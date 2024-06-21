@@ -1,7 +1,7 @@
-import { cacheResolver } from './cacheResolver';
 import { inferPathnameMatcher } from './inferPathnameMatcher';
 import { inferURLComposer } from './inferURLComposer';
 import type { PathnameMatcher, Resolver, Route, RouteOptions } from './types';
+import { isPromiseLike } from './utils';
 
 /**
  * Creates a route that maps pathname and params to a resolved result.
@@ -57,8 +57,32 @@ export function createRoute(
   return {
     pathnameMatcher,
     searchParamsParser: options.searchParamsParser,
-    resolver: options.cacheable ? cacheResolver(resolver) : resolver,
+    resolver: options.cacheable ? createCachedResolver(resolver) : resolver,
     urlComposer,
     paramsValidator: options.paramsValidator,
+  };
+}
+
+/**
+ * Caches the non-`undefined` result returned from the resolver.
+ *
+ * @param resolver The resolver to cache.
+ */
+function createCachedResolver(resolver: Resolver<unknown, unknown>): Resolver<unknown, unknown> {
+  let cachedResult: unknown;
+
+  return params => {
+    if (cachedResult !== undefined || ((cachedResult = resolver(params)), !isPromiseLike(cachedResult))) {
+      return cachedResult;
+    }
+
+    cachedResult = cachedResult.then(
+      result => (cachedResult = result),
+      error => {
+        cachedResult = undefined;
+        throw error;
+      }
+    );
+    return cachedResult;
   };
 }
