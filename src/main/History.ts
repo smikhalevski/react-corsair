@@ -14,9 +14,13 @@ export interface History {
    */
   readonly length: number;
 
-  push(state: unknown, url: URL | string): void;
+  push(url: URL | string): void;
 
-  replace(state: unknown, url: URL | string): void;
+  replace(url: URL | string): void;
+
+  pushState(state: unknown, url?: URL | string): void;
+
+  replaceState(state: unknown, url?: URL | string): void;
 
   go(delta: number): void;
 

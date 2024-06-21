@@ -1,29 +1,19 @@
-import { Router } from './Router';
-
 /**
  * Raw params extracted from a URL.
  */
 export interface RawParams {
-  [name: string]: unknown;
+  [name: string]: any;
 }
 
 /**
- * Extracts raw params from the URL pathname only.
- *
- * @param pathname The URL pathname to extract pathname params from.
- * @returns The extracted params, or `undefined` if the params cannot be extracted (pathname isn't supported).
- */
-export type PathnameParamsParser = (pathname: string) => RawParams | undefined;
-
-/**
- * Parses URL search string as raw params and stringifies to back.
+ * Extracts raw params from a URL search string and stringifies them back.
  */
 export interface SearchParamsParser {
   /**
-   * Parse the URL search string as params.
+   * Extract raw params from a URL search string.
    *
-   * @param search The URL search string.
-   * @returns Parsed params, `undefined` if params cannot be parsed.
+   * @param search The URL search string to extract params from.
+   * @returns Parsed params, or `undefined` if params cannot be parsed.
    */
   parse(search: string): RawParams | undefined;
 
@@ -37,7 +27,30 @@ export interface SearchParamsParser {
 }
 
 /**
- * Validates raw params that were extracted from a URL pathname and query by {@link PathnameParamsParser} and
+ * The result of successful pathname matching.
+ */
+export interface PathnameMatch {
+  /**
+   * The part of the pathname that was matched.
+   */
+  pathname: string;
+
+  /**
+   * Params that were extracted from the pathname.
+   */
+  params: RawParams;
+}
+
+/**
+ * Extracts raw params from the URL pathname.
+ *
+ * @param pathname The URL pathname to extract params from.
+ * @returns The matched pathname, or `undefined` if the pathname isn't supported.
+ */
+export type PathnameMatcher = (pathname: string) => PathnameMatch | undefined;
+
+/**
+ * Validates raw params that were extracted from a URL pathname and a search string by {@link PathnameMatcher} and
  * {@link SearchParamsParser}.
  *
  * @param rawParams Params extracted from a URL pathname and query.
@@ -50,18 +63,20 @@ export type ParamsValidator<Params> = (rawParams: RawParams) => Params | undefin
  * Returns the result associated with a route.
  *
  * @param params The validated params.
- * @returns The resolution result.
+ * @returns The resolution result, or `undefined` if the resolver cannot produce a result for given params.
  * @template Result The resolution result.
  * @template Params The validated params.
  */
-export type Resolver<Result, Params> = (params: Params) => Promise<Result | undefined> | Result | undefined;
+export type Resolver<Result, Params> = (params: Params) => PromiseLike<Result | undefined> | Result | undefined;
 
 /**
- * Takes validated params and composes an absolute URL.
+ * Composes an absolute URL with the given params and the fragment.
  *
- * @param baseURL The base URL.
+ * @param baseURL The absolute base URL.
  * @param params The validated params.
- * @param searchParamsParser The search params parser that can stringify the params.
+ * @param fragment The [URL fragment](https://developer.mozilla.org/en-US/docs/Web/API/URL/hash).
+ * @param searchParamsParser The search params parser that can produce a search string.
+ * @template Params The validated params.
  */
 export type URLComposer<Params> = (
   baseURL: string,
@@ -70,32 +85,53 @@ export type URLComposer<Params> = (
   searchParamsParser: SearchParamsParser
 ) => string;
 
+/**
+ * Options of a route.
+ *
+ * @template Result The resolution result.
+ * @template Params The validated params.
+ */
 export interface RouteOptions<Result, Params> {
   /**
-   * The route pathname pattern that uses {@link URLPattern} syntax, or a callback that parses a pathname into a param
-   * mapping.
+   * The route pathname pattern that uses {@link !URLPattern} syntax, or a callback that parses a pathname.
    */
-  pathname: string | PathnameParamsParser;
+  pathname: string | PathnameMatcher;
 
   /**
-   * The search params parser. If omitted then the parser provided to the router is used.
+   * The value that the route resolves with, or the callback that returns the result.
+   *
+   * In most cases, resolver should return a component, or a promise that is fulfilled with a component.
+   */
+  resolver: Result | Resolver<Result, Params>;
+
+  /**
+   * The search params parser.
+   *
+   * If omitted then the parser provided to the {@link RouterOptions.searchParamsParser router} is used.
+   *
+   * @see {@link paramsValidator}
    */
   searchParamsParser?: SearchParamsParser;
 
   /**
-   * Parses params that were extracted from the URL pathname and query. Here you can coerce, validate and rename params.
+   * Parses params that were extracted from the URL pathname and search string.
    *
-   * **Note:** If omitted then params for this route won't be available through the router.
+   * Here you can coerce, validate and rename params.
    */
   paramsValidator?: ParamsValidator<Params>;
 
   /**
-   * Returns the result associated with the route.
+   * Applicable only if {@link pathname} is a string.
+   *
+   * If `true` then pathname leading and trailing slashes must strictly match the pathname pattern.
+   *
+   * @default false
    */
-  resolver: Resolver<Result, Params>;
+  slashSensitive?: boolean;
 
   /**
-   * If `true` then the first result returned from the {@link resolver} is cached forever.
+   * If `true` then the first result returned from the {@link resolver} is cached forever. Otherwise, resolver is
+   * invoked every time a navigation occurs.
    *
    * @default false
    */
@@ -115,42 +151,27 @@ export interface RouteOptions<Result, Params> {
  */
 export interface Route<Result, Params> {
   /**
-   * Extracts raw params from the URL pathname only.
-   */
-  readonly pathnameParamsParser: PathnameParamsParser;
-
-  /**
-   * The search params parser. If omitted then the parser provided to the router is used.
-   */
-  readonly searchParamsParser: SearchParamsParser | undefined;
-
-  /**
    * Returns the result associated with the route.
    */
   readonly resolver: Resolver<Result, Params>;
 
   /**
+   * Extracts raw params from the URL pathname.
+   */
+  readonly pathnameMatcher: PathnameMatcher;
+
+  /**
+   * The custom search params parser.
+   */
+  readonly searchParamsParser: SearchParamsParser | undefined;
+
+  /**
+   * Parses params that were extracted from the URL pathname and search string.
+   */
+  readonly paramsValidator: ParamsValidator<Params> | undefined;
+
+  /**
    * Composes the URL of the route.
    */
   readonly urlComposer: URLComposer<Params>;
-
-  /**
-   * Parses params that were extracted from the URL pathname and query.
-   */
-  readonly paramsValidator: ParamsValidator<Params> | undefined;
-}
-
-/**
- * The event published by the {@link Router} instance.
- */
-export interface RouterEvent<Result = any> {
-  /**
-   * The type of the event.
-   */
-  type: 'pending' | 'navigated' | 'notFound';
-
-  /**
-   * The router that published the event.
-   */
-  target: Router<Result>;
 }

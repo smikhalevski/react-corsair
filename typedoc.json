@@ -6,22 +6,21 @@
   "excludeInternal": true,
   "disableSources": true,
   "hideGenerator": true,
+  "visibilityFilters": {
+    "inherited": true,
+    "protected": false
+  },
+  "navigation": {
+    "includeFolders": false
+  },
+  "sortEntryPoints": false,
   "readme": "none",
   "tsconfig": "./tsconfig.json",
   "customCss": "./node_modules/typedoc-custom-css/custom.css",
   "entryPoints": [
     "./src/main/index.ts"
   ],
-  "externalSymbolLinkMappings": {
-    "global": {
-      "AbortError": "https://developer.mozilla.org/en-US/docs/Web/API/DOMException#aborterror"
-    },
-    "parallel-universe": {
-      "AbortablePromise": "https://smikhalevski.github.io/parallel-universe/classes/AbortablePromise.html"
-    },
-    "typescript": {
-      "AbortSignal": "https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal",
-      "Promise": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise"
-    }
-  }
+  "plugin": [
+    "typedoc-plugin-mdn-links"
+  ]
 }

@@ -1,46 +1,64 @@
-import { URLPattern } from 'urlpattern-polyfill';
-import { createPathnamePatternURLComposer } from './createPathnamePatternURLComposer';
-import type { PathnameParamsParser, Route, RouteOptions } from './types';
-import { isPromiseLike } from './utils';
+import { cacheResolver } from './cacheResolver';
+import { inferPathnameMatcher } from './inferPathnameMatcher';
+import { inferURLComposer } from './inferURLComposer';
+import type { PathnameMatcher, Resolver, Route, RouteOptions } from './types';
 
-export function createRoute<Result, Params = void>(options: RouteOptions<Result, Params>): Route<Result, Params> {
-  const { pathname, searchParamsParser, paramsValidator } = options;
+/**
+ * Creates a route that maps pathname and params to a resolved result.
+ *
+ * @param pathname The route pathname pattern that uses {@link !URLPattern} syntax, or a callback that parses a pathname.
+ * @param resolver The value that the route resolves with, or the callback that returns the result.
+ * @template Params The pathname params.
+ * @template Result The resolution result.
+ */
+export function createRoute<Result, Params = void>(
+  pathname: string | PathnameMatcher,
+  resolver: Result | Resolver<Result, Params>
+): Route<Result, Params>;
 
-  let pathnameParamsParser: PathnameParamsParser;
-  let urlComposer = options.urlComposer;
-  let resolver = options.resolver;
+/**
+ * Creates a route that maps pathname and params to a resolved result.
+ *
+ * @param options Route options.
+ * @template Params The validated params.
+ * @template Result The resolution result.
+ */
+export function createRoute<Result, Params = void>(options: RouteOptions<Result, Params>): Route<Result, Params>;
+
+export function createRoute(
+  pathnameOrOptions: string | PathnameMatcher | RouteOptions<unknown, unknown>,
+  resolverOrResult?: unknown
+) {
+  const options =
+    typeof pathnameOrOptions === 'string' || typeof pathnameOrOptions === 'function'
+      ? { pathname: pathnameOrOptions, resolver: resolverOrResult! }
+      : pathnameOrOptions;
+
+  resolverOrResult = options.resolver;
+
+  const resolver =
+    typeof resolverOrResult !== 'function' ? () => resolverOrResult : (resolverOrResult as Resolver<unknown, unknown>);
+
+  let { pathname, urlComposer } = options;
+  let pathnameMatcher: PathnameMatcher;
 
   if (typeof pathname === 'string') {
-    const pattern = new URLPattern(new URL(pathname, 'http://base').pathname, 'http://base');
+    pathnameMatcher = inferPathnameMatcher(pathname, options.slashSensitive);
 
-    pathnameParamsParser = pathname => pattern.exec({ pathname })?.pathname.groups;
-
-    urlComposer ||= createPathnamePatternURLComposer(pathname);
+    urlComposer ||= inferURLComposer(pathname);
   } else {
-    pathnameParamsParser = pathname;
-  }
+    pathnameMatcher = pathname;
 
-  if (urlComposer === undefined) {
-    throw new Error('Cannot infer a urlComposer');
-  }
-
-  if (options.cacheable) {
-    let cachedResult: ReturnType<typeof resolver>;
-    let originalResolver = resolver;
-
-    resolver = params => {
-      if (cachedResult === undefined && ((cachedResult = originalResolver(params)), isPromiseLike(cachedResult))) {
-        cachedResult.then(result => (cachedResult = result));
-      }
-      return cachedResult;
-    };
+    if (urlComposer === undefined) {
+      throw new Error('Cannot infer urlComposer from the pathname parser. The urlComposer option is required.');
+    }
   }
 
   return {
-    pathnameParamsParser,
-    searchParamsParser,
-    resolver,
+    pathnameMatcher,
+    searchParamsParser: options.searchParamsParser,
+    resolver: options.cacheable ? cacheResolver(resolver) : resolver,
     urlComposer,
-    paramsValidator,
+    paramsValidator: options.paramsValidator,
   };
 }

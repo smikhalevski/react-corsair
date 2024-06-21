@@ -1,7 +1,7 @@
 import type { RawParams, SearchParamsParser } from './types';
 
 /**
- * Parses URL search params using {@link URLSearchParams}.
+ * Parses URL search params using {@link !URLSearchParams}.
  */
 export const urlSearchParamsParser: SearchParamsParser = {
   parse(search) {
@@ -20,11 +20,11 @@ export const urlSearchParamsParser: SearchParamsParser = {
     const urlSearchParams = new URLSearchParams();
 
     for (const key in rawParams) {
-      const value = rawParams[key as keyof object];
+      const value = rawParams[key];
 
       if (value !== null && typeof value === 'object' && Symbol.iterator in value) {
-        for (const item of Array.isArray(value) ? value : Array.from(value as Iterable<unknown>)) {
-          urlSearchParams.set(key, String(item));
+        for (const item of Array.isArray(value) ? value : Array.from(value)) {
+          urlSearchParams.append(key, String(item));
         }
       } else {
         urlSearchParams.set(key, String(value));
