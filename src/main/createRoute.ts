@@ -28,16 +28,13 @@ export function createRoute<Result, Params = void>(options: RouteOptions<Result,
 export function createRoute(
   pathnameOrOptions: string | PathnameMatcher | RouteOptions<unknown, unknown>,
   resolverOrResult?: unknown
-) {
+): Route<unknown, unknown> {
   const options =
     typeof pathnameOrOptions === 'string' || typeof pathnameOrOptions === 'function'
       ? { pathname: pathnameOrOptions, resolver: resolverOrResult! }
       : pathnameOrOptions;
 
   resolverOrResult = options.resolver;
-
-  const resolver =
-    typeof resolverOrResult !== 'function' ? () => resolverOrResult : (resolverOrResult as Resolver<unknown, unknown>);
 
   let { pathname, urlComposer } = options;
   let pathnameMatcher: PathnameMatcher;
@@ -54,12 +51,27 @@ export function createRoute(
     }
   }
 
+  let isCacheable;
+  let resolver;
+
+  if (typeof resolverOrResult !== 'function') {
+    isCacheable = true;
+    resolver = () => resolverOrResult;
+  } else if (options.cacheable) {
+    isCacheable = true;
+    resolver = createCachedResolver(resolverOrResult as Resolver<unknown, unknown>);
+  } else {
+    isCacheable = false;
+    resolver = resolverOrResult as Resolver<unknown, unknown>;
+  }
+
   return {
     pathnameMatcher,
     searchParamsParser: options.searchParamsParser,
-    resolver: options.cacheable ? createCachedResolver(resolver) : resolver,
+    resolver,
     urlComposer,
     paramsValidator: options.paramsValidator,
+    isCacheable,
   };
 }
 

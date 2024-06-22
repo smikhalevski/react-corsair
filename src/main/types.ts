@@ -131,7 +131,8 @@ export interface RouteOptions<Result, Params> {
 
   /**
    * If `true` then the first result returned from the {@link resolver} is cached forever. Otherwise, resolver is
-   * invoked every time a navigation occurs.
+   * invoked every time a navigation occurs. If {@link resolver} isn't a function then it is always
+   * {@link Route.isCacheable} cacheable.
    *
    * @default false
    */
@@ -174,4 +175,11 @@ export interface Route<Result, Params> {
    * Composes the URL of the route.
    */
   readonly urlComposer: URLComposer<Params>;
+
+  /**
+   * `true` if the result returned from the {@link resolver} is cached.
+   *
+   * @see {@link RouteOptions.cacheable}
+   */
+  readonly isCacheable: boolean;
 }
