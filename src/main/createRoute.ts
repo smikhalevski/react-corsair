@@ -1,40 +1,35 @@
+import { memo } from 'react';
 import { inferPathnameMatcher } from './inferPathnameMatcher';
 import { inferURLComposer } from './inferURLComposer';
-import type { PathnameMatcher, Resolver, Route, RouteOptions } from './types';
+import { ComponentLoader, PathnameMatcher, Route, RouteOptions } from './types';
 import { isPromiseLike } from './utils';
 
 /**
  * Creates a route that maps pathname and params to a resolved result.
  *
  * @param pathname The route pathname pattern that uses {@link !URLPattern} syntax, or a callback that parses a pathname.
- * @param resolver The value that the route resolves with, or the callback that returns the result.
- * @template Params The pathname params.
- * @template Result The resolution result.
+ * @param componentLoader Loads the component rendered by the route.
  */
-export function createRoute<Result, Params = void>(
-  pathname: string | PathnameMatcher,
-  resolver: Result | Resolver<Result, Params>
-): Route<Result, Params>;
+export function createRoute(pathname: string | PathnameMatcher, componentLoader: ComponentLoader): Route<void>;
 
 /**
  * Creates a route that maps pathname and params to a resolved result.
  *
  * @param options Route options.
- * @template Params The validated params.
- * @template Result The resolution result.
+ * @template Params The validated route params.
  */
-export function createRoute<Result, Params = void>(options: RouteOptions<Result, Params>): Route<Result, Params>;
+export function createRoute<Params = void>(options: RouteOptions<Params>): Route<Params>;
 
 export function createRoute(
-  pathnameOrOptions: string | PathnameMatcher | RouteOptions<unknown, unknown>,
-  resolverOrResult?: unknown
-): Route<unknown, unknown> {
-  const options =
-    typeof pathnameOrOptions === 'string' || typeof pathnameOrOptions === 'function'
-      ? { pathname: pathnameOrOptions, resolver: resolverOrResult! }
-      : pathnameOrOptions;
+  pathnameOrOptions: string | PathnameMatcher | RouteOptions<unknown>,
+  componentLoader?: ComponentLoader
+): Route<any> {
+  const options: RouteOptions<unknown> =
+    typeof pathnameOrOptions === 'object'
+      ? pathnameOrOptions
+      : { pathname: pathnameOrOptions, componentLoader: componentLoader! };
 
-  resolverOrResult = options.resolver;
+  componentLoader = options.componentLoader;
 
   let { pathname, urlComposer } = options;
   let pathnameMatcher: PathnameMatcher;
@@ -51,50 +46,40 @@ export function createRoute(
     }
   }
 
-  let isCacheable;
-  let resolver;
-
-  if (typeof resolverOrResult !== 'function') {
-    isCacheable = true;
-    resolver = () => resolverOrResult;
-  } else if (options.cacheable) {
-    isCacheable = true;
-    resolver = createCachedResolver(resolverOrResult as Resolver<unknown, unknown>);
-  } else {
-    isCacheable = false;
-    resolver = resolverOrResult as Resolver<unknown, unknown>;
-  }
-
   return {
     pathnameMatcher,
-    searchParamsParser: options.searchParamsParser,
-    resolver,
+    componentLoader: memoizeComponentLoader(componentLoader),
+    dataLoader: options.dataLoader,
+    paramsParser: options.paramsParser,
     urlComposer,
-    paramsValidator: options.paramsValidator,
-    isCacheable,
   };
 }
 
-/**
- * Caches the non-`undefined` result returned from the resolver.
- *
- * @param resolver The resolver to cache.
- */
-function createCachedResolver(resolver: Resolver<unknown, unknown>): Resolver<unknown, unknown> {
-  let cachedResult: unknown;
+function memoizeComponentLoader(componentLoader: ComponentLoader): ComponentLoader {
+  let cachedComponent: ReturnType<ComponentLoader> | undefined;
 
-  return params => {
-    if (cachedResult !== undefined || ((cachedResult = resolver(params)), !isPromiseLike(cachedResult))) {
-      return cachedResult;
+  return () => {
+    if (cachedComponent !== undefined) {
+      return cachedComponent;
     }
 
-    cachedResult = cachedResult.then(
-      result => (cachedResult = result),
+    const component = componentLoader();
+
+    if (!isPromiseLike(component)) {
+      cachedComponent = memo(component);
+      return cachedComponent;
+    }
+
+    cachedComponent = component.then(
+      module => {
+        cachedComponent = memo(module.default);
+        return { default: cachedComponent };
+      },
       error => {
-        cachedResult = undefined;
+        cachedComponent = undefined;
         throw error;
       }
     );
-    return cachedResult;
+    return cachedComponent;
   };
 }

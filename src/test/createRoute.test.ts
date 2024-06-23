@@ -6,7 +6,7 @@ describe('createRoute', () => {
     const resolver = () => 111;
     const route = createRoute('xxx', resolver);
 
-    expect(route.paramsValidator).toBeUndefined();
+    expect(route.paramsParser).toBeUndefined();
     expect(route.searchParamsParser).toBeUndefined();
     expect(route.pathnameMatcher).toBeInstanceOf(Function);
 
@@ -20,7 +20,7 @@ describe('createRoute', () => {
     const resolver = () => 111;
     const route = createRoute({ pathname: 'xxx', resolver });
 
-    expect(route.paramsValidator).toBeUndefined();
+    expect(route.paramsParser).toBeUndefined();
     expect(route.searchParamsParser).toBeUndefined();
     expect(route.pathnameMatcher).toBeInstanceOf(Function);
 

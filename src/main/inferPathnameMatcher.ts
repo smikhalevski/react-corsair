@@ -31,7 +31,7 @@ export function inferPathnameMatcher(pattern: string, isSlashSensitive = false):
     }
 
     if (match === null) {
-      return;
+      return null;
     }
 
     const params = match.pathname.groups;

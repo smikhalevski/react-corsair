@@ -1,12 +1,11 @@
 import { RawParams, Route } from './types';
 import { urlSearchParamsParser } from './urlSearchParamsParser';
-import { isPromiseLike } from './utils';
 
-export interface RouteMatch<Result> {
+export interface RouteMatch {
   /**
    * The route that was matched.
    */
-  route: Route<Result, any>;
+  route: Route<any>;
 
   /**
    * The pathname that was matched.
@@ -17,11 +16,6 @@ export interface RouteMatch<Result> {
    * Parsed and validated URL parameters. Contains both pathname and search parameters.
    */
   params: RawParams;
-
-  /**
-   * The resolved route result.
-   */
-  result: Result;
 }
 
 /**
@@ -32,66 +26,39 @@ export interface RouteMatch<Result> {
  * @param searchParamsParser The search params parser that extracts raw params from a URL search string and stringifies
  * them back. It is used if a route doesn't define {@link RouteOptions.searchParamsParser its own params parser}.
  */
-export function matchRoute<Result>(
-  url: URL | string,
-  routes: Route<Result, any>[],
+export function matchRoute(
+  url: string | URL | Location,
+  routes: Route<any>[],
   searchParamsParser = urlSearchParamsParser
-): Promise<RouteMatch<Result> | undefined> | RouteMatch<Result> | undefined {
+): RouteMatch | null {
   url = typeof url === 'string' ? new URL(url, 'http://undefined') : url;
 
-  let promise: Promise<RouteMatch<Result> | undefined> | undefined;
+  const searchParams = searchParamsParser.parse(url.search);
 
   for (const route of routes) {
     const pathnameMatch = route.pathnameMatcher(url.pathname);
 
-    if (pathnameMatch === undefined) {
-      // Non-matching pathname
+    if (pathnameMatch === null) {
       continue;
     }
 
     const pathname = pathnameMatch.pathname;
 
-    let params = undefined;
+    let params;
 
-    if (route.paramsValidator !== undefined) {
-      const searchParams = (route.searchParamsParser || searchParamsParser).parse(url.search);
+    if (route.paramsParser !== undefined) {
+      params = pathnameMatch.params !== undefined ? { ...searchParams, ...pathnameMatch.params } : searchParams;
 
-      if (searchParams === undefined) {
-        // Non-matching search params
-        continue;
-      }
-
-      params = (0, route.paramsValidator)(
-        pathnameMatch.params !== undefined ? { ...searchParams, ...pathnameMatch.params } : searchParams
-      );
-
-      if (params === undefined) {
-        // Invalid params
+      try {
+        params =
+          typeof route.paramsParser === 'function' ? route.paramsParser(params) : route.paramsParser.parse(params);
+      } catch {
         continue;
       }
     }
 
-    const result = route.resolver(params);
-
-    if (result === undefined) {
-      // Not resolvable
-      continue;
-    }
-
-    if (promise !== undefined || isPromiseLike(result)) {
-      // Enqueue resolvers
-      promise = (promise || Promise.resolve()).then(
-        routeMatch =>
-          routeMatch ||
-          Promise.resolve(result).then(result =>
-            result === undefined ? undefined : { route, pathname, result, params }
-          )
-      );
-      continue;
-    }
-
-    return { route, pathname, result, params };
+    return { route, pathname, params };
   }
 
-  return promise;
+  return null;
 }

@@ -70,7 +70,7 @@ describe('matchRoute', () => {
     const route = createRoute({
       pathname: 'aaa/:xxx',
       resolver: () => 111,
-      paramsValidator: rawParams => rawParams,
+      paramsParser: rawParams => rawParams,
     });
 
     expect(matchRoute('aaa/yyy', [route])).toEqual({
@@ -98,7 +98,7 @@ describe('matchRoute', () => {
     const route = createRoute({
       pathname: 'aaa',
       resolver: () => 111,
-      paramsValidator: rawParams => rawParams,
+      paramsParser: rawParams => rawParams,
     });
 
     expect(matchRoute('aaa?xxx=yyy', [route])).toEqual({
@@ -122,7 +122,7 @@ describe('matchRoute', () => {
     const route = createRoute({
       pathname: 'aaa/:xxx',
       resolver: () => 111,
-      paramsValidator: rawParams => rawParams,
+      paramsParser: rawParams => rawParams,
     });
 
     expect(matchRoute('aaa/yyy?ppp=qqq', [route])).toEqual({
@@ -137,7 +137,7 @@ describe('matchRoute', () => {
     const route = createRoute({
       pathname: 'aaa/:xxx',
       resolver: () => 111,
-      paramsValidator: rawParams => rawParams,
+      paramsParser: rawParams => rawParams,
     });
 
     expect(matchRoute('aaa/yyy?xxx=zzz', [route])).toEqual({
