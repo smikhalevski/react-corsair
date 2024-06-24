@@ -1,111 +1,69 @@
 import { createRoute } from '../main/createRoute';
 import { urlSearchParamsParser } from '../main/urlSearchParamsParser';
 
+function Component() {
+  return null;
+}
+
 describe('createRoute', () => {
   test('creates a route', () => {
-    const resolver = () => 111;
-    const route = createRoute('xxx', resolver);
+    const componentLoader = () => Component;
+    const route = createRoute('xxx', componentLoader);
 
     expect(route.paramsParser).toBeUndefined();
-    expect(route.searchParamsParser).toBeUndefined();
+    expect(route.dataLoader).toBeUndefined();
     expect(route.pathnameMatcher).toBeInstanceOf(Function);
-
-    expect(route.resolver).toBeInstanceOf(Function);
-    expect(route.resolver).toBe(resolver);
+    expect(route.componentLoader).toBeInstanceOf(Function);
 
     expect(route.urlComposer('yyy', undefined, undefined, urlSearchParamsParser)).toBe('yyy/xxx');
   });
 
   test('creates a route with options', () => {
-    const resolver = () => 111;
-    const route = createRoute({ pathname: 'xxx', resolver });
+    const componentLoader = () => Component;
+    const route = createRoute({ pathname: 'xxx', componentLoader });
 
     expect(route.paramsParser).toBeUndefined();
-    expect(route.searchParamsParser).toBeUndefined();
+    expect(route.dataLoader).toBeUndefined();
     expect(route.pathnameMatcher).toBeInstanceOf(Function);
-
-    expect(route.resolver).toBeInstanceOf(Function);
-    expect(route.resolver).toBe(resolver);
+    expect(route.componentLoader).toBeInstanceOf(Function);
 
     expect(route.urlComposer('yyy', undefined, undefined, urlSearchParamsParser)).toBe('yyy/xxx');
   });
 
-  test('creates a cacheable route', () => {
-    const resolverMock = jest.fn(() => 111);
-    const route = createRoute({ pathname: 'xxx', resolver: resolverMock, cacheable: true });
+  test('component loader is memoized', () => {
+    const componentLoaderMock = jest.fn(() => Component);
+    const route = createRoute({ pathname: 'xxx', componentLoader: componentLoaderMock });
 
-    expect(route.resolver(undefined)).toBe(111);
-    expect(route.resolver(undefined)).toBe(111);
-    expect(route.resolver(undefined)).toBe(111);
+    expect(route.componentLoader()).toEqual(expect.objectContaining({ $$typeof: expect.any(Symbol) }));
+    expect(route.componentLoader()).toEqual(route.componentLoader());
 
-    expect(resolverMock).toHaveBeenCalledTimes(1);
+    expect(componentLoaderMock).toHaveBeenCalledTimes(1);
   });
 
-  test('creates a non-cacheable route', () => {
-    const resolverMock = jest.fn(() => 111);
-    const route = createRoute({ pathname: 'xxx', resolver: resolverMock, cacheable: false });
+  test('caches a component exported from a module', async () => {
+    const componentLoaderMock = jest.fn(() => Promise.resolve({ default: Component }));
+    const route = createRoute({ pathname: 'xxx', componentLoader: componentLoaderMock });
 
-    expect(route.resolver(undefined)).toBe(111);
-    expect(route.resolver(undefined)).toBe(111);
-    expect(route.resolver(undefined)).toBe(111);
+    const promise = route.componentLoader();
 
-    expect(resolverMock).toHaveBeenCalledTimes(3);
-  });
-
-  test('caches a promise result', async () => {
-    const resolverMock = jest.fn(() => Promise.resolve(111));
-    const route = createRoute({ pathname: 'xxx', resolver: resolverMock, cacheable: true });
-
-    const promise = route.resolver(undefined);
-
-    expect(route.resolver(undefined)).toBe(promise);
+    expect(route.componentLoader()).toBe(promise);
 
     await promise;
 
-    expect(route.resolver(undefined)).toBe(111);
-    expect(resolverMock).toHaveBeenCalledTimes(1);
-  });
+    expect(route.componentLoader()).toEqual(expect.objectContaining({ $$typeof: expect.any(Symbol) }));
+    expect(route.componentLoader()).toBe(route.componentLoader());
 
-  test('does not cache sync undefined result', () => {
-    const resolverMock = jest.fn().mockReturnValueOnce(undefined).mockReturnValueOnce(111).mockReturnValue(222);
-    const route = createRoute({ pathname: 'xxx', resolver: resolverMock, cacheable: true });
-
-    expect(route.resolver(undefined)).toBe(undefined);
-    expect(route.resolver(undefined)).toBe(111);
-    expect(route.resolver(undefined)).toBe(111);
-
-    expect(resolverMock).toHaveBeenCalledTimes(2);
-  });
-
-  test('does not cache async undefined result', async () => {
-    const resolverMock = jest
-      .fn()
-      .mockReturnValueOnce(undefined)
-      .mockReturnValueOnce(Promise.resolve(111))
-      .mockReturnValue(222);
-
-    const route = createRoute({ pathname: 'xxx', resolver: resolverMock, cacheable: true });
-
-    expect(route.resolver(undefined)).toBe(undefined);
-
-    const promise = route.resolver(undefined);
-
-    expect(route.resolver(undefined)).toBe(promise);
-
-    await promise;
-
-    expect(route.resolver(undefined)).toBe(111);
-    expect(resolverMock).toHaveBeenCalledTimes(2);
+    expect(componentLoaderMock).toHaveBeenCalledTimes(1);
   });
 
   test('infers urlComposer', () => {
-    const route = createRoute({ pathname: 'xxx/:aaa', resolver: (_params: { aaa?: number }) => 111 });
+    const route = createRoute<{ aaa?: number }>({ pathname: 'xxx/:aaa', componentLoader: () => Component });
 
     expect(() => route.urlComposer('yyy', {}, undefined, urlSearchParamsParser)).toThrow();
     expect(route.urlComposer('yyy', { aaa: 222 }, undefined, urlSearchParamsParser)).toBe('yyy/xxx/222');
   });
 
   test('throws if urlComposer cannot be inferred', () => {
-    expect(() => createRoute({ pathname: () => undefined, resolver: () => 111 })).toThrow();
+    expect(() => createRoute({ pathname: () => null, componentLoader: () => Component })).toThrow();
   });
 });

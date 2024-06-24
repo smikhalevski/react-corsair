@@ -1,136 +1,164 @@
-import React, { ComponentType, createContext, createElement, ReactNode, Suspense, useContext, useRef } from 'react';
+import React, {
+  Component,
+  ComponentType,
+  createContext,
+  createElement,
+  ReactElement,
+  Suspense,
+  useContext,
+} from 'react';
 import { matchRoute, RouteMatch } from './matchRoute';
 import { type Route, SearchParamsParser } from './types';
 import { isPromiseLike } from './utils';
 
+export interface NavigateOptions {
+  /**
+   * The arbitrary navigation state, that can be passed to {@link !History.state}.
+   */
+  state?: any;
+
+  /**
+   * If `true` then navigation should replace the current history entry.
+   *
+   * @default false
+   */
+  replace?: boolean;
+}
+
 export interface Router {
-  getURL<Params>(route: Route<Params>, params: Params): void;
+  /**
+   * The currently active route, or `null` in the {@link RouterProviderProps.notFoundComponent}.
+   */
+  route: Route<any> | null;
 
-  navigate<Params>(route: Route<Params>, params: Params, state?: unknown): void;
+  /**
+   * `true` if the router is currently loading the component or data.
+   */
+  isPending: boolean;
 
+  /**
+   * Navigates the router to the given route.
+   */
+  navigate<Params>(route: Route<Params>, params: Params, options?: NavigateOptions): void;
+
+  /**
+   * Navigates to the previous route.
+   */
   back(): void;
 
-  redirect<Params>(route: Route<Params>, params: Params): never;
-
-  notFound(): never;
-
-  prefetch<Params>(route: Route<Params>, params: Params): void;
+  /**
+   * Returns the URL of the route that starts with {@link RouterProps.base the router base}.
+   */
+  getURL<Params>(route: Route<Params>, params: Params): string;
 }
 
-export interface RouterProps {
-  url: string | URL | Location;
-  onNavigate: (url: string) => void;
+export interface RouterProviderProps {
+  /**
+   * The URL or pathname of the required route.
+   */
+  url: string;
+
+  /**
+   * The array of routes rendered by the router.
+   */
   routes: Route<any>[];
+
+  /**
+   * The base URL or pathname.
+   */
   base?: string;
-  onRedirect?: (url: string) => void;
+
+  /**
+   * The component that is rendered if the route component and data are being loaded.
+   */
   pendingComponent?: ComponentType;
+
+  /**
+   * Component that is rendered if the route that matches the {@link url URL} wasn't found.
+   */
   notFoundComponent?: ComponentType;
+
+  /**
+   * Parses URL search params as an object.
+   */
   searchParamsParser?: SearchParamsParser;
+
+  /**
+   * Triggered when {@link Router.navigate} is called.
+   */
+  onNavigate?: (url: string, options: NavigateOptions) => void;
+
+  /**
+   * Triggered when {@link redirect} is called during rendering.
+   */
+  onRedirect?: (url: string) => void;
+
+  /**
+   * Triggered when {@link Router.back} is called.
+   */
+  onBack?: () => void;
 }
 
-export function Router(props: RouterProps): ReactNode {
-  const manager = (useRef<RouterManager>().current ||= new RouterManager());
-
-  manager.onNavigate = props.onNavigate;
-  manager.onRedirect = props.onRedirect;
-  manager.notFoundComponent = props.notFoundComponent;
-
-  const routeMatch = matchRoute(props.url, props.routes, props.searchParamsParser);
-
-  const pendingComponent = manager.component || props.pendingComponent;
-
-  manager.navigate(routeMatch);
-
-  return (
-    <RouterManagerContext.Provider value={manager}>
-      <Suspense fallback={pendingComponent && createElement(pendingComponent)}>
-        <Route manager={manager} />
-      </Suspense>
-    </RouterManagerContext.Provider>
-  );
-}
-
-export function useRouter(): Router {
-  const manager = useContext(RouterManagerContext);
-
-  if (manager === null) {
-    throw new Error('Expected enclosing Router');
-  }
-  return manager.router;
-}
-
-const RouterManagerContext = createContext<RouterManager | null>(null);
-
-interface RouteProps {
-  manager: RouterManager;
-}
-
-function Route({ manager }: RouteProps) {
-  if (manager.promise !== undefined) {
-    throw manager.promise;
-  }
-  if (manager.component !== undefined) {
-    return createElement(manager.component);
-  }
-  return null;
-}
-
-class RouterManager {
+export class RouterProvider extends Component<RouterProviderProps> {
   router: Router = {
-    getURL: (route, params) => {},
-
-    navigate: (route, params, state) => {
-      this.onNavigate('');
-    },
-
+    route: null,
+    isPending: false,
+    navigate: (route, params, options) => {},
     back: () => {},
-
-    redirect: (route, params) => {
-      this.onRedirect?.('');
-      throw new Redirect(this.router, route, params);
-    },
-
-    notFound: () => {
-      this.component = this.notFoundComponent;
-      throw new Error('Not found');
-    },
-
-    prefetch: (route, params) => {
-      route.dataLoader?.(params);
+    getURL: (route, params) => {
+      return '';
     },
   };
 
-  promise: PromiseLike<ComponentType> | undefined;
-  component: ComponentType | undefined;
-  notFoundComponent: ComponentType | undefined;
-  onNavigate!: (url: string) => void;
-  onRedirect: ((url: string) => void) | undefined;
+  routeMatch: RouteMatch | null = null;
+  prevElement: ReactElement | null = null;
 
-  navigate(routeMatch: RouteMatch | null): void {
-    if (routeMatch === null) {
-      this.component = this.notFoundComponent;
-      return;
-    }
+  constructor(props: RouterProviderProps) {
+    super(props);
+  }
 
-    const component = routeMatch.route.componentLoader();
-    const dataPromise = routeMatch.route.dataLoader?.(routeMatch.params);
+  componentDidCatch(error: Error): void {}
 
-    if (isPromiseLike(component) || dataPromise !== undefined) {
-      this.promise = Promise.all([component, dataPromise]).then(([component]) =>
-        'default' in component ? component.default : component
-      );
-      return;
-    }
-
-    this.promise = undefined;
-    this.component = component;
+  render() {
+    return (
+      <RouterProviderContext.Provider value={this}>
+        <Suspense fallback={this.prevElement || createElementOrNull(this.props.pendingComponent)}>
+          <RouteRenderer provider={this} />
+        </Suspense>
+      </RouterProviderContext.Provider>
+    );
   }
 }
 
-class Redirect<Params> {
-  constructor(
-    public router: Router,
-    public route: Route<Params>,
-    public params: Params
-  ) {}
+function RouteRenderer({ provider }: { provider: RouterProvider }) {
+  provider.routeMatch = matchRoute(provider.props.url, provider.props.routes, provider.props.searchParamsParser);
+
+  if (provider.routeMatch === null) {
+    return (provider.prevElement = createElementOrNull(provider.props.notFoundComponent));
+  }
+
+  // if routeMatch.route is unchanged && url is unchanged && searchParamsParser is unchanged then return the previous element
+
+  const element = provider.routeMatch.route.renderer(provider.routeMatch.params);
+
+  if (isPromiseLike(element)) {
+    throw element;
+  }
+
+  return (provider.prevElement = element);
+}
+
+function createElementOrNull(component: ComponentType | undefined): ReactElement | null {
+  return component !== undefined ? createElement(component) : null;
+}
+
+const RouterProviderContext = createContext<RouterProvider | null>(null);
+
+export function useRouter(): Router {
+  const manager = useContext(RouterProviderContext);
+
+  if (manager === null) {
+    throw new Error('Expected enclosing RouterProvider');
+  }
+  return manager.router;
 }

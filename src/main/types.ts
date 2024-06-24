@@ -1,4 +1,4 @@
-import { ComponentType } from 'react';
+import { ComponentType, ReactElement } from 'react';
 
 /**
  * Raw params extracted from a URL.
@@ -29,7 +29,7 @@ export interface SearchParamsParser {
 }
 
 /**
- * The result of successful pathname matching.
+ * The result of a successful pathname matching.
  */
 export interface PathnameMatch {
   /**
@@ -47,19 +47,27 @@ export interface PathnameMatch {
  * Extracts raw params from the URL pathname.
  *
  * @param pathname The URL pathname to extract params from.
- * @returns The matched pathname, or `undefined` if the pathname isn't supported.
+ * @returns The matched pathname, or `null` if the pathname isn't supported.
  */
 export type PathnameMatcher = (pathname: string) => PathnameMatch | null;
 
 /**
- * Validates raw params that were extracted from a URL pathname and a search string by {@link PathnameMatcher} and
+ * Parses raw params that were extracted from a URL pathname and search string by {@link PathnameMatcher} and
  * {@link SearchParamsParser}.
  *
- * @param rawParams Params extracted from a URL pathname and query.
- * @returns Validated and transformed params that are safe to use inside the app.
  * @template Params The validated params.
  */
-export type ParamsParser<Params> = ((rawParams: RawParams) => Params) | { parse(rawParams: RawParams): Params };
+export interface ParamsParser<Params> {
+  /**
+   * Parses raw params as validated params.
+   *
+   * **Note:** If provided raw params cannot be parsed, parser should throw an error.
+   *
+   * @param rawParams Params extracted from a URL pathname and query.
+   * @returns Validated and transformed params that are safe to use inside the app.
+   */
+  parse(rawParams: RawParams): Params;
+}
 
 /**
  * Composes an absolute URL with the given params and the fragment.
@@ -77,6 +85,9 @@ export type URLComposer<Params> = (
   searchParamsParser: SearchParamsParser
 ) => string;
 
+/**
+ * Returns the component or a module with a default export.
+ */
 export type ComponentLoader = () => PromiseLike<{ default: ComponentType }> | ComponentType;
 
 /**
@@ -96,26 +107,24 @@ export interface RouteOptions<Params> {
   componentLoader: ComponentLoader;
 
   /**
-   * Loads the data associated with the route.
+   * Loads the data required during the route rendering.
    */
-  dataLoader?: (params: Params) => Promise<void> | void;
+  dataLoader?: (params: Params) => PromiseLike<void> | void;
 
   /**
    * Parses params that were extracted from the URL pathname and search string.
-   *
-   * Here you can coerce, validate and rename params.
    */
-  paramsParser?: ParamsParser<Params>;
+  paramsParser?: ParamsParser<Params> | ParamsParser<Params>['parse'];
 
   /**
-   * Composes the URL of this route.
+   * Composes the URL of the route.
    */
   urlComposer?: URLComposer<Params>;
 
   /**
-   * Applicable only if {@link pathname} is a string.
-   *
    * If `true` then pathname leading and trailing slashes must strictly match the pathname pattern.
+   *
+   * **Note:** Applicable only if {@link pathname} is a string.
    *
    * @default false
    */
@@ -134,14 +143,9 @@ export interface Route<Params> {
   pathnameMatcher: PathnameMatcher;
 
   /**
-   * Loads the component rendered by the route.
+   * Loads the component and required data and resolves with the element that must be rendered.
    */
-  componentLoader: ComponentLoader;
-
-  /**
-   * Loads the data associated with the route.
-   */
-  dataLoader: ((params: Params) => Promise<void> | void) | undefined;
+  renderer: (params: Params) => Promise<ReactElement> | ReactElement;
 
   /**
    * Parses params that were extracted from the URL pathname and search string.

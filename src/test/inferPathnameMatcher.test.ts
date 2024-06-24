@@ -4,7 +4,7 @@ describe('inferPathnameMatcher', () => {
   test('matches without slashes', () => {
     const matcher = inferPathnameMatcher('aaa');
 
-    expect(matcher('bbb')).toBeUndefined();
+    expect(matcher('bbb')).toBeNull();
 
     expect(matcher('aaa')).toStrictEqual({ pathname: 'aaa', params: {} });
     expect(matcher('/aaa')).toStrictEqual({ pathname: 'aaa', params: {} });

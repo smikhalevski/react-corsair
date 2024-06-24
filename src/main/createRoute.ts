@@ -1,11 +1,11 @@
-import { memo } from 'react';
+import { createElement, memo, ReactElement } from 'react';
 import { inferPathnameMatcher } from './inferPathnameMatcher';
 import { inferURLComposer } from './inferURLComposer';
 import { ComponentLoader, PathnameMatcher, Route, RouteOptions } from './types';
 import { isPromiseLike } from './utils';
 
 /**
- * Creates a route that maps pathname and params to a resolved result.
+ * Creates a route that maps pathname and params to a component.
  *
  * @param pathname The route pathname pattern that uses {@link !URLPattern} syntax, or a callback that parses a pathname.
  * @param componentLoader Loads the component rendered by the route.
@@ -13,7 +13,7 @@ import { isPromiseLike } from './utils';
 export function createRoute(pathname: string | PathnameMatcher, componentLoader: ComponentLoader): Route<void>;
 
 /**
- * Creates a route that maps pathname and params to a resolved result.
+ * Creates a route that maps pathname and params to a component.
  *
  * @param options Route options.
  * @template Params The validated route params.
@@ -24,14 +24,12 @@ export function createRoute(
   pathnameOrOptions: string | PathnameMatcher | RouteOptions<unknown>,
   componentLoader?: ComponentLoader
 ): Route<any> {
-  const options: RouteOptions<unknown> =
-    typeof pathnameOrOptions === 'object'
-      ? pathnameOrOptions
-      : { pathname: pathnameOrOptions, componentLoader: componentLoader! };
+  const options =
+    typeof pathnameOrOptions === 'string' || typeof pathnameOrOptions === 'function'
+      ? { pathname: pathnameOrOptions, componentLoader: componentLoader! }
+      : pathnameOrOptions;
 
-  componentLoader = options.componentLoader;
-
-  let { pathname, urlComposer } = options;
+  let { pathname, urlComposer, paramsParser, dataLoader } = options;
   let pathnameMatcher: PathnameMatcher;
 
   if (typeof pathname === 'string') {
@@ -46,40 +44,49 @@ export function createRoute(
     }
   }
 
+  const renderer = createRenderer(options.componentLoader);
+
   return {
     pathnameMatcher,
-    componentLoader: memoizeComponentLoader(componentLoader),
-    dataLoader: options.dataLoader,
-    paramsParser: options.paramsParser,
+    renderer: params => {
+      const element = renderer();
+      const promise = dataLoader?.(params);
+
+      if (isPromiseLike(element) || promise !== undefined) {
+        return Promise.all([element, promise]).then(([element]) => element);
+      }
+      return element;
+    },
+    paramsParser: typeof paramsParser === 'function' ? { parse: paramsParser } : paramsParser,
     urlComposer,
   };
 }
 
-function memoizeComponentLoader(componentLoader: ComponentLoader): ComponentLoader {
-  let cachedComponent: ReturnType<ComponentLoader> | undefined;
+function createRenderer(componentLoader: ComponentLoader): () => PromiseLike<ReactElement> | ReactElement {
+  let element: PromiseLike<ReactElement> | ReactElement | undefined;
 
   return () => {
-    if (cachedComponent !== undefined) {
-      return cachedComponent;
+    if (element !== undefined) {
+      return element;
     }
 
     const component = componentLoader();
 
     if (!isPromiseLike(component)) {
-      cachedComponent = memo(component);
-      return cachedComponent;
+      element = createElement(memo(component));
+      return element;
     }
 
-    cachedComponent = component.then(
+    element = component.then(
       module => {
-        cachedComponent = memo(module.default);
-        return { default: cachedComponent };
+        element = createElement(memo(module.default));
+        return element;
       },
       error => {
-        cachedComponent = undefined;
+        element = undefined;
         throw error;
       }
     );
-    return cachedComponent;
+    return element;
   };
 }

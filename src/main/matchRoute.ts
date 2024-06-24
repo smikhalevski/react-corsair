@@ -50,8 +50,7 @@ export function matchRoute(
       params = pathnameMatch.params !== undefined ? { ...searchParams, ...pathnameMatch.params } : searchParams;
 
       try {
-        params =
-          typeof route.paramsParser === 'function' ? route.paramsParser(params) : route.paramsParser.parse(params);
+        params = route.paramsParser.parse(params);
       } catch {
         continue;
       }
@@ -59,6 +58,5 @@ export function matchRoute(
 
     return { route, pathname, params };
   }
-
   return null;
 }
