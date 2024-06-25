@@ -1,11 +1,11 @@
-import { RawParams, Route } from './types';
+import { Route } from './Route';
 import { urlSearchParamsParser } from './urlSearchParamsParser';
 
 export interface RouteMatch {
   /**
    * The route that was matched.
    */
-  route: Route<any>;
+  route: Route;
 
   /**
    * The pathname that was matched.
@@ -15,7 +15,7 @@ export interface RouteMatch {
   /**
    * Parsed and validated URL parameters. Contains both pathname and search parameters.
    */
-  params: RawParams;
+  params: any;
 }
 
 /**
@@ -24,39 +24,41 @@ export interface RouteMatch {
  * @param url The URL or pathname to match.
  * @param routes The array of routes to which the router can navigate.
  * @param searchParamsParser The search params parser that extracts raw params from a URL search string and stringifies
- * them back. It is used if a route doesn't define {@link RouteOptions.searchParamsParser its own params parser}.
+ * them back.
  */
 export function matchRoute(
-  url: string | URL | Location,
-  routes: Route<any>[],
+  url: string,
+  routes: Route[],
   searchParamsParser = urlSearchParamsParser
 ): RouteMatch | null {
-  url = typeof url === 'string' ? new URL(url, 'http://undefined') : url;
+  const { pathname, search } = new URL(url, 'http://undefined');
 
-  const searchParams = searchParamsParser.parse(url.search);
+  const searchParams = searchParamsParser.parse(search);
 
   for (const route of routes) {
-    const pathnameMatch = route.pathnameMatcher(url.pathname);
+    const pathnameMatch = route['_pathnameMatcher'](pathname);
 
     if (pathnameMatch === null) {
       continue;
     }
 
-    const pathname = pathnameMatch.pathname;
-
     let params;
 
-    if (route.paramsParser !== undefined) {
-      params = pathnameMatch.params !== undefined ? { ...searchParams, ...pathnameMatch.params } : searchParams;
-
+    if (route['_paramsParser'] !== undefined) {
       try {
-        params = route.paramsParser.parse(params);
+        params = route['_paramsParser'].parse(
+          pathnameMatch.params !== undefined ? { ...searchParams, ...pathnameMatch.params } : searchParams
+        );
       } catch {
         continue;
       }
     }
 
-    return { route, pathname, params };
+    return {
+      route,
+      pathname: pathname.substring(0, pathnameMatch.index),
+      params,
+    };
   }
   return null;
 }

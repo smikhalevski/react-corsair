@@ -16,19 +16,19 @@ export function inferPathnameMatcher(pattern: string, isSlashSensitive = false):
   const b0 = pattern[pattern.length - 1] === '/';
 
   return pathname => {
-    let match = urlPattern.exec({ pathname });
+    let index = pathname.length;
 
-    if (match === null && !isSlashSensitive) {
-      const a1 = pathname.length !== 0 && pathname[0] === '/';
-      const b1 = pathname.length !== 0 && pathname[pathname.length - 1] === '/';
+    if (!isSlashSensitive) {
+      const a1 = index !== 0 && pathname[0] === '/';
+      const b1 = index !== 0 && pathname[index - 1] === '/';
 
       if (a0 !== a1 || b0 !== b1) {
         pathname = a0 && !a1 ? '/' + pathname : !a0 && a1 ? pathname.substring(1) : pathname;
         pathname = b0 && !b1 ? pathname + '/' : !b0 && b1 ? pathname.slice(0, -1) : pathname;
-
-        match = urlPattern.exec({ pathname });
       }
     }
+
+    const match = urlPattern.exec({ pathname });
 
     if (match === null) {
       return null;
@@ -41,9 +41,9 @@ export function inferPathnameMatcher(pattern: string, isSlashSensitive = false):
       for (let i = 0; params[i] !== undefined; ++i) {
         param = params[i];
       }
-      pathname = pathname.substring(0, pathname.length - param!.length);
+      index -= param!.length;
     }
 
-    return { pathname, params };
+    return { index, params };
   };
 }
