@@ -31,6 +31,8 @@ export interface SearchParamsParser {
 
 /**
  * The result of a successful pathname matching.
+ *
+ * @see {@link RouteOptions.pathname}
  */
 export interface PathnameMatch {
   /**
@@ -39,31 +41,43 @@ export interface PathnameMatch {
   pathname: string;
 
   /**
-   * Params that were extracted from the pathname.
+   * Unchecked params that were extracted from the pathname.
    */
   params: RawParams;
 
   /**
-   * The part of the pathname under the trailing wildcard.
+   * The unmatched part of the pathname that can be passed to the nested router, or `undefined` if nested routing is
+   * forbidden.
    */
-  remainder?: string;
+  nestedPathname?: string;
 }
 
+/**
+ * The result of a successful route matching.
+ */
 export interface RouteMatch {
   /**
    * The route that was matched.
    */
-  route: Route;
+  route: Route<any>;
 
   /**
-   * The pathname that was matched.
+   * The part of the pathname that was matched.
    */
   pathname: string;
 
   /**
    * Parsed and validated URL parameters. Contains both pathname and search parameters.
+   *
+   * Always `undefined` if {@link RouteOptions.paramsParser} wasn't provided to {@link route}.
    */
   params: any;
+
+  /**
+   * The unmatched part of the pathname that can be passed to the nested router, or `undefined` if nested routing is
+   * forbidden.
+   */
+  nestedPathname?: string;
 }
 
 /**
@@ -93,18 +107,18 @@ export interface ParamsParser<Params> {
 }
 
 /**
- * Composes a URL with the given params and the fragment.
+ * Composes a URL with the given params and the hash.
  *
  * @param base The absolute base URL or pathname.
  * @param params The parsed and validated URL params.
- * @param fragment The [URL fragment](https://developer.mozilla.org/en-US/docs/Web/API/URL/hash).
+ * @param hash The [URL hash](https://developer.mozilla.org/en-US/docs/Web/API/URL/hash).
  * @param searchParamsParser The search params parser that can produce a search string.
  * @template Params The parsed and validated URL params.
  */
 export type URLComposer<Params> = (
   base: string | undefined,
   params: Params,
-  fragment: string | undefined,
+  hash: string | undefined,
   searchParamsParser: SearchParamsParser
 ) => string;
 
@@ -114,7 +128,7 @@ export type URLComposer<Params> = (
 export type ComponentLoader = () => PromiseLike<{ default: ComponentType }> | ComponentType;
 
 export interface NavigateOptions {
-  fragment?: string;
+  hash?: string;
 
   /**
    * The arbitrary navigation state, that can be passed to {@link !History.state}.

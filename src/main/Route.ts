@@ -1,18 +1,10 @@
 import { createElement, memo, ReactElement } from 'react';
 import { URLPattern } from 'urlpattern-polyfill';
-import {
-  ComponentLoader,
-  ParamsParser,
-  PathnameMatcher,
-  RawParams,
-  RouteMatch,
-  SearchParamsParser,
-  URLComposer,
-} from './types';
+import { ComponentLoader, ParamsParser, PathnameMatcher, RawParams, RouteMatch, URLComposer } from './types';
 import { isPromiseLike, noop } from './utils';
 
 /**
- * Options of a route.
+ * Options of the {@link Route} constructor.
  *
  * @template Params The parsed and validated URL params.
  */
@@ -23,9 +15,10 @@ export interface RouteOptions<Params> {
   pathname: string | PathnameMatcher;
 
   /**
-   * Loads the component rendered by the route.
+   * Loads the component rendered by the route. If the loader successfully returns the component, the latter is cached.
+   * If the loader throws an error, then it would be called again when the route is rendered next time.
    */
-  componentLoader: ComponentLoader;
+  loader: ComponentLoader;
 
   /**
    * Parses params that were extracted from the URL pathname and search string.
@@ -33,7 +26,7 @@ export interface RouteOptions<Params> {
   paramsParser?: ParamsParser<Params> | ParamsParser<Params>['parse'];
 
   /**
-   * Composes a URL with the given params and the fragment.
+   * Composes a URL with the given params and the hash.
    */
   urlComposer?: URLComposer<Params>;
 
@@ -67,7 +60,7 @@ export class Route<Params = object | void> {
   protected _paramsParser: ParamsParser<Params> | undefined;
 
   /**
-   * Composes a URL with the given params and the fragment.
+   * Composes a URL with the given params and the hash.
    */
   protected _urlComposer: URLComposer<Params>;
 
@@ -95,7 +88,7 @@ export class Route<Params = object | void> {
   constructor(options: RouteOptions<Params>);
 
   constructor(options: string | PathnameMatcher | RouteOptions<any>, loader?: ComponentLoader) {
-    options = typeof options === 'object' ? options : { pathname: options, componentLoader: loader! };
+    options = typeof options === 'object' ? options : { pathname: options, loader: loader! };
 
     const { pathname, urlComposer, paramsParser, onBeforeRender } = options;
 
@@ -112,13 +105,13 @@ export class Route<Params = object | void> {
 
     this._paramsParser = typeof paramsParser === 'function' ? { parse: paramsParser } : paramsParser;
 
-    const cachedRenderer = createCachedRenderer(options.componentLoader);
+    const cachedRenderer = createCachedRenderer(options.loader);
 
     this._render = params => {
       const element = cachedRenderer();
       const promise = onBeforeRender?.(params);
 
-      return isPromiseLike(promise) ? Promise.all([element, promise]).then(([element]) => element) : element;
+      return isPromiseLike(promise) ? Promise.all([element, promise]).then(pair => pair[0]) : element;
     };
   }
 
@@ -138,7 +131,7 @@ export class Route<Params = object | void> {
 }
 
 /**
- * Creates a function that returns the route element or throws a promise if it isn't loaded yet.
+ * Creates a function that renders the route element or throws a promise if route isn't loaded yet.
  *
  * @param route The route ro render.
  * @param params The parsed and validated URL params that the renderer would use.
@@ -197,8 +190,8 @@ function createCachedRenderer(loader: ComponentLoader): () => Promise<ReactEleme
   };
 }
 
-// Route components don't receive any props, so props are always equal
 function propsAreEqual(_prevProps: unknown, _nextProps: unknown): boolean {
+  // Route components don't receive any props, so props are always equal
   return true;
 }
 
@@ -211,7 +204,7 @@ function propsAreEqual(_prevProps: unknown, _nextProps: unknown): boolean {
  */
 export function createPathnameMatcher(pattern: string, isSlashSensitive = false): PathnameMatcher {
   const urlPattern = new URLPattern({ pathname: pattern });
-  const isWildcard = pattern[pattern.length - 1] === '*';
+  const hasNestedPathname = pattern === '*' || pattern.endsWith('/*');
 
   const a = pattern[0] === '/';
   const b = pattern[pattern.length - 1] === '/';
@@ -235,16 +228,16 @@ export function createPathnameMatcher(pattern: string, isSlashSensitive = false)
 
     const params = match.pathname.groups;
 
-    let remainder;
+    let nestedPathname;
 
-    if (isWildcard) {
+    if (hasNestedPathname) {
       for (let i = 0; params[i] !== undefined; ++i) {
-        remainder = params[i];
+        nestedPathname = params[i];
       }
-      pathname = pathname.substring(0, pathname.length - remainder!.length);
+      pathname = pathname.substring(0, pathname.length - nestedPathname!.length - 1);
     }
 
-    return { pathname, params, remainder };
+    return { pathname, params, nestedPathname };
   };
 }
 
@@ -262,13 +255,9 @@ export function createURLComposer(pattern: string): URLComposer<any> {
     );
   }
 
-  pattern = pattern.replace(/\*+$/, '').replace(/\/$/, '');
+  pattern = pattern.replace(/\/?\*+$/, '');
 
-  if (pattern.length !== 0 && pattern[0] !== '/') {
-    pattern = '/' + pattern;
-  }
-
-  return (base, params, fragment, searchParamsParser) => {
+  return (base, params, hash, searchParamsParser) => {
     let pathname = pattern;
     let search = '';
 
@@ -295,20 +284,20 @@ export function createURLComposer(pattern: string): URLComposer<any> {
 
     if (base === undefined) {
       base = '';
-    } else if (pattern.length !== 0 && base.length !== 0 && base[base.length - 1] === '/') {
-      base = base.slice(0, -1);
+    } else if (pathname.length !== 0 && base.length !== 0 && pathname[0] !== '/' && base[base.length - 1] !== '/') {
+      base += '/';
     }
 
     search = search.length === 0 || search === '?' ? '' : search[0] === '?' ? search : '?' + search;
 
-    fragment =
-      fragment === undefined || fragment.length === 0 || fragment === '#'
+    hash =
+      hash === undefined || hash.length === 0 || hash === '#'
         ? ''
-        : fragment[0] === '#'
-          ? fragment
-          : '#' + encodeURIComponent(fragment);
+        : hash[0] === '#'
+          ? hash
+          : '#' + encodeURIComponent(hash);
 
-    return base + pathname + search + fragment;
+    return base + pathname + search + hash;
   };
 }
 
@@ -319,16 +308,11 @@ function compareLengthDescending(a: string, b: string): number {
 /**
  * Matches a URL with a route.
  *
- * @param url The URL or pathname to match.
+ * @param pathname The pathname to match.
+ * @param searchParams The search params to match.
  * @param routes The array of routes to which the router can navigate.
- * @param searchParamsParser The search params parser that extracts raw params from a URL search string and stringifies
- * them back.
  */
-export function matchRoute(url: string, routes: Route[], searchParamsParser: SearchParamsParser): RouteMatch | null {
-  const { pathname, search } = new URL(url, 'http://undefined');
-
-  const searchParams = searchParamsParser.parse(search);
-
+export function matchRoute(pathname: string, searchParams: RawParams, routes: Route<any>[]): RouteMatch | null {
   for (const route of routes) {
     const match = route['_pathnameMatcher'](pathname);
 
@@ -341,6 +325,7 @@ export function matchRoute(url: string, routes: Route[], searchParamsParser: Sea
         route,
         pathname: match.pathname,
         params: route['_paramsParser']?.parse({ ...searchParams, ...match.params }),
+        nestedPathname: match.nestedPathname,
       };
     } catch {}
   }

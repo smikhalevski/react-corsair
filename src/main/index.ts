@@ -1,11 +1,10 @@
-export { Route } from './Route';
-export { Router } from './Router';
-export { RouterProvider } from './RouterProvider';
 export { notFound, NotFoundError } from './notFound';
 export { redirect, Redirect } from './redirect';
-export { useRouter } from './useRouter';
-export { useRouteParams } from './useRouteParams';
+export { Route } from './Route';
+export { Router } from './Router';
+export { RouterProvider, useRouteParams, useRouter } from './RouterProvider';
 
+export type { RedirectOptions } from './redirect';
 export type { RouteOptions } from './Route';
 export type { RouterProviderProps } from './RouterProvider';
 export type {

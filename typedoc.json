@@ -2,6 +2,7 @@
   "name": "React Corsair",
   "includeVersion": true,
   "excludePrivate": true,
+  "excludeProtected": true,
   "excludeExternals": true,
   "excludeInternal": true,
   "disableSources": true,
