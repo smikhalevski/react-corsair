@@ -1,14 +1,15 @@
 export { Route } from './Route';
-export { Router, NotFoundError } from './Router';
+export { Router } from './Router';
 export { RouterProvider } from './RouterProvider';
-export { redirect } from './redirect';
+export { notFound, NotFoundError } from './notFound';
+export { redirect, Redirect } from './redirect';
 export { useRouter } from './useRouter';
 export { useRouteParams } from './useRouteParams';
 
 export type { RouteOptions } from './Route';
 export type { RouterProviderProps } from './RouterProvider';
 export type {
-  ComponentFetcher,
+  ComponentLoader,
   NavigateOptions,
   ParamsParser,
   PathnameMatch,

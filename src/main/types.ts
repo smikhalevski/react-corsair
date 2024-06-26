@@ -1,4 +1,5 @@
 import { ComponentType } from 'react';
+import { Route } from './Route';
 
 /**
  * Raw params extracted from a URL.
@@ -33,14 +34,36 @@ export interface SearchParamsParser {
  */
 export interface PathnameMatch {
   /**
-   * The index in the pathname up-to which it was matched.
+   * The part of the pathname that was matched.
    */
-  index: number;
+  pathname: string;
 
   /**
    * Params that were extracted from the pathname.
    */
   params: RawParams;
+
+  /**
+   * The part of the pathname under the trailing wildcard.
+   */
+  remainder?: string;
+}
+
+export interface RouteMatch {
+  /**
+   * The route that was matched.
+   */
+  route: Route;
+
+  /**
+   * The pathname that was matched.
+   */
+  pathname: string;
+
+  /**
+   * Parsed and validated URL parameters. Contains both pathname and search parameters.
+   */
+  params: any;
 }
 
 /**
@@ -79,7 +102,7 @@ export interface ParamsParser<Params> {
  * @template Params The parsed and validated URL params.
  */
 export type URLComposer<Params> = (
-  base: string,
+  base: string | undefined,
   params: Params,
   fragment: string | undefined,
   searchParamsParser: SearchParamsParser
@@ -88,7 +111,7 @@ export type URLComposer<Params> = (
 /**
  * Returns the component or a module with a default export.
  */
-export type ComponentFetcher = () => PromiseLike<{ default: ComponentType }> | ComponentType;
+export type ComponentLoader = () => PromiseLike<{ default: ComponentType }> | ComponentType;
 
 export interface NavigateOptions {
   fragment?: string;

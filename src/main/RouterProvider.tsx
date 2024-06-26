@@ -1,10 +1,10 @@
-import React, { Component, createContext, ReactNode, Suspense, useContext } from 'react';
-import { matchRoute, RouteMatch } from './matchRoute';
-import { Route } from './Route';
+import React, { Component, createContext, ReactElement, ReactNode, Suspense, useContext } from 'react';
+import { NotFoundError } from './notFound';
+import { createSuspenseRenderer, matchRoute, Route } from './Route';
 import { Router } from './Router';
 import { NavigateOptions, SearchParamsParser } from './types';
 import { urlSearchParamsParser } from './urlSearchParamsParser';
-import { isPromiseLike } from './utils';
+import { isArrayEqual } from './utils';
 
 export interface RouterProviderProps {
   /**
@@ -23,12 +23,13 @@ export interface RouterProviderProps {
   base?: string;
 
   /**
-   * The component that is rendered if the route component and data are being loaded.
+   * Fallback that is rendered if the route component is being fetched.
    */
   pendingFallback?: ReactNode;
 
   /**
-   * Component that is rendered if the route that matches the {@link url URL} wasn't found.
+   * Fallback that is rendered if the route that matches the {@link url} wasn't matched by any route, or if
+   * {@link notFound} was called during rendering.
    */
   notFoundFallback?: ReactNode;
 
@@ -43,11 +44,6 @@ export interface RouterProviderProps {
   onNavigate?: (url: string, options: NavigateOptions) => void;
 
   /**
-   * Triggered when {@link redirect} is called during rendering.
-   */
-  onRedirect?: (url: string) => void;
-
-  /**
    * Triggered when {@link Router.back} is called.
    */
   onBack?: () => void;
@@ -55,54 +51,77 @@ export interface RouterProviderProps {
 
 const RouterProviderContext = createContext<RouterProvider | null>(null);
 
-export class RouterProvider extends Component<RouterProviderProps> {
+interface RouterProviderState {
+  url?: string;
+  routes?: Route[];
+  parent?: RouterProvider | null;
+  route?: Route;
+  params?: any;
+  renderer?: () => ReactElement;
+  searchParamsParser?: SearchParamsParser;
+}
+
+export class RouterProvider extends Component<RouterProviderProps, RouterProviderState> {
   static contextType = RouterProviderContext;
 
-  root: RouterProvider;
-  parent: RouterProvider | null;
-  routeMatch: RouteMatch | null = null;
-  pendingRouteMatch: RouteMatch | null = null;
-  base;
-  searchParamsParser;
-  router = new Router(this);
-  renderedNode: ReactNode | undefined = undefined;
-  onNavigate;
-  onRedirect;
-  onBack;
-  isNotFound = false;
+  readonly root: RouterProvider;
+  readonly router = new Router(this);
+
+  static getDerivedStateFromProps(props: RouterProviderProps, state: RouterProviderState): RouterProviderState | null {
+    if (
+      props.url === state.url &&
+      state.routes !== undefined &&
+      isArrayEqual(props.routes, state.routes) &&
+      props.searchParamsParser === state.searchParamsParser
+    ) {
+      return null;
+    }
+
+    const searchParamsParser =
+      props.searchParamsParser || state.parent?.state.searchParamsParser || urlSearchParamsParser;
+
+    const routeMatch = matchRoute(props.url, props.routes, searchParamsParser);
+
+    if (routeMatch === null) {
+      return {
+        url: props.url,
+        routes: props.routes,
+        route: undefined,
+        params: undefined,
+        renderer: undefined,
+        searchParamsParser,
+      };
+    }
+
+    return {
+      url: props.url,
+      routes: props.routes,
+      route: routeMatch.route,
+      params: routeMatch.params,
+      renderer: createSuspenseRenderer(routeMatch.route, routeMatch.params),
+    };
+  }
+
+  static getDerivedStateFromError(error: Error): Partial<RouterProviderState> | null {
+    if (error instanceof NotFoundError) {
+      return { renderer: undefined };
+    }
+    return null;
+  }
 
   constructor(props: RouterProviderProps, context: RouterProvider | null) {
     super(props);
 
     this.root = context === null ? this : context.root;
-    this.parent = context;
-    this.base = props.base || '';
-    this.searchParamsParser = props.searchParamsParser || urlSearchParamsParser;
-    this.onNavigate = props.onNavigate;
-    this.onRedirect = props.onRedirect;
-    this.onBack = props.onBack;
+    this.state = {
+      parent: context,
+    };
   }
-
-  onNotFound() {
-    this.isNotFound = true;
-    // throw new NotFoundError();
-  }
-
-  componentDidCatch(error: Error): void {
-    //   if (error instanceof NotFoundError) {
-    //     return;
-    //   }
-    //   throw error;
-  }
-
-  // UNSAFE_componentWillReceiveProps(nextProps: Readonly<RouterProviderProps>) {
-  //   this.isNotFound &&= this.props.url === nextProps.url;
-  // }
 
   render() {
     return (
       <RouterProviderContext.Provider value={this}>
-        <Suspense fallback={this.renderedNode || this.props.pendingFallback}>
+        <Suspense fallback={this.props.pendingFallback}>
           <RouteRenderer provider={this} />
         </Suspense>
       </RouterProviderContext.Provider>
@@ -111,22 +130,7 @@ export class RouterProvider extends Component<RouterProviderProps> {
 }
 
 function RouteRenderer({ provider }: { provider: RouterProvider }) {
-  const { props } = provider;
-  const routeMatch = provider.isNotFound ? null : matchRoute(props.url, props.routes, props.searchParamsParser);
-
-  // if routeMatch.route is unchanged && url is unchanged && searchParamsParser is unchanged then return the previous renderedNode
-  const renderedNode = routeMatch === null ? props.notFoundFallback : routeMatch.route['_renderer'](routeMatch.params);
-
-  if (isPromiseLike(renderedNode)) {
-    provider.pendingRouteMatch = routeMatch;
-    throw renderedNode;
-  }
-
-  provider.routeMatch = routeMatch;
-  provider.pendingRouteMatch = null;
-  provider.renderedNode = renderedNode;
-
-  return renderedNode;
+  return provider.state.renderer === undefined ? provider.props.notFoundFallback : provider.state.renderer();
 }
 
 export function useRouterProvider(): RouterProvider {

@@ -1,5 +1,6 @@
 import { createRoute } from '../main/createRoute';
-import { matchRoute } from '../main/matchRoute';
+
+import { matchRoute } from '../main/Route';
 
 function Component1() {
   return null;

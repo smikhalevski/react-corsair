@@ -1,4 +1,4 @@
-import type { RawParams, SearchParamsParser } from './types';
+import { RawParams, SearchParamsParser } from './types';
 
 /**
  * Parses URL search params using {@link !URLSearchParams}.
