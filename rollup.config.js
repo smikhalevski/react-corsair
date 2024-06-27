@@ -7,5 +7,5 @@ module.exports = {
     { format: 'es', entryFileNames: '[name].mjs', dir: './lib', preserveModules: true },
   ],
   plugins: [typescript({ tsconfig: './tsconfig.build.json' })],
-  external: ['react', 'parallel-universe'],
+  external: ['react', 'parallel-universe', 'urlpattern-polyfill'],
 };
