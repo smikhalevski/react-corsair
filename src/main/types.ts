@@ -1,144 +1,96 @@
 import { ComponentType } from 'react';
-import { Route } from './Route';
 
 /**
- * Raw params extracted from a URL.
+ * An entry in a history stack. A location contains information about the URL path, as well as possibly some arbitrary
+ * state.
  */
-export interface RawParams {
-  [name: string]: any;
-}
-
-/**
- * Extracts raw params from a URL search string and stringifies them back.
- */
-export interface SearchParamsParser {
+export interface Location {
   /**
-   * Extract raw params from a URL search string.
-   *
-   * @param search The URL search string to extract params from.
-   * @returns Parsed params, or `undefined` if params cannot be parsed.
-   */
-  parse(search: string): RawParams;
-
-  /**
-   * Stringifies params as a search string.
-   *
-   * @param rawParams Params to stringify.
-   * @returns The URL search string.
-   */
-  stringify(rawParams: RawParams): string;
-}
-
-/**
- * The result of a successful pathname matching.
- *
- * @see {@link RouteOptions.pathname}
- */
-export interface PathnameMatch {
-  /**
-   * The part of the pathname that was matched.
+   * A URL pathname, beginning with a /.
    */
   pathname: string;
 
   /**
-   * Unchecked params that were extracted from the pathname.
+   * A URL search string, beginning with a ?.
    */
-  params: RawParams;
+  search: string;
 
   /**
-   * The unmatched part of the pathname that can be passed to the nested router, or `undefined` if nested routing is
-   * forbidden.
+   * A URL fragment identifier, beginning with a #.
    */
-  nestedPathname?: string;
+  hash: string;
+
+  /**
+   * A value of arbitrary data associated with this location.
+   */
+  state?: unknown;
 }
 
 /**
- * Extracts raw params from the URL pathname.
- *
- * @param pathname The URL pathname to extract params from.
- * @returns The matched pathname, or `null` if the pathname isn't supported.
+ * The result of {@link LocationMatcher.matchLocation location matching}.
  */
-export type PathnameMatcher = (pathname: string) => PathnameMatch | null;
-
-/**
- * Parses raw params that were extracted from a URL pathname and search string by {@link PathnameMatcher} and
- * {@link SearchParamsParser}.
- *
- * @template Params Parsed URL params.
- */
-export interface ParamsParser<Params> {
+export interface LocationMatch<Params> {
   /**
-   * Parses and validates raw params.
-   *
-   * **Note:** If provided raw params cannot be parsed, parser should throw an error.
-   *
-   * @param rawParams Params extracted from a URL pathname and search string.
-   * @returns Parsed and validated params that are safe to use inside the app.
+   * The part of the {@link Location.pathname} that was matched.
    */
-  parse(rawParams: RawParams): Params;
+  pathname: string;
+
+  /**
+   * The unmatched part of the pathname that can be passed to the successive router, or `undefined` if successive
+   * routing is forbidden.
+   */
+  successivePathname?: string;
+
+  /**
+   * Parsed and validated location params.
+   */
+  params: Params;
+
+  /**
+   * The matched {@link Location.hash}.
+   */
+  hash: string;
+
+  /**
+   * The matched location state.
+   */
+  state: unknown;
+}
+
+export interface LocationOptions<Params> {
+  params: Params;
+  hash?: string;
+  state?: unknown;
+}
+
+export interface LocationMatcher<Params, Context> {
+  /**
+   * Matches the location and extracts params, or returns `null` if location doesn't satisfy this matcher.
+   *
+   * @param location The location to match.
+   * @param context The router context.
+   */
+  matchLocation(location: Location, context: Context): LocationMatch<Params> | null;
+
+  /**
+   * Creates a location that satisfies this matcher.
+   *
+   * @param options The location options.
+   * @param context The router context.
+   */
+  createLocation(options: LocationOptions<Params>, context: Context): Location;
 }
 
 /**
- * Composes a URL with the given params and the hash.
- *
- * @param base The absolute base URL or pathname.
- * @param params Parsed URL params.
- * @param hash The [URL hash](https://developer.mozilla.org/en-US/docs/Web/API/URL/hash).
- * @param searchParamsParser The search params parser that can produce a search string.
- * @template Params Parsed URL params.
- */
-export type URLComposer<Params> = (
-  base: string | undefined,
-  params: Params,
-  hash: string | undefined,
-  searchParamsParser: SearchParamsParser
-) => string;
-
-/**
- * Returns the component or a module with a default export.
+ * Returns the module import with a default component export, or returns the component itself.
  */
 export type ComponentLoader = () => PromiseLike<{ default: ComponentType }> | ComponentType;
 
-/**
- * The result of a successful route matching.
- */
-export interface RouteMatch {
-  /**
-   * The route that was matched.
-   */
-  route: Route<any>;
-
-  /**
-   * The part of the pathname that was matched.
-   */
-  pathname: string;
-
-  /**
-   * Parsed and validated URL parameters. Contains both pathname and search parameters.
-   *
-   * Always `undefined` if {@link RouteOptions.paramsParser} wasn't provided to {@link route}.
-   */
-  params: any;
-
-  /**
-   * The unmatched part of the pathname that can be passed to the nested router, or `undefined` if nested routing is
-   * forbidden.
-   */
-  nestedPathname?: string;
-}
-
 export interface NavigateOptions {
-  hash?: string;
-
-  /**
-   * The arbitrary navigation state, that can be passed to {@link !History.state}.
-   */
-  state?: any;
-
   /**
    * If `true` then navigation should replace the current history entry.
    *
    * @default false
    */
-  replace?: boolean;
+  isReplace?: boolean;
 }

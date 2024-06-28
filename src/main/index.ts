@@ -10,10 +10,8 @@ export type { RouterProviderProps } from './RouterProvider';
 export type {
   ComponentLoader,
   NavigateOptions,
-  ParamsParser,
-  PathnameMatch,
-  PathnameMatcher,
-  RawParams,
-  SearchParamsParser,
-  URLComposer,
+  Location,
+  LocationMatch,
+  LocationMatcher,
+  LocationOptions,
 } from './types';

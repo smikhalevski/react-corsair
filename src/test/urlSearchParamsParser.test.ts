@@ -1,4 +1,4 @@
-import { urlSearchParamsParser } from '../main/urlSearchParamsParser';
+import { urlSearchParamsParser } from '../main/ParameterizedLocationMatcher';
 
 describe('urlSearchParamsParser', () => {
   test('parses params', () => {

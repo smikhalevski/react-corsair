@@ -1,12 +1,12 @@
 import { Route } from './Route';
 import { RouterProvider } from './RouterProvider';
-import { NavigateOptions } from './types';
+import { Location, NavigateOptions } from './types';
 
 export class Router {
   /**
    * @hidden
    */
-  constructor(protected _provider: RouterProvider) {}
+  constructor(protected _provider: RouterProvider<any>) {}
 
   get parent(): Router | undefined {
     return this._provider.state.parent?.router;
@@ -23,12 +23,12 @@ export class Router {
   /**
    * Navigates the router to the given route.
    */
-  navigate(route: Route<void | object>, params: void | object, options?: NavigateOptions): void;
+  navigate(route: Route, params: void | object, hash?: string, options?: NavigateOptions): void;
 
-  navigate<Params>(route: Route<Params>, params: Params, options?: NavigateOptions): void;
+  navigate<Params>(route: Route<Params>, params: Params, hash?: string, options?: NavigateOptions): void;
 
-  navigate<Params>(route: Route<Params>, params: Params, options: NavigateOptions = {}): void {
-    this._provider.props.onNavigate?.(this.getURL(route, params, options.hash), options);
+  navigate<Params>(route: Route<Params>, params: Params, hash?: string, options: NavigateOptions = {}): void {
+    this._provider.props.onNavigate(this.getLocation(route, params, hash), options);
   }
 
   /**
@@ -41,7 +41,7 @@ export class Router {
   /**
    * Returns the URL of the route that starts with {@link RouterProviderProps.base the router base}.
    */
-  getURL<Params>(route: Route<Params>, params: Params, hash?: string): string {
-    return route['_urlComposer'](this._provider.props.base, params, hash, this._provider.state.searchParamsParser!);
+  getLocation<Params>(route: Route<Params>, params: Params, hash?: string): Location {
+    return route.matcher.createLocation({ params, hash }, this._provider.state.context);
   }
 }
