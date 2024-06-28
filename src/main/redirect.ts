@@ -1,9 +1,17 @@
+/**
+ * Options of the {@link redirect} function.
+ */
 export interface RedirectOptions {
+  /**
+   * If `true` then [the permanent redirect](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308) is rendered.
+   *
+   * @default false
+   */
   isPermanent?: boolean;
 }
 
 /**
- * Throws {@link Redirect} that renders the redirect to the given URL.
+ * Throws the {@link Redirect} instance that renders the redirect to the given URL.
  *
  * @param url The URL to redirect to.
  * @param options Redirect options.

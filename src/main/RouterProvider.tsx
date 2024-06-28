@@ -1,6 +1,6 @@
 import React, { Component, createContext, ReactElement, ReactNode, Suspense, useContext } from 'react';
 import { NotFoundError } from './notFound';
-import { createSuspenseRenderer, matchRoute, Route } from './Route';
+import { createSuspenseRouteRenderer, matchRoute, Route } from './Route';
 import { Router } from './Router';
 import { NavigateOptions, RawParams, RouteMatch, SearchParamsParser } from './types';
 import { urlSearchParamsParser } from './urlSearchParamsParser';
@@ -194,7 +194,7 @@ export class RouterProvider extends Component<RouterProviderProps, RouterProvide
     return {
       routes,
       routeMatch,
-      renderer: createSuspenseRenderer(routeMatch.route, routeMatch.params),
+      renderer: createSuspenseRouteRenderer(routeMatch.route, routeMatch.params),
       searchParamsParser,
       url,
     };

@@ -6,7 +6,7 @@ import { isPromiseLike, noop } from './utils';
 /**
  * Options of the {@link Route} constructor.
  *
- * @template Params The parsed and validated URL params.
+ * @template Params Parsed URL params.
  */
 export interface RouteOptions<Params> {
   /**
@@ -15,40 +15,42 @@ export interface RouteOptions<Params> {
   pathname: string | PathnameMatcher;
 
   /**
-   * Loads the component rendered by the route. If the loader successfully returns the component, the latter is cached.
-   * If the loader throws an error, then it would be called again when the route is rendered next time.
+   * Loads the component rendered by the route.
+   *
+   * If the loader successfully returns the component, then the component is cached. If the loader throws an error,
+   * then it would be called again when the route is rendered next time.
    */
-  loader: ComponentLoader;
+  componentLoader: ComponentLoader;
 
   /**
-   * Parses params that were extracted from the URL pathname and search string.
+   * Parses params that were extracted from the pathname and search string.
    */
   paramsParser?: ParamsParser<Params> | ParamsParser<Params>['parse'];
 
   /**
-   * Composes a URL with the given params and the hash.
+   * Composes a URL with the given base, params and hash.
    */
   urlComposer?: URLComposer<Params>;
 
   /**
-   * If `true` then pathname leading and trailing slashes must strictly match the pathname pattern.
+   * If `true` then pathname leading and trailing slashes must strictly match {@link pathname the pathname pattern}.
    *
    * **Note:** Applicable only if {@link pathname} is a string.
    *
    * @default false
    */
-  slashSensitive?: boolean;
+  isSlashSensitive?: boolean;
 
   /**
-   * Called before the route component is rendered and when {@link Route.prefetch} is called. If promise is returned,
+   * Called before the route component is rendered and when {@link Route.prefetch} is called. If a promise is returned,
    * the component rendering is delayed until the promise is resolved.
    *
-   * @param params The parsed and validated URL params.
+   * @param params Parsed URL params.
    */
   onBeforeRender?: (params: Params) => PromiseLike<void> | void;
 }
 
-export class Route<Params = object | void> {
+export class Route<Params = void> {
   /**
    * Extracts raw params from the URL pathname.
    */
@@ -68,7 +70,7 @@ export class Route<Params = object | void> {
    * Loads the component, awaits {@link RouteOptions.onBeforeRender}, and the resolves with the element that must be
    * rendered. If there's nothing to await, an element is returned synchronously.
    *
-   * @param params The parsed and validated URL params.
+   * @param params Parsed URL params.
    */
   protected _render: (params: Params) => Promise<ReactElement> | ReactElement;
 
@@ -76,9 +78,9 @@ export class Route<Params = object | void> {
    * Creates a route that maps pathname and params to a component.
    *
    * @param pathname The route pathname pattern that uses {@link !URLPattern} syntax, or a callback that parses a pathname.
-   * @param loader Loads the component rendered by the route.
+   * @param componentLoader Loads the component rendered by the route.
    */
-  constructor(pathname: string | PathnameMatcher, loader: ComponentLoader);
+  constructor(pathname: string | PathnameMatcher, componentLoader: ComponentLoader);
 
   /**
    * Creates a route that maps pathname and params to a component.
@@ -87,14 +89,14 @@ export class Route<Params = object | void> {
    */
   constructor(options: RouteOptions<Params>);
 
-  constructor(options: string | PathnameMatcher | RouteOptions<any>, loader?: ComponentLoader) {
-    options = typeof options === 'object' ? options : { pathname: options, loader: loader! };
+  constructor(options: string | PathnameMatcher | RouteOptions<any>, componentLoader?: ComponentLoader) {
+    options = typeof options === 'object' ? options : { pathname: options, componentLoader: componentLoader! };
 
     const { pathname, urlComposer, paramsParser, onBeforeRender } = options;
 
     if (typeof pathname === 'string') {
       this._urlComposer = urlComposer || createURLComposer(pathname);
-      this._pathnameMatcher = createPathnameMatcher(pathname, options.slashSensitive);
+      this._pathnameMatcher = createPathnameMatcher(pathname, options.isSlashSensitive);
     } else {
       if (urlComposer === undefined) {
         throw new Error('Cannot infer urlComposer from the pathname. The urlComposer option is required.');
@@ -105,10 +107,10 @@ export class Route<Params = object | void> {
 
     this._paramsParser = typeof paramsParser === 'function' ? { parse: paramsParser } : paramsParser;
 
-    const cachedRenderer = createCachedRenderer(options.loader);
+    const cachedComponentRenderer = createCachedComponentRenderer(options.componentLoader);
 
     this._render = params => {
-      const element = cachedRenderer();
+      const element = cachedComponentRenderer();
       const promise = onBeforeRender?.(params);
 
       return isPromiseLike(promise) ? Promise.all([element, promise]).then(pair => pair[0]) : element;
@@ -136,7 +138,7 @@ export class Route<Params = object | void> {
  * @param route The route ro render.
  * @param params The parsed and validated URL params that the renderer would use.
  */
-export function createSuspenseRenderer<Params>(route: Route<Params>, params: Params): () => ReactElement {
+export function createSuspenseRouteRenderer<Params>(route: Route<Params>, params: Params): () => ReactElement {
   let element: Promise<ReactElement> | ReactElement | undefined;
 
   return () => {
@@ -159,9 +161,9 @@ export function createSuspenseRenderer<Params>(route: Route<Params>, params: Par
  * Create a function that loads the component and returns an element to render. The component is loaded only once, if an
  * error occurs during loading, then loading is retried the next time the returned renderer is called.
  *
- * @param loader Loads the component rendered by the route.
+ * @param componentLoader Loads the component rendered by the route.
  */
-function createCachedRenderer(loader: ComponentLoader): () => Promise<ReactElement> | ReactElement {
+function createCachedComponentRenderer(componentLoader: ComponentLoader): () => Promise<ReactElement> | ReactElement {
   let element: Promise<ReactElement> | ReactElement | undefined;
 
   return () => {
@@ -169,7 +171,7 @@ function createCachedRenderer(loader: ComponentLoader): () => Promise<ReactEleme
       return element;
     }
 
-    const component = loader();
+    const component = componentLoader();
 
     if (!isPromiseLike(component)) {
       element = createElement(memo(component, propsAreEqual));

@@ -12,8 +12,8 @@ function Component2() {
 
 describe('Route', () => {
   test('creates a route', () => {
-    const componentFetcher = () => Component1;
-    const route = new Route('xxx', componentFetcher);
+    const componentLoader = () => Component1;
+    const route = new Route('xxx', componentLoader);
 
     expect(route['_paramsParser']).toBeUndefined();
     expect(route['_render']).toBeInstanceOf(Function);
@@ -22,8 +22,8 @@ describe('Route', () => {
   });
 
   test('creates a route with options', () => {
-    const componentFetcher = () => Component1;
-    const route = new Route({ pathname: 'xxx', loader: componentFetcher });
+    const componentLoader = () => Component1;
+    const route = new Route({ pathname: 'xxx', componentLoader });
 
     expect(route['_paramsParser']).toBeUndefined();
     expect(route['_render']).toBeInstanceOf(Function);
@@ -31,9 +31,9 @@ describe('Route', () => {
     expect(route['_urlComposer']('yyy', undefined, undefined, urlSearchParamsParser)).toBe('yyy/xxx');
   });
 
-  test('component loader is memoized', () => {
+  test('component componentLoader is memoized', () => {
     const componentFetcherMock = jest.fn(() => Component1);
-    const route = new Route({ pathname: 'xxx', loader: componentFetcherMock });
+    const route = new Route({ pathname: 'xxx', componentLoader: componentFetcherMock });
 
     expect(isValidElement(route['_render']())).toBe(true);
     expect(route['_render']()).toEqual(route['_render']());
@@ -43,7 +43,7 @@ describe('Route', () => {
 
   test('caches a component exported from a module', async () => {
     const componentFetcherMock = jest.fn(() => Promise.resolve({ default: Component1 }));
-    const route = new Route({ pathname: 'xxx', loader: componentFetcherMock });
+    const route = new Route({ pathname: 'xxx', componentLoader: componentFetcherMock });
 
     const promise = route['_render']();
 
@@ -58,14 +58,14 @@ describe('Route', () => {
   });
 
   test('infers urlComposer', () => {
-    const route = new Route<{ aaa?: number }>({ pathname: 'xxx/:aaa', loader: () => Component1 });
+    const route = new Route<{ aaa?: number }>({ pathname: 'xxx/:aaa', componentLoader: () => Component1 });
 
     expect(() => route['_urlComposer']('yyy', {}, undefined, urlSearchParamsParser)).toThrow();
     expect(route['_urlComposer']('yyy', { aaa: 222 }, undefined, urlSearchParamsParser)).toBe('yyy/xxx/222');
   });
 
   test('throws if urlComposer cannot be inferred', () => {
-    expect(() => new Route({ pathname: () => null, loader: () => Component1 })).toThrow();
+    expect(() => new Route({ pathname: () => null, componentLoader: () => Component1 })).toThrow();
   });
 });
 
@@ -200,7 +200,7 @@ describe('matchRoute', () => {
   test('matches a route with pathname params', () => {
     const route = new Route({
       pathname: 'aaa/:xxx',
-      loader: () => Component1,
+      componentLoader: () => Component1,
       paramsParser: rawParams => rawParams,
     });
 
@@ -214,7 +214,7 @@ describe('matchRoute', () => {
   test('matches a route with pathname params but does not return them by default', () => {
     const route = new Route({
       pathname: 'aaa/:xxx',
-      loader: () => Component1,
+      componentLoader: () => Component1,
     });
 
     expect(matchRoute('aaa/yyy', {}, [route])).toEqual({
@@ -226,7 +226,7 @@ describe('matchRoute', () => {
   test('matches a route with search params', () => {
     const route = new Route({
       pathname: 'aaa',
-      loader: () => Component1,
+      componentLoader: () => Component1,
       paramsParser: rawParams => rawParams,
     });
 
@@ -240,7 +240,7 @@ describe('matchRoute', () => {
   test('matches a route with search params but does not return them by default', () => {
     const route = new Route({
       pathname: 'aaa',
-      loader: () => Component1,
+      componentLoader: () => Component1,
     });
 
     expect(matchRoute('aaa', { xxx: 'yyy' }, [route])).toEqual({
@@ -252,7 +252,7 @@ describe('matchRoute', () => {
   test('returns both pathname and search params', () => {
     const route = new Route({
       pathname: 'aaa/:xxx',
-      loader: () => Component1,
+      componentLoader: () => Component1,
       paramsParser: rawParams => rawParams,
     });
 
@@ -266,7 +266,7 @@ describe('matchRoute', () => {
   test('pathname params have precedence over search params', () => {
     const route = new Route({
       pathname: 'aaa/:xxx',
-      loader: () => Component1,
+      componentLoader: () => Component1,
       paramsParser: rawParams => rawParams,
     });
 
