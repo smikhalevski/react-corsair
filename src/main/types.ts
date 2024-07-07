@@ -1,144 +1,150 @@
-import { ComponentType } from 'react';
-import { Route } from './Route';
+import { ComponentType, ReactNode } from 'react';
 
-/**
- * Raw params extracted from a URL.
- */
-export interface RawParams {
-  [name: string]: any;
+export interface Dict {
+  [key: string]: any;
 }
 
 /**
- * Extracts raw params from a URL search string and stringifies them back.
+ * A location contains information about the URL path and history state.
  */
-export interface SearchParamsParser {
+export interface Location {
   /**
-   * Extract raw params from a URL search string.
-   *
-   * @param search The URL search string to extract params from.
-   * @returns Parsed params, or `undefined` if params cannot be parsed.
-   */
-  parse(search: string): RawParams;
-
-  /**
-   * Stringifies params as a search string.
-   *
-   * @param rawParams Params to stringify.
-   * @returns The URL search string.
-   */
-  stringify(rawParams: RawParams): string;
-}
-
-/**
- * The result of a successful pathname matching.
- *
- * @see {@link RouteOptions.pathname}
- */
-export interface PathnameMatch {
-  /**
-   * The part of the pathname that was matched.
+   * A URL pathname.
    */
   pathname: string;
 
   /**
-   * Unchecked params that were extracted from the pathname.
+   * URL search params represented as an object.
    */
-  params: RawParams;
+  searchParams: Dict;
 
   /**
-   * The unmatched part of the pathname that can be passed to the nested router, or `undefined` if nested routing is
-   * forbidden.
+   * A URL fragment identifier.
    */
-  nestedPathname?: string;
+  hash: string;
+
+  /**
+   * An arbitrary data associated with the location.
+   */
+  state?: any;
 }
 
-/**
- * The result of a successful route matching.
- */
-export interface RouteMatch {
+export interface LocationOptions {
   /**
-   * The route that was matched.
-   */
-  route: Route<any>;
-
-  /**
-   * The part of the pathname that was matched.
-   */
-  pathname: string;
-
-  /**
-   * Parsed and validated URL parameters. Contains both pathname and search parameters.
+   * A URL fragment identifier.
    *
-   * Always `undefined` if {@link RouteOptions.paramsParser} wasn't provided to {@link route}.
+   * If hash begins with a "#" then it is used as is. Otherwise, it is encoded using {@link !encodeURIComponent}.
    */
-  params: any;
-
-  /**
-   * The unmatched part of the pathname that can be passed to the nested router, or `undefined` if nested routing is
-   * forbidden.
-   */
-  nestedPathname?: string;
-}
-
-/**
- * Extracts raw params from the URL pathname.
- *
- * @param pathname The URL pathname to extract params from.
- * @returns The matched pathname, or `null` if the pathname isn't supported.
- */
-export type PathnameMatcher = (pathname: string) => PathnameMatch | null;
-
-/**
- * Parses raw params that were extracted from a URL pathname and search string by {@link PathnameMatcher} and
- * {@link SearchParamsParser}.
- *
- * @template Params The parsed and validated URL params.
- */
-export interface ParamsParser<Params> {
-  /**
-   * Parses and validates raw params.
-   *
-   * **Note:** If provided raw params cannot be parsed, parser should throw an error.
-   *
-   * @param rawParams Params extracted from a URL pathname and search string.
-   * @returns Parsed and validated params that are safe to use inside the app.
-   */
-  parse(rawParams: RawParams): Params;
-}
-
-/**
- * Composes a URL with the given params and the hash.
- *
- * @param base The absolute base URL or pathname.
- * @param params The parsed and validated URL params.
- * @param hash The [URL hash](https://developer.mozilla.org/en-US/docs/Web/API/URL/hash).
- * @param searchParamsParser The search params parser that can produce a search string.
- * @template Params The parsed and validated URL params.
- */
-export type URLComposer<Params> = (
-  base: string | undefined,
-  params: Params,
-  hash: string | undefined,
-  searchParamsParser: SearchParamsParser
-) => string;
-
-/**
- * Returns the component or a module with a default export.
- */
-export type ComponentLoader = () => PromiseLike<{ default: ComponentType }> | ComponentType;
-
-export interface NavigateOptions {
   hash?: string;
 
   /**
-   * The arbitrary navigation state, that can be passed to {@link !History.state}.
+   * An arbitrary data associated with the location.
    */
   state?: any;
+}
+
+/**
+ * A content rendered by a route:
+ *
+ * - An arbitrary React node (element, string, number, etc.)
+ * - A function that returns a component.
+ * - A function that dynamically imports a module that default-exports the component.
+ *
+ * You can call {@link redirect} in to trigger navigation. In this case
+ *
+ * @example
+ * () => import('./UserPage')
+ */
+export type RouteContent = (() => PromiseLike<{ default: ComponentType } | ComponentType> | ComponentType) | ReactNode;
+
+/**
+ * Adapter that can validate route params.
+ */
+export interface ParamsAdapter<Params> {
+  /**
+   * Validates params extracted from a {@link Location.pathname} and {@link Location.searchParams}.
+   */
+  parse(params: Dict): Params;
 
   /**
-   * If `true` then navigation should replace the current history entry.
-   *
-   * @default false
+   * Converts route params to {@link Location.searchParams}.
    */
-  replace?: boolean;
+  toSearchParams?(params: Params): Dict;
 }
+
+export interface RouteOptions<Params, Data, Context> {
+  /**
+   * A URL pathname segment.
+   *
+   * @example "/foo/$bar"
+   */
+  pathname: string;
+
+  /**
+   * A content rendered by a route.
+   *
+   * If `undefined` then router implicitly renders {@link Outlet}.
+   */
+  content?: RouteContent;
+
+  /**
+   * Validates and transforms params extracted from the {@link Location.pathname} and {@link Location.searchParams}.
+   */
+  paramsAdapter?: ParamsAdapter<Params> | ParamsAdapter<Params>['parse'];
+
+  /**
+   * Loads data that is synchronously available inside the {@link content}.
+   *
+   * @param params Route params extracted from a location.
+   * @param context A context provided to a router.
+   */
+  dataLoader?: (params: Params, context: Context) => PromiseLike<Data> | Data;
+  /**
+   * A fallback that is rendered when the route content or data are being loaded.
+   */
+  pendingFallback?: ReactNode;
+
+  /**
+   * A fallback that is rendered when an error was thrown during route rendering.
+   */
+  errorFallback?: ReactNode;
+
+  /**
+   * A fallback that is rendered if there is no matched nested route.
+   */
+  notFoundFallback?: ReactNode;
+
+  /**
+   * What to render when route is being loaded.
+   *
+   * <dl>
+   *   <dt>"fallback"</dt>
+   *   <dd>A {@link pendingFallback} is always rendered if a route is matched and content or data are being loaded.</dd>
+   *   <dt>"auto"</dt>
+   *   <dd>If another route is currently rendered then it would be preserved until content and data of a newly matched
+   *   route are loaded. Otherwise, a {@link pendingFallback} is rendered.</dd>
+   * </dl>
+   *
+   * @default "auto"
+   */
+  pendingBehavior?: 'fallback' | 'auto';
+}
+
+export interface NavigateOptions {
+  /**
+   * An action that was requested to navigate to a location.
+   *
+   * <dl>
+   *   <dt>"push"</dt>
+   *   <dd>A location must be pushed to a history stack.</dd>
+   *   <dt>"replace"</dt>
+   *   <dd>A location must replace the current history entry.</dd>
+   *   <dt>"redirect"</dt>
+   *   <dd>A location must be used to redirect a client. Usually, redirects are triggered when {@link redirect} is
+   *   called during route rendering or data loading.</dd>
+   * </dl>
+   */
+  action: 'push' | 'replace' | 'redirect' | 'permanentRedirect';
+}
+
+export interface NavigateToRouteOptions extends Partial<NavigateOptions>, LocationOptions {}

@@ -1,4 +1,22 @@
-export function noop() {}
+import { ComponentType, createElement, memo, ReactElement } from 'react';
+
+const elementCache = new WeakMap<ComponentType, ReactElement>();
+
+export function memoizeElement(component: ComponentType): ReactElement {
+  let element = elementCache.get(component);
+
+  if (element === undefined) {
+    element = createElement(memo(component, propsAreEqual));
+    elementCache.set(component, element);
+  }
+
+  return element;
+}
+
+function propsAreEqual(_prevProps: unknown, _nextProps: unknown): boolean {
+  // Route components don't receive any props, so props are always equal
+  return true;
+}
 
 export function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
   return value !== null && typeof value === 'object' && 'then' in value;

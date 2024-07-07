@@ -54,10 +54,6 @@
     "typedoc-plugin-mdn-links": "^3.1.27",
     "typescript": "^5.4.5"
   },
-  "dependencies": {
-    "parallel-universe": "^6.1.0",
-    "urlpattern-polyfill": "^10.0.0"
-  },
   "peerDependencies": {
     "react": ">=16.8.0"
   }

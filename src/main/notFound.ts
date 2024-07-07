@@ -1,6 +1,6 @@
 /**
- * Throws {@link NotFoundError} that causes the closest {@link RouterProvider} to render the
- * {@link RouterProviderProps.notFoundFallback}.
+ * Throws {@link NotFoundError} that causes the closest {@link Router} to render the
+ * {@link RouterProps.notFoundFallback}.
  *
  * @param message The optional message of the {@link NotFoundError}.
  */
@@ -9,7 +9,7 @@ export function notFound(message?: string): never {
 }
 
 /**
- * The errors that should be thrown during rendering to signify that the {@link RouterProviderProps.notFoundFallback}
+ * The errors that should be thrown during rendering to signify that the {@link RouterProps.notFoundFallback}
  * must be rendered instead of the matched route.
  */
 export class NotFoundError extends Error {}
