@@ -165,3 +165,40 @@ export interface RouteOptions<Params, Data, Context> {
    */
   pendingBehavior?: 'fallback' | 'auto';
 }
+
+/**
+ * A history abstraction.
+ */
+export interface History {
+  /**
+   * The current history location.
+   */
+  readonly location: Location;
+
+  /**
+   * Adds an entry to the history stack.
+   *
+   * @param to A location to navigate to.
+   */
+  push(to: To): void;
+
+  /**
+   * Modifies the current history entry, replacing it with the state object and URL passed in the method parameters.
+   *
+   * @param to A location to navigate to.
+   */
+  replace(to: To): void;
+
+  /**
+   * Move back to the previous history entry.
+   */
+  back(): void;
+
+  /**
+   * Subscribe to location changes.
+   *
+   * @param listener A listener to subscribe.
+   * @returns A callback to unsubscribe a listener.
+   */
+  subscribe(listener: () => void): () => void;
+}

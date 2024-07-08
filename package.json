@@ -56,5 +56,8 @@
   },
   "peerDependencies": {
     "react": ">=16.8.0"
+  },
+  "dependencies": {
+    "parallel-universe": "^6.1.1"
   }
 }

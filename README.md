@@ -12,7 +12,8 @@ npm install --save-prod react-corsair
 
 # Introduction
 
-React Corsair is a router that abstracts URLs away from the domain of your application.
+React Corsair is a router that abstracts URLs away from the domain of your application. It doesn't depend on
+[`History`](https://developer.mozilla.org/en-US/docs/Web/API/History) but can be easily integrated with it.
 
 Create a component that renders the page of your app:
 
@@ -25,9 +26,12 @@ export default function UserPage() {
 Create a [`Route`](https://smikhalevski.github.io/react-corsair/classes/Route.html) that lazy-loads the page component:
 
 ```ts
-import { Route } from 'react-corsair';
+import { createRoute } from 'react-corsair';
 
-const userRoute = new Route('/user', () => import('./UserPage'));
+const userRoute = createRoute({
+  pathname: '/user',
+  content: () => import('./UserPage')
+});
 ```
 
 Render [`Router`](https://smikhalevski.github.io/react-corsair/classes/RouterProvider.html) component to set up
@@ -38,31 +42,37 @@ import { useState } from 'react';
 import { Router } from 'react-corsair';
 
 function App() {
-  const [url, setURL] = useState('/user');
+  const [location, setLocation] = useState<Location>({
+    pathname: '/user',
+    searchParams: {},
+    hash: ''
+  });
   
   return (
     <Router
-      url={url}
+      location={location}
       routes={[userRoute]}
-      onNavigate={setURL}
+      onPush={setLocation}
     />
   );
 }
 ```
 
-Access [`Router`](https://smikhalevski.github.io/react-corsair/classes/Router.html) in components rendered by
+Access [`Navigation`](https://smikhalevski.github.io/react-corsair/classes/Navigation.html) in components rendered by
 the `Router`:
 
-```ts
+```tsx
+import { useNavigation } from 'react-corsair';
+
 export default function UserPage() {
-  const router = useRouter();
+  const navigation = useNavigation();
   
   return 'Hello';
 }
 ```
 
-Router allows to navigate to a new route:
+Navigation allows to push to a new route:
 
 ```ts
-router.navigate(userRoute);
+navigation.push(userRoute);
 ```

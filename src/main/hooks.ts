@@ -1,10 +1,14 @@
-import { useContext } from 'react';
+import { useContext, useSyncExternalStore } from 'react';
 import { Navigation } from './Navigation';
 import { OutletControllerContext } from './Outlet';
 import { OutletController } from './OutletController';
 import { Route } from './Route';
 import { NavigationContext } from './Router';
-import { Location } from './types';
+import { History, Location } from './types';
+
+export function useHistorySubscription(history: History): void {
+  useSyncExternalStore(history.subscribe, () => history.location);
+}
 
 /**
  * Provides components a way to trigger router navigation.
