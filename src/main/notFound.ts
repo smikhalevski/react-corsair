@@ -1,16 +1,16 @@
 /**
- * Throws {@link NotFoundError} that causes the closest {@link Router} to render the
- * {@link RouterProps.notFoundFallback}.
+ * Throws {@link NotFoundError} that causes an enclosing {@link Outlet} to render a
+ * {@link RouteOptions.notFoundFallback}.
  *
- * @param message The optional message of the {@link NotFoundError}.
+ * @param message An optional message of a {@link NotFoundError}.
  */
 export function notFound(message?: string): never {
   throw new NotFoundError(message);
 }
 
 /**
- * The errors that should be thrown during rendering to signify that the {@link RouterProps.notFoundFallback}
- * must be rendered instead of the matched route.
+ * An error that is thrown during rendering to signify that the {@link RouteOptions.notFoundFallback} must be rendered
+ * instead of the matched route.
  */
 export class NotFoundError extends Error {}
 

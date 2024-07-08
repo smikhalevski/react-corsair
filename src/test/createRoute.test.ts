@@ -59,7 +59,7 @@ describe('Route', () => {
     test('ignores unexpected search params', () => {
       expect(createRoute<any>({ pathname: 'aaa/$bbb' }).getLocation({ bbb: 'xxx', ccc: 'yyy' })).toEqual({
         pathname: '/aaa/xxx',
-        searchParams: {},
+        searchParams: { ccc: 'yyy' },
         hash: '',
       });
     });

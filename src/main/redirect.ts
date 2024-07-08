@@ -1,10 +1,10 @@
-import { Route } from './Route';
-import { Location, LocationOptions } from './types';
+import { Location, To } from './types';
+import { toLocation } from './utils';
 
 /**
  * Options of the {@link redirect} function.
  */
-export interface RedirectOptions extends LocationOptions {
+export interface RedirectOptions {
   /**
    * If `true` then [the permanent redirect](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308) is rendered.
    *
@@ -14,20 +14,22 @@ export interface RedirectOptions extends LocationOptions {
 }
 
 /**
- * Throws the {@link Redirect} instance that renders the redirect to the given URL.
+ * Throws a {@link Redirect} instance that redirects router to a location.
+ *
+ * During SSR, redirects abort rendering. On the client, redirects trigger {@link RouterProps.onReplace}.
  */
-export function redirect<T extends Route>(route: T, params: T['_params'], options: RedirectOptions = {}): never {
-  throw new Redirect(route.getLocation(params, options), options.isPermanent);
+export function redirect(to: To, options?: RedirectOptions): never {
+  throw new Redirect(toLocation(to), options?.isPermanent);
 }
 
 /**
- * Describes the redirect to a URL.
+ * A redirect to a location.
  */
 export class Redirect {
   /**
-   * Created a new {@link Redirect} instance.
+   * Creates a new {@link Redirect} instance.
    *
-   * @param location The location to redirect to.
+   * @param location A location to redirect to.
    * @param isPermanent If `true` then
    * [the permanent redirect](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308) is rendered.
    */

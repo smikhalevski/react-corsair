@@ -1,187 +1,120 @@
-import React, { Component, createContext, ReactNode, Suspense } from 'react';
-import { RouteMatch } from './matchRoutes';
-import { NotFoundError } from './notFound';
-import { Redirect } from './redirect';
-import { Route } from './Route';
-import { RouterProvider } from './Router';
-import { isPromiseLike } from './utils';
-import { Location } from './types';
+import React, { Component, createContext, FC, ReactNode, Suspense } from 'react';
+import { OutletController } from './OutletController';
 
-export class OutletController {
-  next: OutletController | null = null;
-  route: Route | null = null;
-  params: unknown = undefined;
-  node: ReactNode = undefined;
-  data: unknown = undefined;
-  error: unknown = undefined;
-
-  protected _promise: Promise<void> | undefined;
-
-  constructor(
-    readonly routerProvider: RouterProvider,
-    readonly location: Location
-  ) {}
-
-  setError(error: unknown): void {
-    this.abort();
-
-    if (error instanceof Redirect) {
-      this.abort();
-
-      this.routerProvider.props.onNavigate?.(error.location, {
-        action: error.isPermanent ? 'permanentRedirect' : 'redirect',
-      });
-      this.node = undefined;
-      this.data = undefined;
-      this.error = undefined;
-    } else if (error instanceof NotFoundError) {
-      this.node = this.route?.['_notFoundFallback'];
-      this.data = undefined;
-      this.error = undefined;
-    } else {
-      this.node = this.route?.['_errorFallback'];
-      this.data = undefined;
-      this.error = error;
-    }
-  }
-
-  suspend(): void {
-    if (this._promise !== undefined) {
-      throw this._promise;
-    }
-  }
-
-  abort(): void {
-    this._promise = undefined;
-  }
-
-  load({ route, params }: RouteMatch, context: any): void {
-    this.abort();
-
-    this.route = route;
-    this.params = params;
-
-    let node;
-    let data;
-
-    try {
-      node = route['_contentRenderer']();
-      data = route['_dataLoader']?.(params, context);
-    } catch (error) {
-      this.node = route['_errorFallback'];
-      this.data = undefined;
-      this.error = error;
-      this._promise = undefined;
-      return;
-    }
-
-    if (isPromiseLike(node) || isPromiseLike(data)) {
-      this.node = route['_pendingFallback'];
-      this.data = undefined;
-      this.error = undefined;
-
-      const promise = (this._promise = Promise.all([node, data]).then(
-        ([node, data]) => {
-          if (this._promise !== promise) {
-            return;
-          }
-          this.node = node;
-          this.data = data;
-          this._promise = undefined;
-        },
-        error => {
-          if (this._promise !== promise) {
-            return;
-          }
-          this.node = route['_errorFallback'];
-          this.error = error;
-          this._promise = undefined;
-        }
-      ));
-      return;
-    }
-
-    this.node = node;
-    this.data = data;
-    this.error = undefined;
-    this._promise = undefined;
-  }
-}
-
+/**
+ * The current outlet controller. Hooks use this context to access route matches.
+ */
 export const OutletControllerContext = createContext<OutletController | null>(null);
 
 OutletControllerContext.displayName = 'OutletControllerContext';
 
-export const NextOutletControllerContext = createContext<OutletController | null>(null);
+export const NestedOutletControllerContext = createContext<OutletController | null>(null);
 
-NextOutletControllerContext.displayName = 'NextOutletControllerContext';
+NestedOutletControllerContext.displayName = 'NestedOutletControllerContext';
 
-export class Outlet extends Component<{}, { hasError: boolean; error: unknown }> {
-  static contextType = NextOutletControllerContext;
+export interface OutletProps {
+  /**
+   * Children that are rendered if an {@link Outlet} doesn't have any content to render.
+   */
+  children?: ReactNode;
+}
 
-  static getDerivedStateFromError(error: unknown): Outlet['state'] {
+interface OutletState {
+  hasError: boolean;
+  error: unknown;
+}
+
+/**
+ * Renders a {@link Route} provided by an enclosing {@link Router}.
+ */
+export class Outlet extends Component<OutletProps, OutletState> {
+  /**
+   * @internal
+   */
+  static contextType = NestedOutletControllerContext;
+
+  /**
+   * @internal
+   */
+  static getDerivedStateFromError(error: unknown): Partial<OutletState> | null {
     return { hasError: true, error };
   }
 
-  declare context: OutletController;
+  /**
+   * @internal
+   */
+  declare context: OutletController | null;
 
-  prevController;
-  controller;
+  private _prevController;
+  private _controller;
 
-  constructor(props: {}, context: OutletController) {
+  /**
+   * @internal
+   */
+  constructor(props: OutletProps, context: OutletController | null) {
     super(props);
-    this.prevController = this.controller = context;
+
     this.state = { hasError: false, error: undefined };
+
+    this._prevController = this._controller = context;
+    this._OutletContent.displayName = 'OutletContent';
   }
 
+  /**
+   * @internal
+   */
+  componentDidUpdate(_prevProps: Readonly<OutletProps>, _prevState: Readonly<OutletState>, _snapshot?: unknown): void {
+    if (this.state.hasError) {
+      this.setState({ hasError: false, error: undefined });
+    }
+  }
+
+  /**
+   * @internal
+   */
   render() {
-    if (this.context === null) {
-      this.controller?.abort();
-      return null;
+    if (this.context !== this._controller) {
+      this._controller?.abort();
+      this._controller = this.context;
     }
 
-    if (this.context !== this.controller) {
-      this.controller.abort();
-      this.controller = this.context;
+    if (this._controller === null) {
+      this._prevController = null;
+      return this.props.children;
     }
 
     if (this.state.hasError) {
-      this.controller.setError(this.state.error);
+      this._controller.setError(this.state.error);
     }
 
     return (
-      <Suspense
-        fallback={
-          <OutletRenderer
-            outlet={this}
-            controller={
-              this.controller.route?.['_pendingBehavior'] === 'fallback' ? this.controller : this.prevController
-            }
-            isSuspended={true}
-          />
-        }
-      >
-        <OutletRenderer
-          outlet={this}
-          controller={this.controller}
-          isSuspended={false}
-        />
+      <Suspense fallback={<this._OutletContent isSuspendable={false} />}>
+        <this._OutletContent isSuspendable={true} />
       </Suspense>
     );
   }
-}
 
-function OutletRenderer(props: { outlet: Outlet; controller: OutletController; isSuspended: boolean }) {
-  if (!props.isSuspended) {
-    props.controller.suspend();
-    props.outlet.prevController = props.controller;
-  }
+  private _OutletContent: FC<{ isSuspendable: boolean }> = ({ isSuspendable }) => {
+    let controller = this._controller!;
 
-  return (
-    <OutletControllerContext.Provider value={props.controller}>
-      <NextOutletControllerContext.Provider value={props.controller.next}>
-        {props.controller.node}
-      </NextOutletControllerContext.Provider>
-    </OutletControllerContext.Provider>
-  );
+    if (isSuspendable) {
+      controller.suspend();
+      this._prevController = controller;
+    } else {
+      const prevController = controller.route?.['_pendingBehavior'] === 'fallback' ? controller : this._prevController;
+
+      if (prevController === null) {
+        return this.props.children;
+      }
+      controller = prevController;
+    }
+
+    return (
+      <OutletControllerContext.Provider value={controller}>
+        <NestedOutletControllerContext.Provider value={controller.nestedController}>
+          {controller.node}
+        </NestedOutletControllerContext.Provider>
+      </OutletControllerContext.Provider>
+    );
+  };
 }

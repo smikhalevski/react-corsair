@@ -1,13 +1,15 @@
-import React, { HTMLAttributes, ReactElement, useEffect } from 'react';
+import React, { HTMLAttributes, MouseEvent, ReactElement, useEffect } from 'react';
 import { useNavigation } from './hooks';
-import { Route } from './Route';
-import { Dict, NavigateToRouteOptions } from './types';
+import { LocationOptions, To } from './types';
 
-export interface LinkProps<T extends Route>
-  extends Omit<HTMLAttributes<HTMLAnchorElement>, 'href'>,
-    NavigateToRouteOptions {
-  to: T;
-  params: T['_params'];
+/**
+ * Props of the {@link Link} component.
+ */
+export interface LinkProps extends Omit<HTMLAttributes<HTMLAnchorElement>, 'href'>, LocationOptions {
+  /**
+   * A location or route to navigate to when link is clicked.
+   */
+  to: To;
 
   /**
    * When to prefetch a route and its data.
@@ -22,36 +24,41 @@ export interface LinkProps<T extends Route>
    * @default "off"
    */
   prefetch?: 'rendered' | 'off';
+
+  /**
+   * Navigation action triggered by a link.
+   */
+  action?: 'push' | 'replace';
 }
 
-export interface NoParamsLinkProps extends Omit<LinkProps<Route<any, void>>, 'params'> {
-  params?: undefined;
-}
-
-export function Link<T extends Route>(props: NoParamsLinkProps | LinkProps<T>): ReactElement {
-  const { to, params, prefetch } = props;
-
-  const aProps: Dict = { ...props };
-  delete aProps.to;
-  delete aProps.params;
-  delete aProps.prefetch;
+/**
+ * Renders an `a` tag that trigger an enclosing router navigation when clicked.
+ */
+export function Link(props: LinkProps): ReactElement {
+  const { to, prefetch, action } = props;
 
   const navigation = useNavigation();
 
   useEffect(() => {
     if (prefetch === 'rendered') {
-      navigation.prefetch(to, params);
+      navigation.prefetch(to);
     }
   }, []);
 
+  const handleClick = (event: MouseEvent) => {
+    event.preventDefault();
+
+    if (action === 'replace') {
+      navigation.replace(to);
+    } else {
+      navigation.push(to);
+    }
+  };
+
   return (
     <a
-      {...aProps}
-      href=""
-      onClick={event => {
-        event.preventDefault();
-        navigation.navigate(to, params);
-      }}
+      href="#"
+      onClick={handleClick}
     />
   );
 }

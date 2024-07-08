@@ -1,51 +1,10 @@
-import { Dispatch, SetStateAction, useContext } from 'react';
+import { useContext } from 'react';
 import { Navigation } from './Navigation';
 import { OutletControllerContext } from './Outlet';
+import { OutletController } from './OutletController';
 import { Route } from './Route';
 import { NavigationContext } from './Router';
 import { Location } from './types';
-
-// export interface Router {
-//   /**
-//    * The currently rendered location.
-//    */
-//   location: Location;
-//
-//   /**
-//    * The currently rendered route.
-//    */
-//   route: Route | null;
-//
-//   /**
-//    * The location of a pending route.
-//    */
-//   pendingLocation: Location | null;
-//
-//   /**
-//    * The route that is being loaded.
-//    */
-//   pendingRoute: Route | null;
-//
-//   /**
-//    * The error encountered during route rendering.
-//    */
-//   error: any;
-// }
-//
-// export declare function useRouter(): Router;
-
-/**
- * The currently rendered location.
- */
-export function useLocation(): Location {
-  const controller = useContext(OutletControllerContext);
-
-  if (controller === null) {
-    throw new Error('useLocation must be used within a route content or fallback');
-  }
-
-  return controller.location;
-}
 
 /**
  * Provides components a way to trigger router navigation.
@@ -54,51 +13,77 @@ export function useNavigation(): Navigation {
   const navigation = useContext(NavigationContext);
 
   if (navigation === null) {
-    throw new Error('useNavigation must be used within a router');
+    throw new Error('Forbidden outside of a router');
   }
   return navigation;
 }
 
-/**
- * Returns params of the rendered route and callback to navigate to a location with updated params.
- *
- * **Note:** If route isn't rendered an {@link !Error} is thrown.
- */
-export function useRouteParams<Params extends object | void>(
-  route: Route<any, Params>
-): [Params, Dispatch<SetStateAction<Params>>] {
+function useOutletController(): OutletController {
   const controller = useContext(OutletControllerContext);
 
   if (controller === null) {
-    throw new Error('useRouteParams must be used within a route content or fallback');
+    throw new Error('Forbidden outside of a route');
   }
+  return controller;
+}
 
-  for (let controllerRoute = controller.route; controllerRoute !== null; controllerRoute = controllerRoute.parent) {
-    if (controllerRoute === route) {
-      return [controller.params as Params, () => undefined];
+/**
+ * Returns the currently rendered location.
+ */
+export function useLocation(): Location {
+  return useOutletController().location;
+}
+
+/**
+ * Returns the currently rendered route.
+ *
+ * @returns A rendered route, or `null` if {@link RouterProps.notFoundFallback} is rendered.
+ */
+export function useRoute(): Route | null {
+  return useOutletController().route;
+}
+
+/**
+ * Returns params of the rendered route.
+ *
+ * @param route A route to retrieve params for.
+ * @template Params Route params.
+ */
+export function useRouteParams<Params extends object | void>(route: Route<any, Params>): Params {
+  const controller = useOutletController();
+
+  for (let r = controller.route; r !== null; r = r.parent) {
+    if (r === route) {
+      return controller.params;
     }
   }
 
-  throw new Error('Cannot retrieve params of a route that is not rendered');
+  throw new Error("Cannot retrieve params of a route that isn't rendered");
 }
 
 /**
  * Returns the data loaded for the rendered route.
  *
- * **Note:** If route isn't rendered an {@link !Error} is thrown.
+ * @param route A route to retrieve data for.
+ * @template Data Data loaded by a route.
  */
 export function useRouteData<Data>(route: Route<any, any, Data>): Data {
-  const controller = useContext(OutletControllerContext);
+  const controller = useOutletController();
 
-  if (controller === null) {
-    throw new Error('useRouteData must be used within a route content or fallback');
-  }
-
-  for (let controllerRoute = controller.route; controllerRoute !== null; controllerRoute = controllerRoute.parent) {
-    if (controllerRoute === route) {
-      return controller.data as Data;
+  for (let r = controller.route; r !== null; r = r.parent) {
+    if (r === route) {
+      return controller.data;
     }
   }
 
-  throw new Error('Cannot retrieve data of a route that is not rendered');
+  throw new Error("Cannot retrieve data of a route that isn't rendered");
+}
+
+/**
+ * Returns the error thrown during data loading or route rendering.
+ *
+ * @returns An error, or `undefined` if there's no error.
+ */
+export function useRouteError(): any {
+  return useOutletController().error;
 }

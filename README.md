@@ -30,18 +30,18 @@ import { Route } from 'react-corsair';
 const userRoute = new Route('/user', () => import('./UserPage'));
 ```
 
-Render [`RouterProvider`](https://smikhalevski.github.io/react-corsair/classes/RouterProvider.html) component to set up
+Render [`Router`](https://smikhalevski.github.io/react-corsair/classes/RouterProvider.html) component to set up
 the router:
 
 ```tsx
 import { useState } from 'react';
-import { RouterProvider } from 'react-corsair';
+import { Router } from 'react-corsair';
 
 function App() {
   const [url, setURL] = useState('/user');
   
   return (
-    <RouterProvider
+    <Router
       url={url}
       routes={[userRoute]}
       onNavigate={setURL}
@@ -51,7 +51,7 @@ function App() {
 ```
 
 Access [`Router`](https://smikhalevski.github.io/react-corsair/classes/Router.html) in components rendered by
-the `RouterProvider`:
+the `Router`:
 
 ```ts
 export default function UserPage() {

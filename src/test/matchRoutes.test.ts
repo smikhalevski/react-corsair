@@ -14,8 +14,8 @@ describe('matchRoutes', () => {
     expect(matchRoutes('/aaa', {}, [aaaRoute, bbbRoute])).toEqual([{ route: aaaRoute, params: {} }]);
 
     expect(matchRoutes('/aaa/bbb', {}, [aaaRoute, bbbRoute])).toEqual([
-      { route: aaaRoute, params: {} },
       { route: bbbRoute, params: {} },
+      { route: aaaRoute, params: {} },
     ]);
 
     expect(matchRoutes('/bbb', {}, [bbbRoute, aaaRoute])).toBeNull();
@@ -27,9 +27,9 @@ describe('matchRoutes', () => {
     expect(matchRoutes('/aaa/bbb', {}, [aaaRoute, cccRoute])).toBeNull();
 
     expect(matchRoutes('/aaa/bbb/ccc', {}, [aaaRoute, cccRoute])).toEqual([
-      { route: aaaRoute, params: {} },
-      { route: bbbRoute, params: {} },
       { route: cccRoute, params: {} },
+      { route: bbbRoute, params: {} },
+      { route: aaaRoute, params: {} },
     ]);
   });
 });

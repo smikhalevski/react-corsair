@@ -1,20 +1,23 @@
-import { ComponentType, createElement, memo, ReactElement } from 'react';
+import { ComponentType, createElement, isValidElement, memo, ReactElement, ReactNode } from 'react';
+import { Location, To } from './types';
 
-const elementCache = new WeakMap<ComponentType, ReactElement>();
+const cache = new WeakMap<ComponentType | ReactElement, ReactNode>();
 
-export function memoizeElement(component: ComponentType): ReactElement {
-  let element = elementCache.get(component);
-
-  if (element === undefined) {
-    element = createElement(memo(component, propsAreEqual));
-    elementCache.set(component, element);
+export function memoizeNode(value: ComponentType | ReactNode): ReactNode {
+  if (typeof value !== 'function' && !isValidElement(value)) {
+    return value;
   }
+  let node = cache.get(value);
 
-  return element;
+  if (node === undefined) {
+    node = createElement(memo(typeof value !== 'function' ? () => value : value, propsAreEqual));
+    cache.set(value, node);
+  }
+  return node;
 }
 
+// Memoized components don't receive any props, so props are always equal
 function propsAreEqual(_prevProps: unknown, _nextProps: unknown): boolean {
-  // Route components don't receive any props, so props are always equal
   return true;
 }
 
@@ -35,4 +38,8 @@ export function isArrayEqual(a: any[], b: any[]): boolean {
     }
   }
   return true;
+}
+
+export function toLocation(to: To): Location {
+  return 'getLocation' in to ? to.getLocation() : to;
 }

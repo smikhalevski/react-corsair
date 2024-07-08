@@ -5,6 +5,11 @@ export interface Dict {
 }
 
 /**
+ * A location or route.
+ */
+export type To = Location | { getLocation(): Location };
+
+/**
  * A location contains information about the URL path and history state.
  */
 export interface Location {
@@ -19,7 +24,7 @@ export interface Location {
   searchParams: Dict;
 
   /**
-   * A URL fragment identifier.
+   * A URL fragment identifier, beginning with "#".
    */
   hash: string;
 
@@ -29,6 +34,9 @@ export interface Location {
   state?: any;
 }
 
+/**
+ * Non-essential {@link Location} options.
+ */
 export interface LocationOptions {
   /**
    * A URL fragment identifier.
@@ -50,69 +58,97 @@ export interface LocationOptions {
  * - A function that returns a component.
  * - A function that dynamically imports a module that default-exports the component.
  *
- * You can call {@link redirect} in to trigger navigation. In this case
- *
  * @example
  * () => import('./UserPage')
  */
 export type RouteContent = (() => PromiseLike<{ default: ComponentType } | ComponentType> | ComponentType) | ReactNode;
 
 /**
- * Adapter that can validate route params.
+ * A fallback rendered by the {@link Outlet} when {@link RouteContent} cannot be rendered for some reason.
+ */
+export type RouteFallback = ComponentType | ReactNode;
+
+/**
+ * An adapter that can validate and transform route params.
+ *
+ * @template Params Route params.
  */
 export interface ParamsAdapter<Params> {
   /**
-   * Validates params extracted from a {@link Location.pathname} and {@link Location.searchParams}.
+   * Validates and transforms params extracted from a {@link Location.pathname} and {@link Location.searchParams}.
+   *
+   * @param params A dictionary that contains both pathname and search params.
+   * @returns Route params.
    */
   parse(params: Dict): Params;
 
   /**
+   * Converts route params to {@link Location.pathname} params.
+   *
+   * @param params Route params.
+   * @returns Params that should be substituted into a location pathname.
+   */
+  toPathnameParams?(params: Params): Dict;
+
+  /**
    * Converts route params to {@link Location.searchParams}.
+   *
+   * @param params Route params.
+   * @returns A dictionary that is used as {@link Location.searchParams}.
    */
   toSearchParams?(params: Params): Dict;
 }
 
+/**
+ * Options of a {@link Route}.
+ *
+ * @template Params Route params.
+ * @template Data Data loaded by a route.
+ * @template Context A context provided by a {@link Router} for a {@link dataLoader}.
+ */
 export interface RouteOptions<Params, Data, Context> {
   /**
-   * A URL pathname segment.
+   * A URL pathname segment. Leading and trailing slashes are ignored during route matching.
    *
    * @example "/foo/$bar"
    */
   pathname: string;
 
   /**
-   * A content rendered by a route.
-   *
-   * If `undefined` then router implicitly renders {@link Outlet}.
+   * A content rendered by a route. If `undefined` then route implicitly renders {@link Outlet}.
    */
   content?: RouteContent;
 
   /**
-   * Validates and transforms params extracted from the {@link Location.pathname} and {@link Location.searchParams}.
+   * An adapter that can validate and transform params extracted from the {@link Location.pathname} and
+   * {@link Location.searchParams}. Params are available inside the {@link content} through {@link useRouteParams} hook.
    */
   paramsAdapter?: ParamsAdapter<Params> | ParamsAdapter<Params>['parse'];
 
   /**
-   * Loads data that is synchronously available inside the {@link content}.
+   * Loads data required to render a route. The loaded data is synchronously available inside the {@link content}
+   * through {@link useRouteData} hook.
    *
    * @param params Route params extracted from a location.
-   * @param context A context provided to a router.
+   * @param context A {@link RouterProps.context} provided to a {@link Router}.
    */
   dataLoader?: (params: Params, context: Context) => PromiseLike<Data> | Data;
-  /**
-   * A fallback that is rendered when the route content or data are being loaded.
-   */
-  pendingFallback?: ReactNode;
 
   /**
-   * A fallback that is rendered when an error was thrown during route rendering.
+   * A fallback that is rendered when the route {@link content} or {@link dataLoader data} are being loaded.
    */
-  errorFallback?: ReactNode;
+  pendingFallback?: RouteFallback;
 
   /**
-   * A fallback that is rendered if there is no matched nested route.
+   * A fallback that is rendered when an error was thrown during route rendering. An error is available through
+   * {@link useRouteError} hook.
    */
-  notFoundFallback?: ReactNode;
+  errorFallback?: RouteFallback;
+
+  /**
+   * A fallback that is rendered if {@link notFound} was called during route rendering.
+   */
+  notFoundFallback?: RouteFallback;
 
   /**
    * What to render when route is being loaded.
@@ -122,29 +158,10 @@ export interface RouteOptions<Params, Data, Context> {
    *   <dd>A {@link pendingFallback} is always rendered if a route is matched and content or data are being loaded.</dd>
    *   <dt>"auto"</dt>
    *   <dd>If another route is currently rendered then it would be preserved until content and data of a newly matched
-   *   route are loaded. Otherwise, a {@link pendingFallback} is rendered.</dd>
+   *   route are being loaded. Otherwise, a {@link pendingFallback} is rendered.</dd>
    * </dl>
    *
    * @default "auto"
    */
   pendingBehavior?: 'fallback' | 'auto';
 }
-
-export interface NavigateOptions {
-  /**
-   * An action that was requested to navigate to a location.
-   *
-   * <dl>
-   *   <dt>"push"</dt>
-   *   <dd>A location must be pushed to a history stack.</dd>
-   *   <dt>"replace"</dt>
-   *   <dd>A location must replace the current history entry.</dd>
-   *   <dt>"redirect"</dt>
-   *   <dd>A location must be used to redirect a client. Usually, redirects are triggered when {@link redirect} is
-   *   called during route rendering or data loading.</dd>
-   * </dl>
-   */
-  action: 'push' | 'replace' | 'redirect' | 'permanentRedirect';
-}
-
-export interface NavigateToRouteOptions extends Partial<NavigateOptions>, LocationOptions {}
