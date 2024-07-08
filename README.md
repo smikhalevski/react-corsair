@@ -10,6 +10,8 @@
 npm install --save-prod react-corsair
 ```
 
+🔥&ensp;[**Live example**](https://codesandbox.io/p/sandbox/react-corsair-example-mzjzcm)
+
 # Introduction
 
 React Corsair is a router that abstracts URLs away from the domain of your application. It doesn't depend on

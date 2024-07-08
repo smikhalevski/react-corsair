@@ -1,7 +1,15 @@
 export { createBrowserHistory } from './createBrowserHistory';
 export { createMemoryHistory } from './createMemoryHistory';
 export { createRoute } from './createRoute';
-export { useNavigation, useLocation, useRoute, useRouteData, useRouteParams, useRouteError } from './hooks';
+export {
+  useHistorySubscription,
+  useNavigation,
+  useLocation,
+  useRoute,
+  useRouteData,
+  useRouteParams,
+  useRouteError,
+} from './hooks';
 export { Link } from './Link';
 export { Navigation } from './Navigation';
 export { notFound, NotFoundError } from './notFound';
