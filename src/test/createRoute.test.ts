@@ -13,7 +13,11 @@ describe('Route', () => {
       expect(cccRoute.getLocation()).toEqual({ pathname: '/aaa/bbb/ccc', searchParams: {}, hash: '' });
 
       expect(createRoute({ pathname: 'aaa' }).getLocation()).toEqual({ pathname: '/aaa', searchParams: {}, hash: '' });
-      expect(createRoute({ pathname: 'aaa/' }).getLocation()).toEqual({ pathname: '/aaa', searchParams: {}, hash: '' });
+      expect(createRoute({ pathname: 'aaa/' }).getLocation()).toEqual({
+        pathname: '/aaa/',
+        searchParams: {},
+        hash: '',
+      });
 
       expect(createRoute(createRoute({ pathname: '/' }), { pathname: '/' }).getLocation()).toEqual({
         pathname: '/',
@@ -49,7 +53,7 @@ describe('Route', () => {
     });
 
     test('interpolates pathname params', () => {
-      expect(createRoute<{ bbb: string }>({ pathname: 'aaa/$bbb' }).getLocation({ bbb: 'xxx' })).toEqual({
+      expect(createRoute<{ bbb: string }>({ pathname: 'aaa/:bbb' }).getLocation({ bbb: 'xxx' })).toEqual({
         pathname: '/aaa/xxx',
         searchParams: {},
         hash: '',
@@ -57,7 +61,7 @@ describe('Route', () => {
     });
 
     test('ignores unexpected search params', () => {
-      expect(createRoute<any>({ pathname: 'aaa/$bbb' }).getLocation({ bbb: 'xxx', ccc: 'yyy' })).toEqual({
+      expect(createRoute<any>({ pathname: 'aaa/:bbb' }).getLocation({ bbb: 'xxx', ccc: 'yyy' })).toEqual({
         pathname: '/aaa/xxx',
         searchParams: { ccc: 'yyy' },
         hash: '',
@@ -66,7 +70,7 @@ describe('Route', () => {
 
     test('adds search params by omitting pathname params', () => {
       expect(
-        createRoute({ pathname: 'aaa/$bbb', paramsAdapter: params => params }).getLocation({
+        createRoute({ pathname: 'aaa/:bbb', paramsAdapter: params => params }).getLocation({
           bbb: 'xxx',
           ccc: 'yyy',
         })
@@ -84,7 +88,7 @@ describe('Route', () => {
       };
 
       expect(
-        createRoute({ pathname: 'aaa/$bbb', paramsAdapter }).getLocation({
+        createRoute({ pathname: 'aaa/:bbb', paramsAdapter }).getLocation({
           bbb: 'xxx',
         })
       ).toEqual({

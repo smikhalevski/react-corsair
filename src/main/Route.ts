@@ -1,8 +1,8 @@
 import { ReactNode } from 'react';
-import { memoizeNode } from './utils';
 import { Outlet } from './Outlet';
 import { PathnameAdapter } from './PathnameAdapter';
 import { Dict, Location, LocationOptions, RouteContent, RouteOptions } from './types';
+import { memoizeNode } from './utils';
 
 type Squash<T> = { [K in keyof T]: T[K] } & {};
 
@@ -63,7 +63,7 @@ export class Route<
 
     this.parent = parent;
 
-    this._pathnameAdapter = new PathnameAdapter(options.pathname);
+    this._pathnameAdapter = new PathnameAdapter(options.pathname, options.isCaseSensitive);
     this._paramsAdapter = typeof paramsAdapter === 'function' ? { parse: paramsAdapter } : paramsAdapter;
     this._pendingNode = memoizeNode(options.pendingFallback);
     this._errorNode = memoizeNode(options.errorFallback);
@@ -92,9 +92,9 @@ export class Route<
     } else {
       if (_paramsAdapter === undefined || _paramsAdapter.toSearchParams === undefined) {
         // Search params = params omit pathname params
-        for (const paramName in params) {
-          if (params.hasOwnProperty(paramName) && !_pathnameAdapter.paramNames.has(paramName)) {
-            searchParams[paramName] = params[paramName];
+        for (const name in params) {
+          if (params.hasOwnProperty(name) && !_pathnameAdapter.paramNames.has(name)) {
+            searchParams[name] = params[name];
           }
         }
       } else {
@@ -109,7 +109,7 @@ export class Route<
     if (parent !== null) {
       const location = parent.getLocation(params, options);
 
-      location.pathname += location.pathname.endsWith('/') ? pathname : '/' + pathname;
+      location.pathname += location.pathname.endsWith('/') ? pathname.substring(1) : pathname;
 
       // Merge search params
       Object.assign(location.searchParams, searchParams);
@@ -127,7 +127,7 @@ export class Route<
           : '#' + encodeURIComponent(hash);
 
     return {
-      pathname: '/' + pathname,
+      pathname,
       searchParams,
       hash,
       state: options?.state,

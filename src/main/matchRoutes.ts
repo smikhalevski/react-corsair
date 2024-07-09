@@ -28,7 +28,7 @@ export function matchRoutes(pathname: string, searchParams: Dict, routes: Route[
   for (const route of routes) {
     const match = matchPathname(pathname, route, cache);
 
-    if (match === null || match.nestedPathname !== '') {
+    if (match === null || match.nestedPathname !== '/') {
       // No match or pathname cannot be consumed by a route
       continue;
     }

@@ -22,6 +22,7 @@ export type { BrowserHistoryOptions } from './createBrowserHistory';
 export type { MemoryHistoryOptions } from './createMemoryHistory';
 export type { LinkProps } from './Link';
 export type { OutletProps } from './Outlet';
+export type { RouterProps, NoContextRouterProps } from './Router';
 export type {
   Dict,
   To,

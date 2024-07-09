@@ -108,11 +108,38 @@ export interface ParamsAdapter<Params> {
  */
 export interface RouteOptions<Params, Data, Context> {
   /**
-   * A URL pathname segment. Leading and trailing slashes are ignored during route matching.
+   * A URL pathname pattern.
    *
-   * @example "/foo/$bar"
+   * Pattern can include params that conform `:[A-Za-z$_][A-Za-z0-9$_]+`, for example `:teamId`.
+   *
+   * Params match the whole segment and cannot be partial:
+   *
+   * - 🚫`"/teams-:teamId"`
+   * - ✅`"/teams/:teamId"`
+   * - 🚫`"/:category--:productId"`
+   * - ✅`"/:productSlug"`
+   *
+   * By default, a param matches a non-empty pathname substring. To make a param optional (so it can match zero
+   * characters) follow it by a `?` flag. For example: `":userId?"`.
+   *
+   * You can make a static pathname segment optional as well: `"/project/task?/:taskId"`.
+   *
+   * By default, a param matches a pathname segment: all characters except a `/`. Follow a param with a `*` flag to make
+   * it match multiple segments. For example: `":slug*"`. Such params are called wildcard params.
+   *
+   * To make param both wildcard and optional, combine `*` and `?` flags: `":slug*?"`
+   *
+   * To use `:` as a character in a pathname pattern, replace it with an {@link !encodeURIComponent encoded}
+   * representation: `%3A`.
    */
   pathname: string;
+
+  /**
+   * If `true` then {@link pathname} is matched in a case-sensitive manner.
+   *
+   * @default false
+   */
+  isCaseSensitive?: boolean;
 
   /**
    * A content rendered by a route. If `undefined` then route implicitly renders {@link Outlet}.
