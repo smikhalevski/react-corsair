@@ -1,20 +1,16 @@
-import React, { Component, createContext, ReactNode } from 'react';
-import { Navigation } from './Navigation';
-import { isArrayEqual } from './utils';
+import React, { Component, ComponentType, ReactNode } from 'react';
 import { matchRoutes } from './matchRoutes';
-import { NestedOutletControllerContext, Outlet } from './Outlet';
-import { OutletController } from './OutletController';
+import { Navigation } from './Navigation';
+import { ChildOutletContentContext, NotFoundOutletContent, Outlet, OutletContent, RouteOutletContent } from './Outlet';
 import { Route } from './Route';
 import { Location } from './types';
-
-export const NavigationContext = createContext<Navigation | null>(null);
-
-NavigationContext.displayName = 'NavigationContext';
+import { NavigationContext } from './useNavigation';
+import { isArrayEqual } from './utils';
 
 /**
  * Props of the {@link Router} component.
  *
- * @template Context A context provided by a {@link Router} for a {@link RouteOptions.dataLoader}.
+ * @template Context A context provided by a {@link Router} for a {@link RouteOptions.loader}.
  */
 export interface RouterProps<Context> {
   /**
@@ -28,17 +24,17 @@ export interface RouterProps<Context> {
   routes: Route<any, any, any, Context>[];
 
   /**
-   * An arbitrary context provided to {@link RouteOptions.dataLoader}.
+   * An arbitrary context provided to {@link RouteOptions.loader}.
    */
   context: Context;
 
   /**
-   * Triggered when a router location must be changed.
+   * Triggered when a new location must be added to a history stack.
    */
   onPush?: (location: Location) => void;
 
   /**
-   * Triggered when a router location must be changed.
+   * Triggered when a new location must replace the current history entry.
    */
   onReplace?: (location: Location) => void;
 
@@ -53,69 +49,91 @@ export interface RouterProps<Context> {
   children?: ReactNode;
 
   /**
-   * A fallback that is rendered in the {@link Outlet} if there is no route in {@link routes} that matches
+   * A component that is rendered when a {@link RouteOptions.lazyComponent} or {@link RouteOptions.loader} are being
+   * loaded. Render a skeleton or a spinner in this component to notify user that a new route is being loaded.
+   *
+   * The {@link Router}-level {@link loadingComponent} is used only for root routes. Child routes must specify their own
+   * {@link RouteOptions.loadingComponent}.
+   */
+  loadingComponent?: ComponentType;
+
+  /**
+   * A component that is rendered when an error was thrown during route rendering.
+   *
+   * The {@link Router}-level {@link errorComponent} is used only for root routes. Child routes must specify their own
+   * {@link RouteOptions.errorComponent}.
+   */
+  errorComponent?: ComponentType;
+
+  /**
+   * A component that is rendered in the {@link Outlet} if there is no route in {@link routes} that matches
    * the {@link location}.
    */
-  notFoundFallback?: ReactNode;
+  notFoundComponent?: ComponentType;
 }
 
 /**
- * Options of a {@link Router} that doesn't provide any context for a {@link RouteOptions.dataLoader}.
+ * Options of a {@link Router} that doesn't provide any context for a {@link RouteOptions.loader}.
  */
-export interface NoContextRouterProps extends Omit<RouterProps<void>, 'context'> {}
+interface NoContextRouterProps extends Omit<RouterProps<void>, 'context'> {
+  /**
+   * An arbitrary context provided to {@link RouteOptions.loader}.
+   */
+  context?: undefined;
+}
 
 interface RouterState {
+  location: Location | null;
   routes: Route[];
-  controller: OutletController | null;
-  router: Router<any>;
+  content: OutletContent | null;
 }
 
 /**
  * A router that renders a route that matches the provided location.
  *
- * @template Context A context provided by a {@link Router} for a {@link RouteOptions.dataLoader}.
+ * @template Context A context provided by a {@link Router} for a {@link RouteOptions.loader}.
  */
 export class Router<Context = void> extends Component<NoContextRouterProps | RouterProps<Context>, RouterState> {
   /**
    * @internal
    */
-  static getDerivedStateFromProps(props: RouterProps<any>, state: RouterState): Partial<RouterState> | null {
-    if (
-      state.controller !== null &&
-      state.controller.location === props.location &&
-      isArrayEqual(state.routes, props.routes)
-    ) {
+  static displayName = 'Router';
+
+  /**
+   * @internal
+   */
+  static getDerivedStateFromProps(props: RouterProps<unknown>, state: RouterState): Partial<RouterState> | null {
+    if (state.location === props.location && isArrayEqual(state.routes, props.routes)) {
       return null;
     }
 
     const routeMatches = matchRoutes(props.location.pathname, props.location.searchParams, props.routes);
 
-    let controller: OutletController | null = null;
+    let content: OutletContent | null = null;
 
     if (routeMatches === null) {
-      controller = new OutletController(props.location);
-      controller.node = props.notFoundFallback;
+      content = new NotFoundOutletContent(props);
+    } else {
+      for (const routeMatch of routeMatches) {
+        content = new RouteOutletContent(content, routeMatch.route, routeMatch.params, props.context);
+      }
+      if (content === null) {
+        throw new Error('Expected at least one route match');
+      }
 
-      return {
-        routes: props.routes,
-        controller,
-      };
-    }
-
-    for (const routeMatch of routeMatches) {
-      const prevController = new OutletController(props.location);
-      prevController.load(routeMatch.route, routeMatch.params, props.context);
-      prevController.nestedController = controller;
-      controller = prevController;
+      content.loadingComponent ||= props.loadingComponent;
+      content.errorComponent ||= props.errorComponent;
+      content.notFoundComponent ||= props.notFoundComponent;
     }
 
     return {
+      location: props.location,
       routes: props.routes,
-      controller: controller,
+      content,
     };
   }
 
-  private readonly _navigation = new Navigation(this);
+  private _navigation = new Navigation(this);
 
   /**
    * @internal
@@ -124,9 +142,9 @@ export class Router<Context = void> extends Component<NoContextRouterProps | Rou
     super(props);
 
     this.state = {
+      location: null,
       routes: props.routes,
-      controller: null,
-      router: this,
+      content: null,
     };
   }
 
@@ -136,9 +154,9 @@ export class Router<Context = void> extends Component<NoContextRouterProps | Rou
   render() {
     return (
       <NavigationContext.Provider value={this._navigation}>
-        <NestedOutletControllerContext.Provider value={this.state.controller}>
+        <ChildOutletContentContext.Provider value={this.state.content}>
           {this.props.children === undefined ? <Outlet /> : this.props.children}
-        </NestedOutletControllerContext.Provider>
+        </ChildOutletContentContext.Provider>
       </NavigationContext.Provider>
     );
   }

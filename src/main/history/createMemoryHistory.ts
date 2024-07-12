@@ -1,6 +1,9 @@
 import { PubSub } from 'parallel-universe';
-import { History, Location } from './types';
-import { toLocation } from './utils';
+import { Location } from '../types';
+import { History, SearchParamsAdapter } from './types';
+import { urlSearchParamsAdapter } from './urlSearchParamsAdapter';
+import { toLocation } from '../utils';
+import { toURL } from './utils';
 
 /**
  * Options of {@link createMemoryHistory}.
@@ -10,6 +13,19 @@ export interface MemoryHistoryOptions {
    * A non-empty array of initial history entries.
    */
   initialEntries: Location[];
+
+  /**
+   * A URL base used by {@link History.toURL}.
+   *
+   * If omitted a base should be specified with each {@link History.toURL} call, otherwise an error is thrown.
+   */
+  base?: URL | string;
+
+  /**
+   * An adapter that extracts params from a URL search string and stringifies them back. By default, an adapter that
+   * relies on {@link !URLSearchParams} is used.
+   */
+  searchParamsAdapter?: SearchParamsAdapter;
 }
 
 /**
@@ -18,6 +34,7 @@ export interface MemoryHistoryOptions {
  * @param options History options.
  */
 export function createMemoryHistory(options: MemoryHistoryOptions): History {
+  const { base: defaultBase, searchParamsAdapter = urlSearchParamsAdapter } = options;
   const pubSub = new PubSub();
   const entries = options.initialEntries.slice(0);
 
@@ -30,6 +47,13 @@ export function createMemoryHistory(options: MemoryHistoryOptions): History {
   return {
     get location() {
       return entries[cursor];
+    },
+
+    toURL(location, base = defaultBase) {
+      if (base === undefined) {
+        throw new Error('No base URL provided');
+      }
+      return new URL(toURL(location, searchParamsAdapter), base);
     },
 
     push(to) {

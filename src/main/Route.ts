@@ -1,10 +1,28 @@
-import { ReactNode } from 'react';
+import { ComponentType } from 'react';
 import { Outlet } from './Outlet';
 import { PathnameAdapter } from './PathnameAdapter';
-import { Dict, Location, LocationOptions, RouteContent, RouteOptions } from './types';
-import { memoizeNode } from './utils';
+import { Dict, LoadingAppearance, Location, LocationOptions, ParamsAdapter, RouteOptions } from './types';
+import { isPromiseLike } from './utils';
 
 type Squash<T> = { [K in keyof T]: T[K] } & {};
+
+/**
+ * A content returned by {@link Route.loader} and rendered by the {@link Outlet} when a route is matched by
+ * a {@link Router}.
+ *
+ * @template Data Data loaded by a route.
+ */
+export interface RouteContent<Data> {
+  /**
+   * A route {@link RouteOptions.component component} .
+   */
+  component: ComponentType;
+
+  /**
+   * Data loaded by a {@link RouteOptions.loader}.
+   */
+  data: Data;
+}
 
 /**
  * A route that can be rendered by a router.
@@ -12,7 +30,7 @@ type Squash<T> = { [K in keyof T]: T[K] } & {};
  * @template Parent A parent route or `null` if there is no parent.
  * @template Params Route params.
  * @template Data Data loaded by a route.
- * @template Context A context provided by a {@link Router} for a {@link RouteOptions.dataLoader}.
+ * @template Context A context provided by a {@link Router} for a {@link RouteOptions.loader}.
  */
 export class Route<
   Parent extends Route<any, any, Context> | null = any,
@@ -39,14 +57,45 @@ export class Route<
    */
   readonly parent: Parent;
 
-  protected _pathnameAdapter;
-  protected _paramsAdapter;
-  protected _pendingNode;
-  protected _errorNode;
-  protected _notFoundNode;
-  protected _pendingBehavior;
-  protected _contentRenderer;
-  protected _dataLoader;
+  /**
+   * Parses a pathname pattern, matches a pathname against this pattern, and creates a pathname from params and
+   * a pattern.
+   */
+  pathnameAdapter: PathnameAdapter;
+
+  /**
+   * An adapter that can validate and transform params extracted from the {@link Location.pathname} and
+   * {@link Location.searchParams}.
+   */
+  paramsAdapter: ParamsAdapter<Params> | undefined;
+
+  /**
+   * A component that is rendered when a {@link loader} is pending.
+   */
+  loadingComponent: ComponentType | undefined;
+
+  /**
+   * A component that is rendered when an error was thrown during route rendering.
+   */
+  errorComponent: ComponentType | undefined;
+
+  /**
+   * A component that is rendered if {@link notFound} was called during route rendering.
+   */
+  notFoundComponent: ComponentType | undefined;
+
+  /**
+   * What to render when a {@link loader} is pending.
+   */
+  loadingAppearance: LoadingAppearance;
+
+  /**
+   * Loads a component and data that are rendered in an {@link Outlet}.
+   *
+   * @param params Route params.
+   * @param context A context provided by a {@link Router} for a {@link RouteOptions.loader}.
+   */
+  loader: (params: Params, context: Context) => Promise<RouteContent<Data>> | RouteContent<Data>;
 
   /**
    * Creates a new instance of a {@link Route}.
@@ -56,21 +105,19 @@ export class Route<
    * @template Parent A parent route or `null` if there is no parent.
    * @template Params Route params.
    * @template Data Data loaded by a route.
-   * @template Context A context provided by a {@link Router} for a {@link RouteOptions.dataLoader}.
+   * @template Context A context provided by a {@link Router} for a {@link RouteOptions.loader}.
    */
-  constructor(parent: Parent, options: RouteOptions<Params, Data, Context>) {
-    const { paramsAdapter } = options;
+  constructor(parent: Parent, options: RouteOptions<Params, Data, Context> = {}) {
+    const { pathname = '/', paramsAdapter, loadingAppearance = 'auto' } = options;
 
     this.parent = parent;
-
-    this._pathnameAdapter = new PathnameAdapter(options.pathname, options.isCaseSensitive);
-    this._paramsAdapter = typeof paramsAdapter === 'function' ? { parse: paramsAdapter } : paramsAdapter;
-    this._pendingNode = memoizeNode(options.pendingFallback);
-    this._errorNode = memoizeNode(options.errorFallback);
-    this._notFoundNode = memoizeNode(options.notFoundFallback);
-    this._pendingBehavior = options.pendingBehavior;
-    this._contentRenderer = createContentRenderer(options.content);
-    this._dataLoader = options.dataLoader;
+    this.pathnameAdapter = new PathnameAdapter(pathname, options.isCaseSensitive);
+    this.paramsAdapter = typeof paramsAdapter === 'function' ? { parse: paramsAdapter } : paramsAdapter;
+    this.loadingComponent = options.loadingComponent;
+    this.errorComponent = options.errorComponent;
+    this.notFoundComponent = options.notFoundComponent;
+    this.loadingAppearance = loadingAppearance;
+    this.loader = createLoader(options);
   }
 
   /**
@@ -80,29 +127,31 @@ export class Route<
    * @param options Location options.
    */
   getLocation(params: this['_params'], options?: LocationOptions): Location {
-    const { parent, _pathnameAdapter, _paramsAdapter } = this;
+    const { parent, pathnameAdapter, paramsAdapter } = this;
 
     let pathname;
     let searchParams: Dict = {};
+    let hash;
+    let state;
 
     if (params === undefined) {
       // No params = no search params
       searchParams = {};
-      pathname = _pathnameAdapter.toPathname(undefined);
+      pathname = pathnameAdapter.toPathname(undefined);
     } else {
-      if (_paramsAdapter === undefined || _paramsAdapter.toSearchParams === undefined) {
+      if (paramsAdapter === undefined || paramsAdapter.toSearchParams === undefined) {
         // Search params = params omit pathname params
         for (const name in params) {
-          if (params.hasOwnProperty(name) && !_pathnameAdapter.paramNames.has(name)) {
+          if (params.hasOwnProperty(name) && !pathnameAdapter.paramNames.has(name)) {
             searchParams[name] = params[name];
           }
         }
       } else {
-        searchParams = _paramsAdapter.toSearchParams(params);
+        searchParams = paramsAdapter.toSearchParams(params);
       }
 
-      pathname = _pathnameAdapter.toPathname(
-        _paramsAdapter === undefined || _paramsAdapter.toPathnameParams === undefined ? params : undefined
+      pathname = pathnameAdapter.toPathname(
+        paramsAdapter === undefined || paramsAdapter.toPathnameParams === undefined ? params : undefined
       );
     }
 
@@ -117,81 +166,72 @@ export class Route<
       return location;
     }
 
-    let hash;
-
     hash =
-      options === undefined || (hash = options.hash) === undefined || hash === '' || hash === '#'
+      options === undefined ||
+      ((state = options.state), (hash = options.hash)) === undefined ||
+      hash === '' ||
+      hash === '#'
         ? ''
         : hash.charAt(0) === '#'
           ? hash
           : '#' + encodeURIComponent(hash);
 
-    return {
-      pathname,
-      searchParams,
-      hash,
-      state: options?.state,
-    };
+    return { pathname, searchParams, hash, state };
   }
 
   /**
-   * Prefetches route content and data of this route and its ancestors.
+   * Prefetches a component and data of this route and its ancestors.
    *
    * @param params Route params.
-   * @param context A context provided to a {@link RouteOptions.dataLoader}.
+   * @param context A context provided to a {@link RouteOptions.loader}.
    */
   prefetch(params: this['_params'], context: Context): void {
     for (let route: Route | null = this; route !== null; route = route.parent) {
-      try {
-        route['_contentRenderer']();
-        route['_dataLoader']?.(params, context);
-      } catch {
-        // noop
-      }
+      route.loader(params, context);
     }
   }
 }
 
 /**
- * Create a function that loads the component and returns a node to render. The component is loaded only once,
- * if an error occurs during loading, then loading is retried the next time the returned render is called.
+ * Creates a function that loads the component and its data. The component is loaded only once, if an error occurs
+ * during loading, then component is loaded the next time the loader is called.
  */
-function createContentRenderer(content: RouteContent): () => Promise<ReactNode> | ReactNode {
-  let node: Promise<ReactNode> | ReactNode | undefined;
+function createLoader<Params, Data, Context>(options: RouteOptions<Params, Data, Context>): Route['loader'] {
+  const { lazyComponent, loader } = options;
 
-  if (content === undefined) {
-    node = memoizeNode(Outlet);
+  let component: PromiseLike<ComponentType> | ComponentType | undefined = options.component;
+
+  if (component !== undefined && lazyComponent !== undefined) {
+    throw new Error('Route must have either component or lazyComponent');
   }
 
-  return () => {
-    if (node !== undefined) {
-      return node;
-    }
+  if (component === undefined && lazyComponent === undefined) {
+    component = Outlet;
+  }
 
-    if (typeof content !== 'function') {
-      node = memoizeNode(content);
-      return node;
-    }
+  return (params, context) => {
+    component ||= lazyComponent!().then(
+      module => {
+        component = module.default;
 
-    const promiseOrComponent = content();
-
-    if (typeof promiseOrComponent === 'function') {
-      node = memoizeNode(promiseOrComponent);
-      return node;
-    }
-
-    node = Promise.resolve(promiseOrComponent).then(
-      moduleOrComponent => {
-        const component = 'default' in moduleOrComponent ? moduleOrComponent.default : moduleOrComponent;
-        node = memoizeNode(component);
-        return node;
+        if (typeof component === 'function') {
+          return component;
+        }
+        component = undefined;
+        throw new TypeError('Module must default-export a component');
       },
       error => {
-        node = undefined;
+        component = undefined;
         throw error;
       }
     );
 
-    return node;
+    const data = loader?.(params, context);
+
+    if (isPromiseLike(component) || isPromiseLike(data)) {
+      return Promise.all([component, data]).then(([component, data]) => ({ component, data }));
+    }
+
+    return { component, data };
   };
 }

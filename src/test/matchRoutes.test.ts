@@ -1,4 +1,4 @@
-import { createRoute } from '../main/createRoute';
+import { createRoute } from '../main';
 import { matchRoutes } from '../main/matchRoutes';
 
 describe('matchRoutes', () => {

@@ -28,7 +28,7 @@ export function matchRoutes(pathname: string, searchParams: Dict, routes: Route[
   for (const route of routes) {
     const match = matchPathname(pathname, route, cache);
 
-    if (match === null || match.nestedPathname !== '/') {
+    if (match === null || match.childPathname !== '/') {
       // No match or pathname cannot be consumed by a route
       continue;
     }
@@ -51,10 +51,10 @@ function matchPathname(pathname: string, route: Route, cache: Map<Route, Pathnam
     if (match === null) {
       return null;
     }
-    pathname = match.nestedPathname;
+    pathname = match.childPathname;
   }
 
-  match = route['_pathnameAdapter'].match(pathname);
+  match = route.pathnameAdapter.match(pathname);
 
   cache.set(route, match);
 
@@ -67,9 +67,9 @@ function getRouteMatches(route: Route, searchParams: Dict, cache: Map<Route, Pat
   const match = cache.get(route)!;
 
   const params =
-    route['_paramsAdapter'] === undefined
+    route.paramsAdapter === undefined
       ? match.params || {}
-      : route['_paramsAdapter'].parse({ ...searchParams, ...match.params });
+      : route.paramsAdapter.parse({ ...searchParams, ...match.params });
 
   routeMatches.unshift({ route, params });
 

@@ -1,4 +1,4 @@
-import { ComponentType, ReactNode } from 'react';
+import { ComponentType } from 'react';
 
 export interface Dict {
   [key: string]: any;
@@ -24,7 +24,7 @@ export interface Location {
   searchParams: Dict;
 
   /**
-   * A URL fragment identifier, beginning with "#".
+   * A URL fragment identifier, beginning with `#`.
    */
   hash: string;
 
@@ -41,7 +41,7 @@ export interface LocationOptions {
   /**
    * A URL fragment identifier.
    *
-   * If hash begins with a "#" then it is used as is. Otherwise, it is encoded using {@link !encodeURIComponent}.
+   * If hash begins with a `#` then it is used as is. Otherwise, it is encoded using {@link !encodeURIComponent}.
    */
   hash?: string;
 
@@ -50,23 +50,6 @@ export interface LocationOptions {
    */
   state?: any;
 }
-
-/**
- * A content rendered by a route:
- *
- * - An arbitrary React node (element, string, number, etc.)
- * - A function that returns a component.
- * - A function that dynamically imports a module that default-exports the component.
- *
- * @example
- * () => import('./UserPage')
- */
-export type RouteContent = (() => PromiseLike<{ default: ComponentType } | ComponentType> | ComponentType) | ReactNode;
-
-/**
- * A fallback rendered by the {@link Outlet} when {@link RouteContent} cannot be rendered for some reason.
- */
-export type RouteFallback = ComponentType | ReactNode;
 
 /**
  * An adapter that can validate and transform route params.
@@ -100,39 +83,53 @@ export interface ParamsAdapter<Params> {
 }
 
 /**
+ * What to render when {@link RouteOptions.lazyComponent} or {@link RouteOptions.loader} are being loaded.
+ *
+ * <dl>
+ *   <dt>"loading"</dt>
+ *   <dd>A {@link RouteOptions.loadingComponent} is always rendered if a route is matched and component or loader are
+ *   being loaded.</dd>
+ *
+ *   <dt>"auto"</dt>
+ *   <dd>If another route is currently rendered then it would be preserved until component and loader of a newly
+ *   matched route are being loaded. Otherwise, a {@link RouteOptions.loadingComponent} is rendered.</dd>
+ * </dl>
+ */
+export type LoadingAppearance = 'loading' | 'auto';
+
+/**
  * Options of a {@link Route}.
  *
  * @template Params Route params.
  * @template Data Data loaded by a route.
- * @template Context A context provided by a {@link Router} for a {@link dataLoader}.
+ * @template Context A context provided by a {@link Router} for a {@link loader}.
  */
 export interface RouteOptions<Params, Data, Context> {
   /**
    * A URL pathname pattern.
    *
-   * Pattern can include params that conform `:[A-Za-z$_][A-Za-z0-9$_]+`, for example `:teamId`.
+   * Pattern can include params that conform `:[A-Za-z$_][A-Za-z0-9$_]+`. For example `"/:userId"`.
    *
-   * Params match the whole segment and cannot be partial:
+   * Params match a whole segment and cannot be partial. For example, `"/teams--:teamId"` is invalid and would throw
+   * a {@link !SyntaxError}, while `"/teams/:teamId"` is valid.
    *
-   * - 🚫`"/teams-:teamId"`
-   * - ✅`"/teams/:teamId"`
-   * - 🚫`"/:category--:productId"`
-   * - ✅`"/:productSlug"`
+   * By default, a param matches a non-empty pathname segment. To make a param optional (so it can match an absent
+   * segment) follow it by a `?` flag. For example: `"/user/:userId?"` matches both `"/user"` and `"/user/37"`.
    *
-   * By default, a param matches a non-empty pathname substring. To make a param optional (so it can match zero
-   * characters) follow it by a `?` flag. For example: `":userId?"`.
+   * Static pathname segments can be optional as well: `"/project/task?/:taskId"`.
    *
-   * You can make a static pathname segment optional as well: `"/project/task?/:taskId"`.
+   * By default, a param matches a single pathname segment. Follow a param with a `*` flag to make it match multiple
+   * segments. For example: `"/:slug*"` matches `"/watch"` and `"/watch/a/movie"`. Such params are called wildcard
+   * params.
    *
-   * By default, a param matches a pathname segment: all characters except a `/`. Follow a param with a `*` flag to make
-   * it match multiple segments. For example: `":slug*"`. Such params are called wildcard params.
-   *
-   * To make param both wildcard and optional, combine `*` and `?` flags: `":slug*?"`
+   * To make param both wildcard and optional, combine `*` and `?` flags: `"/:slug*?"`.
    *
    * To use `:` as a character in a pathname pattern, replace it with an {@link !encodeURIComponent encoded}
    * representation: `%3A`.
+   *
+   * @default "/"
    */
-  pathname: string;
+  pathname?: string;
 
   /**
    * If `true` then {@link pathname} is matched in a case-sensitive manner.
@@ -142,90 +139,55 @@ export interface RouteOptions<Params, Data, Context> {
   isCaseSensitive?: boolean;
 
   /**
-   * A content rendered by a route. If `undefined` then route implicitly renders {@link Outlet}.
+   * A component that is rendered by a route.
+   *
+   * If both {@link component} and {@link lazyComponent} are omitted then a route implicitly renders an {@link Outlet}.
    */
-  content?: RouteContent;
+  component?: ComponentType;
+
+  /**
+   * A lazy-loaded component that is rendered by a route. A component cached forever if a returned {@link !Promise}
+   * is fulfilled.
+   *
+   * @example
+   * () => import('./UserPage')
+   */
+  lazyComponent?: () => PromiseLike<{ default: ComponentType }>;
 
   /**
    * An adapter that can validate and transform params extracted from the {@link Location.pathname} and
-   * {@link Location.searchParams}. Params are available inside the {@link content} through {@link useRouteParams} hook.
+   * {@link Location.searchParams}.
    */
   paramsAdapter?: ParamsAdapter<Params> | ParamsAdapter<Params>['parse'];
 
   /**
-   * Loads data required to render a route. The loaded data is synchronously available inside the {@link content}
-   * through {@link useRouteData} hook.
+   * Loads data required to render a route.
    *
    * @param params Route params extracted from a location.
    * @param context A {@link RouterProps.context} provided to a {@link Router}.
    */
-  dataLoader?: (params: Params, context: Context) => PromiseLike<Data> | Data;
+  loader?: (params: Params, context: Context) => PromiseLike<Data> | Data;
 
   /**
-   * A fallback that is rendered when the route {@link content} or {@link dataLoader data} are being loaded.
+   * A component that is rendered when a {@link lazyComponent} or {@link loader} are being loaded. Render a skeleton or
+   * a spinner in this component to notify user that a new route is being loaded.
    */
-  pendingFallback?: RouteFallback;
+  loadingComponent?: ComponentType;
 
   /**
-   * A fallback that is rendered when an error was thrown during route rendering. An error is available through
-   * {@link useRouteError} hook.
+   * A component that is rendered when an error was thrown during route rendering.
    */
-  errorFallback?: RouteFallback;
+  errorComponent?: ComponentType;
 
   /**
-   * A fallback that is rendered if {@link notFound} was called during route rendering.
+   * A component that is rendered if {@link notFound} was called during route rendering.
    */
-  notFoundFallback?: RouteFallback;
+  notFoundComponent?: ComponentType;
 
   /**
-   * What to render when route is being loaded.
-   *
-   * <dl>
-   *   <dt>"fallback"</dt>
-   *   <dd>A {@link pendingFallback} is always rendered if a route is matched and content or data are being loaded.</dd>
-   *   <dt>"auto"</dt>
-   *   <dd>If another route is currently rendered then it would be preserved until content and data of a newly matched
-   *   route are being loaded. Otherwise, a {@link pendingFallback} is rendered.</dd>
-   * </dl>
+   * What to render when {@link lazyComponent} or {@link loader} are being loaded.
    *
    * @default "auto"
    */
-  pendingBehavior?: 'fallback' | 'auto';
-}
-
-/**
- * A history abstraction.
- */
-export interface History {
-  /**
-   * The current history location.
-   */
-  readonly location: Location;
-
-  /**
-   * Adds an entry to the history stack.
-   *
-   * @param to A location to navigate to.
-   */
-  push(to: To): void;
-
-  /**
-   * Modifies the current history entry, replacing it with the state object and URL passed in the method parameters.
-   *
-   * @param to A location to navigate to.
-   */
-  replace(to: To): void;
-
-  /**
-   * Move back to the previous history entry.
-   */
-  back(): void;
-
-  /**
-   * Subscribe to location changes.
-   *
-   * @param listener A listener to subscribe.
-   * @returns A callback to unsubscribe a listener.
-   */
-  subscribe(listener: () => void): () => void;
+  loadingAppearance?: LoadingAppearance;
 }

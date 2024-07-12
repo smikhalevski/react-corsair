@@ -1,6 +1,6 @@
 import React, { HTMLAttributes, MouseEvent, ReactElement, useEffect } from 'react';
-import { useNavigation } from './hooks';
 import { LocationOptions, To } from './types';
+import { useNavigation } from './useNavigation';
 
 /**
  * Props of the {@link Link} component.
@@ -62,3 +62,5 @@ export function Link(props: LinkProps): ReactElement {
     />
   );
 }
+
+Link.displayName = 'Link';

@@ -1,5 +1,5 @@
-import { SearchParamsAdapter } from './createBrowserHistory';
-import { Dict } from './types';
+import { Dict } from '../types';
+import { SearchParamsAdapter } from './types';
 
 /**
  * Parses URL search params using {@link !URLSearchParams}.

@@ -1,35 +1,24 @@
-export { createBrowserHistory } from './createBrowserHistory';
-export { createMemoryHistory } from './createMemoryHistory';
+export { createBrowserHistory } from './history/createBrowserHistory';
+export { createMemoryHistory } from './history/createMemoryHistory';
+export { useHistorySubscription } from './history/useHistorySubscription';
 export { createRoute } from './createRoute';
-export {
-  useHistorySubscription,
-  useNavigation,
-  useLocation,
-  useRoute,
-  useRouteData,
-  useRouteParams,
-  useRouteError,
-} from './hooks';
 export { Link } from './Link';
 export { Navigation } from './Navigation';
 export { notFound, NotFoundError } from './notFound';
 export { Outlet } from './Outlet';
+export { PathnameAdapter } from './PathnameAdapter';
 export { redirect, Redirect } from './redirect';
 export { Route } from './Route';
 export { Router } from './Router';
+export { useNavigation } from './useNavigation';
 
-export type { BrowserHistoryOptions } from './createBrowserHistory';
-export type { MemoryHistoryOptions } from './createMemoryHistory';
+export type { BrowserHistoryOptions } from './history/createBrowserHistory';
+export type { MemoryHistoryOptions } from './history/createMemoryHistory';
+export type { History, SearchParamsAdapter } from './history/types';
 export type { LinkProps } from './Link';
 export type { OutletProps } from './Outlet';
-export type { RouterProps, NoContextRouterProps } from './Router';
-export type {
-  Dict,
-  To,
-  Location,
-  LocationOptions,
-  RouteOptions,
-  ParamsAdapter,
-  RouteContent,
-  RouteFallback,
-} from './types';
+export type { PathnameMatch } from './PathnameAdapter';
+export type { RouterProps } from './Router';
+export type { RouteContent } from './Route';
+export type { RedirectOptions } from './redirect';
+export type { Dict, To, Location, LocationOptions, RouteOptions, ParamsAdapter, LoadingAppearance } from './types';

@@ -27,14 +27,21 @@ export function redirect(to: To, options?: RedirectOptions): never {
  */
 export class Redirect {
   /**
+   * `true` if a [a permanent redirect](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308) must be rendered.
+   */
+  isPermanent;
+
+  /**
    * Creates a new {@link Redirect} instance.
    *
    * @param location A location to redirect to.
    * @param isPermanent If `true` then
-   * [the permanent redirect](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308) is rendered.
+   * [a permanent redirect](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308) must be rendered.
    */
   constructor(
     public location: Location,
-    public isPermanent = false
-  ) {}
+    isPermanent = false
+  ) {
+    this.isPermanent = isPermanent;
+  }
 }

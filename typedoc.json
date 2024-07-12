@@ -23,5 +23,13 @@
   ],
   "plugin": [
     "typedoc-plugin-mdn-links"
-  ]
+  ],
+  "externalSymbolLinkMappings": {
+    "react": {
+      "ComponentType": "https://react.dev/reference/react/createElement"
+    },
+    "typescript": {
+      "PromiseLike": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise"
+    }
+  }
 }

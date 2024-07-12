@@ -1,7 +1,7 @@
-import { toLocation } from './utils';
 import { matchRoutes } from './matchRoutes';
 import { Router, RouterProps } from './Router';
 import { To } from './types';
+import { toLocation } from './utils';
 
 /**
  * Provides components a way to trigger router navigation.
@@ -49,7 +49,7 @@ export class Navigation {
    */
   prefetch(to: To): boolean {
     const location = toLocation(to);
-    const { routes, context } = this._router.props as RouterProps<unknown>;
+    const { routes, context } = this._router.props;
 
     const routeMatches = matchRoutes(location.pathname, location.searchParams, routes);
 
@@ -57,7 +57,7 @@ export class Navigation {
       return false;
     }
     for (const routeMatch of routeMatches) {
-      routeMatch.route.prefetch(routeMatch.params, context);
+      routeMatch.route.loader(routeMatch.params, context);
     }
     return true;
   }

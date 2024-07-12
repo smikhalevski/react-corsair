@@ -1,34 +1,23 @@
 import { PubSub } from 'parallel-universe';
-import { Dict, History } from './types';
+import { toLocation } from '../utils';
+import { History, SearchParamsAdapter } from './types';
 import { urlSearchParamsAdapter } from './urlSearchParamsAdapter';
-import { parseURL, toLocation, toURL } from './utils';
-
-/**
- * Extracts params from a URL search string and stringifies them back.
- */
-export interface SearchParamsAdapter {
-  /**
-   * Extract params from a URL search string.
-   *
-   * @param search The URL search string to extract params from.
-   */
-  parse(search: string): Dict;
-
-  /**
-   * Stringifies params as a search string.
-   *
-   * @param params Params to stringify.
-   */
-  stringify(params: Dict): string;
-}
+import { parseURL, toURL } from './utils';
 
 /**
  * Options of {@link createBrowserHistory}.
  */
 export interface BrowserHistoryOptions {
   /**
-   * An adapter that extracts params from a URL search string and stringifies them back. By default,
-   * an adapter that relies on {@link !URLSearchParams} is used.
+   * A URL base used by {@link History.toURL}.
+   *
+   * @default window.location.origin
+   */
+  base?: URL | string;
+
+  /**
+   * An adapter that extracts params from a URL search string and stringifies them back. By default, an adapter that
+   * relies on {@link !URLSearchParams} is used.
    */
   searchParamsAdapter?: SearchParamsAdapter;
 }
@@ -38,9 +27,9 @@ export interface BrowserHistoryOptions {
  *
  * @param options History options.
  */
-export function createBrowserHistory(options?: BrowserHistoryOptions): History {
+export function createBrowserHistory(options: BrowserHistoryOptions = {}): History {
+  const { base: defaultBase = window.location.origin, searchParamsAdapter = urlSearchParamsAdapter } = options;
   const pubSub = new PubSub();
-  const searchParamsAdapter = options?.searchParamsAdapter || urlSearchParamsAdapter;
 
   let location = parseURL(window.location.href, searchParamsAdapter);
 
@@ -52,6 +41,10 @@ export function createBrowserHistory(options?: BrowserHistoryOptions): History {
   return {
     get location() {
       return location;
+    },
+
+    toURL(location, base = defaultBase) {
+      return new URL(toURL(location, searchParamsAdapter), base);
     },
 
     push(to) {
