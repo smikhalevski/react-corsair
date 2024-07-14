@@ -1,8 +1,11 @@
 import React, { Component, ComponentType, ReactNode } from 'react';
+import { deriveSlotContent } from './deriveSlotContent';
 import { matchRoutes } from './matchRoutes';
 import { Navigation } from './Navigation';
-import { ChildOutletContentContext, NotFoundOutletContent, Outlet, OutletContent, RouteOutletContent } from './Outlet';
+import { NotFoundSlotContent } from './NotFoundSlotContent';
+import { Outlet } from './Outlet';
 import { Route } from './Route';
+import { ChildSlotContentContext, SlotContent } from './Slot';
 import { Location } from './types';
 import { NavigationContext } from './useNavigation';
 import { isArrayEqual } from './utils';
@@ -83,9 +86,10 @@ interface NoContextRouterProps extends Omit<RouterProps<void>, 'context'> {
 }
 
 interface RouterState {
+  navigation: Navigation;
   location: Location | null;
   routes: Route[];
-  content: OutletContent | null;
+  content: SlotContent | undefined;
 }
 
 /**
@@ -109,31 +113,15 @@ export class Router<Context = void> extends Component<NoContextRouterProps | Rou
 
     const routeMatches = matchRoutes(props.location.pathname, props.location.searchParams, props.routes);
 
-    let content: OutletContent | null = null;
-
-    if (routeMatches === null) {
-      content = new NotFoundOutletContent(props);
-    } else {
-      for (const routeMatch of routeMatches) {
-        content = new RouteOutletContent(content, routeMatch.route, routeMatch.params, props.context);
-      }
-      if (content === null) {
-        throw new Error('Expected at least one route match');
-      }
-
-      content.loadingComponent ||= props.loadingComponent;
-      content.errorComponent ||= props.errorComponent;
-      content.notFoundComponent ||= props.notFoundComponent;
-    }
-
     return {
       location: props.location,
       routes: props.routes,
-      content,
+      content:
+        routeMatches === null
+          ? new NotFoundSlotContent(props.notFoundComponent, props)
+          : deriveSlotContent(state.content, routeMatches, props),
     };
   }
-
-  private _navigation = new Navigation(this);
 
   /**
    * @internal
@@ -142,9 +130,10 @@ export class Router<Context = void> extends Component<NoContextRouterProps | Rou
     super(props);
 
     this.state = {
+      navigation: new Navigation(this),
       location: null,
       routes: props.routes,
-      content: null,
+      content: undefined,
     };
   }
 
@@ -153,10 +142,10 @@ export class Router<Context = void> extends Component<NoContextRouterProps | Rou
    */
   render() {
     return (
-      <NavigationContext.Provider value={this._navigation}>
-        <ChildOutletContentContext.Provider value={this.state.content}>
+      <NavigationContext.Provider value={this.state.navigation}>
+        <ChildSlotContentContext.Provider value={this.state.content}>
           {this.props.children === undefined ? <Outlet /> : this.props.children}
-        </ChildOutletContentContext.Provider>
+        </ChildSlotContentContext.Provider>
       </NavigationContext.Provider>
     );
   }
