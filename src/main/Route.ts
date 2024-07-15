@@ -7,12 +7,11 @@ import { isPromiseLike } from './utils';
 type Squash<T> = { [K in keyof T]: T[K] } & {};
 
 /**
- * A content returned by {@link Route.loader} and rendered by the {@link Outlet} when a route is matched by
- * a {@link Router}.
+ * A content returned by {@link Route.loader}.
  *
  * @template Data Data loaded by a route.
  */
-export interface RouteContent<Data> {
+export interface RouteContent<Data = any> {
   /**
    * A route {@link RouteOptions.component component} .
    */
@@ -70,14 +69,14 @@ export class Route<
   paramsAdapter: ParamsAdapter<Params> | undefined;
 
   /**
-   * A component that is rendered when a {@link loader} is pending.
-   */
-  loadingComponent: ComponentType | undefined;
-
-  /**
    * A component that is rendered when an error was thrown during route rendering.
    */
   errorComponent: ComponentType | undefined;
+
+  /**
+   * A component that is rendered when a {@link loader} is pending.
+   */
+  loadingComponent: ComponentType | undefined;
 
   /**
    * A component that is rendered if {@link notFound} was called during route rendering.
@@ -113,8 +112,8 @@ export class Route<
     this.parent = parent;
     this.pathnameAdapter = new PathnameAdapter(pathname, options.isCaseSensitive);
     this.paramsAdapter = typeof paramsAdapter === 'function' ? { parse: paramsAdapter } : paramsAdapter;
-    this.loadingComponent = options.loadingComponent;
     this.errorComponent = options.errorComponent;
+    this.loadingComponent = options.loadingComponent;
     this.notFoundComponent = options.notFoundComponent;
     this.loadingAppearance = loadingAppearance;
     this.loader = createLoader(options);

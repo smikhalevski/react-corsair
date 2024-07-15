@@ -26,7 +26,8 @@
   ],
   "externalSymbolLinkMappings": {
     "react": {
-      "ComponentType": "https://react.dev/reference/react/createElement"
+      "ComponentType": "https://react.dev/reference/react/createElement",
+      "Suspense": "https://react.dev/reference/react/Suspense"
     },
     "typescript": {
       "PromiseLike": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise"

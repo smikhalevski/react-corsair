@@ -1,81 +1,141 @@
 import { ComponentType } from 'react';
 import { NotFoundError } from './notFound';
-import { Route } from './Route';
-import { SlotContent, SlotContentComponents } from './Slot';
+import { Route, RouteContent } from './Route';
+import { SlotContent } from './Slot';
 import { isPromiseLike } from './utils';
 
+export interface RouterContentOptions {
+  context: unknown;
+  errorComponent?: ComponentType;
+  loadingComponent?: ComponentType;
+  notFoundComponent?: ComponentType;
+}
+
+export interface RouteSlotContentOptions extends RouterContentOptions {
+  /**
+   * A previous content that was rendered in this slot.
+   */
+  prevContent: RouteSlotContent | undefined;
+
+  /**
+   * A content rendered in the child slot.
+   */
+  childContent: RouteSlotContent | undefined;
+  route: Route | undefined;
+  params: unknown;
+}
+
 export class RouteSlotContent implements SlotContent {
+  childContent: RouteSlotContent | undefined;
   promise: Promise<void> | undefined;
-  renderedComponent: ComponentType | undefined;
-  loadingComponent: ComponentType | undefined;
-  errorComponent: ComponentType | undefined;
-  notFoundComponent: ComponentType | undefined;
+  component: ComponentType | undefined;
+  payload: unknown;
+  route: Route | undefined;
+  params: unknown;
   data: unknown;
   error: unknown;
 
-  constructor(
-    readonly prevContent: RouteSlotContent | undefined,
-    readonly childContent: RouteSlotContent | undefined,
-    readonly route: Route,
-    readonly params: unknown,
-    context: unknown,
-    options: SlotContentComponents
-  ) {
-    prevContent?.freeze();
+  protected _options: RouteSlotContentOptions;
+  protected _prevContent: RouteSlotContent | undefined;
 
-    this.loadingComponent = route.loadingComponent || options.loadingComponent;
-    this.errorComponent = route.errorComponent || options.errorComponent;
-    this.notFoundComponent = route.notFoundComponent || options.notFoundComponent;
+  constructor(options: RouteSlotContentOptions) {
+    options.prevContent?._freeze();
 
-    this.promise = this.data = this.error = undefined;
+    if (options.route === undefined) {
+      this._options = options;
+      this._prevContent = this;
+      this.component = options.notFoundComponent;
+      return;
+    }
+
+    Object.assign(this, options.prevContent);
+    this._options = options;
+    this._prevContent = options.prevContent;
+
+    this._load();
+  }
+
+  setError(error: unknown): void {
+    const options = this._prevContent === undefined ? this._options : this._prevContent._options;
+
+    this.childContent = options.childContent;
+    this.component = error instanceof NotFoundError ? options.notFoundComponent : options.errorComponent;
+    this.payload = { error };
+    this.route = options.route;
+    this.params = options.params;
+    this.data = undefined;
+    this.error = error;
+  }
+
+  protected _setRouteContent(content: RouteContent): void {
+    this.childContent = this._options.childContent;
+    this.component = content.component;
+    this.payload = { data: content.data };
+    this.route = this._options.route;
+    this.params = this._options.params;
+    this.data = content.data;
+    this.error = undefined;
+  }
+
+  protected _freeze(): void {
+    this.promise = undefined;
+
+    if (this._prevContent === undefined || this._prevContent === this) {
+      return;
+    }
+    this._prevContent._freeze();
+  }
+
+  protected _load(): void {
+    if (this._options.route === undefined) {
+      return;
+    }
+
+    this.promise = undefined;
 
     let content;
 
     try {
-      content = route.loader(params, context);
+      content = this._options.route.loader(this._options.params, this._options.context);
     } catch (error) {
+      this._prevContent = this;
       this.setError(error);
       return;
     }
 
-    if (isPromiseLike(content)) {
-      const promise = content.then(
-        content => {
-          if (this.promise === promise) {
-            this.promise = undefined;
-            this.renderedComponent = content.component;
-            this.data = content.data;
-          }
-        },
-        error => {
-          if (this.promise === promise) {
-            this.promise = undefined;
-            this.setError(error);
-          }
-        }
-      );
-
-      if (prevContent === undefined || route.loadingAppearance === 'loading') {
-        this.renderedComponent = this.loadingComponent;
-        this.data = undefined;
-      } else {
-        this.renderedComponent = prevContent.renderedComponent;
-        this.data = prevContent.data;
-        this.params = prevContent.params;
-        this.error = prevContent.error;
-      }
-    } else {
-      this.renderedComponent = content.component;
-      this.data = content.data;
+    if (!isPromiseLike(content)) {
+      this._prevContent = this;
+      this._setRouteContent(content);
+      return;
     }
-  }
 
-  setError(error: unknown): void {
-    this.renderedComponent = error instanceof NotFoundError ? this.notFoundComponent : this.errorComponent;
-    this.error = error;
-  }
+    const promise = content.then(
+      content => {
+        if (this.promise === promise) {
+          this.promise = undefined;
+          this._prevContent = this;
+          this._setRouteContent(content);
+        }
+      },
+      error => {
+        if (this.promise === promise) {
+          this.promise = undefined;
+          this._prevContent = this;
+          this.setError(error);
+        }
+      }
+    );
 
-  freeze(): void {
-    this.promise = undefined;
+    this.promise = promise;
+
+    if (this._prevContent === undefined || this._options.route.loadingAppearance === 'loading') {
+      this.childContent = this._options.childContent;
+      this.component = this._options.loadingComponent;
+      this.payload = undefined;
+      this.route = this._options.route;
+      this.params = this._options.params;
+      this.data = undefined;
+      this.error = undefined;
+    }
   }
 }

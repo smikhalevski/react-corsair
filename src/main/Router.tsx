@@ -1,12 +1,11 @@
 import React, { Component, ComponentType, ReactNode } from 'react';
-import { deriveSlotContent } from './deriveSlotContent';
 import { matchRoutes } from './matchRoutes';
-import { Navigation } from './Navigation';
-import { NotFoundSlotContent } from './NotFoundSlotContent';
-import { Outlet } from './Outlet';
+import { Outlet, RouteSlotContentContext } from './Outlet';
 import { Route } from './Route';
-import { ChildSlotContentContext, SlotContent } from './Slot';
 import { Location } from './types';
+import { createRouteSlotContent } from './createRouteSlotContent';
+import { Navigation } from './Navigation';
+import { RouteSlotContent } from './RouteSlotContent';
 import { NavigationContext } from './useNavigation';
 import { isArrayEqual } from './utils';
 
@@ -52,6 +51,14 @@ export interface RouterProps<Context> {
   children?: ReactNode;
 
   /**
+   * A component that is rendered when an error was thrown during route rendering.
+   *
+   * The {@link Router}-level {@link errorComponent} is used only for root routes. Child routes must specify their own
+   * {@link RouteOptions.errorComponent}.
+   */
+  errorComponent?: ComponentType;
+
+  /**
    * A component that is rendered when a {@link RouteOptions.lazyComponent} or {@link RouteOptions.loader} are being
    * loaded. Render a skeleton or a spinner in this component to notify user that a new route is being loaded.
    *
@@ -59,14 +66,6 @@ export interface RouterProps<Context> {
    * {@link RouteOptions.loadingComponent}.
    */
   loadingComponent?: ComponentType;
-
-  /**
-   * A component that is rendered when an error was thrown during route rendering.
-   *
-   * The {@link Router}-level {@link errorComponent} is used only for root routes. Child routes must specify their own
-   * {@link RouteOptions.errorComponent}.
-   */
-  errorComponent?: ComponentType;
 
   /**
    * A component that is rendered in the {@link Outlet} if there is no route in {@link routes} that matches
@@ -89,7 +88,7 @@ interface RouterState {
   navigation: Navigation;
   location: Location | null;
   routes: Route[];
-  content: SlotContent | undefined;
+  contents: RouteSlotContent[];
 }
 
 /**
@@ -116,10 +115,7 @@ export class Router<Context = void> extends Component<NoContextRouterProps | Rou
     return {
       location: props.location,
       routes: props.routes,
-      content:
-        routeMatches === null
-          ? new NotFoundSlotContent(props.notFoundComponent, props)
-          : deriveSlotContent(state.content, routeMatches, props),
+      contents: createRouteSlotContent(state.contents, routeMatches, props),
     };
   }
 
@@ -133,7 +129,7 @@ export class Router<Context = void> extends Component<NoContextRouterProps | Rou
       navigation: new Navigation(this),
       location: null,
       routes: props.routes,
-      content: undefined,
+      contents: [],
     };
   }
 
@@ -143,9 +139,9 @@ export class Router<Context = void> extends Component<NoContextRouterProps | Rou
   render() {
     return (
       <NavigationContext.Provider value={this.state.navigation}>
-        <ChildSlotContentContext.Provider value={this.state.content}>
+        <RouteSlotContentContext.Provider value={this.state.contents[0]}>
           {this.props.children === undefined ? <Outlet /> : this.props.children}
-        </ChildSlotContentContext.Provider>
+        </RouteSlotContentContext.Provider>
       </NavigationContext.Provider>
     );
   }

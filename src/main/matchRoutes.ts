@@ -71,7 +71,7 @@ function getRouteMatches(route: Route, searchParams: Dict, cache: Map<Route, Pat
       ? match.params || {}
       : route.paramsAdapter.parse({ ...searchParams, ...match.params });
 
-  routeMatches.unshift({ route, params });
+  routeMatches.push({ route, params });
 
   return routeMatches;
 }

@@ -1,5 +1,8 @@
 import React, { ReactNode, useContext } from 'react';
-import { ChildSlotContentContext, Slot } from './Slot';
+import { RouteSlotContent } from './RouteSlotContent';
+import { Slot } from './Slot';
+
+export const RouteSlotContentContext = React.createContext<RouteSlotContent | undefined>(undefined);
 
 /**
  * Props of an {@link Outlet}.
@@ -12,15 +15,17 @@ export interface OutletProps {
 }
 
 /**
- * Renders route provided be an enclosing {@link Router}.
+ * Renders a route provided by an enclosing {@link Router}.
  */
 export function Outlet(props: OutletProps): ReactNode {
-  const content = useContext(ChildSlotContentContext);
+  const content = useContext(RouteSlotContentContext);
 
+  if (content === undefined) {
+    return props.children;
+  }
   return (
-    <Slot
-      content={content}
-      children={props.children}
-    />
+    <RouteSlotContentContext.Provider value={content.childContent}>
+      <Slot content={content} />
+    </RouteSlotContentContext.Provider>
   );
 }

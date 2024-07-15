@@ -169,15 +169,15 @@ export interface RouteOptions<Params, Data, Context> {
   loader?: (params: Params, context: Context) => PromiseLike<Data> | Data;
 
   /**
+   * A component that is rendered when an error was thrown during route rendering.
+   */
+  errorComponent?: ComponentType;
+
+  /**
    * A component that is rendered when a {@link lazyComponent} or {@link loader} are being loaded. Render a skeleton or
    * a spinner in this component to notify user that a new route is being loaded.
    */
   loadingComponent?: ComponentType;
-
-  /**
-   * A component that is rendered when an error was thrown during route rendering.
-   */
-  errorComponent?: ComponentType;
 
   /**
    * A component that is rendered if {@link notFound} was called during route rendering.
