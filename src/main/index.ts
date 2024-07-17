@@ -11,6 +11,7 @@ export { redirect, Redirect } from './redirect';
 export { Route } from './Route';
 export { Router } from './Router';
 export { useNavigation } from './useNavigation';
+export { useRouteState } from './useRouteState';
 
 export type { BrowserHistoryOptions } from './history/createBrowserHistory';
 export type { MemoryHistoryOptions } from './history/createMemoryHistory';
@@ -19,6 +20,6 @@ export type { LinkProps } from './Link';
 export type { OutletProps } from './Outlet';
 export type { PathnameMatch } from './PathnameAdapter';
 export type { RouterProps } from './Router';
-export type { RouteContent } from './Route';
 export type { RedirectOptions } from './redirect';
 export type { Dict, To, Location, LocationOptions, RouteOptions, ParamsAdapter, LoadingAppearance } from './types';
+export type { RouteState } from './useRouteState';

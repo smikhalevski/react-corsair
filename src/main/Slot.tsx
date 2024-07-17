@@ -1,34 +1,16 @@
-import React, { Component, ComponentType, createElement, ReactNode, Suspense } from 'react';
+import React, { Component, createElement, memo, ReactNode, Suspense } from 'react';
+import { RouteContent, SlotValue } from './SlotValue';
 
-/**
- * The content rendered in a {@link Slot}.
- */
-export interface SlotContent {
-  /**
-   * A component that is rendered in a {@link Slot}.
-   */
-  component: ComponentType | undefined;
+export const SlotValueContext = React.createContext<SlotValue | undefined>(undefined);
 
-  /**
-   * A payload that is marshalled to a client during SSR.
-   */
-  payload: unknown;
+SlotValueContext.displayName = 'SlotValueContext';
 
-  /**
-   * A {@link !Promise} thrown in a {@link !Suspense} body if defined.
-   */
-  promise: Promise<void> | undefined;
+export const RouteContentContext = React.createContext<RouteContent | undefined>(undefined);
 
-  /**
-   * Associates an error with the content in this slot.
-   *
-   * @param error An error to associate.
-   */
-  setError(error: unknown): void;
-}
+RouteContentContext.displayName = 'RouteContentContext';
 
-export interface SlotProps {
-  content: SlotContent;
+interface SlotProps {
+  value: SlotValue;
 }
 
 interface SlotState {
@@ -36,66 +18,79 @@ interface SlotState {
   error: unknown;
 }
 
-export class Slot extends Component<SlotProps, SlotState> {
-  constructor(props: SlotProps) {
-    super(props);
+/**
+ * Renders a volatile value that reflects a route content.
+ */
+export const Slot = memo(
+  class extends Component<SlotProps, SlotState> {
+    static displayName = 'Slot';
 
-    this.state = { hasError: false, error: undefined };
-  }
+    constructor(props: SlotProps) {
+      super(props);
 
-  static getDerivedStateFromError(error: unknown): Partial<SlotState> | null {
-    return { hasError: true, error };
-  }
-
-  static getDerivedStateFromProps(nextProps: Readonly<SlotProps>, prevState: SlotState): Partial<SlotState> | null {
-    if (prevState.hasError) {
-      // Move error to the content
-      nextProps.content.setError(prevState.error);
-
-      return { hasError: false, error: undefined };
+      this.state = { hasError: false, error: undefined };
     }
-    return null;
-  }
 
-  render(): ReactNode {
-    const { props } = this;
+    static getDerivedStateFromError(error: unknown): Partial<SlotState> | null {
+      return { hasError: true, error };
+    }
 
-    return (
-      <Suspense
-        fallback={
+    static getDerivedStateFromProps(nextProps: Readonly<SlotProps>, prevState: SlotState): Partial<SlotState> | null {
+      if (prevState.hasError) {
+        // Move error to the content
+        nextProps.value.setError(prevState.error);
+
+        return { hasError: false, error: undefined };
+      }
+      return null;
+    }
+
+    componentWillUnmount(): void {
+      this.props.value.freeze();
+    }
+
+    render(): ReactNode {
+      const { props } = this;
+
+      return (
+        <Suspense
+          fallback={
+            <SlotRenderer
+              isSuspended={true}
+              value={props.value}
+            />
+          }
+        >
           <SlotRenderer
-            isSuspendable={false}
-            content={props.content}
+            isSuspended={false}
+            value={props.value}
           />
-        }
-      >
-        <SlotRenderer
-          isSuspendable={true}
-          content={props.content}
-        />
-      </Suspense>
-    );
-  }
-}
+        </Suspense>
+      );
+    }
+  },
+  (prevProps, nextProps) => prevProps.value === nextProps.value
+);
 
 interface SlotRendererProps {
-  isSuspendable: boolean;
-  content: SlotContent;
+  isSuspended: boolean;
+  value: SlotValue;
 }
 
-function SlotRenderer({ isSuspendable, content }: SlotRendererProps): ReactNode {
-  if (isSuspendable && content.promise !== undefined) {
-    throw content.promise;
+function SlotRenderer({ isSuspended, value }: SlotRendererProps): ReactNode {
+  const component = isSuspended ? value.fallbackComponent : value.component;
+
+  if (!isSuspended && value.promise !== undefined) {
+    throw value.promise;
   }
-  if (content.component === undefined) {
+  if (component === undefined) {
     return null;
   }
   return (
-    <>
-      {createElement(content.component)}
-      {content.payload !== undefined && (
-        <script dangerouslySetInnerHTML={{ __html: 'var e=document.currentScript;e&&e.parentNode.removeChild(e)' }} />
-      )}
-    </>
+    <RouteContentContext.Provider value={value.routeContent}>
+      <SlotValueContext.Provider value={value.childValue}>{createElement(component)}</SlotValueContext.Provider>
+    </RouteContentContext.Provider>
   );
 }
+
+SlotRenderer.displayName = 'SlotRenderer';

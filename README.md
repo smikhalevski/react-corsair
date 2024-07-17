@@ -32,11 +32,11 @@ import { createRoute } from 'react-corsair';
 
 const userRoute = createRoute({
   pathname: '/user',
-  content: () => import('./UserPage')
+  lazyComponent: () => import('./UserPage')
 });
 ```
 
-Render [`Router`](https://smikhalevski.github.io/react-corsair/classes/RouterProvider.html) component to set up
+Render [`Router`](https://smikhalevski.github.io/react-corsair/classes/Router.html) component to set up
 the router:
 
 ```tsx

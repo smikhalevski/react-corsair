@@ -1,27 +1,9 @@
 import { ComponentType } from 'react';
-import { Outlet } from './Outlet';
 import { PathnameAdapter } from './PathnameAdapter';
 import { Dict, LoadingAppearance, Location, LocationOptions, ParamsAdapter, RouteOptions } from './types';
-import { isPromiseLike } from './utils';
+import { Outlet } from './Outlet';
 
 type Squash<T> = { [K in keyof T]: T[K] } & {};
-
-/**
- * A content returned by {@link Route.loader}.
- *
- * @template Data Data loaded by a route.
- */
-export interface RouteContent<Data = any> {
-  /**
-   * A route {@link RouteOptions.component component} .
-   */
-  component: ComponentType;
-
-  /**
-   * Data loaded by a {@link RouteOptions.loader}.
-   */
-  data: Data;
-}
 
 /**
  * A route that can be rendered by a router.
@@ -29,7 +11,7 @@ export interface RouteContent<Data = any> {
  * @template Parent A parent route or `null` if there is no parent.
  * @template Params Route params.
  * @template Data Data loaded by a route.
- * @template Context A context provided by a {@link Router} for a {@link RouteOptions.loader}.
+ * @template Context A context required by a data loader.
  */
 export class Route<
   Parent extends Route<any, any, Context> | null = any,
@@ -74,7 +56,7 @@ export class Route<
   errorComponent: ComponentType | undefined;
 
   /**
-   * A component that is rendered when a {@link loader} is pending.
+   * A component that is rendered when a component or data are being loaded.
    */
   loadingComponent: ComponentType | undefined;
 
@@ -84,17 +66,22 @@ export class Route<
   notFoundComponent: ComponentType | undefined;
 
   /**
-   * What to render when a {@link loader} is pending.
+   * What to render when a component or data are being loaded.
    */
   loadingAppearance: LoadingAppearance;
 
   /**
-   * Loads a component and data that are rendered in an {@link Outlet}.
+   * Loads data required to render a route.
    *
-   * @param params Route params.
-   * @param context A context provided by a {@link Router} for a {@link RouteOptions.loader}.
+   * @param params Route params extracted from a location.
+   * @param context A {@link RouterProps.context} provided to a {@link Router}.
    */
-  loader: (params: Params, context: Context) => Promise<RouteContent<Data>> | RouteContent<Data>;
+  loader: ((params: Params, context: Context) => PromiseLike<Data> | Data) | undefined;
+
+  /**
+   * Loads and caches a route component.
+   */
+  getComponent: () => Promise<ComponentType> | ComponentType;
 
   /**
    * Creates a new instance of a {@link Route}.
@@ -107,16 +94,50 @@ export class Route<
    * @template Context A context provided by a {@link Router} for a {@link RouteOptions.loader}.
    */
   constructor(parent: Parent, options: RouteOptions<Params, Data, Context> = {}) {
-    const { pathname = '/', paramsAdapter, loadingAppearance = 'auto' } = options;
+    const { lazyComponent, paramsAdapter } = options;
 
     this.parent = parent;
-    this.pathnameAdapter = new PathnameAdapter(pathname, options.isCaseSensitive);
+    this.pathnameAdapter = new PathnameAdapter(options.pathname || '/', options.isCaseSensitive);
     this.paramsAdapter = typeof paramsAdapter === 'function' ? { parse: paramsAdapter } : paramsAdapter;
     this.errorComponent = options.errorComponent;
     this.loadingComponent = options.loadingComponent;
     this.notFoundComponent = options.notFoundComponent;
-    this.loadingAppearance = loadingAppearance;
-    this.loader = createLoader(options);
+    this.loadingAppearance = options.loadingAppearance || 'auto';
+    this.loader = options.loader;
+
+    let component: Promise<ComponentType> | ComponentType | undefined = options.component;
+
+    if (component !== undefined && lazyComponent !== undefined) {
+      throw new Error('Route must have either a component or a lazyComponent');
+    }
+
+    if (component === undefined && lazyComponent === undefined) {
+      component = Outlet;
+    }
+
+    this.getComponent = () => {
+      if (component !== undefined) {
+        return component;
+      }
+
+      component = Promise.resolve(lazyComponent!()).then(
+        module => {
+          component = module.default;
+
+          if (typeof component === 'function') {
+            return component;
+          }
+          component = undefined;
+          throw new TypeError('Module must default-export a component');
+        },
+        error => {
+          component = undefined;
+          throw error;
+        }
+      );
+
+      return component;
+    };
   }
 
   /**
@@ -184,53 +205,27 @@ export class Route<
    * @param params Route params.
    * @param context A context provided to a {@link RouteOptions.loader}.
    */
-  prefetch(params: this['_params'], context: Context): void {
+  prefetch(params: this['_params'], context: 0 extends 1 & Context ? void : never): void;
+
+  /**
+   * Prefetches a component and data of this route and its ancestors.
+   *
+   * @param params Route params.
+   * @param context A context provided to a {@link RouteOptions.loader}.
+   */
+  prefetch(params: this['_params'], context: Context): void;
+
+  prefetch(params: this['_params'], context: unknown): void {
     for (let route: Route | null = this; route !== null; route = route.parent) {
-      route.loader(params, context);
-    }
-  }
-}
-
-/**
- * Creates a function that loads the component and its data. The component is loaded only once, if an error occurs
- * during loading, then component is loaded the next time the loader is called.
- */
-function createLoader<Params, Data, Context>(options: RouteOptions<Params, Data, Context>): Route['loader'] {
-  const { lazyComponent, loader } = options;
-
-  let component: PromiseLike<ComponentType> | ComponentType | undefined = options.component;
-
-  if (component !== undefined && lazyComponent !== undefined) {
-    throw new Error('Route must have either component or lazyComponent');
-  }
-
-  if (component === undefined && lazyComponent === undefined) {
-    component = Outlet;
-  }
-
-  return (params, context) => {
-    component ||= lazyComponent!().then(
-      module => {
-        component = module.default;
-
-        if (typeof component === 'function') {
-          return component;
-        }
-        component = undefined;
-        throw new TypeError('Module must default-export a component');
-      },
-      error => {
-        component = undefined;
-        throw error;
+      try {
+        route.getComponent();
+        route.loader?.(params, context);
+      } catch (error) {
+        setTimeout(() => {
+          // Force uncaught exception
+          throw error;
+        }, 0);
       }
-    );
-
-    const data = loader?.(params, context);
-
-    if (isPromiseLike(component) || isPromiseLike(data)) {
-      return Promise.all([component, data]).then(([component, data]) => ({ component, data }));
     }
-
-    return { component, data };
-  };
+  }
 }

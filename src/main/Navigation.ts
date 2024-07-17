@@ -41,7 +41,7 @@ export class Navigation {
   }
 
   /**
-   * Prefetch the content and data of a route and its ancestors matched by a location.
+   * Prefetch a content of a route matched by a location and content of its ancestors.
    *
    * @param to A location or route.
    * @returns `true` if the route was prefetched, or `false` if there's no route in the router that matches the provided
@@ -50,15 +50,12 @@ export class Navigation {
   prefetch(to: To): boolean {
     const location = toLocation(to);
     const { routes, context } = this._router.props;
+    const routeMatch = matchRoutes(location.pathname, location.searchParams, routes)?.pop();
 
-    const routeMatches = matchRoutes(location.pathname, location.searchParams, routes);
-
-    if (routeMatches === null) {
+    if (routeMatch === undefined) {
       return false;
     }
-    for (const routeMatch of routeMatches) {
-      routeMatch.route.loader(routeMatch.params, context);
-    }
+    routeMatch.route.prefetch(routeMatch.params, context);
     return true;
   }
 }

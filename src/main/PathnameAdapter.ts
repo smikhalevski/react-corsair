@@ -153,7 +153,7 @@ const STAGE_OPTIONAL = 4;
 /**
  * A result of a pathname pattern parsing.
  */
-interface Template {
+interface PathnameTemplate {
   /**
    * A non-empty array of segments and param names extracted from a pathname pattern.
    */
@@ -168,7 +168,7 @@ interface Template {
 /**
  * Parses pathname pattern as a template.
  */
-export function parsePathname(pathname: string): Template {
+export function parsePathname(pathname: string): PathnameTemplate {
   const segments = [];
   const flags = [];
 
@@ -261,7 +261,7 @@ export function parsePathname(pathname: string): Template {
 /**
  * Creates a {@link !RegExp} that matches a pathname template.
  */
-export function createPathnameRegExp(template: Template, isCaseSensitive = false): RegExp {
+export function createPathnameRegExp(template: PathnameTemplate, isCaseSensitive = false): RegExp {
   const { segments, flags } = template;
 
   let pattern = '^';

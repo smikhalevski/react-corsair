@@ -1,12 +1,12 @@
 import React, { Component, ComponentType, ReactNode } from 'react';
-import { matchRoutes } from './matchRoutes';
-import { Outlet, RouteSlotContentContext } from './Outlet';
+import { matchRoutes, RouteMatch } from './matchRoutes';
+import { Navigation } from './Navigation';
+import { Outlet } from './Outlet';
 import { Route } from './Route';
 import { Location } from './types';
-import { createRouteSlotContent } from './createRouteSlotContent';
-import { Navigation } from './Navigation';
-import { RouteSlotContent } from './RouteSlotContent';
 import { NavigationContext } from './useNavigation';
+import { SlotValueContext } from './Slot';
+import { SlotValue } from './SlotValue';
 import { isArrayEqual } from './utils';
 
 /**
@@ -88,7 +88,7 @@ interface RouterState {
   navigation: Navigation;
   location: Location | null;
   routes: Route[];
-  contents: RouteSlotContent[];
+  slotValues: SlotValue[];
 }
 
 /**
@@ -115,7 +115,7 @@ export class Router<Context = void> extends Component<NoContextRouterProps | Rou
     return {
       location: props.location,
       routes: props.routes,
-      contents: createRouteSlotContent(state.contents, routeMatches, props),
+      slotValues: createSlotValues(state.slotValues, routeMatches, props),
     };
   }
 
@@ -129,7 +129,7 @@ export class Router<Context = void> extends Component<NoContextRouterProps | Rou
       navigation: new Navigation(this),
       location: null,
       routes: props.routes,
-      contents: [],
+      slotValues: [],
     };
   }
 
@@ -139,10 +139,49 @@ export class Router<Context = void> extends Component<NoContextRouterProps | Rou
   render() {
     return (
       <NavigationContext.Provider value={this.state.navigation}>
-        <RouteSlotContentContext.Provider value={this.state.contents[0]}>
+        <SlotValueContext.Provider value={this.state.slotValues[0]}>
           {this.props.children === undefined ? <Outlet /> : this.props.children}
-        </RouteSlotContentContext.Provider>
+        </SlotValueContext.Provider>
       </NavigationContext.Provider>
     );
   }
+}
+
+export function createSlotValues(
+  oldSlotValues: SlotValue[],
+  routeMatches: RouteMatch[] | null,
+  routerProps: RouterProps<any>
+): SlotValue[] {
+  const { context, errorComponent, loadingComponent, notFoundComponent } = routerProps;
+
+  if (routeMatches === null) {
+    // Not found
+    return [
+      new SlotValue({
+        errorComponent,
+        loadingComponent,
+        notFoundComponent,
+      }),
+    ];
+  }
+
+  const slotValues: SlotValue[] = [];
+
+  // Matched a route
+  for (let i = routeMatches.length; i-- > 0; ) {
+    const route = routeMatches[i].route;
+
+    slotValues[i] = new SlotValue({
+      oldValue: oldSlotValues[i],
+      childValue: slotValues[i + 1],
+      route,
+      params: routeMatches[i].params,
+      context,
+      errorComponent: i === 0 ? errorComponent : undefined,
+      loadingComponent: i === 0 ? loadingComponent : undefined,
+      notFoundComponent: i === 0 ? notFoundComponent : undefined,
+    });
+  }
+
+  return slotValues;
 }

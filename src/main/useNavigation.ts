@@ -12,7 +12,7 @@ export function useNavigation(): Navigation {
   const navigation = useContext(NavigationContext);
 
   if (navigation === null) {
-    throw new Error('Forbidden outside of a router');
+    throw new Error('Forbidden outside of a Router');
   }
   return navigation;
 }

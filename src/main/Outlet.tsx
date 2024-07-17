@@ -1,15 +1,12 @@
 import React, { ReactNode, useContext } from 'react';
-import { RouteSlotContent } from './RouteSlotContent';
-import { Slot } from './Slot';
-
-export const RouteSlotContentContext = React.createContext<RouteSlotContent | undefined>(undefined);
+import { Slot, SlotValueContext } from './Slot';
 
 /**
  * Props of an {@link Outlet}.
  */
 export interface OutletProps {
   /**
-   * A content that is rendered if there's nothing render.
+   * A content that is rendered if there's no route to render.
    */
   children?: ReactNode;
 }
@@ -18,14 +15,9 @@ export interface OutletProps {
  * Renders a route provided by an enclosing {@link Router}.
  */
 export function Outlet(props: OutletProps): ReactNode {
-  const content = useContext(RouteSlotContentContext);
+  const value = useContext(SlotValueContext);
 
-  if (content === undefined) {
-    return props.children;
-  }
-  return (
-    <RouteSlotContentContext.Provider value={content.childContent}>
-      <Slot content={content} />
-    </RouteSlotContentContext.Provider>
-  );
+  return value === undefined ? props.children : <Slot value={value} />;
 }
+
+Outlet.displayName = 'Outlet';
