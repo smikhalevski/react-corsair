@@ -103,7 +103,7 @@ describe('Route', () => {
   });
 
   describe('getComponent', () => {
-    const ComponentMock: FC = () => null;
+    const Component: FC = () => null;
 
     test('returns an Outlet if there is no component', () => {
       const route = createRoute({});
@@ -114,26 +114,26 @@ describe('Route', () => {
     test('throws if both component and lazyComponent are provided', () => {
       expect(() =>
         createRoute({
-          component: ComponentMock,
-          lazyComponent: () => Promise.resolve({ default: ComponentMock }),
+          component: Component,
+          lazyComponent: () => Promise.resolve({ default: Component }),
         })
       ).toThrow(new Error('Route must have either a component or a lazyComponent'));
     });
 
     test('returns a component', () => {
       const route = createRoute({
-        component: ComponentMock,
+        component: Component,
       });
 
-      expect(route.getComponent()).toEqual(ComponentMock);
+      expect(route.getComponent()).toEqual(Component);
     });
 
     test('loads a lazy component', async () => {
       const route = createRoute({
-        lazyComponent: () => Promise.resolve({ default: ComponentMock }),
+        lazyComponent: () => Promise.resolve({ default: Component }),
       });
 
-      await expect(route.getComponent()).resolves.toEqual(ComponentMock);
+      await expect(route.getComponent()).resolves.toEqual(Component);
     });
 
     test('throws if lazy component module does not default-export a function', async () => {
@@ -153,7 +153,7 @@ describe('Route', () => {
     });
 
     test('does not load a lazy component twice', async () => {
-      const lazyComponentMock = jest.fn(() => Promise.resolve({ default: ComponentMock }));
+      const lazyComponentMock = jest.fn(() => Promise.resolve({ default: Component }));
 
       const route = createRoute({
         lazyComponent: lazyComponentMock,
@@ -171,7 +171,7 @@ describe('Route', () => {
         .fn()
         .mockReturnValueOnce(Promise.resolve(111))
         .mockReturnValueOnce(Promise.resolve(222))
-        .mockReturnValueOnce(Promise.resolve({ default: ComponentMock }));
+        .mockReturnValueOnce(Promise.resolve({ default: Component }));
 
       const route = createRoute({
         lazyComponent: lazyComponentMock,
@@ -179,13 +179,13 @@ describe('Route', () => {
 
       await expect(() => route.getComponent()).rejects.toEqual(expect.any(TypeError));
       await expect(() => route.getComponent()).rejects.toEqual(expect.any(TypeError));
-      await expect(route.getComponent()).resolves.toEqual(ComponentMock);
+      await expect(route.getComponent()).resolves.toEqual(Component);
 
       expect(lazyComponentMock).toHaveBeenCalledTimes(3);
     });
 
     test('returns lazy component synchronously after the first call', async () => {
-      const lazyComponentMock = jest.fn(() => Promise.resolve({ default: ComponentMock }));
+      const lazyComponentMock = jest.fn(() => Promise.resolve({ default: Component }));
 
       const route = createRoute({
         lazyComponent: lazyComponentMock,
@@ -193,7 +193,7 @@ describe('Route', () => {
 
       await route.getComponent();
 
-      expect(route.getComponent()).toEqual(ComponentMock);
+      expect(route.getComponent()).toEqual(Component);
     });
   });
 

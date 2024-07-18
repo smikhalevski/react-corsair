@@ -1,4 +1,4 @@
-import { PathnameMatch } from './PathnameAdapter';
+import { PathnameMatch } from './PathnameTemplate';
 import { Route } from './Route';
 import { Dict } from './types';
 
@@ -54,7 +54,7 @@ function matchPathname(pathname: string, route: Route, cache: Map<Route, Pathnam
     pathname = match.childPathname;
   }
 
-  match = route.pathnameAdapter.match(pathname);
+  match = route.pathnameTemplate.match(pathname);
 
   cache.set(route, match);
 

@@ -1,7 +1,7 @@
 import { Dict } from './types';
 
 /**
- * A result returned by {@link PathnameAdapter.match} on a successful pathname match.
+ * A result returned by {@link PathnameTemplate.match} on a successful pathname match.
  */
 export interface PathnameMatch {
   /**
@@ -21,13 +21,18 @@ export interface PathnameMatch {
 }
 
 /**
- * Parses a pathname pattern, matches a pathname against this pattern, and creates a pathname from params and a pattern.
+ * A template of a pathname pattern.
  */
-export class PathnameAdapter {
+export class PathnameTemplate {
   /**
    * Names of template params.
    */
   readonly paramNames: ReadonlySet<string>;
+
+  /**
+   * `true` if pathname is matched in a case-sensitive manner.
+   */
+  readonly isCaseSensitive: boolean;
 
   /**
    * An array that contains segments and param names.
@@ -45,26 +50,23 @@ export class PathnameAdapter {
   protected _regExp: RegExp;
 
   /**
-   * Creates a new {@link PathnameAdapter} instance.
+   * Creates a new {@link PathnameTemplate} instance.
    *
-   * @param pathname A pathname pattern.
+   * @param pattern A pathname pattern from which a template is derived.
    * @param isCaseSensitive If `true` then pathname is matched in a case-sensitive manner.
    */
-  constructor(pathname: string, isCaseSensitive = false) {
-    const template = parsePathname(pathname);
-    const paramNames = new Set<string>();
+  constructor(
+    readonly pattern: string,
+    isCaseSensitive = false
+  ) {
+    const template = parsePattern(pattern);
 
-    for (let i = 0; i < template.segments.length; ++i) {
-      if ((template.flags[i] & FLAG_PARAM) === FLAG_PARAM) {
-        paramNames.add(template.segments[i]);
-      }
-    }
-
-    this.paramNames = paramNames;
+    this.paramNames = template.paramNames;
+    this.isCaseSensitive = isCaseSensitive;
 
     this._segments = template.segments;
     this._flags = template.flags;
-    this._regExp = createPathnameRegExp(template, isCaseSensitive);
+    this._regExp = createPatternRegExp(template, isCaseSensitive);
   }
 
   /**
@@ -153,7 +155,7 @@ const STAGE_OPTIONAL = 4;
 /**
  * A result of a pathname pattern parsing.
  */
-interface PathnameTemplate {
+interface Template {
   /**
    * A non-empty array of segments and param names extracted from a pathname pattern.
    */
@@ -163,20 +165,26 @@ interface PathnameTemplate {
    * An array of bitmasks that holds {@link segments} metadata.
    */
   flags: number[];
+
+  /**
+   * Names of pattern params.
+   */
+  paramNames: ReadonlySet<string>;
 }
 
 /**
- * Parses pathname pattern as a template.
+ * Parses pathname pattern as segments and flags.
  */
-export function parsePathname(pathname: string): PathnameTemplate {
+export function parsePattern(pattern: string): Template {
   const segments = [];
   const flags = [];
+  const paramNames = new Set<string>();
 
   let stage = STAGE_SEPARATOR;
   let segmentIndex = 0;
 
-  for (let i = 0, charCode, paramIndex; i < pathname.length; ) {
-    switch (pathname.charCodeAt(i)) {
+  for (let i = 0, charCode, paramIndex, paramName; i < pattern.length; ) {
+    switch (pattern.charCodeAt(i)) {
       case 58 /* : */:
         if (stage !== STAGE_SEPARATOR) {
           throw new SyntaxError('Unexpected param at ' + i);
@@ -185,7 +193,7 @@ export function parsePathname(pathname: string): PathnameTemplate {
         paramIndex = ++i;
 
         while (
-          ((charCode = pathname.charCodeAt(i)),
+          ((charCode = pattern.charCodeAt(i)),
           (i > paramIndex && charCode >= 48 && charCode <= 57) /* 0-9 */ ||
             (charCode >= 65 && charCode <= 90) /* A-Z */ ||
             (charCode >= 97 && charCode <= 122) /* a-z */ ||
@@ -199,7 +207,9 @@ export function parsePathname(pathname: string): PathnameTemplate {
           throw new SyntaxError('Param must have a name at ' + i);
         }
 
-        segments.push(pathname.substring(paramIndex, i));
+        paramName = pattern.substring(paramIndex, i);
+        paramNames.add(paramName);
+        segments.push(paramName);
         flags.push(FLAG_PARAM);
         stage = STAGE_PARAM;
         break;
@@ -215,7 +225,7 @@ export function parsePathname(pathname: string): PathnameTemplate {
 
       case 63 /* ? */:
         if (stage === STAGE_SEPARATOR || stage === STAGE_SEGMENT) {
-          segments.push(pathname.substring(segmentIndex, i));
+          segments.push(pattern.substring(segmentIndex, i));
           flags.push(FLAG_OPTIONAL);
           stage = STAGE_OPTIONAL;
           ++i;
@@ -233,7 +243,7 @@ export function parsePathname(pathname: string): PathnameTemplate {
 
       case 47 /* / */:
         if (i !== 0 && (stage === STAGE_SEPARATOR || stage === STAGE_SEGMENT)) {
-          segments.push(pathname.substring(segmentIndex, i));
+          segments.push(pattern.substring(segmentIndex, i));
           flags.push(0);
         }
         stage = STAGE_SEPARATOR;
@@ -251,19 +261,17 @@ export function parsePathname(pathname: string): PathnameTemplate {
   }
 
   if (stage === STAGE_SEPARATOR || stage === STAGE_SEGMENT) {
-    segments.push(pathname.substring(segmentIndex));
+    segments.push(pattern.substring(segmentIndex));
     flags.push(0);
   }
 
-  return { segments, flags };
+  return { segments, flags, paramNames };
 }
 
 /**
  * Creates a {@link !RegExp} that matches a pathname template.
  */
-export function createPathnameRegExp(template: PathnameTemplate, isCaseSensitive = false): RegExp {
-  const { segments, flags } = template;
-
+export function createPatternRegExp({ segments, flags }: Template, isCaseSensitive = false): RegExp {
   let pattern = '^';
 
   for (let i = 0, segment, flag, segmentPattern; i < segments.length; ++i) {

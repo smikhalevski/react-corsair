@@ -1,7 +1,7 @@
 import { ComponentType } from 'react';
-import { PathnameAdapter } from './PathnameAdapter';
-import { Dict, LoadingAppearance, Location, LocationOptions, ParamsAdapter, RouteOptions } from './types';
 import { Outlet } from './Outlet';
+import { PathnameTemplate } from './PathnameTemplate';
+import { Dict, LoadingAppearance, Location, LocationOptions, ParamsAdapter, RouteOptions } from './types';
 
 type Squash<T> = { [K in keyof T]: T[K] } & {};
 
@@ -39,10 +39,9 @@ export class Route<
   readonly parent: Parent;
 
   /**
-   * Parses a pathname pattern, matches a pathname against this pattern, and creates a pathname from params and
-   * a pattern.
+   * A template of a pathname pattern.
    */
-  pathnameAdapter: PathnameAdapter;
+  pathnameTemplate: PathnameTemplate;
 
   /**
    * An adapter that can validate and transform params extracted from the {@link Location.pathname} and
@@ -97,7 +96,7 @@ export class Route<
     const { lazyComponent, paramsAdapter } = options;
 
     this.parent = parent;
-    this.pathnameAdapter = new PathnameAdapter(options.pathname || '/', options.isCaseSensitive);
+    this.pathnameTemplate = new PathnameTemplate(options.pathname || '/', options.isCaseSensitive);
     this.paramsAdapter = typeof paramsAdapter === 'function' ? { parse: paramsAdapter } : paramsAdapter;
     this.errorComponent = options.errorComponent;
     this.loadingComponent = options.loadingComponent;
@@ -147,7 +146,7 @@ export class Route<
    * @param options Location options.
    */
   getLocation(params: this['_params'], options?: LocationOptions): Location {
-    const { parent, pathnameAdapter, paramsAdapter } = this;
+    const { parent, pathnameTemplate, paramsAdapter } = this;
 
     let pathname;
     let searchParams: Dict = {};
@@ -157,12 +156,12 @@ export class Route<
     if (params === undefined) {
       // No params = no search params
       searchParams = {};
-      pathname = pathnameAdapter.toPathname(undefined);
+      pathname = pathnameTemplate.toPathname(undefined);
     } else {
       if (paramsAdapter === undefined || paramsAdapter.toSearchParams === undefined) {
         // Search params = params omit pathname params
         for (const name in params) {
-          if (params.hasOwnProperty(name) && !pathnameAdapter.paramNames.has(name)) {
+          if (params.hasOwnProperty(name) && !pathnameTemplate.paramNames.has(name)) {
             searchParams[name] = params[name];
           }
         }
@@ -170,7 +169,7 @@ export class Route<
         searchParams = paramsAdapter.toSearchParams(params);
       }
 
-      pathname = pathnameAdapter.toPathname(
+      pathname = pathnameTemplate.toPathname(
         paramsAdapter === undefined || paramsAdapter.toPathnameParams === undefined ? params : undefined
       );
     }
