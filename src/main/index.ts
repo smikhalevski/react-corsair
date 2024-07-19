@@ -1,4 +1,5 @@
 export { createBrowserHistory } from './history/createBrowserHistory';
+export { createHashHistory } from './history/createHashHistory';
 export { createMemoryHistory } from './history/createMemoryHistory';
 export { Link } from './history/Link';
 export { useHistorySubscription } from './history/useHistorySubscription';
@@ -14,10 +15,9 @@ export { Router } from './Router';
 export { useNavigation } from './useNavigation';
 export { useRouteState } from './useRouteState';
 
-export type { BrowserHistoryOptions } from './history/createBrowserHistory';
 export type { MemoryHistoryOptions } from './history/createMemoryHistory';
 export type { LinkProps } from './history/Link';
-export type { History, SearchParamsAdapter } from './history/types';
+export type { HistoryOptions, History, SearchParamsAdapter } from './history/types';
 export type { OutletProps } from './Outlet';
 export type { PathnameMatch } from './PathnameTemplate';
 export type { RouterProps } from './Router';

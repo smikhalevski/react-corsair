@@ -1,29 +1,18 @@
 import { PubSub } from 'parallel-universe';
 import { Location } from '../types';
-import { History, SearchParamsAdapter } from './types';
-import { urlSearchParamsAdapter } from './urlSearchParamsAdapter';
 import { toLocation } from '../utils';
+import { History, HistoryOptions } from './types';
+import { urlSearchParamsAdapter } from './urlSearchParamsAdapter';
 import { toURL } from './utils';
 
 /**
  * Options of {@link createMemoryHistory}.
  */
-export interface MemoryHistoryOptions {
+export interface MemoryHistoryOptions extends HistoryOptions {
   /**
    * A non-empty array of initial history entries.
    */
   initialEntries: Location[];
-
-  /**
-   * A default URL base used by {@link History.toURL}.
-   */
-  base?: URL | string;
-
-  /**
-   * An adapter that extracts params from a URL search string and stringifies them back. By default, an adapter that
-   * relies on {@link !URLSearchParams} is used.
-   */
-  searchParamsAdapter?: SearchParamsAdapter;
 }
 
 /**

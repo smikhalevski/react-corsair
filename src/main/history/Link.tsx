@@ -1,4 +1,4 @@
-import React, { forwardRef, HTMLAttributes, useContext, useEffect } from 'react';
+import React, { forwardRef, HTMLAttributes, useContext, useEffect, MouseEvent } from 'react';
 import { LocationOptions, To } from '../types';
 import { useNavigation } from '../useNavigation';
 import { toLocation } from '../utils';
@@ -43,28 +43,36 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
     }
   }, []);
 
+  const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (typeof onClick === 'function') {
+      onClick(event);
+    }
+
+    if (
+      event.isDefaultPrevented() ||
+      event.getModifierState('Alt') ||
+      event.getModifierState('Control') ||
+      event.getModifierState('Shift') ||
+      event.getModifierState('Meta')
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (replace) {
+      navigation.replace(to);
+    } else {
+      navigation.push(to);
+    }
+  };
+
   return (
     <a
       {...anchorProps}
       ref={ref}
       href={history?.toURL(toLocation(to))}
-      onClick={event => {
-        if (typeof onClick === 'function') {
-          onClick(event);
-        }
-
-        if (event.isDefaultPrevented()) {
-          return;
-        }
-
-        event.preventDefault();
-
-        if (replace) {
-          navigation.replace(to);
-        } else {
-          navigation.push(to);
-        }
-      }}
+      onClick={handleClick}
     />
   );
 });

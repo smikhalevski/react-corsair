@@ -1,5 +1,18 @@
 import { Dict, Location, To } from '../types';
 
+export interface HistoryOptions {
+  /**
+   * A default URL base used by {@link History.toURL}.
+   */
+  base?: URL | string;
+
+  /**
+   * An adapter that extracts params from a URL search string and stringifies them back. By default, an adapter that
+   * relies on {@link !URLSearchParams} is used.
+   */
+  searchParamsAdapter?: SearchParamsAdapter;
+}
+
 /**
  * A history abstraction.
  */

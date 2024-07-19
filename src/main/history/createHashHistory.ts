@@ -6,11 +6,11 @@ import { urlSearchParamsAdapter } from './urlSearchParamsAdapter';
 import { parseURL, toURL } from './utils';
 
 /**
- * Create the history adapter that reads and writes location to a browser's session history.
+ * Create the history adapter that reads and writes location to a browser's session history using only URL hash.
  *
  * @param options History options.
  */
-export function createBrowserHistory(options: HistoryOptions = {}): History {
+export function createHashHistory(options: HistoryOptions = {}): History {
   const { base: defaultBase, searchParamsAdapter = urlSearchParamsAdapter } = options;
   const pubSub = new PubSub();
   const handlePopstate = () => pubSub.publish();
@@ -20,24 +20,26 @@ export function createBrowserHistory(options: HistoryOptions = {}): History {
 
   return {
     get location() {
-      const { href } = window.location;
+      const href = decodeURIComponent(window.location.hash.substring(1));
 
       return prevHref === href ? location : (location = parseURL((prevHref = href), searchParamsAdapter));
     },
 
     toURL(location, base = defaultBase) {
-      return toURL(location, searchParamsAdapter, base);
+      const url = '#' + encodeURIComponent(toURL(location, searchParamsAdapter));
+
+      return base === undefined ? url : new URL(url, base).toString();
     },
 
     push(to) {
       location = toLocation(to);
-      history.pushState(location.state, '', toURL(location, searchParamsAdapter));
+      history.pushState(location.state, '', '#' + encodeURIComponent(toURL(location, searchParamsAdapter)));
       pubSub.publish();
     },
 
     replace(to) {
       location = toLocation(to);
-      history.replaceState(location.state, '', toURL(location, searchParamsAdapter));
+      history.replaceState(location.state, '', '#' + encodeURIComponent(toURL(location, searchParamsAdapter)));
       pubSub.publish();
     },
 
