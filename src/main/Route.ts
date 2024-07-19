@@ -146,56 +146,60 @@ export class Route<
    * @param options Location options.
    */
   getLocation(params: this['_params'], options?: LocationOptions): Location {
-    const { parent, pathnameTemplate, paramsAdapter } = this;
-
-    let pathname;
+    let pathname = '';
     let searchParams: Dict = {};
-    let hash;
-    let state;
+    let hasLooseParams = false;
 
-    if (params === undefined) {
-      // No params = no search params
-      searchParams = {};
-      pathname = pathnameTemplate.toPathname(undefined);
-    } else {
-      if (paramsAdapter === undefined || paramsAdapter.toSearchParams === undefined) {
-        // Search params = params omit pathname params
-        for (const name in params) {
-          if (params.hasOwnProperty(name) && !pathnameTemplate.paramNames.has(name)) {
-            searchParams[name] = params[name];
+    for (let route: Route | null = this; route !== null; route = route.parent) {
+      const { paramsAdapter } = route;
+
+      const pathnameChunk = route.pathnameTemplate.toPathname(
+        paramsAdapter === undefined || paramsAdapter.toPathnameParams === undefined
+          ? params
+          : paramsAdapter.toPathnameParams(params)
+      );
+
+      pathname = pathnameChunk + (pathnameChunk.endsWith('/') ? pathname.substring(1) : pathname);
+
+      if (paramsAdapter === undefined) {
+        // No adapter = no search params
+        continue;
+      }
+      if (paramsAdapter.toSearchParams === undefined) {
+        hasLooseParams = true;
+        continue;
+      }
+      searchParams = { ...paramsAdapter.toSearchParams(params), ...searchParams };
+    }
+
+    if (hasLooseParams && params !== undefined) {
+      let pathnameParamNames;
+
+      if (this.parent === null) {
+        pathnameParamNames = this.pathnameTemplate.paramNames;
+      } else {
+        pathnameParamNames = new Set<string>();
+
+        for (let route: Route | null = this; route !== null; route = route.parent) {
+          for (const name of route.pathnameTemplate.paramNames) {
+            pathnameParamNames.add(name);
           }
         }
-      } else {
-        searchParams = paramsAdapter.toSearchParams(params);
       }
 
-      pathname = pathnameTemplate.toPathname(
-        paramsAdapter === undefined || paramsAdapter.toPathnameParams === undefined ? params : undefined
-      );
+      for (const name in params) {
+        if (params.hasOwnProperty(name) && !pathnameParamNames.has(name) && !searchParams.hasOwnProperty(name)) {
+          searchParams[name] = params[name];
+        }
+      }
     }
 
-    if (parent !== null) {
-      const location = parent.getLocation(params, options);
-
-      location.pathname += location.pathname.endsWith('/') ? pathname.substring(1) : pathname;
-
-      // Merge search params
-      Object.assign(location.searchParams, searchParams);
-
-      return location;
-    }
-
-    hash =
-      options === undefined ||
-      ((state = options.state), (hash = options.hash)) === undefined ||
-      hash === '' ||
-      hash === '#'
-        ? ''
-        : hash.charAt(0) === '#'
-          ? hash
-          : '#' + encodeURIComponent(hash);
-
-    return { pathname, searchParams, hash, state };
+    return {
+      pathname,
+      searchParams,
+      hash: options === undefined || options.hash === undefined ? '' : options.hash,
+      state: options?.state,
+    };
   }
 
   /**

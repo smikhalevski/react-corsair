@@ -4,22 +4,22 @@ import { createRoute, Outlet, ParamsAdapter } from '../main';
 describe('Route', () => {
   describe('getLocation', () => {
     test('returns a location', () => {
-      const aaaRoute = createRoute({ pathname: '/aaa' });
-      const bbbRoute = createRoute(aaaRoute, { pathname: '/bbb' });
-      const cccRoute = createRoute(bbbRoute, { pathname: '/ccc' });
+      const aaaRoute = createRoute('/aaa');
+      const bbbRoute = createRoute(aaaRoute, '/bbb');
+      const cccRoute = createRoute(bbbRoute, '/ccc');
 
       expect(aaaRoute.getLocation()).toEqual({ pathname: '/aaa', searchParams: {}, hash: '' });
       expect(bbbRoute.getLocation()).toEqual({ pathname: '/aaa/bbb', searchParams: {}, hash: '' });
       expect(cccRoute.getLocation()).toEqual({ pathname: '/aaa/bbb/ccc', searchParams: {}, hash: '' });
 
-      expect(createRoute({ pathname: 'aaa' }).getLocation()).toEqual({ pathname: '/aaa', searchParams: {}, hash: '' });
-      expect(createRoute({ pathname: 'aaa/' }).getLocation()).toEqual({
+      expect(createRoute('aaa').getLocation()).toEqual({ pathname: '/aaa', searchParams: {}, hash: '' });
+      expect(createRoute('aaa/').getLocation()).toEqual({
         pathname: '/aaa/',
         searchParams: {},
         hash: '',
       });
 
-      expect(createRoute(createRoute({ pathname: '/' }), { pathname: '/' }).getLocation()).toEqual({
+      expect(createRoute(createRoute('/'), { pathname: '/' }).getLocation()).toEqual({
         pathname: '/',
         searchParams: {},
         hash: '',
@@ -27,43 +27,37 @@ describe('Route', () => {
     });
 
     test('adds hash', () => {
-      expect(createRoute({ pathname: 'aaa' }).getLocation(undefined, { hash: '' })).toEqual({
+      expect(createRoute('aaa').getLocation(undefined, { hash: '' })).toEqual({
         pathname: '/aaa',
         searchParams: {},
         hash: '',
       });
 
-      expect(createRoute({ pathname: 'aaa' }).getLocation(undefined, { hash: '#' })).toEqual({
+      expect(createRoute('aaa').getLocation(undefined, { hash: '#$%' })).toEqual({
         pathname: '/aaa',
         searchParams: {},
-        hash: '',
+        hash: '#$%',
       });
 
-      expect(createRoute({ pathname: 'aaa' }).getLocation(undefined, { hash: 'xxx' })).toEqual({
+      expect(createRoute('aaa').getLocation(undefined, { hash: 'xxx' })).toEqual({
         pathname: '/aaa',
         searchParams: {},
-        hash: '#xxx',
-      });
-
-      expect(createRoute({ pathname: 'aaa' }).getLocation(undefined, { hash: '$%#' })).toEqual({
-        pathname: '/aaa',
-        searchParams: {},
-        hash: '#%24%25%23',
+        hash: 'xxx',
       });
     });
 
     test('interpolates pathname params', () => {
-      expect(createRoute<{ bbb: string }>({ pathname: 'aaa/:bbb' }).getLocation({ bbb: 'xxx' })).toEqual({
+      expect(createRoute<{ bbb: string }>('aaa/:bbb').getLocation({ bbb: 'xxx' })).toEqual({
         pathname: '/aaa/xxx',
         searchParams: {},
         hash: '',
       });
     });
 
-    test('ignores unexpected search params', () => {
-      expect(createRoute<any>({ pathname: 'aaa/:bbb' }).getLocation({ bbb: 'xxx', ccc: 'yyy' })).toEqual({
+    test('ignores unexpected search params if there is no paramsAdapter', () => {
+      expect(createRoute<any>('aaa/:bbb').getLocation({ bbb: 'xxx', ccc: 'yyy' })).toEqual({
         pathname: '/aaa/xxx',
-        searchParams: { ccc: 'yyy' },
+        searchParams: {},
         hash: '',
       });
     });
@@ -77,6 +71,54 @@ describe('Route', () => {
       ).toEqual({
         pathname: '/aaa/xxx',
         searchParams: { ccc: 'yyy' },
+        hash: '',
+      });
+    });
+
+    test('adds search params by omitting pathname params for nested routes', () => {
+      const aaaRoute = createRoute({ pathname: 'aaa/:xxx', paramsAdapter: params => params });
+      const bbbRoute = createRoute(aaaRoute, { pathname: 'bbb/:yyy', paramsAdapter: params => params });
+
+      expect(bbbRoute.getLocation({ xxx: '111', yyy: '222', ccc: 'yyy' })).toEqual({
+        pathname: '/aaa/111/bbb/222',
+        searchParams: { ccc: 'yyy' },
+        hash: '',
+      });
+    });
+
+    test('no loose params if route has an adapter with toSearchParams', () => {
+      const route = createRoute({
+        pathname: 'aaa/:xxx',
+        paramsAdapter: {
+          parse: params => params,
+          toSearchParams: _prams => ({ vvv: 111 }),
+        },
+      });
+
+      expect(route.getLocation({ xxx: 'bbb', ccc: 'yyy' })).toEqual({
+        pathname: '/aaa/bbb',
+        searchParams: { vvv: 111 },
+        hash: '',
+      });
+    });
+
+    test('does not add loose params that already exist on searchParams', () => {
+      const aaaRoute = createRoute({
+        pathname: 'aaa',
+        paramsAdapter: {
+          parse: params => params,
+          toSearchParams: _prams => ({ vvv: 111 }),
+        },
+      });
+
+      const bbbRoute = createRoute(aaaRoute, {
+        pathname: 'bbb',
+        paramsAdapter: params => params,
+      });
+
+      expect(bbbRoute.getLocation({ vvv: 222, ccc: 'yyy' })).toEqual({
+        pathname: '/aaa/bbb',
+        searchParams: { vvv: 111, ccc: 'yyy' },
         hash: '',
       });
     });
@@ -106,7 +148,7 @@ describe('Route', () => {
     const Component: FC = () => null;
 
     test('returns an Outlet if there is no component', () => {
-      const route = createRoute({});
+      const route = createRoute();
 
       expect(route.getComponent()).toEqual(Outlet);
     });

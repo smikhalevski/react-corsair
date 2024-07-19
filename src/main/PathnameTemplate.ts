@@ -109,7 +109,7 @@ export class PathnameTemplate {
   /**
    * Creates a pathname from a template by substituting params, beginning with a "/".
    */
-  toPathname(params: Dict | undefined): string {
+  toPathname(params?: Dict | void): string {
     const { _segments, _flags } = this;
 
     let pathname = '';

@@ -18,7 +18,7 @@ export interface RouterProps<Context> {
   /**
    * The location rendered by the router.
    */
-  location: Location;
+  location: Partial<Location>;
 
   /**
    * Routes that the router can render.
@@ -86,7 +86,7 @@ interface NoContextRouterProps extends Omit<RouterProps<void>, 'context'> {
 
 interface RouterState {
   navigation: Navigation;
-  location: Location | null;
+  location: Partial<Location> | null;
   routes: Route[];
   slotValues: SlotValue[];
 }
@@ -110,7 +110,9 @@ export class Router<Context = void> extends Component<NoContextRouterProps | Rou
       return null;
     }
 
-    const routeMatches = matchRoutes(props.location.pathname, props.location.searchParams, props.routes);
+    const { pathname = '/', searchParams = {} } = props.location;
+
+    const routeMatches = matchRoutes(pathname, searchParams, props.routes);
 
     return {
       location: props.location,

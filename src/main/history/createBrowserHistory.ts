@@ -1,6 +1,7 @@
 import { PubSub } from 'parallel-universe';
 import { toLocation } from '../utils';
 import { History, SearchParamsAdapter } from './types';
+import { Location } from '../types';
 import { urlSearchParamsAdapter } from './urlSearchParamsAdapter';
 import { parseURL, toURL } from './utils';
 
@@ -9,9 +10,7 @@ import { parseURL, toURL } from './utils';
  */
 export interface BrowserHistoryOptions {
   /**
-   * A URL base used by {@link History.toURL}.
-   *
-   * @default window.location.origin
+   * A default URL base used by {@link History.toURL}.
    */
   base?: URL | string;
 
@@ -28,23 +27,22 @@ export interface BrowserHistoryOptions {
  * @param options History options.
  */
 export function createBrowserHistory(options: BrowserHistoryOptions = {}): History {
-  const { base: defaultBase = window.location.origin, searchParamsAdapter = urlSearchParamsAdapter } = options;
+  const { base: defaultBase, searchParamsAdapter = urlSearchParamsAdapter } = options;
   const pubSub = new PubSub();
+  const handlePopstate = () => pubSub.publish();
 
-  let location = parseURL(window.location.href, searchParamsAdapter);
-
-  window.addEventListener('popstate', () => {
-    location = parseURL(window.location.href, searchParamsAdapter);
-    pubSub.publish();
-  });
+  let prevHref: string;
+  let location: Location;
 
   return {
     get location() {
-      return location;
+      const { href } = window.location;
+
+      return prevHref === href ? location : (location = parseURL((prevHref = href), searchParamsAdapter));
     },
 
     toURL(location, base = defaultBase) {
-      return new URL(toURL(location, searchParamsAdapter), base);
+      return toURL(location, searchParamsAdapter, base);
     },
 
     push(to) {
@@ -64,7 +62,19 @@ export function createBrowserHistory(options: BrowserHistoryOptions = {}): Histo
     },
 
     subscribe(listener) {
-      return pubSub.subscribe(listener);
+      if (pubSub.listenerCount === 0) {
+        window.addEventListener('popstate', handlePopstate);
+      }
+
+      const unsubscribe = pubSub.subscribe(listener);
+
+      return () => {
+        unsubscribe();
+
+        if (pubSub.listenerCount === 0) {
+          window.removeEventListener('popstate', handlePopstate);
+        }
+      };
     },
   };
 }

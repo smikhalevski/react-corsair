@@ -116,7 +116,7 @@ describe('PathnameTemplate', () => {
   });
 
   test('creates a pathname without params', () => {
-    expect(new PathnameTemplate('/aaa').toPathname(undefined)).toBe('/aaa');
+    expect(new PathnameTemplate('/aaa').toPathname()).toBe('/aaa');
   });
 
   test('creates a pathname with params', () => {
@@ -124,15 +124,15 @@ describe('PathnameTemplate', () => {
   });
 
   test("throws if non-optional param isn't provided", () => {
-    expect(() => new PathnameTemplate('/:xxx').toPathname(undefined)).toThrow(new Error('Param must be a string: xxx'));
+    expect(() => new PathnameTemplate('/:xxx').toPathname()).toThrow(new Error('Param must be a string: xxx'));
 
     expect(() => new PathnameTemplate('/:xxx').toPathname({})).toThrow(new Error('Param must be a string: xxx'));
   });
 
   test("does not throw if optional param isn't provided", () => {
-    expect(new PathnameTemplate('/:xxx?').toPathname(undefined)).toBe('/');
-    expect(new PathnameTemplate('/aaa/:xxx?').toPathname(undefined)).toBe('/aaa');
-    expect(new PathnameTemplate('/aaa/:xxx?/bbb').toPathname(undefined)).toBe('/aaa/bbb');
+    expect(new PathnameTemplate('/:xxx?').toPathname()).toBe('/');
+    expect(new PathnameTemplate('/aaa/:xxx?').toPathname()).toBe('/aaa');
+    expect(new PathnameTemplate('/aaa/:xxx?/bbb').toPathname()).toBe('/aaa/bbb');
   });
 
   test('matches a wildcard param', () => {

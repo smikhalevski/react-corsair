@@ -9,7 +9,7 @@ describe('createRoute', () => {
   });
 
   test('(options) signature', () => {
-    const route = createRoute({ pathname: '/rrr' });
+    const route = createRoute('/rrr');
 
     expect(route.parent).toBeNull();
     expect(route.pathnameTemplate.pattern).toBe('/rrr');
@@ -27,7 +27,7 @@ describe('createRoute', () => {
 
   test('(parent, options) signature', () => {
     const aaaRoute = createRoute();
-    const route = createRoute(aaaRoute, { pathname: '/rrr' });
+    const route = createRoute(aaaRoute, '/rrr');
 
     expect(route.parent).toBe(aaaRoute);
     expect(route.pathnameTemplate.pattern).toBe('/rrr');

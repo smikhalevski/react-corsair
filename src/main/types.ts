@@ -24,7 +24,7 @@ export interface Location {
   searchParams: Dict;
 
   /**
-   * A URL fragment identifier, beginning with `#`.
+   * A decoded URL fragment identifier without a `#`.
    */
   hash: string;
 

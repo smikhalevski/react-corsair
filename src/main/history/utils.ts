@@ -1,12 +1,17 @@
 import { Location } from '../types';
 import { SearchParamsAdapter } from './types';
 
-export function toURL(location: Location, searchParamsAdapter: SearchParamsAdapter): string {
-  let search = searchParamsAdapter.stringify(location.searchParams);
+export function toURL(location: Location, searchParamsAdapter: SearchParamsAdapter, base?: string | URL): string {
+  const { pathname, searchParams, hash } = location;
 
-  search = search === '' || search === '?' ? '' : search.charAt(0) === '?' ? search : '?' + search;
+  const search = searchParamsAdapter.stringify(searchParams);
 
-  return location.pathname + search + location.hash;
+  const url =
+    pathname +
+    (search === '' || search === '?' ? '' : search.charAt(0) === '?' ? search : '?' + search) +
+    (hash === '' ? '' : '#' + encodeURIComponent(hash));
+
+  return base === undefined ? url : new URL(url, base).toString();
 }
 
 export function parseURL(url: string, searchParamsAdapter: SearchParamsAdapter): Location {
@@ -15,7 +20,7 @@ export function parseURL(url: string, searchParamsAdapter: SearchParamsAdapter):
   return {
     pathname,
     searchParams: searchParamsAdapter.parse(search),
-    hash,
+    hash: decodeURIComponent(hash.substring(1)),
     state: undefined,
   };
 }

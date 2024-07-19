@@ -15,9 +15,7 @@ export interface MemoryHistoryOptions {
   initialEntries: Location[];
 
   /**
-   * A URL base used by {@link History.toURL}.
-   *
-   * If omitted a base should be specified with each {@link History.toURL} call, otherwise an error is thrown.
+   * A default URL base used by {@link History.toURL}.
    */
   base?: URL | string;
 
@@ -50,19 +48,17 @@ export function createMemoryHistory(options: MemoryHistoryOptions): History {
     },
 
     toURL(location, base = defaultBase) {
-      if (base === undefined) {
-        throw new Error('No base URL provided');
-      }
-      return new URL(toURL(location, searchParamsAdapter), base);
+      return toURL(location, searchParamsAdapter, base);
     },
 
     push(to) {
-      entries.push(toLocation(to));
+      cursor++;
+      entries.splice(cursor, entries.length, toLocation(to));
       pubSub.publish();
     },
 
     replace(to) {
-      entries.splice(cursor, entries.length - cursor, toLocation(to));
+      entries.splice(cursor, entries.length, toLocation(to));
       pubSub.publish();
     },
 

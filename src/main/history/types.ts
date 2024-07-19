@@ -10,12 +10,12 @@ export interface History {
   readonly location: Location;
 
   /**
-   * Creates a {@link !URL} for a given location.
+   * Creates a URL for a given location.
    *
    * @param location A location to create a URL for.
-   * @param base A string representing the base URL.
+   * @param base A URL base.
    */
-  toURL(location: Location, base?: URL | string): URL;
+  toURL(location: Location, base?: URL | string): string;
 
   /**
    * Adds an entry to the history stack.
