@@ -29,10 +29,10 @@ npm install --save-prod react-corsair
 
 # Overview
 
-URLs don't matter because they aren't a part of your domain. React Corsair is a router that abstracts URLs away from
-your application. It replaces URLs
-with [`Route`](https://smikhalevski.github.io/react-corsair/functions/createRoute.html) objects that can be used for
-location matching, params validation, navigation, type inference, etc.
+URLs don't matter since they are almost never part of the application domain logic. React Corsair is a router that
+abstracts URLs away from your application.
+Use [`Route`](https://smikhalevski.github.io/react-corsair/functions/createRoute.html) objects instead of URLs
+to match locations, validate params, navigate between pages, prefetch data, infer types, etc.
 
 React Corsair can be used in any environment and doesn't require any browser-specific API to be available. Browser
 history integration is optional.

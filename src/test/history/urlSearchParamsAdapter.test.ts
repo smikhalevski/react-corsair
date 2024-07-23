@@ -11,13 +11,11 @@ describe('urlSearchParamsAdapter', () => {
     expect(urlSearchParamsAdapter.stringify({ aaa: 'bbb' })).toBe('aaa=bbb');
     expect(urlSearchParamsAdapter.stringify({ aaa: ['bbb', 'ccc'] })).toBe('aaa=bbb&aaa=ccc');
     expect(urlSearchParamsAdapter.stringify({ aaa: new Set(['bbb', 'ccc']) })).toBe('aaa=bbb&aaa=ccc');
-    expect(
-      urlSearchParamsAdapter.stringify({
-        aaa: new Map([
-          ['bbb', 111],
-          ['ccc', 222],
-        ]),
-      })
-    ).toBe('aaa=bbb%2C111&aaa=ccc%2C222');
+  });
+
+  test('throws if param cannot be stringified', () => {
+    expect(() => urlSearchParamsAdapter.stringify({ aaa: new Map() })).toThrow(
+      new TypeError('Unsupported param value type: aaa')
+    );
   });
 });
