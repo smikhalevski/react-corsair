@@ -4,7 +4,7 @@ import { Route } from './Route';
 import { isPromiseLike } from './utils';
 
 /**
- * A payload produced during a route SSR.
+ * A route payload passed from the server to the client during SSR.
  */
 export interface SSRRoutePayload {
   /**
@@ -13,7 +13,7 @@ export interface SSRRoutePayload {
   data?: unknown;
 
   /**
-   * An error that occurred when content was resolved.
+   * An error that occurred when component and data were loaded or rendered.
    */
   error?: unknown;
 
@@ -78,72 +78,60 @@ export function loadRoute(route: Route, params: unknown, context: unknown): Prom
 }
 
 /**
- * Returns SSR payloads on the client when called _the first time_, and clears SSR payloads on every consequent call.
+ * Loads route components and uses data rendered during SSR.
+ *
+ * **Note:** Hydration has a side effect of overwriting the SSR state, so no-op when called the second time.
  */
-export function takeOrClearSSRPayloads(
-  routeCount: number,
-  payloadParser: (payloadStr: string) => SSRRoutePayload
-): Array<Promise<SSRRoutePayload> | SSRRoutePayload> | null {
-  const ssrPayloads = window.__REACT_CORSAIR_SSR_PAYLOADS__;
+export function hydrateRoutes(
+  routeMatches: RouteMatch[],
+  ssrPayloadParser: (ssrPayloadStr: string) => SSRRoutePayload
+): Array<Promise<RoutePayload> | RoutePayload> | null {
+  const ssrState = typeof window !== 'undefined' ? window.__REACT_CORSAIR_SSR_STATE__ : undefined;
 
-  if (!(ssrPayloads instanceof Map)) {
-    if (ssrPayloads !== undefined) {
-      window.__REACT_CORSAIR_SSR_PAYLOADS__ = undefined;
+  if (!(ssrState instanceof Map)) {
+    if (ssrState !== undefined) {
+      window.__REACT_CORSAIR_SSR_STATE__ = undefined;
     }
     return null;
   }
 
-  const payloads = [];
   const resolvers = new Map<number, (ssrPayload: SSRRoutePayload) => void>();
 
-  window.__REACT_CORSAIR_SSR_PAYLOADS__ = {
-    set(index, payloadStr) {
+  window.__REACT_CORSAIR_SSR_STATE__ = {
+    set(index, ssrPayloadStr) {
       const resolve = resolvers.get(index);
 
       if (resolve !== undefined) {
-        resolve(payloadParser(payloadStr));
+        resolve(ssrPayloadParser(ssrPayloadStr));
         resolvers.delete(index);
       }
     },
   };
 
-  for (let i = 0; i < routeCount; i++) {
-    if (ssrPayloads.has(i)) {
-      payloads.push(payloadParser(ssrPayloads.get(i)));
-    } else {
-      payloads.push(new Promise<SSRRoutePayload>(resolve => resolvers.set(i, resolve)));
-    }
-  }
-
-  return payloads;
-}
-
-/**
- * Loads route components and uses data rendered during SSR.
- */
-export function hydrateRoutes(
-  routeMatches: RouteMatch[],
-  ssrPayloads: Array<Promise<SSRRoutePayload> | SSRRoutePayload>
-): Array<Promise<RoutePayload> | RoutePayload> | null {
   return routeMatches.map((routeMatch, i) => {
     let component;
+    let ssrPayload;
 
     try {
       component = routeMatch.route.getComponent();
+
+      ssrPayload = ssrState.has(i)
+        ? ssrPayloadParser(ssrState.get(i))
+        : new Promise<SSRRoutePayload>(resolve => resolvers.set(i, resolve));
     } catch (error) {
       return createErrorPayload(error);
     }
 
-    if (isPromiseLike(component) || isPromiseLike(ssrPayloads[i])) {
-      return Promise.all([component, ssrPayloads[i]]).then(hydratePayload, createErrorPayload);
+    if (isPromiseLike(component) || isPromiseLike(ssrPayload)) {
+      return Promise.all([component, ssrPayload]).then(hydratePayload, createErrorPayload);
     }
 
-    return hydratePayload([component, ssrPayloads[i]]);
+    return hydratePayload([component, ssrPayload]);
   });
 }
 
 function hydratePayload(pair: [ComponentType, SSRRoutePayload]): RoutePayload {
-  return pair[1].hasError ? createOkPayload(pair[0], pair[1].data) : createErrorPayload(pair[1].error);
+  return pair[1].hasError ? createErrorPayload(pair[1].error) : createOkPayload(pair[0], pair[1].data);
 }
 
 function createOkPayload(component: ComponentType, data: unknown): RoutePayload {

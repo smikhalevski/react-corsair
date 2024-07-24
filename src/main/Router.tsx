@@ -1,13 +1,17 @@
-import React, { Component, ComponentType, ReactNode } from 'react';
+import React, { Component, ComponentType, createContext, ReactNode } from 'react';
+import { createNavigation } from './createNavigation';
+import { hydrateRoutes, loadRoutes, SSRRoutePayload } from './loadRoutes';
 import { matchRoutes, RouteMatch } from './matchRoutes';
-import { Navigation } from './Navigation';
 import { Outlet } from './Outlet';
 import { Route } from './Route';
+import { SlotControllerContext } from './Slot';
+import { NotFoundSlotController, RouteSlotController, SlotController } from './SlotController';
 import { Location } from './types';
-import { NavigationContext } from './useNavigation';
-import { SlotValueContext } from './Slot';
-import { SlotValue } from './SlotValue';
 import { isArrayEqual } from './utils';
+
+export const RouterContext = createContext<Router<any> | null>(null);
+
+RouterContext.displayName = 'RouterContext';
 
 /**
  * Props of the {@link Router} component.
@@ -72,6 +76,48 @@ export interface RouterProps<Context> {
    * the {@link location}.
    */
   notFoundComponent?: ComponentType;
+
+  /**
+   * How a router is affiliated to SSR:
+   *
+   * <dl>
+   * <dt>"client"</dt>
+   * <dd>When a location is matched for the first time by a router, the latter tries to hydrate data from a global
+   * SSR state. Used by default when {@link !window} is defined.</dd>
+   * <dt>"server"</dt>
+   * <dd>A router renders hydration chunks to populate a global SSR state on the client. Used by default when
+   * {@link !window} is `undefined`.</dd>
+   * <dt>"none"</dt>
+   * <dd>A router doesn't participate in SSR.</dd>
+   * </dl>
+   */
+  ssrAffiliation?: 'client' | 'server' | 'none';
+
+  /**
+   * Parses a payload that was stringified during SSR.
+   *
+   * Provide this option on the client when {@link ssrAffiliation SSR is enabled}.
+   *
+   * @param payloadStr A stringified payload to parse.
+   * @default JSON.parse
+   */
+  payloadParser?: (payloadStr: string) => SSRRoutePayload;
+
+  /**
+   * Stringifies a route payload during SSR.
+   *
+   * Provide this option on the server when {@link ssrAffiliation SSR is enabled}.
+   *
+   * @param payload A route payload to stringify.
+   * @default JSON.stringify
+   */
+  payloadStringifier?: (payload: SSRRoutePayload) => string;
+
+  /**
+   * A [Content-Security-Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src)
+   * nonce that should be also passed as `script-src` directive in an HTTP header.
+   */
+  nonce?: string;
 }
 
 /**
@@ -85,10 +131,9 @@ interface NoContextRouterProps extends Omit<RouterProps<void>, 'context'> {
 }
 
 interface RouterState {
-  navigation: Navigation;
   location: Partial<Location> | null;
   routes: Route[];
-  slotValues: SlotValue[];
+  slotControllers: SlotController[];
 }
 
 /**
@@ -105,6 +150,18 @@ export class Router<Context = void> extends Component<NoContextRouterProps | Rou
   /**
    * @internal
    */
+  static defaultProps: Partial<NoContextRouterProps> = {
+    ssrAffiliation: typeof window === 'undefined' ? 'server' : 'client',
+  };
+
+  /**
+   * @internal
+   */
+  readonly navigation = createNavigation(this);
+
+  /**
+   * @internal
+   */
   static getDerivedStateFromProps(props: RouterProps<unknown>, state: RouterState): Partial<RouterState> | null {
     if (state.location === props.location && isArrayEqual(state.routes, props.routes)) {
       return null;
@@ -117,7 +174,7 @@ export class Router<Context = void> extends Component<NoContextRouterProps | Rou
     return {
       location: props.location,
       routes: props.routes,
-      slotValues: createSlotValues(state.slotValues, routeMatches, props),
+      slotControllers: createSlotControllers(state.slotControllers, routeMatches, props),
     };
   }
 
@@ -128,10 +185,9 @@ export class Router<Context = void> extends Component<NoContextRouterProps | Rou
     super(props);
 
     this.state = {
-      navigation: new Navigation(this),
       location: null,
       routes: props.routes,
-      slotValues: [],
+      slotControllers: [],
     };
   }
 
@@ -139,51 +195,60 @@ export class Router<Context = void> extends Component<NoContextRouterProps | Rou
    * @internal
    */
   render() {
+    const controller = this.state.slotControllers[0];
+
     return (
-      <NavigationContext.Provider value={this.state.navigation}>
-        <SlotValueContext.Provider value={this.state.slotValues[0]}>
+      <RouterContext.Provider value={this}>
+        <SlotControllerContext.Provider value={controller}>
+          {this.props.ssrAffiliation === 'server' && controller instanceof RouteSlotController && (
+            <script
+              nonce={this.props.nonce}
+              dangerouslySetInnerHTML={{
+                __html:
+                  'window.__REACT_CORSAIR_SSR_STATE__=new Map();' +
+                  'var e=document.currentScript;e&&e.parentNode.removeChild(e);',
+              }}
+            />
+          )}
           {this.props.children === undefined ? <Outlet /> : this.props.children}
-        </SlotValueContext.Provider>
-      </NavigationContext.Provider>
+        </SlotControllerContext.Provider>
+      </RouterContext.Provider>
     );
   }
 }
 
-export function createSlotValues(
-  oldSlotValues: SlotValue[],
+export function createSlotControllers(
+  prevControllers: SlotController[],
   routeMatches: RouteMatch[] | null,
   routerProps: RouterProps<any>
-): SlotValue[] {
+): SlotController[] {
   const { context, errorComponent, loadingComponent, notFoundComponent } = routerProps;
 
   if (routeMatches === null) {
     // Not found
-    return [
-      new SlotValue({
-        errorComponent,
-        loadingComponent,
-        notFoundComponent,
-      }),
-    ];
+    return [new NotFoundSlotController(routerProps)];
   }
 
-  const slotValues: SlotValue[] = [];
+  const routePayloads =
+    hydrateRoutes(routeMatches, routerProps.payloadParser || JSON.parse) || loadRoutes(routeMatches, context);
+
+  const slotControllers: RouteSlotController[] = [];
 
   // Matched a route
   for (let i = routeMatches.length; i-- > 0; ) {
-    const route = routeMatches[i].route;
-
-    slotValues[i] = new SlotValue({
-      oldValue: oldSlotValues[i],
-      childValue: slotValues[i + 1],
-      route,
-      params: routeMatches[i].params,
-      context,
+    slotControllers[i] = new RouteSlotController(prevControllers[i], {
+      childController: slotControllers[i + 1],
+      index: i,
+      routeMatch: routeMatches[i],
+      routePayload: routePayloads[i],
+      payloadStringifier:
+        routerProps.ssrAffiliation === 'server' ? routerProps.payloadStringifier || JSON.stringify : undefined,
+      nonce: routerProps.nonce,
       errorComponent: i === 0 ? errorComponent : undefined,
       loadingComponent: i === 0 ? loadingComponent : undefined,
       notFoundComponent: i === 0 ? notFoundComponent : undefined,
     });
   }
 
-  return slotValues;
+  return slotControllers;
 }

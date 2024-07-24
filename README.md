@@ -589,7 +589,7 @@ function TeamPage() {
 }
 ```
 
-Here, [`navigation.push`](https://smikhalevski.github.io/react-corsair/classes/Navigation.html#push) triggers
+Here, [`navigation.push`](https://smikhalevski.github.io/react-corsair/interfaces/Navigation.html#push) triggers
 [`onPush`](https://smikhalevski.github.io/react-corsair/interfaces/RouterProps.html#onPush) with
 the location of `userRoute`.
 
@@ -888,7 +888,7 @@ method on a route itself:
 userRoute.prefetch({ userId: 42 });
 ```
 
-Or user [`Navigation`](https://smikhalevski.github.io/react-corsair/classes/Navigation.html) to prefetch a location:
+Or user [`Navigation`](https://smikhalevski.github.io/react-corsair/interfaces/Navigation.html) to prefetch a location:
 
 ```ts
 const navigation = useNavigation();

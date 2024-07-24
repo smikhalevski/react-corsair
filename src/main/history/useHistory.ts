@@ -2,10 +2,13 @@ import { createContext, useContext } from 'react';
 import { History } from './types';
 import { useHistorySubscription } from './useHistorySubscription';
 
-export const HistoryContext = createContext<History>(null!);
+export const HistoryContext = createContext<History | null>(null);
 
 HistoryContext.displayName = 'HistoryContext';
 
+/**
+ * Provides {@link History} instance to nested elements.
+ */
 export const HistoryProvider = HistoryContext.Provider;
 
 /**

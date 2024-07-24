@@ -55,7 +55,7 @@
     "typescript": "^5.5.3"
   },
   "peerDependencies": {
-    "react": ">=18.0.0"
+    "react": ">=16.8.0"
   },
   "dependencies": {
     "parallel-universe": "^6.1.1"
