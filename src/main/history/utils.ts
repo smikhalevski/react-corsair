@@ -1,6 +1,9 @@
 import { Location } from '../types';
 import { SearchParamsAdapter } from './types';
 
+/**
+ * Composes a URL from a location.
+ */
 export function toURL(location: Location, searchParamsAdapter: SearchParamsAdapter, base?: string | URL): string {
   const { pathname, searchParams, hash } = location;
 
@@ -14,6 +17,9 @@ export function toURL(location: Location, searchParamsAdapter: SearchParamsAdapt
   return base === undefined ? url : new URL(url, base).toString();
 }
 
+/**
+ * Parses a URL string as a location.
+ */
 export function parseURL(url: string, searchParamsAdapter: SearchParamsAdapter): Location {
   const { pathname, search, hash } = new URL(url, 'http://undefined');
 

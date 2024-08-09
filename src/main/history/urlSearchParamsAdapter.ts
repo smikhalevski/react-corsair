@@ -23,14 +23,35 @@ export const urlSearchParamsAdapter: SearchParamsAdapter = {
     for (const name in params) {
       const value = params[name];
 
-      if (value !== null && typeof value === 'object' && Symbol.iterator in value) {
-        for (const item of Array.isArray(value) ? value : Array.from(value)) {
-          urlSearchParams.append(name, String(item));
+      if (value instanceof Set || Array.isArray(value)) {
+        for (const item of value) {
+          appendParam(urlSearchParams, name, item);
         }
       } else {
-        urlSearchParams.set(name, String(value));
+        appendParam(urlSearchParams, name, value);
       }
     }
     return urlSearchParams.toString();
   },
 };
+
+function appendParam(urlSearchParams: URLSearchParams, name: string, value: unknown): void {
+  const paramValue = toParamValue(name, value);
+
+  if (paramValue !== null) {
+    urlSearchParams.append(name, paramValue);
+  }
+}
+
+function toParamValue(name: string, value: unknown): string | null {
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+  if (value === null || value === undefined) {
+    return null;
+  }
+  if (typeof value === 'object' || typeof value === 'symbol' || typeof value === 'function') {
+    throw new TypeError('Unsupported param value type: ' + name);
+  }
+  return value.toString();
+}

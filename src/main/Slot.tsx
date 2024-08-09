@@ -1,95 +1,125 @@
-import React, { Component, createElement, memo, ReactNode, Suspense } from 'react';
-import { RouteContent, SlotValue } from './SlotValue';
+import React, { Component, createElement, ReactNode, Suspense } from 'react';
+import { SlotController } from './SlotController';
 
-export const SlotValueContext = React.createContext<SlotValue | undefined>(undefined);
+export const SlotControllerContext = React.createContext<SlotController | undefined>(undefined);
 
-SlotValueContext.displayName = 'SlotValueContext';
+SlotControllerContext.displayName = 'SlotControllerContext';
 
-export const RouteContentContext = React.createContext<RouteContent | undefined>(undefined);
+export const ChildSlotControllerContext = React.createContext<SlotController | undefined>(undefined);
 
-RouteContentContext.displayName = 'RouteContentContext';
+ChildSlotControllerContext.displayName = 'ChildSlotControllerContext';
 
 interface SlotProps {
-  value: SlotValue;
+  controller: SlotController;
 }
 
 interface SlotState {
-  hasError: boolean;
+  /**
+   * An error captured by an error boundary.
+   */
   error: unknown;
+  hasError: boolean;
 }
 
-/**
- * Renders a volatile value that reflects a route content.
- */
-export const Slot = memo(
-  class extends Component<SlotProps, SlotState> {
-    static displayName = 'Slot';
+export class Slot extends Component<SlotProps, SlotState> {
+  static displayName = 'Slot';
 
-    constructor(props: SlotProps) {
-      super(props);
+  private _unsubscribe?: () => void;
 
-      this.state = { hasError: false, error: undefined };
+  constructor(props: SlotProps) {
+    super(props);
+
+    this.state = { error: undefined, hasError: false };
+
+    this.forceUpdate = this.forceUpdate.bind(this);
+  }
+
+  static getDerivedStateFromError(error: unknown): Partial<SlotState> | null {
+    return { error, hasError: true };
+  }
+
+  static getDerivedStateFromProps(nextProps: Readonly<SlotProps>, prevState: SlotState): Partial<SlotState> | null {
+    if (prevState.hasError) {
+      // Propagate an error to a controller
+      nextProps.controller.renderedController.setRenderingError(prevState.error);
+
+      return { error: undefined, hasError: false };
     }
+    return null;
+  }
 
-    static getDerivedStateFromError(error: unknown): Partial<SlotState> | null {
-      return { hasError: true, error };
+  componentDidMount() {
+    this._unsubscribe = this.props.controller.subscribe?.(this.forceUpdate);
+  }
+
+  shouldComponentUpdate(nextProps: Readonly<SlotProps>, _nextState: Readonly<SlotState>, _nextContext: any): boolean {
+    return this.props.controller === nextProps.controller;
+  }
+
+  componentDidUpdate(prevProps: Readonly<SlotProps>, _prevState: Readonly<SlotState>, _snapshot?: any) {
+    if (this.props.controller !== prevProps.controller) {
+      this._unsubscribe?.();
+      this._unsubscribe = this.props.controller.subscribe?.(this.forceUpdate);
     }
+  }
 
-    static getDerivedStateFromProps(nextProps: Readonly<SlotProps>, prevState: SlotState): Partial<SlotState> | null {
-      if (prevState.hasError) {
-        // Move error to the content
-        nextProps.value.setError(prevState.error);
+  componentWillUnmount() {
+    this._unsubscribe?.();
+  }
 
-        return { hasError: false, error: undefined };
-      }
-      return null;
-    }
-
-    componentWillUnmount(): void {
-      this.props.value.freeze();
-    }
-
-    render(): ReactNode {
-      const { props } = this;
-
-      return (
-        <Suspense
-          fallback={
-            <SlotRenderer
-              isSuspended={true}
-              value={props.value}
-            />
-          }
-        >
+  render(): ReactNode {
+    return (
+      <Suspense
+        fallback={
           <SlotRenderer
-            isSuspended={false}
-            value={props.value}
+            isSuspendable={false}
+            controller={this.props.controller.renderedController}
           />
-        </Suspense>
-      );
-    }
-  },
-  (prevProps, nextProps) => prevProps.value === nextProps.value
-);
+        }
+      >
+        <SlotRenderer
+          isSuspendable={true}
+          controller={this.props.controller.renderedController}
+        />
+      </Suspense>
+    );
+  }
+}
 
 interface SlotRendererProps {
-  isSuspended: boolean;
-  value: SlotValue;
+  isSuspendable: boolean;
+  controller: SlotController;
 }
 
-function SlotRenderer({ isSuspended, value }: SlotRendererProps): ReactNode {
-  const component = isSuspended ? value.fallbackComponent : value.component;
+function SlotRenderer({ isSuspendable, controller }: SlotRendererProps): ReactNode {
+  const component = isSuspendable ? controller.component : controller.loadingComponent;
 
-  if (!isSuspended && value.promise !== undefined) {
-    throw value.promise;
+  if (isSuspendable && controller.promise !== undefined) {
+    throw controller.promise;
   }
   if (component === undefined) {
     return null;
   }
+
+  let stateStr;
+
   return (
-    <RouteContentContext.Provider value={value.routeContent}>
-      <SlotValueContext.Provider value={value.childValue}>{createElement(component)}</SlotValueContext.Provider>
-    </RouteContentContext.Provider>
+    <SlotControllerContext.Provider value={controller}>
+      <ChildSlotControllerContext.Provider value={controller.childController}>
+        {isSuspendable && (stateStr = controller.getStateStr()) !== undefined && (
+          <script
+            nonce={controller.nonce}
+            dangerouslySetInnerHTML={{
+              __html:
+                'window.__REACT_CORSAIR_SSR_STATE__&&' +
+                `window.__REACT_CORSAIR_SSR_STATE__.set(${controller.index},${JSON.stringify(stateStr)});` +
+                'var e=document.currentScript;e&&e.parentNode.removeChild(e);',
+            }}
+          />
+        )}
+        {createElement(component)}
+      </ChildSlotControllerContext.Provider>
+    </SlotControllerContext.Provider>
   );
 }
 
