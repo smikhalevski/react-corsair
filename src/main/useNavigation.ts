@@ -9,7 +9,7 @@ export function useNavigation(): Navigation {
   const router = useContext(RouterContext);
 
   if (router === null) {
-    throw new Error('Forbidden outside of a Router');
+    throw new Error('Cannot be used outside of a Router');
   }
   return router.navigation;
 }

@@ -43,7 +43,7 @@ describe('loadRoute', () => {
 });
 
 describe('loadRoute', () => {
-  test('returns OK payload for outlet route', () => {
+  test('returns OK state for outlet route', () => {
     const route = createRoute();
 
     expect(loadRoute(route, {}, undefined)).toEqual({
@@ -54,7 +54,7 @@ describe('loadRoute', () => {
     });
   });
 
-  test('returns OK payload for route with a component', () => {
+  test('returns OK state for route with a component', () => {
     const route = createRoute({
       component: Component1,
     });
@@ -67,7 +67,7 @@ describe('loadRoute', () => {
     });
   });
 
-  test('returns OK payload for route with a loader', () => {
+  test('returns OK state for route with a loader', () => {
     const route = createRoute({
       loader: () => 111,
     });
@@ -80,7 +80,7 @@ describe('loadRoute', () => {
     });
   });
 
-  test('returns an async OK payload for route with a loader', async () => {
+  test('returns an async OK state for route with a loader', async () => {
     const route = createRoute({
       loader: () => Promise.resolve(111),
     });
@@ -93,7 +93,7 @@ describe('loadRoute', () => {
     });
   });
 
-  test('returns an async OK for payload for route with a lazy component', async () => {
+  test('returns an async OK for state for route with a lazy component', async () => {
     const route = createRoute({
       lazyComponent: () => Promise.resolve({ default: Component1 }),
     });
@@ -106,7 +106,7 @@ describe('loadRoute', () => {
     });
   });
 
-  test('returns an async OK for payload for route with a lazy component and loader', async () => {
+  test('returns an async OK for state for route with a lazy component and loader', async () => {
     const route = createRoute({
       lazyComponent: () => Promise.resolve({ default: Component1 }),
       loader: () => Promise.resolve(111),
@@ -120,7 +120,7 @@ describe('loadRoute', () => {
     });
   });
 
-  test('returns an error payload if lazy component throws during load', async () => {
+  test('returns an error state if lazy component throws during load', async () => {
     const route = createRoute({
       lazyComponent: () => Promise.reject(111),
     });
@@ -133,7 +133,7 @@ describe('loadRoute', () => {
     });
   });
 
-  test('returns an error payload if loader throws', () => {
+  test('returns an error state if loader throws', () => {
     const route = createRoute({
       loader: () => {
         throw 111;
@@ -148,7 +148,7 @@ describe('loadRoute', () => {
     });
   });
 
-  test('returns an error payload if loader rejects', async () => {
+  test('returns an error state if loader rejects', async () => {
     const route = createRoute({
       loader: () => Promise.reject(111),
     });
@@ -161,7 +161,7 @@ describe('loadRoute', () => {
     });
   });
 
-  test('returns an error payload if both lazy component and loader throw', async () => {
+  test('returns an error state if both lazy component and loader throw', async () => {
     const route = createRoute({
       lazyComponent: () => Promise.reject(111),
       loader: () => Promise.reject(222),
@@ -250,7 +250,7 @@ describe('hydrateRoutes', () => {
     });
   });
 
-  test('returns an error payload', () => {
+  test('returns an error state', () => {
     const route = createRoute();
 
     window.__REACT_CORSAIR_SSR_STATE__ = new Map().set(
@@ -280,7 +280,7 @@ describe('hydrateRoutes', () => {
     expect(loaderMock).not.toHaveBeenCalled();
   });
 
-  test('waits for a payload to arrive', async () => {
+  test('waits for a state to arrive', async () => {
     const loaderMock = jest.fn();
 
     const route = createRoute({
@@ -289,15 +289,15 @@ describe('hydrateRoutes', () => {
 
     window.__REACT_CORSAIR_SSR_STATE__ = new Map();
 
-    const payloads = hydrateRoutes([{ route, params: {} }], JSON.parse);
+    const contents = hydrateRoutes([{ route, params: {} }], JSON.parse);
 
-    expect(payloads).toEqual([expect.any(Promise)]);
+    expect(contents).toEqual([expect.any(Promise)]);
 
     expect(loaderMock).not.toHaveBeenCalled();
 
     window.__REACT_CORSAIR_SSR_STATE__.set(0, JSON.stringify({ data: 'aaa' }));
 
-    await expect(payloads![0]).resolves.toEqual({ component: Outlet, data: 'aaa', error: undefined, hasError: false });
+    await expect(contents![0]).resolves.toEqual({ component: Outlet, data: 'aaa', error: undefined, hasError: false });
   });
 
   test('does not hydrate the second call', () => {
@@ -310,27 +310,27 @@ describe('hydrateRoutes', () => {
     expect(window.__REACT_CORSAIR_SSR_STATE__).toBe(undefined);
   });
 
-  test('uses a custom payload parser', () => {
-    const ssrPayloadParserMock = jest.fn(JSON.parse);
+  test('uses a custom state parser', () => {
+    const stateParserMock = jest.fn(JSON.parse);
     const route = createRoute();
 
     window.__REACT_CORSAIR_SSR_STATE__ = new Map().set(0, JSON.stringify({ data: 'aaa' }));
 
-    hydrateRoutes([{ route, params: {} }], ssrPayloadParserMock);
+    hydrateRoutes([{ route, params: {} }], stateParserMock);
 
-    expect(ssrPayloadParserMock).toHaveBeenCalledTimes(1);
-    expect(ssrPayloadParserMock).toHaveBeenNthCalledWith(1, '{"data":"aaa"}');
+    expect(stateParserMock).toHaveBeenCalledTimes(1);
+    expect(stateParserMock).toHaveBeenNthCalledWith(1, '{"data":"aaa"}');
   });
 
-  test('returns an error payload when a payload parser throws', () => {
-    const ssrPayloadParser = () => {
+  test('returns an error state when a state parser throws', () => {
+    const stateParser = () => {
       throw 111;
     };
     const route = createRoute();
 
     window.__REACT_CORSAIR_SSR_STATE__ = new Map().set(0, JSON.stringify({ data: 'aaa' }));
 
-    expect(hydrateRoutes([{ route, params: {} }], ssrPayloadParser)).toEqual([
+    expect(hydrateRoutes([{ route, params: {} }], stateParser)).toEqual([
       {
         component: undefined,
         data: undefined,

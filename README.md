@@ -447,7 +447,7 @@ createRoute('/foo%3Abar');
 You can access matched [pathname params](#pathname-templates) and search params in route components:
 
 ```ts
-import { createRoute, useRouteState } from 'react-corsair';
+import { createRoute, useRouteParams } from 'react-corsair';
 
 interface TeamParams {
   teamId: string;
@@ -457,7 +457,7 @@ interface TeamParams {
 const teamRoute = createRoute<UserParams>('/teams/:teamId', TeamPage);
 
 function TeamPage() {
-  const { params } = useRouteState(teamRoute);
+  const params = useRouteParams(teamRoute);
 
   // 🟡 The params type was inferred from the teamRoute.
   return `Team ${params.teamId} is sorted by ${params.sortBy}.`;
@@ -657,13 +657,13 @@ This tells `<Router>` to always render `userRoute.loadingComponent` when `userRo
 loaded yet. `loadingAppearance` can be set to:
 
 <dl>
-<dt><code>"loading"</code></dt>
+<dt>"loading"</dt>
 <dd>
 
 A `loadingComponent` is always rendered if a route is matched and a component or a data loader are being loaded.
 
 </dd>
-<dt><code>"auto"</code></dt>
+<dt>"auto"</dt>
 <dd>
 
 If another route is currently rendered then it would be preserved until a component and data loader of a newly
@@ -717,10 +717,10 @@ During route component rendering, you may detect that there's not enough data to
 the [`notFound`](https://smikhalevski.github.io/react-corsair/functions/notFound.html) function in such case:
 
 ```ts
-import { notFound, useRouteState } from 'react-corsair';
+import { notFound, useRouteParams } from 'react-corsair';
 
 function UserPage() {
-  const { params } = useRouteState(userRoute);
+  const params = useRouteParams(userRoute);
 
   const user = useUser(params.userId);
 
@@ -835,11 +835,11 @@ const userRoute = createRoute({
 `<Router>` matches the route. Router waits for both component and data to be loaded and then renders the component.
 
 You can access the loaded data in your route component using
-the [useRouteState](https://smikhalevski.github.io/react-corsair/functions/useRouteState.html) hook:
+the [useRouteData](https://smikhalevski.github.io/react-corsair/functions/useRouteData.html) hook:
 
 ```ts
 function UserPage() {
-  const { data } = useRouteState(userRoute);
+  const userData = useRouteData(userRoute);
 
   // Render the data here
 }

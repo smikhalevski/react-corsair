@@ -36,6 +36,9 @@ export interface Navigation {
   prefetch(to: To): boolean;
 }
 
+/**
+ * Creates a {@link Navigation} bound to a {@link Router}.
+ */
 export function createNavigation(router: Router<any>): Navigation {
   return {
     push(to) {

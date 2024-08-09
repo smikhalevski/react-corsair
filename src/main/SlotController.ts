@@ -1,6 +1,6 @@
 import { PubSub } from 'parallel-universe';
 import { ComponentType } from 'react';
-import { RoutePayload, SSRRoutePayload } from './loadRoutes';
+import { RouteContent, RouteState } from './loadRoutes';
 import { RouteMatch } from './matchRoutes';
 import { NotFoundError } from './notFound';
 import { Route } from './Route';
@@ -15,10 +15,10 @@ export interface SlotController {
    * if a new route has {@link RouteOptions.loadingAppearance} set to `"auto"` and an old route must be kept on
    * the screen.
    */
-  appearsAs: SlotController;
+  renderedController: SlotController;
 
   /**
-   * A controller that is propagated to a child {@link Slot}.
+   * A controller that is propagated to a child {@link Slot} when this controller is rendered.
    */
   childController?: SlotController;
 
@@ -48,18 +48,34 @@ export interface SlotController {
   nonce?: string;
 
   /**
-   * Sets an error to this controller.
+   * An error that occurred during loading or rendering.
    */
-  setRenderError(error: unknown): void;
-
-  subscribe?(listener: () => void): () => void;
+  error: unknown;
 
   /**
-   * Returns a stringified route payload.
+   * `true` if {@link error} contains an actual error.
    */
-  getPayloadStr(): string | undefined;
+  hasError: boolean;
+
+  /**
+   * Sets an error that occurred during rendering of a {@link component}.
+   */
+  setRenderingError(error: unknown): void;
+
+  /**
+   * Subscribes listener to controller changes.
+   */
+  subscribe(listener: () => void): () => void;
+
+  /**
+   * Returns a stringified route state during SSR.
+   */
+  getStateStr(): string | undefined;
 }
 
+/**
+ * Options of a {@link SlotController}.
+ */
 export interface SlotControllerOptions {
   /**
    * A component that is rendered when an error was thrown during a slot rendering.
@@ -81,12 +97,14 @@ export interface SlotControllerOptions {
  * A slot controller of a Not Found page.
  */
 export class NotFoundSlotController implements SlotController {
-  appearsAs = this;
+  renderedController = this;
   component: ComponentType | undefined;
   loadingComponent: ComponentType | undefined;
-
+  error: unknown = undefined;
   hasError = false;
   errorComponent: ComponentType | undefined;
+
+  private _pubSub = new PubSub();
 
   constructor(options: SlotControllerOptions) {
     this.component = options.notFoundComponent;
@@ -94,17 +112,23 @@ export class NotFoundSlotController implements SlotController {
     this.errorComponent = options.errorComponent;
   }
 
-  setRenderError(error: unknown): void {
+  setRenderingError(error: unknown): void {
     if (this.hasError) {
       // Unrecoverable error
       throw error;
     }
+    this.error = error;
     this.hasError = true;
     this.component = this.errorComponent;
+    this._pubSub.publish();
   }
 
-  getPayloadStr(): string | undefined {
-    return;
+  subscribe(listener: () => void): () => void {
+    return this._pubSub.subscribe(listener);
+  }
+
+  getStateStr(): string | undefined {
+    return undefined;
   }
 }
 
@@ -118,7 +142,7 @@ export interface RouteSlotControllerOptions extends SlotControllerOptions {
   childController?: RouteSlotController;
 
   /**
-   * A route match ID, used during SSR to populate a global state.
+   * An index of a route match.
    */
   index: number;
 
@@ -128,14 +152,14 @@ export interface RouteSlotControllerOptions extends SlotControllerOptions {
   routeMatch: RouteMatch;
 
   /**
-   * A payload of a matched route.
+   * A content of a matched route.
    */
-  routePayload: Promise<RoutePayload> | RoutePayload;
+  routeContent: Promise<RouteContent> | RouteContent;
 
   /**
-   * Stringifies a route payload during SSR.
+   * Stringifies a route state during SSR.
    */
-  payloadStringifier?: (payload: SSRRoutePayload) => string;
+  stateStringifier?: (state: RouteState) => string;
 
   /**
    * A Content-Security-Policy nonce.
@@ -144,7 +168,7 @@ export interface RouteSlotControllerOptions extends SlotControllerOptions {
 }
 
 export class RouteSlotController implements SlotController {
-  appearsAs: SlotController;
+  renderedController: SlotController;
   childController: RouteSlotController | undefined;
   component: ComponentType | undefined;
   loadingComponent: ComponentType | undefined;
@@ -159,9 +183,9 @@ export class RouteSlotController implements SlotController {
   hasError = false;
   errorComponent: ComponentType | undefined;
   notFoundComponent: ComponentType | undefined;
-  payloadStringifier;
+  stateStringifier;
 
-  protected _pubSub = new PubSub();
+  private _pubSub = new PubSub();
 
   /**
    * @param prevController A controller that is being replaced in a slot with this controller.
@@ -176,44 +200,25 @@ export class RouteSlotController implements SlotController {
 
     this.route = route;
     this.params = params;
-    this.appearsAs = route.loadingAppearance === 'loading' ? this : prevController || this;
+    this.renderedController = route.loadingAppearance === 'loading' ? this : prevController || this;
     this.component = this.promise = this.data = this.error = undefined;
     this.errorComponent = route.errorComponent || options.errorComponent;
     this.loadingComponent = route.loadingComponent || options.loadingComponent;
     this.notFoundComponent = route.notFoundComponent || options.notFoundComponent;
     this.childController = options.childController;
-    this.payloadStringifier = options.payloadStringifier;
+    this.stateStringifier = options.stateStringifier;
     this.index = options.index;
     this.nonce = options.nonce;
 
-    this._setRoutePayload(options.routePayload);
+    this._setRouteContent(options.routeContent);
   }
 
-  protected _setRoutePayload(routePayload: Promise<RoutePayload> | RoutePayload): void {
-    if (isPromiseLike(routePayload)) {
-      const promise = routePayload.then(routePayload => {
-        if (promise === this.promise) {
-          this.promise = undefined;
-          this._setRoutePayload(routePayload);
-        }
-      });
-
-      this.promise = promise;
-    } else {
-      this.appearsAs = this;
-      this.component = routePayload.component || this.errorComponent;
-      this.data = routePayload.data;
-      this.error = routePayload.error;
-      this.hasError = routePayload.hasError;
-    }
-    this._pubSub.publish();
-  }
-
-  setRenderError(error: unknown): void {
+  setRenderingError(error: unknown): void {
     if (this.hasError) {
       // Unrecoverable error
       throw error;
     }
+    this.error = error;
     this.hasError = true;
     this.component = error instanceof NotFoundError ? this.notFoundComponent : this.errorComponent;
     this._pubSub.publish();
@@ -223,16 +228,40 @@ export class RouteSlotController implements SlotController {
     return this._pubSub.subscribe(listener);
   }
 
-  protected _abort(): void {
-    this.promise = undefined;
-    this.childController?._abort();
-  }
-
-  getPayloadStr(): string | undefined {
-    return this.payloadStringifier?.({
+  getStateStr(): string | undefined {
+    return this.stateStringifier?.({
       data: this.data,
       error: this.error,
       hasError: this.hasError,
     });
+  }
+
+  private _setRouteContent(routeContent: Promise<RouteContent> | RouteContent): void {
+    if (isPromiseLike(routeContent)) {
+      const promise = routeContent.then(routeContent => {
+        if (promise !== this.promise) {
+          return;
+        }
+        this.promise = undefined;
+        this._setRouteContent(routeContent);
+      });
+
+      this.promise = promise;
+      this._pubSub.publish();
+      return;
+    }
+
+    this.renderedController = this;
+    this.component = routeContent.component || this.errorComponent;
+    this.data = routeContent.data;
+    this.error = routeContent.error;
+    this.hasError = routeContent.hasError;
+    this.promise = undefined;
+    this._pubSub.publish();
+  }
+
+  private _abort(): void {
+    this.promise = undefined;
+    this.childController?._abort();
   }
 }

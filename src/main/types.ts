@@ -86,13 +86,12 @@ export interface ParamsAdapter<Params> {
  * What to render when {@link RouteOptions.lazyComponent} or {@link RouteOptions.loader} are being loaded.
  *
  * <dl>
- *   <dt>"loading"</dt>
- *   <dd>A {@link RouteOptions.loadingComponent} is always rendered if a route is matched and component or loader are
- *   being loaded.</dd>
- *
- *   <dt>"auto"</dt>
- *   <dd>If another route is currently rendered then it would be preserved until component and loader of a newly
- *   matched route are being loaded. Otherwise, a {@link RouteOptions.loadingComponent} is rendered.</dd>
+ * <dt>"loading"</dt>
+ * <dd>A {@link RouteOptions.loadingComponent} is always rendered if a route is matched and component or loader are
+ * being loaded.</dd>
+ * <dt>"auto"</dt>
+ * <dd>If another route is currently rendered then it would be preserved until component and loader of a newly matched
+ * route are being loaded. Otherwise, a {@link RouteOptions.loadingComponent} is rendered.</dd>
  * </dl>
  */
 export type LoadingAppearance = 'loading' | 'auto';

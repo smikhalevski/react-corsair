@@ -22,7 +22,11 @@ export function createHashHistory(options: HistoryOptions = {}): History {
     get location() {
       const href = decodeURIComponent(window.location.hash.substring(1));
 
-      return prevHref === href ? location : (location = parseURL((prevHref = href), searchParamsAdapter));
+      if (prevHref !== href) {
+        prevHref = href;
+        location = parseURL(href, searchParamsAdapter);
+      }
+      return location;
     },
 
     toURL(location, base = defaultBase) {

@@ -1,5 +1,5 @@
 import React, { ReactNode, useContext } from 'react';
-import { Slot, SlotControllerContext } from './Slot';
+import { ChildSlotControllerContext, Slot } from './Slot';
 
 /**
  * Props of an {@link Outlet}.
@@ -15,7 +15,7 @@ export interface OutletProps {
  * Renders a route provided by an enclosing {@link Router}.
  */
 export function Outlet(props: OutletProps): ReactNode {
-  const controller = useContext(SlotControllerContext);
+  const controller = useContext(ChildSlotControllerContext);
 
   return controller === undefined ? props.children : <Slot controller={controller} />;
 }

@@ -12,13 +12,15 @@ export { redirect, Redirect } from './redirect';
 export { Route } from './Route';
 export { Router } from './Router';
 export { useNavigation } from './useNavigation';
-export { useRouteState } from './useRouteState';
+export { useRouteData } from './useRouteData';
+export { useRouteError } from './useRouteError';
+export { useRouteParams } from './useRouteParams';
 
 export type { MemoryHistoryOptions } from './history/createMemoryHistory';
 export type { LinkProps } from './history/Link';
 export type { HistoryOptions, History, SearchParamsAdapter } from './history/types';
 export type { Navigation } from './createNavigation';
-export type { SSRRoutePayload } from './loadRoutes';
+export type { RouteState } from './loadRoutes';
 export type { OutletProps } from './Outlet';
 export type { PathnameMatch } from './PathnameTemplate';
 export type { RouterProps } from './Router';

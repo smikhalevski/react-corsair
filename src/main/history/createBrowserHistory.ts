@@ -22,7 +22,11 @@ export function createBrowserHistory(options: HistoryOptions = {}): History {
     get location() {
       const { href } = window.location;
 
-      return prevHref === href ? location : (location = parseURL((prevHref = href), searchParamsAdapter));
+      if (prevHref !== href) {
+        prevHref = href;
+        location = parseURL(href, searchParamsAdapter);
+      }
+      return location;
     },
 
     toURL(location, base = defaultBase) {

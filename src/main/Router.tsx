@@ -1,10 +1,10 @@
 import React, { Component, ComponentType, createContext, ReactNode } from 'react';
 import { createNavigation } from './createNavigation';
-import { hydrateRoutes, loadRoutes, SSRRoutePayload } from './loadRoutes';
+import { hydrateRoutes, loadRoutes, RouteState } from './loadRoutes';
 import { matchRoutes, RouteMatch } from './matchRoutes';
 import { Outlet } from './Outlet';
 import { Route } from './Route';
-import { SlotControllerContext } from './Slot';
+import { ChildSlotControllerContext } from './Slot';
 import { NotFoundSlotController, RouteSlotController, SlotController } from './SlotController';
 import { Location } from './types';
 import { isArrayEqual } from './utils';
@@ -83,35 +83,36 @@ export interface RouterProps<Context> {
    * <dl>
    * <dt>"client"</dt>
    * <dd>When a location is matched for the first time by a router, the latter tries to hydrate data from a global
-   * SSR state. Used by default when {@link !window} is defined.</dd>
+   * SSR state.</dd>
    * <dt>"server"</dt>
-   * <dd>A router renders hydration chunks to populate a global SSR state on the client. Used by default when
-   * {@link !window} is `undefined`.</dd>
+   * <dd>A router renders hydration chunks to populate a global SSR state on the client.</dd>
    * <dt>"none"</dt>
    * <dd>A router doesn't participate in SSR.</dd>
    * </dl>
+   *
+   * By default, "client" or "server" depending on presence of {@link !window}.
    */
   ssrAffiliation?: 'client' | 'server' | 'none';
 
   /**
-   * Parses a payload that was stringified during SSR.
+   * Parses a state that was stringified during SSR.
    *
    * Provide this option on the client when {@link ssrAffiliation SSR is enabled}.
    *
-   * @param payloadStr A stringified payload to parse.
+   * @param stateStr A stringified state to parse.
    * @default JSON.parse
    */
-  payloadParser?: (payloadStr: string) => SSRRoutePayload;
+  stateParser?: (stateStr: string) => RouteState;
 
   /**
-   * Stringifies a route payload during SSR.
+   * Stringifies a route state during SSR.
    *
    * Provide this option on the server when {@link ssrAffiliation SSR is enabled}.
    *
-   * @param payload A route payload to stringify.
+   * @param state A route state to stringify.
    * @default JSON.stringify
    */
-  payloadStringifier?: (payload: SSRRoutePayload) => string;
+  stateStringifier?: (state: RouteState) => string;
 
   /**
    * A [Content-Security-Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src)
@@ -199,7 +200,7 @@ export class Router<Context = void> extends Component<NoContextRouterProps | Rou
 
     return (
       <RouterContext.Provider value={this}>
-        <SlotControllerContext.Provider value={controller}>
+        <ChildSlotControllerContext.Provider value={controller}>
           {this.props.ssrAffiliation === 'server' && controller instanceof RouteSlotController && (
             <script
               nonce={this.props.nonce}
@@ -211,7 +212,7 @@ export class Router<Context = void> extends Component<NoContextRouterProps | Rou
             />
           )}
           {this.props.children === undefined ? <Outlet /> : this.props.children}
-        </SlotControllerContext.Provider>
+        </ChildSlotControllerContext.Provider>
       </RouterContext.Provider>
     );
   }
@@ -222,15 +223,17 @@ export function createSlotControllers(
   routeMatches: RouteMatch[] | null,
   routerProps: RouterProps<any>
 ): SlotController[] {
-  const { context, errorComponent, loadingComponent, notFoundComponent } = routerProps;
-
   if (routeMatches === null) {
     // Not found
     return [new NotFoundSlotController(routerProps)];
   }
 
-  const routePayloads =
-    hydrateRoutes(routeMatches, routerProps.payloadParser || JSON.parse) || loadRoutes(routeMatches, context);
+  const { stateParser = JSON.parse, stateStringifier = JSON.stringify } = routerProps;
+
+  const routeContents =
+    routerProps.ssrAffiliation === 'client'
+      ? hydrateRoutes(routeMatches, stateParser) || loadRoutes(routeMatches, routerProps.context)
+      : loadRoutes(routeMatches, routerProps.context);
 
   const slotControllers: RouteSlotController[] = [];
 
@@ -240,13 +243,12 @@ export function createSlotControllers(
       childController: slotControllers[i + 1],
       index: i,
       routeMatch: routeMatches[i],
-      routePayload: routePayloads[i],
-      payloadStringifier:
-        routerProps.ssrAffiliation === 'server' ? routerProps.payloadStringifier || JSON.stringify : undefined,
+      routeContent: routeContents[i],
+      stateStringifier: routerProps.ssrAffiliation === 'server' ? stateStringifier : undefined,
       nonce: routerProps.nonce,
-      errorComponent: i === 0 ? errorComponent : undefined,
-      loadingComponent: i === 0 ? loadingComponent : undefined,
-      notFoundComponent: i === 0 ? notFoundComponent : undefined,
+      errorComponent: i === 0 ? routerProps.errorComponent : undefined,
+      loadingComponent: i === 0 ? routerProps.loadingComponent : undefined,
+      notFoundComponent: i === 0 ? routerProps.notFoundComponent : undefined,
     });
   }
 

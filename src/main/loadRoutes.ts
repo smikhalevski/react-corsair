@@ -4,9 +4,9 @@ import { Route } from './Route';
 import { isPromiseLike } from './utils';
 
 /**
- * A route payload passed from the server to the client during SSR.
+ * A state rendered by a route component.
  */
-export interface SSRRoutePayload {
+export interface RouteState {
   /**
    * Data available in a route component.
    */
@@ -19,46 +19,34 @@ export interface SSRRoutePayload {
 
   /**
    * `true` if {@link error} contains an actual error.
+   *
+   * @default false
    */
   hasError?: boolean;
 }
 
 /**
- * A payload produced during a route loading.
+ * A loaded route state and component.
  */
-export interface RoutePayload {
+export interface RouteContent extends RouteState {
   /**
    * A component rendered by a route, or `undefined` if an {@link error} occurred.
    */
   component: ComponentType | undefined;
-
-  /**
-   * Data available in a route component.
-   */
-  data: unknown;
-
-  /**
-   * An error that occurred during a state resolution.
-   */
-  error: unknown;
-
-  /**
-   * `true` if {@link error} contains an actual error.
-   */
   hasError: boolean;
 }
 
 /**
- * Loads components and data for matched routes.
+ * Loads components and state for matched routes.
  */
-export function loadRoutes(routeMatches: RouteMatch[], context: unknown): Array<Promise<RoutePayload> | RoutePayload> {
+export function loadRoutes(routeMatches: RouteMatch[], context: unknown): Array<Promise<RouteContent> | RouteContent> {
   return routeMatches.map(routeMatch => loadRoute(routeMatch.route, routeMatch.params, context));
 }
 
 /**
- * Loads a component and data for a route.
+ * Loads a component and state for a route.
  */
-export function loadRoute(route: Route, params: unknown, context: unknown): Promise<RoutePayload> | RoutePayload {
+export function loadRoute(route: Route, params: unknown, context: unknown): Promise<RouteContent> | RouteContent {
   let component;
   let data;
 
@@ -67,25 +55,25 @@ export function loadRoute(route: Route, params: unknown, context: unknown): Prom
 
     data = route.loader?.(params, context);
   } catch (error) {
-    return createErrorPayload(error);
+    return createErrorContent(error);
   }
 
   if (isPromiseLike(component) || isPromiseLike(data)) {
-    return Promise.all([component, data]).then(pair => createOkPayload(pair[0], pair[1]), createErrorPayload);
+    return Promise.all([component, data]).then(pair => createOkContent(pair[0], pair[1]), createErrorContent);
   }
 
-  return createOkPayload(component, data);
+  return createOkContent(component, data);
 }
 
 /**
  * Loads route components and uses data rendered during SSR.
  *
- * **Note:** Hydration has a side effect of overwriting the SSR state, so no-op when called the second time.
+ * **Note:** Hydration has a side effect of overwriting the SSR state, so it is a no-op when called the second time.
  */
 export function hydrateRoutes(
   routeMatches: RouteMatch[],
-  ssrPayloadParser: (ssrPayloadStr: string) => SSRRoutePayload
-): Array<Promise<RoutePayload> | RoutePayload> | null {
+  stateParser: (stateStr: string) => RouteState
+): Array<Promise<RouteContent> | RouteContent> | null {
   const ssrState = typeof window !== 'undefined' ? window.__REACT_CORSAIR_SSR_STATE__ : undefined;
 
   if (!(ssrState instanceof Map)) {
@@ -95,49 +83,49 @@ export function hydrateRoutes(
     return null;
   }
 
-  const resolvers = new Map<number, (ssrPayload: SSRRoutePayload) => void>();
+  const stateResolvers = new Map<number, (state: RouteState) => void>();
 
   window.__REACT_CORSAIR_SSR_STATE__ = {
-    set(index, ssrPayloadStr) {
-      const resolve = resolvers.get(index);
+    set(index, stateStr) {
+      const resolveState = stateResolvers.get(index);
 
-      if (resolve !== undefined) {
-        resolve(ssrPayloadParser(ssrPayloadStr));
-        resolvers.delete(index);
+      if (resolveState !== undefined) {
+        resolveState(stateParser(stateStr));
+        stateResolvers.delete(index);
       }
     },
   };
 
   return routeMatches.map((routeMatch, i) => {
     let component;
-    let ssrPayload;
+    let state;
 
     try {
       component = routeMatch.route.getComponent();
 
-      ssrPayload = ssrState.has(i)
-        ? ssrPayloadParser(ssrState.get(i))
-        : new Promise<SSRRoutePayload>(resolve => resolvers.set(i, resolve));
+      state = ssrState.has(i)
+        ? stateParser(ssrState.get(i))
+        : new Promise<RouteState>(resolve => stateResolvers.set(i, resolve));
     } catch (error) {
-      return createErrorPayload(error);
+      return createErrorContent(error);
     }
 
-    if (isPromiseLike(component) || isPromiseLike(ssrPayload)) {
-      return Promise.all([component, ssrPayload]).then(hydratePayload, createErrorPayload);
+    if (isPromiseLike(component) || isPromiseLike(state)) {
+      return Promise.all([component, state]).then(hydrateContent, createErrorContent);
     }
 
-    return hydratePayload([component, ssrPayload]);
+    return hydrateContent([component, state]);
   });
 }
 
-function hydratePayload(pair: [ComponentType, SSRRoutePayload]): RoutePayload {
-  return pair[1].hasError ? createErrorPayload(pair[1].error) : createOkPayload(pair[0], pair[1].data);
+function hydrateContent(pair: [ComponentType, RouteState]): RouteContent {
+  return pair[1].hasError ? createErrorContent(pair[1].error) : createOkContent(pair[0], pair[1].data);
 }
 
-function createOkPayload(component: ComponentType, data: unknown): RoutePayload {
+function createOkContent(component: ComponentType, data: unknown): RouteContent {
   return { component, data, error: undefined, hasError: false };
 }
 
-function createErrorPayload(error: unknown): RoutePayload {
+function createErrorContent(error: unknown): RouteContent {
   return { component: undefined, data: undefined, error, hasError: true };
 }

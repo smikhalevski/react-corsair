@@ -18,7 +18,7 @@ export function useHistory(): History {
   const history = useContext(HistoryContext);
 
   if (history === null) {
-    throw new Error('Forbidden outside of a HistoryProvider');
+    throw new Error('Cannot be used outside of a HistoryProvider');
   }
 
   useHistorySubscription(history);
