@@ -3,6 +3,7 @@ export { createHashHistory } from './history/createHashHistory';
 export { createMemoryHistory } from './history/createMemoryHistory';
 export { Link } from './history/Link';
 export { useHistorySubscription } from './history/useHistorySubscription';
+export { urlSearchParamsAdapter } from './history/urlSearchParamsAdapter';
 export { useHistory, HistoryProvider } from './history/useHistory';
 export { createRoute } from './createRoute';
 export { notFound, NotFoundError } from './notFound';

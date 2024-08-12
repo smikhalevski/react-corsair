@@ -13,5 +13,5 @@ export function useRouteParams<Params extends object>(route: Route<any, Params>)
 
   return useSnapshot(controller.subscribe, () =>
     controller instanceof RouteSlotController ? controller.params : undefined
-  );
+  ) as any;
 }

@@ -18,7 +18,7 @@ export interface RouteState {
   error?: unknown;
 
   /**
-   * `true` if {@link error} contains an actual error.
+   * `true` if {@link error} contains an actual error, or `false` otherwise.
    *
    * @default false
    */

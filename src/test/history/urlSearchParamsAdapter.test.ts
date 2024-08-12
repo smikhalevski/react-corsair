@@ -1,4 +1,4 @@
-import { urlSearchParamsAdapter } from '../../main/history/urlSearchParamsAdapter';
+import { urlSearchParamsAdapter } from '../../main';
 
 describe('urlSearchParamsAdapter', () => {
   test('parses params', () => {

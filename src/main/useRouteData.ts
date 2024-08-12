@@ -13,5 +13,5 @@ export function useRouteData<Data>(route: Route<any, any, Data>): Data {
 
   return useSnapshot(controller.subscribe, () =>
     controller instanceof RouteSlotController ? controller.data : undefined
-  );
+  ) as any;
 }
