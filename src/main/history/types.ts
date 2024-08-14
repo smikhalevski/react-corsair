@@ -1,8 +1,8 @@
-import { Dict, Location, To } from '../types';
+import { Dict, Location, To } from '../__types';
 
 export interface HistoryOptions {
   /**
-   * A default URL base used by {@link History.toURL}.
+   * A base URL.
    */
   base?: URL | string;
 
@@ -26,9 +26,8 @@ export interface History {
    * Creates a URL for a given location.
    *
    * @param location A location to create a URL for.
-   * @param base A URL base.
    */
-  toURL(location: Location, base?: URL | string): string;
+  toURL(location: Location): string;
 
   /**
    * Adds an entry to the history stack.

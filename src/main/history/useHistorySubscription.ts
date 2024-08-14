@@ -1,4 +1,4 @@
-import React from 'react';
+import { useSyncExternalStore } from 'react';
 import { History } from './types';
 
 /**
@@ -7,22 +7,9 @@ import { History } from './types';
  * @param history The history to subscribe to.
  */
 export function useHistorySubscription(history: History): void {
-  if (typeof React.useSyncExternalStore === 'function') {
-    React.useSyncExternalStore(
-      history.subscribe,
-      () => history.location,
-      () => history.location
-    );
-    return;
-  }
-
-  const [, setLocation] = React.useState(history.location);
-
-  React.useEffect(() => {
-    setLocation(history.location);
-
-    return history.subscribe(() => {
-      setLocation(history.location);
-    });
-  }, [history]);
+  useSyncExternalStore(
+    history.subscribe,
+    () => history.location,
+    () => history.location
+  );
 }

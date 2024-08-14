@@ -1,7 +1,14 @@
+import { JSDOM } from 'jsdom';
 import { delay } from 'parallel-universe';
 import { createHashHistory, SearchParamsAdapter, urlSearchParamsAdapter } from '../../main';
 
 describe('createHashHistory', () => {
+  beforeEach(() => {
+    const { window } = new JSDOM('', { url: 'http://localhost' });
+
+    Object.assign(global, { window });
+  });
+
   test('pushes location', async () => {
     const aaaLocation = { pathname: '/aaa', searchParams: {}, hash: '' };
 
@@ -140,12 +147,6 @@ describe('createHashHistory', () => {
     expect(createHashHistory().toURL({ pathname: '/aaa', searchParams: { xxx: 111 }, hash: '' })).toBe(
       '#%2Faaa%3Fxxx%3D111'
     );
-  });
-
-  test('creates a URL with a base', async () => {
-    expect(
-      createHashHistory().toURL({ pathname: '/aaa', searchParams: { xxx: 111 }, hash: '' }, 'http://bbb.ccc')
-    ).toBe('http://bbb.ccc/#%2Faaa%3Fxxx%3D111');
   });
 
   test('creates a URL with a default base', async () => {

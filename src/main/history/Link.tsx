@@ -1,6 +1,6 @@
-import React, { forwardRef, HTMLAttributes, MouseEvent, useContext, useEffect } from 'react';
-import { To } from '../types';
-import { useNavigation } from '../useNavigation';
+import React, { forwardRef, HTMLAttributes, MouseEventHandler, useContext, useEffect } from 'react';
+import { To } from '../__types';
+import { useNavigation } from '../__useNavigation';
 import { toLocation } from '../utils';
 import { HistoryContext } from './useHistory';
 
@@ -45,7 +45,7 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
     }
   }, []);
 
-  const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
+  const handleClick: MouseEventHandler<HTMLAnchorElement> = event => {
     if (typeof onClick === 'function') {
       onClick(event);
     }

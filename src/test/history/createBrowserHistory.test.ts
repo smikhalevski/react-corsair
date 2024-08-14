@@ -1,7 +1,36 @@
+import { JSDOM } from 'jsdom';
 import { delay } from 'parallel-universe';
 import { createBrowserHistory, SearchParamsAdapter, urlSearchParamsAdapter } from '../../main';
 
 describe('createBrowserHistory', () => {
+  beforeEach(() => {
+    const { window } = new JSDOM('', { url: 'http://localhost' });
+
+    Object.assign(global, { window });
+  });
+
+  test('removes base from location', async () => {
+    window.history.pushState(null, '', '/aaa/bbb');
+
+    expect(window.location.href).toBe('http://localhost/aaa/bbb');
+
+    expect(createBrowserHistory({ base: 'http://localhost/aaa' }).location).toEqual({
+      pathname: '/bbb',
+      searchParams: {},
+      hash: '',
+    });
+    expect(createBrowserHistory({ base: 'http://localhost/aaa/' }).location).toEqual({
+      pathname: '/bbb',
+      searchParams: {},
+      hash: '',
+    });
+    expect(createBrowserHistory({ base: 'http://xxx.zzz/aaa' }).location).toEqual({
+      pathname: '/bbb',
+      searchParams: {},
+      hash: '',
+    });
+  });
+
   test('pushes location', async () => {
     const aaaLocation = { pathname: '/aaa', searchParams: {}, hash: '' };
 
@@ -140,12 +169,6 @@ describe('createBrowserHistory', () => {
     expect(createBrowserHistory().toURL({ pathname: '/aaa', searchParams: { xxx: 111 }, hash: '' })).toBe(
       '/aaa?xxx=111'
     );
-  });
-
-  test('creates a URL with a base', async () => {
-    expect(
-      createBrowserHistory().toURL({ pathname: '/aaa', searchParams: { xxx: 111 }, hash: '' }, 'http://bbb.ccc')
-    ).toBe('http://bbb.ccc/aaa?xxx=111');
   });
 
   test('creates a URL with a default base', async () => {
