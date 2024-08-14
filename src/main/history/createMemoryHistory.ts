@@ -1,5 +1,5 @@
 import { PubSub } from 'parallel-universe';
-import { Location } from '../__types';
+import { Location } from '../types';
 import { toLocation } from '../utils';
 import { History, HistoryOptions } from './types';
 import { urlSearchParamsAdapter } from './urlSearchParamsAdapter';
@@ -37,8 +37,8 @@ export function createMemoryHistory(options: MemoryHistoryOptions): History {
       return entries[cursor];
     },
 
-    toURL(location) {
-      return toURL(location, searchParamsAdapter, baseURL);
+    toURL(to) {
+      return toURL(toLocation(to), searchParamsAdapter, baseURL);
     },
 
     push(to) {

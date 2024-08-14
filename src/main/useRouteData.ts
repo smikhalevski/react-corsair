@@ -1,17 +1,15 @@
-import { useContext } from 'react';
 import { Route } from './Route';
-import { SlotControllerContext } from './Slot';
 import { RouteSlotController } from './SlotController';
-import { useSnapshot } from './useSnapshot';
+import { useSlotController } from './useSlotController';
 
 export function useRouteData<Data>(route: Route<any, any, Data>): Data {
-  const controller = useContext(SlotControllerContext);
+  const controller = useSlotController();
 
-  if (controller === undefined) {
-    throw new Error('Cannot be used outside of a route');
+  if (!(controller instanceof RouteSlotController && controller.route === route)) {
+    throw new Error("Route isn't rendered");
   }
-
-  return useSnapshot(controller.subscribe, () =>
-    controller instanceof RouteSlotController ? controller.data : undefined
-  ) as any;
+  if (controller.status !== 'ok') {
+    throw new Error("Route isn't loaded");
+  }
+  return controller.data as Data;
 }

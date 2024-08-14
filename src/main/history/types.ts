@@ -1,4 +1,4 @@
-import { Dict, Location, To } from '../__types';
+import { Dict, Location, To } from '../types';
 
 export interface HistoryOptions {
   /**
@@ -25,9 +25,9 @@ export interface History {
   /**
    * Creates a URL for a given location.
    *
-   * @param location A location to create a URL for.
+   * @param to A location to create a URL for.
    */
-  toURL(location: Location): string;
+  toURL(to: To): string;
 
   /**
    * Adds an entry to the history stack.

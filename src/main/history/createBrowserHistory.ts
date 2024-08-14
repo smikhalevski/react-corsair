@@ -1,5 +1,5 @@
 import { PubSub } from 'parallel-universe';
-import { Location } from '../__types';
+import { Location } from '../types';
 import { toLocation } from '../utils';
 import { History, HistoryOptions } from './types';
 import { urlSearchParamsAdapter } from './urlSearchParamsAdapter';
@@ -30,8 +30,8 @@ export function createBrowserHistory(options: HistoryOptions = {}): History {
       return location;
     },
 
-    toURL(location) {
-      return toURL(location, searchParamsAdapter, baseURL);
+    toURL(to) {
+      return toURL(toLocation(to), searchParamsAdapter, baseURL);
     },
 
     push(to) {

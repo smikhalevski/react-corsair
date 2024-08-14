@@ -1,9 +1,7 @@
 import React, { Component, createElement, ReactNode, Suspense } from 'react';
 import { SlotController } from './SlotController';
-
-export const SlotControllerContext = React.createContext<SlotController | undefined>(undefined);
-
-SlotControllerContext.displayName = 'SlotControllerContext';
+import { useInternalRouter } from './useInternalRouter';
+import { SlotControllerContext } from './useSlotController';
 
 export const ChildSlotControllerContext = React.createContext<SlotController | undefined>(undefined);
 
@@ -18,13 +16,17 @@ interface SlotState {
    * An error captured by an error boundary.
    */
   error: unknown;
+
+  /**
+   * `true` if an error boundary was triggered.
+   */
   hasError: boolean;
 }
 
 export class Slot extends Component<SlotProps, SlotState> {
   static displayName = 'Slot';
 
-  private _unsubscribe?: () => void;
+  private declare _unsubscribe: () => void;
 
   constructor(props: SlotProps) {
     super(props);
@@ -40,8 +42,7 @@ export class Slot extends Component<SlotProps, SlotState> {
 
   static getDerivedStateFromProps(nextProps: Readonly<SlotProps>, prevState: SlotState): Partial<SlotState> | null {
     if (prevState.hasError) {
-      // Propagate an error to a controller
-      nextProps.controller.renderedController.setRenderingError(prevState.error);
+      nextProps.controller.renderedController.onCatch(prevState.error);
 
       return { error: undefined, hasError: false };
     }
@@ -49,35 +50,35 @@ export class Slot extends Component<SlotProps, SlotState> {
   }
 
   componentDidMount() {
-    this._unsubscribe = this.props.controller.subscribe?.(this.forceUpdate);
+    this._unsubscribe = this.props.controller.subscribe(this.forceUpdate);
   }
 
   shouldComponentUpdate(nextProps: Readonly<SlotProps>, _nextState: Readonly<SlotState>, _nextContext: any): boolean {
-    return this.props.controller === nextProps.controller;
+    return this.props.controller !== nextProps.controller;
   }
 
   componentDidUpdate(prevProps: Readonly<SlotProps>, _prevState: Readonly<SlotState>, _snapshot?: any) {
     if (this.props.controller !== prevProps.controller) {
-      this._unsubscribe?.();
-      this._unsubscribe = this.props.controller.subscribe?.(this.forceUpdate);
+      this._unsubscribe();
+      this._unsubscribe = this.props.controller.subscribe(this.forceUpdate);
     }
   }
 
   componentWillUnmount() {
-    this._unsubscribe?.();
+    this._unsubscribe();
   }
 
   render(): ReactNode {
     return (
       <Suspense
         fallback={
-          <SlotRenderer
+          <InternalSlot
             isSuspendable={false}
             controller={this.props.controller.renderedController}
           />
         }
       >
-        <SlotRenderer
+        <InternalSlot
           isSuspendable={true}
           controller={this.props.controller.renderedController}
         />
@@ -86,41 +87,28 @@ export class Slot extends Component<SlotProps, SlotState> {
   }
 }
 
-interface SlotRendererProps {
+interface InternalSlotProps {
   isSuspendable: boolean;
   controller: SlotController;
 }
 
-function SlotRenderer({ isSuspendable, controller }: SlotRendererProps): ReactNode {
-  const component = isSuspendable ? controller.component : controller.loadingComponent;
+function InternalSlot(props: InternalSlotProps): ReactNode {
+  const { isSuspendable, controller } = props;
+  const { isServer } = useInternalRouter().state;
+  const component = isSuspendable ? (controller.onSuspend(), controller.component) : controller.fallbackComponent;
 
-  if (isSuspendable && controller.promise !== undefined) {
-    throw controller.promise;
-  }
   if (component === undefined) {
     return null;
   }
 
-  let stateStr;
-
   return (
     <SlotControllerContext.Provider value={controller}>
       <ChildSlotControllerContext.Provider value={controller.childController}>
-        {isSuspendable && (stateStr = controller.getStateStr()) !== undefined && (
-          <script
-            nonce={controller.nonce}
-            dangerouslySetInnerHTML={{
-              __html:
-                'window.__REACT_CORSAIR_SSR_STATE__&&' +
-                `window.__REACT_CORSAIR_SSR_STATE__.set(${controller.index},${JSON.stringify(stateStr)});` +
-                'var e=document.currentScript;e&&e.parentNode.removeChild(e);',
-            }}
-          />
-        )}
+        {isServer && isSuspendable && controller.renderHydrationScript()}
         {createElement(component)}
       </ChildSlotControllerContext.Provider>
     </SlotControllerContext.Provider>
   );
 }
 
-SlotRenderer.displayName = 'SlotRenderer';
+InternalSlot.displayName = 'InternalSlot';

@@ -1,17 +1,7 @@
-import React, { Component, ComponentType, createContext, ReactNode } from 'react';
-import { createNavigation } from './createNavigation';
-import { hydrateRoutes, loadRoutes, RouteState } from './loadRoutes';
-import { matchRoutes, RouteMatch } from './matchRoutes';
-import { Outlet } from './Outlet';
+import React, { ComponentType, ReactElement, ReactNode, useId } from 'react';
 import { Route } from './Route';
-import { ChildSlotControllerContext } from './Slot';
-import { NotFoundSlotController, RouteSlotController, SlotController } from './SlotController';
-import { Location } from './types';
-import { isArrayEqual } from './utils';
-
-export const RouterContext = createContext<Router<any> | null>(null);
-
-RouterContext.displayName = 'RouterContext';
+import { Location, RouteState } from './types';
+import { InternalRouter } from './InternalRouter';
 
 /**
  * Props of the {@link Router} component.
@@ -78,26 +68,7 @@ export interface RouterProps<Context> {
   notFoundComponent?: ComponentType;
 
   /**
-   * How a router is affiliated to SSR:
-   *
-   * <dl>
-   * <dt>"client"</dt>
-   * <dd>When a location is matched for the first time by a router, the latter tries to hydrate data from a global
-   * SSR state.</dd>
-   * <dt>"server"</dt>
-   * <dd>A router renders hydration chunks to populate a global SSR state on the client.</dd>
-   * <dt>"none"</dt>
-   * <dd>A router doesn't participate in SSR.</dd>
-   * </dl>
-   *
-   * By default, "client" or "server" depending on presence of {@link !window}.
-   */
-  ssrAffiliation?: 'client' | 'server' | 'none';
-
-  /**
-   * Parses a state that was stringified during SSR.
-   *
-   * Provide this option on the client when {@link ssrAffiliation SSR is enabled}.
+   * Parses a route state when route is hydrated on the client after SSR.
    *
    * @param stateStr A stringified state to parse.
    * @default JSON.parse
@@ -106,8 +77,6 @@ export interface RouterProps<Context> {
 
   /**
    * Stringifies a route state during SSR.
-   *
-   * Provide this option on the server when {@link ssrAffiliation SSR is enabled}.
    *
    * @param state A route state to stringify.
    * @default JSON.stringify
@@ -122,135 +91,29 @@ export interface RouterProps<Context> {
 }
 
 /**
- * Options of a {@link Router} that doesn't provide any context for a {@link RouteOptions.loader}.
+ * A router that renders a route that matches the provided location.
  */
-interface NoContextRouterProps extends Omit<RouterProps<void>, 'context'> {
-  /**
-   * An arbitrary context provided to {@link RouteOptions.loader}.
-   */
-  context?: undefined;
-}
-
-interface RouterState {
-  location: Partial<Location> | null;
-  routes: Route[];
-  slotControllers: SlotController[];
-}
+export function Router(props: Omit<RouterProps<void>, 'context'>): ReactElement;
 
 /**
  * A router that renders a route that matches the provided location.
  *
  * @template Context A context provided by a {@link Router} for a {@link RouteOptions.loader}.
  */
-export class Router<Context = void> extends Component<NoContextRouterProps | RouterProps<Context>, RouterState> {
-  /**
-   * @internal
-   */
-  static displayName = 'Router';
+export function Router<Context>(props: RouterProps<Context>): ReactElement;
 
-  /**
-   * @internal
-   */
-  static defaultProps: Partial<NoContextRouterProps> = {
-    ssrAffiliation: typeof window === 'undefined' ? 'server' : 'client',
-  };
+export function Router(props: Omit<RouterProps<void>, 'context'> | RouterProps<any>): ReactElement {
+  const routerId = useId().toLowerCase();
 
-  /**
-   * @internal
-   */
-  readonly navigation = createNavigation(this);
-
-  /**
-   * @internal
-   */
-  static getDerivedStateFromProps(props: RouterProps<unknown>, state: RouterState): Partial<RouterState> | null {
-    if (state.location === props.location && isArrayEqual(state.routes, props.routes)) {
-      return null;
-    }
-
-    const { pathname = '/', searchParams = {} } = props.location;
-
-    const routeMatches = matchRoutes(pathname, searchParams, props.routes);
-
-    return {
-      location: props.location,
-      routes: props.routes,
-      slotControllers: createSlotControllers(state.slotControllers, routeMatches, props),
-    };
-  }
-
-  /**
-   * @internal
-   */
-  constructor(props: RouterProps<Context>) {
-    super(props);
-
-    this.state = {
-      location: null,
-      routes: props.routes,
-      slotControllers: [],
-    };
-  }
-
-  /**
-   * @internal
-   */
-  render() {
-    const controller = this.state.slotControllers[0];
-
-    return (
-      <RouterContext.Provider value={this}>
-        <ChildSlotControllerContext.Provider value={controller}>
-          {this.props.ssrAffiliation === 'server' && controller instanceof RouteSlotController && (
-            <script
-              nonce={this.props.nonce}
-              dangerouslySetInnerHTML={{
-                __html:
-                  'window.__REACT_CORSAIR_SSR_STATE__=new Map();' +
-                  'var e=document.currentScript;e&&e.parentNode.removeChild(e);',
-              }}
-            />
-          )}
-          {this.props.children === undefined ? <Outlet /> : this.props.children}
-        </ChildSlotControllerContext.Provider>
-      </RouterContext.Provider>
-    );
-  }
+  return (
+    <InternalRouter
+      {...props}
+      routerId={routerId}
+    />
+  );
 }
 
-export function createSlotControllers(
-  prevControllers: SlotController[],
-  routeMatches: RouteMatch[] | null,
-  routerProps: RouterProps<any>
-): SlotController[] {
-  if (routeMatches === null) {
-    // Not found
-    return [new NotFoundSlotController(routerProps)];
-  }
-
-  const { stateParser = JSON.parse, stateStringifier = JSON.stringify } = routerProps;
-
-  const routeContents =
-    routerProps.ssrAffiliation === 'client'
-      ? hydrateRoutes(routeMatches, stateParser) || loadRoutes(routeMatches, routerProps.context)
-      : loadRoutes(routeMatches, routerProps.context);
-
-  const slotControllers: RouteSlotController[] = [];
-
-  // Matched a route
-  for (let i = routeMatches.length; i-- > 0; ) {
-    slotControllers[i] = new RouteSlotController(prevControllers[i], {
-      childController: slotControllers[i + 1],
-      index: i,
-      routeMatch: routeMatches[i],
-      routeContent: routeContents[i],
-      stateStringifier: routerProps.ssrAffiliation === 'server' ? stateStringifier : undefined,
-      nonce: routerProps.nonce,
-      errorComponent: i === 0 ? routerProps.errorComponent : undefined,
-      loadingComponent: i === 0 ? routerProps.loadingComponent : undefined,
-      notFoundComponent: i === 0 ? routerProps.notFoundComponent : undefined,
-    });
-  }
-
-  return slotControllers;
-}
+/**
+ * @internal
+ */
+Router.displayName = 'Router';

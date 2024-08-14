@@ -1,4 +1,4 @@
-import { Location } from '../__types';
+import { Location } from '../types';
 import { urlSearchParamsAdapter } from './urlSearchParamsAdapter';
 
 /**

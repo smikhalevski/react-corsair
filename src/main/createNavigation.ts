@@ -1,5 +1,6 @@
 import { matchRoutes } from './matchRoutes';
-import { Router, RouterProps } from './Router';
+import { InternalRouter } from './InternalRouter';
+import { RouterProps } from './Router';
 import { To } from './types';
 import { toLocation } from './utils';
 
@@ -39,7 +40,7 @@ export interface Navigation {
 /**
  * Creates a {@link Navigation} bound to a {@link Router}.
  */
-export function createNavigation(router: Router<any>): Navigation {
+export function createNavigation(router: InternalRouter): Navigation {
   return {
     push(to) {
       router.props.onPush?.(toLocation(to));

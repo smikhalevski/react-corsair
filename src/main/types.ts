@@ -5,7 +5,7 @@ export interface Dict {
 }
 
 /**
- * A location or route.
+ * A location or route that doesn't have required search params.
  */
 export type To = Location | { getLocation(): Location };
 
@@ -95,6 +95,18 @@ export interface ParamsAdapter<Params> {
  * </dl>
  */
 export type LoadingAppearance = 'loading' | 'auto';
+
+/**
+ * Where the route is rendered.
+ *
+ * <dl>
+ * <dt>"server"</dt>
+ * <dd>Route is rendered on the server during SSR and hydrated on the client.</dd>
+ * <dt>"client"</dt>
+ * <dd>Route is rendered exclusively on the client. During SSR loading state is rendered.</dd>
+ * </dl>
+ */
+export type RenderingDisposition = 'server' | 'client';
 
 /**
  * Options of a {@link Route}.
@@ -189,4 +201,31 @@ export interface RouteOptions<Params, Data, Context> {
    * @default "auto"
    */
   loadingAppearance?: LoadingAppearance;
+
+  /**
+   * Where the route is rendered.
+   *
+   * @default "server"
+   */
+  renderingDisposition?: RenderingDisposition;
+}
+
+/**
+ * A state rendered by a route component.
+ */
+export interface RouteState {
+  /**
+   * Data available in a route component.
+   */
+  data?: unknown;
+
+  /**
+   * An error that occurred during loading or rendering.
+   */
+  error?: unknown;
+
+  /**
+   * `true` if {@link error} contains an actual error, or `false` otherwise.
+   */
+  hasError: boolean;
 }

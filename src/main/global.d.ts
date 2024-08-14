@@ -1,10 +1,12 @@
 declare global {
   interface Window {
     /**
-     * A map from a route match index to a serialized SSR state.
+     * A mapping from a router ID to a Map from a matched route index to a corresponding SSR state.
      */
     __REACT_CORSAIR_SSR_STATE__?: {
-      set(index: number, stateStr: string): void;
+      [routerId: string]: {
+        set(routeIndex: number, stateStr: string): void;
+      };
     };
   }
 }

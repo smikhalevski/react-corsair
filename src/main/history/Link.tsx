@@ -1,6 +1,6 @@
 import React, { forwardRef, HTMLAttributes, MouseEventHandler, useContext, useEffect } from 'react';
-import { To } from '../__types';
-import { useNavigation } from '../__useNavigation';
+import { To } from '../types';
+import { useNavigation } from '../useNavigation';
 import { toLocation } from '../utils';
 import { HistoryContext } from './useHistory';
 

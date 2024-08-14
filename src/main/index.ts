@@ -2,9 +2,10 @@ export { createBrowserHistory } from './history/createBrowserHistory';
 export { createHashHistory } from './history/createHashHistory';
 export { createMemoryHistory } from './history/createMemoryHistory';
 export { Link } from './history/Link';
-export { useHistorySubscription } from './history/useHistorySubscription';
 export { urlSearchParamsAdapter } from './history/urlSearchParamsAdapter';
 export { useHistory, HistoryProvider } from './history/useHistory';
+export { useHistorySubscription } from './history/useHistorySubscription';
+
 export { createRoute } from './createRoute';
 export { notFound, NotFoundError } from './notFound';
 export { Outlet } from './Outlet';
@@ -20,10 +21,20 @@ export { useRouteParams } from './useRouteParams';
 export type { MemoryHistoryOptions } from './history/createMemoryHistory';
 export type { LinkProps } from './history/Link';
 export type { HistoryOptions, History, SearchParamsAdapter } from './history/types';
+
 export type { Navigation } from './createNavigation';
-export type { RouteState } from './loadRoutes';
+export type { RouterProps } from './Router';
 export type { OutletProps } from './Outlet';
 export type { PathnameMatch } from './PathnameTemplate';
-export type { RouterProps } from './Router';
 export type { RedirectOptions } from './redirect';
-export type { Dict, To, Location, LocationOptions, RouteOptions, ParamsAdapter, LoadingAppearance } from './types';
+export type {
+  Dict,
+  To,
+  Location,
+  LocationOptions,
+  RouteOptions,
+  RouteState,
+  ParamsAdapter,
+  LoadingAppearance,
+  RenderingDisposition,
+} from './types';

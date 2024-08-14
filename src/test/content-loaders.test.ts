@@ -1,10 +1,18 @@
+import { JSDOM } from 'jsdom';
 import { createRoute, Outlet } from '../main';
-import { hydrateRoutes, loadRoute, loadRoutes } from '../main/loadRoutes';
+import {
+  createErrorContent,
+  createOkContent,
+  hydrateRoutes,
+  loadRoute,
+  loadRoutes,
+  loadServerRoutes,
+} from '../main/content-loaders';
 
 const Component1 = () => undefined;
 const Component2 = () => undefined;
 
-describe('loadRoute', () => {
+describe('loadRoutes', () => {
   test('loads multiple routes', () => {
     const aaaLoaderMock = jest.fn(() => 'xxx');
     const bbbLoaderMock = jest.fn(() => 'yyy');
@@ -20,20 +28,7 @@ describe('loadRoute', () => {
         ],
         { ccc: 333 }
       )
-    ).toEqual([
-      {
-        component: Component1,
-        data: 'xxx',
-        error: undefined,
-        hasError: false,
-      },
-      {
-        component: Component2,
-        data: 'yyy',
-        error: undefined,
-        hasError: false,
-      },
-    ]);
+    ).toEqual([createOkContent(Component1, 'xxx'), createOkContent(Component2, 'yyy')]);
 
     expect(aaaLoaderMock).toHaveBeenCalledTimes(1);
     expect(aaaLoaderMock).toHaveBeenNthCalledWith(1, { aaa: 111 }, { ccc: 333 });
@@ -46,12 +41,7 @@ describe('loadRoute', () => {
   test('returns OK state for outlet route', () => {
     const route = createRoute();
 
-    expect(loadRoute(route, {}, undefined)).toEqual({
-      component: Outlet,
-      data: undefined,
-      error: undefined,
-      hasError: false,
-    });
+    expect(loadRoute({ route, params: {} }, undefined)).toEqual(createOkContent(Outlet, undefined));
   });
 
   test('returns OK state for route with a component', () => {
@@ -59,12 +49,7 @@ describe('loadRoute', () => {
       component: Component1,
     });
 
-    expect(loadRoute(route, {}, undefined)).toEqual({
-      component: Component1,
-      data: undefined,
-      error: undefined,
-      hasError: false,
-    });
+    expect(loadRoute({ route, params: {} }, undefined)).toEqual(createOkContent(Component1, undefined));
   });
 
   test('returns OK state for route with a loader', () => {
@@ -72,12 +57,7 @@ describe('loadRoute', () => {
       loader: () => 111,
     });
 
-    expect(loadRoute(route, {}, undefined)).toEqual({
-      component: Outlet,
-      data: 111,
-      error: undefined,
-      hasError: false,
-    });
+    expect(loadRoute({ route, params: {} }, undefined)).toEqual(createOkContent(Outlet, 111));
   });
 
   test('returns an async OK state for route with a loader', async () => {
@@ -85,12 +65,7 @@ describe('loadRoute', () => {
       loader: () => Promise.resolve(111),
     });
 
-    await expect(loadRoute(route, {}, undefined)).resolves.toEqual({
-      component: Outlet,
-      data: 111,
-      error: undefined,
-      hasError: false,
-    });
+    await expect(loadRoute({ route, params: {} }, undefined)).resolves.toEqual(createOkContent(Outlet, 111));
   });
 
   test('returns an async OK for state for route with a lazy component', async () => {
@@ -98,12 +73,7 @@ describe('loadRoute', () => {
       lazyComponent: () => Promise.resolve({ default: Component1 }),
     });
 
-    await expect(loadRoute(route, {}, undefined)).resolves.toEqual({
-      component: Component1,
-      data: undefined,
-      error: undefined,
-      hasError: false,
-    });
+    await expect(loadRoute({ route, params: {} }, undefined)).resolves.toEqual(createOkContent(Component1, undefined));
   });
 
   test('returns an async OK for state for route with a lazy component and loader', async () => {
@@ -112,12 +82,7 @@ describe('loadRoute', () => {
       loader: () => Promise.resolve(111),
     });
 
-    await expect(loadRoute(route, {}, undefined)).resolves.toEqual({
-      component: Component1,
-      data: 111,
-      error: undefined,
-      hasError: false,
-    });
+    await expect(loadRoute({ route, params: {} }, undefined)).resolves.toEqual(createOkContent(Component1, 111));
   });
 
   test('returns an error state if lazy component throws during load', async () => {
@@ -125,12 +90,7 @@ describe('loadRoute', () => {
       lazyComponent: () => Promise.reject(111),
     });
 
-    await expect(loadRoute(route, {}, undefined)).resolves.toEqual({
-      component: undefined,
-      data: undefined,
-      error: 111,
-      hasError: true,
-    });
+    await expect(loadRoute({ route, params: {} }, undefined)).resolves.toEqual(createErrorContent(111));
   });
 
   test('returns an error state if loader throws', () => {
@@ -140,12 +100,7 @@ describe('loadRoute', () => {
       },
     });
 
-    expect(loadRoute(route, {}, undefined)).toEqual({
-      component: undefined,
-      data: undefined,
-      error: 111,
-      hasError: true,
-    });
+    expect(loadRoute({ route, params: {} }, undefined)).toEqual(createErrorContent(111));
   });
 
   test('returns an error state if loader rejects', async () => {
@@ -153,12 +108,7 @@ describe('loadRoute', () => {
       loader: () => Promise.reject(111),
     });
 
-    await expect(loadRoute(route, {}, undefined)).resolves.toEqual({
-      component: undefined,
-      data: undefined,
-      error: 111,
-      hasError: true,
-    });
+    await expect(loadRoute({ route, params: {} }, undefined)).resolves.toEqual(createErrorContent(111));
   });
 
   test('returns an error state if both lazy component and loader throw', async () => {
@@ -167,12 +117,7 @@ describe('loadRoute', () => {
       loader: () => Promise.reject(222),
     });
 
-    await expect(loadRoute(route, {}, undefined)).resolves.toEqual({
-      component: undefined,
-      data: undefined,
-      error: 222,
-      hasError: true,
-    });
+    await expect(loadRoute({ route, params: {} }, undefined)).resolves.toEqual(createErrorContent(222));
   });
 
   test('data is ignored if lazy component loader throws', async () => {
@@ -181,12 +126,7 @@ describe('loadRoute', () => {
       loader: () => 'aaa',
     });
 
-    await expect(loadRoute(route, {}, undefined)).resolves.toEqual({
-      component: undefined,
-      data: undefined,
-      error: 111,
-      hasError: true,
-    });
+    await expect(loadRoute({ route, params: {} }, undefined)).resolves.toEqual(createErrorContent(111));
   });
 
   test('calls loader with params and context', () => {
@@ -196,20 +136,53 @@ describe('loadRoute', () => {
       loader: loaderMock,
     });
 
-    loadRoute(route, { aaa: 111 }, { bbb: 222 });
+    loadRoute({ route, params: { aaa: 111 } }, { bbb: 222 });
 
     expect(loaderMock).toHaveBeenCalledTimes(1);
     expect(loaderMock).toHaveBeenNthCalledWith(1, { aaa: 111 }, { bbb: 222 });
   });
 });
 
+describe('loadServerRoutes', () => {
+  test('loads routes with server rendering disposition', () => {
+    const loaderMock1 = jest.fn();
+    const loaderMock2 = jest.fn();
+    const loaderMock3 = jest.fn();
+
+    const route1 = createRoute({ loader: loaderMock1 });
+    const route2 = createRoute({ loader: loaderMock2 });
+    const route3 = createRoute({ loader: loaderMock3, renderingDisposition: 'client' });
+
+    loadServerRoutes(
+      [
+        { route: route1, params: {} },
+        { route: route2, params: {} },
+        { route: route3, params: {} },
+      ],
+      undefined
+    );
+
+    expect(loaderMock1).toHaveBeenCalledTimes(1);
+    expect(loaderMock2).toHaveBeenCalledTimes(1);
+    expect(loaderMock3).not.toHaveBeenCalled();
+  });
+});
+
 describe('hydrateRoutes', () => {
+  beforeEach(() => {
+    const { window } = new JSDOM('', { url: 'http://localhost' });
+
+    Object.assign(global, { window });
+  });
+
   test('hydrates a route from an SSR state', () => {
     const route = createRoute();
 
-    window.__REACT_CORSAIR_SSR_STATE__ = new Map().set(0, JSON.stringify({ data: 'aaa' }));
+    window.__REACT_CORSAIR_SSR_STATE__ = {
+      xxx: new Map().set(0, JSON.stringify({ data: 'aaa', hasError: false })),
+    };
 
-    expect(hydrateRoutes([{ route, params: {} }], JSON.parse)).toEqual([
+    expect(hydrateRoutes('xxx', [{ route, params: {} }], undefined)).toEqual([
       { component: Outlet, data: 'aaa', error: undefined, hasError: false },
     ]);
   });
@@ -217,17 +190,20 @@ describe('hydrateRoutes', () => {
   test('hydrates multiple routes from an SSR state', () => {
     const route = createRoute();
 
-    window.__REACT_CORSAIR_SSR_STATE__ = new Map()
-      .set(0, JSON.stringify({ data: 'aaa' }))
-      .set(1, JSON.stringify({ data: 'bbb' }));
+    window.__REACT_CORSAIR_SSR_STATE__ = {
+      xxx: new Map()
+        .set(0, JSON.stringify({ data: 'aaa', hasError: false }))
+        .set(1, JSON.stringify({ data: 'bbb', hasError: false })),
+    };
 
     expect(
       hydrateRoutes(
+        'xxx',
         [
           { route, params: {} },
           { route, params: {} },
         ],
-        JSON.parse
+        undefined
       )
     ).toEqual([
       { component: Outlet, data: 'aaa', error: undefined, hasError: false },
@@ -240,9 +216,11 @@ describe('hydrateRoutes', () => {
       lazyComponent: () => Promise.resolve({ default: Component1 }),
     });
 
-    window.__REACT_CORSAIR_SSR_STATE__ = new Map().set(0, JSON.stringify({ data: 'aaa' }));
+    window.__REACT_CORSAIR_SSR_STATE__ = {
+      xxx: new Map().set(0, JSON.stringify({ data: 'aaa', hasError: false })),
+    };
 
-    await expect(hydrateRoutes([{ route, params: {} }], JSON.parse)![0]).resolves.toEqual({
+    await expect(hydrateRoutes('xxx', [{ route, params: {} }], undefined)[0]).resolves.toEqual({
       component: Component1,
       data: 'aaa',
       error: undefined,
@@ -253,12 +231,11 @@ describe('hydrateRoutes', () => {
   test('returns an error state', () => {
     const route = createRoute();
 
-    window.__REACT_CORSAIR_SSR_STATE__ = new Map().set(
-      0,
-      JSON.stringify({ data: 'IGNORED', error: 'aaa', hasError: true })
-    );
+    window.__REACT_CORSAIR_SSR_STATE__ = {
+      xxx: new Map().set(0, JSON.stringify({ data: 'IGNORED', error: 'aaa', hasError: true })),
+    };
 
-    expect(hydrateRoutes([{ route, params: {} }], JSON.parse)![0]).toEqual({
+    expect(hydrateRoutes('xxx', [{ route, params: {} }], undefined)[0]).toEqual({
       component: undefined,
       data: undefined,
       error: 'aaa',
@@ -273,9 +250,11 @@ describe('hydrateRoutes', () => {
       loader: loaderMock,
     });
 
-    window.__REACT_CORSAIR_SSR_STATE__ = new Map().set(0, JSON.stringify({ data: 'aaa' }));
+    window.__REACT_CORSAIR_SSR_STATE__ = {
+      xxx: new Map().set(0, JSON.stringify({ data: 'aaa' })),
+    };
 
-    hydrateRoutes([{ route, params: {} }], JSON.parse);
+    hydrateRoutes('xxx', [{ route, params: {} }], undefined);
 
     expect(loaderMock).not.toHaveBeenCalled();
   });
@@ -287,36 +266,62 @@ describe('hydrateRoutes', () => {
       loader: loaderMock,
     });
 
-    window.__REACT_CORSAIR_SSR_STATE__ = new Map();
+    window.__REACT_CORSAIR_SSR_STATE__ = {
+      xxx: new Map(),
+    };
 
-    const contents = hydrateRoutes([{ route, params: {} }], JSON.parse);
+    const contents = hydrateRoutes('xxx', [{ route, params: {} }], undefined);
 
     expect(contents).toEqual([expect.any(Promise)]);
 
     expect(loaderMock).not.toHaveBeenCalled();
 
-    window.__REACT_CORSAIR_SSR_STATE__.set(0, JSON.stringify({ data: 'aaa' }));
+    window.__REACT_CORSAIR_SSR_STATE__.xxx.set(0, JSON.stringify({ data: 'aaa' }));
 
-    await expect(contents![0]).resolves.toEqual({ component: Outlet, data: 'aaa', error: undefined, hasError: false });
+    await expect(contents[0]).resolves.toEqual({ component: Outlet, data: 'aaa', error: undefined, hasError: false });
   });
 
-  test('does not hydrate the second call', () => {
-    const route = createRoute();
+  test('loads a route on the second call', () => {
+    const loaderMock = jest.fn(() => 'zzz');
 
-    window.__REACT_CORSAIR_SSR_STATE__ = new Map().set(0, JSON.stringify({ data: 'aaa' }));
+    const route = createRoute({
+      loader: loaderMock,
+    });
 
-    expect(hydrateRoutes([{ route, params: {} }], JSON.parse)).toBeInstanceOf(Array);
-    expect(hydrateRoutes([{ route, params: {} }], JSON.parse)).toBeNull();
-    expect(window.__REACT_CORSAIR_SSR_STATE__).toBe(undefined);
+    window.__REACT_CORSAIR_SSR_STATE__ = {
+      xxx: new Map().set(0, JSON.stringify({ data: 'aaa' })),
+    };
+
+    expect(hydrateRoutes('xxx', [{ route, params: {} }], undefined)).toEqual([
+      {
+        component: Outlet,
+        data: 'aaa',
+        error: undefined,
+        hasError: false,
+      },
+    ]);
+    expect(loaderMock).not.toHaveBeenCalled();
+
+    expect(hydrateRoutes('xxx', [{ route, params: {} }], undefined)).toEqual([
+      {
+        component: Outlet,
+        data: 'zzz',
+        error: undefined,
+        hasError: false,
+      },
+    ]);
+    expect(loaderMock).toHaveBeenCalledTimes(1);
   });
 
   test('uses a custom state parser', () => {
     const stateParserMock = jest.fn(JSON.parse);
     const route = createRoute();
 
-    window.__REACT_CORSAIR_SSR_STATE__ = new Map().set(0, JSON.stringify({ data: 'aaa' }));
+    window.__REACT_CORSAIR_SSR_STATE__ = {
+      xxx: new Map().set(0, JSON.stringify({ data: 'aaa' })),
+    };
 
-    hydrateRoutes([{ route, params: {} }], stateParserMock);
+    hydrateRoutes('xxx', [{ route, params: {} }], undefined, stateParserMock);
 
     expect(stateParserMock).toHaveBeenCalledTimes(1);
     expect(stateParserMock).toHaveBeenNthCalledWith(1, '{"data":"aaa"}');
@@ -328,9 +333,11 @@ describe('hydrateRoutes', () => {
     };
     const route = createRoute();
 
-    window.__REACT_CORSAIR_SSR_STATE__ = new Map().set(0, JSON.stringify({ data: 'aaa' }));
+    window.__REACT_CORSAIR_SSR_STATE__ = {
+      xxx: new Map().set(0, JSON.stringify({ data: 'aaa' })),
+    };
 
-    expect(hydrateRoutes([{ route, params: {} }], stateParser)).toEqual([
+    expect(hydrateRoutes('xxx', [{ route, params: {} }], undefined, stateParser)).toEqual([
       {
         component: undefined,
         data: undefined,

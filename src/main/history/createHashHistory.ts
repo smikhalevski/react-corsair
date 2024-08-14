@@ -1,5 +1,5 @@
 import { PubSub } from 'parallel-universe';
-import { Location } from '../__types';
+import { Location } from '../types';
 import { toLocation } from '../utils';
 import { History, HistoryOptions } from './types';
 import { urlSearchParamsAdapter } from './urlSearchParamsAdapter';
@@ -30,8 +30,8 @@ export function createHashHistory(options: HistoryOptions = {}): History {
       return location;
     },
 
-    toURL(location) {
-      const url = '#' + encodeURIComponent(toURL(location, searchParamsAdapter));
+    toURL(to) {
+      const url = '#' + encodeURIComponent(toURL(toLocation(to), searchParamsAdapter));
 
       return baseURL === undefined ? url : new URL(url, baseURL).toString();
     },
