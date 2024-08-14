@@ -1,12 +1,26 @@
 import { ComponentType } from 'react';
+import { NotFoundError } from './notFound';
 import { Outlet } from './Outlet';
 import { PathnameTemplate } from './PathnameTemplate';
-import { Dict, LoadingAppearance, Location, LocationOptions, ParamsAdapter, RouteOptions } from './types';
+import { Redirect } from './redirect';
+import {
+  Dict,
+  LoadingAppearance,
+  Location,
+  LocationOptions,
+  ParamsAdapter,
+  RenderingDisposition,
+  RouteOptions,
+} from './types';
 
-type Squash<T> = { [K in keyof T]: T[K] } & {};
+type Squash<T> = { [K in keyof T]: T[K] } & unknown;
+
+type PartialToVoid<T> = Partial<T> extends T ? T | void : T;
 
 /**
  * A route that can be rendered by a router.
+ *
+ * Use {@link createRoute} to create a {@link Route} instance.
  *
  * @template Parent A parent route or `null` if there is no parent.
  * @template Params Route params.
@@ -24,7 +38,7 @@ export class Route<
    *
    * @internal
    */
-  declare _params: Parent extends Route ? Squash<Parent['_params'] & Params> : Params;
+  declare _params: PartialToVoid<Parent extends Route ? Squash<Parent['_params'] & Params> : Params>;
 
   /**
    * The type of route context.
@@ -50,6 +64,14 @@ export class Route<
   paramsAdapter: ParamsAdapter<Params> | undefined;
 
   /**
+   * Loads data required to render a route.
+   *
+   * @param params Route params extracted from a location.
+   * @param context A {@link RouterProps.context} provided to a {@link Router}.
+   */
+  loader: ((params: Params, context: Context) => PromiseLike<Data> | Data) | undefined;
+
+  /**
    * A component that is rendered when an error was thrown during route rendering.
    */
   errorComponent: ComponentType | undefined;
@@ -70,12 +92,9 @@ export class Route<
   loadingAppearance: LoadingAppearance;
 
   /**
-   * Loads data required to render a route.
-   *
-   * @param params Route params extracted from a location.
-   * @param context A {@link RouterProps.context} provided to a {@link Router}.
+   * Where the route is rendered.
    */
-  loader: ((params: Params, context: Context) => PromiseLike<Data> | Data) | undefined;
+  renderingDisposition: RenderingDisposition;
 
   /**
    * Loads and caches a route component.
@@ -98,11 +117,12 @@ export class Route<
     this.parent = parent;
     this.pathnameTemplate = new PathnameTemplate(options.pathname || '/', options.isCaseSensitive);
     this.paramsAdapter = typeof paramsAdapter === 'function' ? { parse: paramsAdapter } : paramsAdapter;
+    this.loader = options.loader;
     this.errorComponent = options.errorComponent;
     this.loadingComponent = options.loadingComponent;
     this.notFoundComponent = options.notFoundComponent;
     this.loadingAppearance = options.loadingAppearance || 'auto';
-    this.loader = options.loader;
+    this.renderingDisposition = options.renderingDisposition || 'server';
 
     let component: Promise<ComponentType> | ComponentType | undefined = options.component;
 
@@ -224,6 +244,10 @@ export class Route<
         route.getComponent();
         route.loader?.(params, context);
       } catch (error) {
+        if (error instanceof NotFoundError || error instanceof Redirect) {
+          return;
+        }
+
         setTimeout(() => {
           // Force uncaught exception
           throw error;

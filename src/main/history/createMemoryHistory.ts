@@ -21,9 +21,10 @@ export interface MemoryHistoryOptions extends HistoryOptions {
  * @param options History options.
  */
 export function createMemoryHistory(options: MemoryHistoryOptions): History {
-  const { base: defaultBase, searchParamsAdapter = urlSearchParamsAdapter } = options;
+  const { base, searchParamsAdapter = urlSearchParamsAdapter } = options;
   const pubSub = new PubSub();
   const entries = options.initialEntries.slice(0);
+  const baseURL = base === undefined ? undefined : new URL(base);
 
   if (entries.length === 0) {
     throw new Error('Expected at least one initial entry');
@@ -36,8 +37,8 @@ export function createMemoryHistory(options: MemoryHistoryOptions): History {
       return entries[cursor];
     },
 
-    toURL(location, base = defaultBase) {
-      return toURL(location, searchParamsAdapter, base);
+    toURL(to) {
+      return toURL(toLocation(to), searchParamsAdapter, baseURL);
     },
 
     push(to) {

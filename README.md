@@ -29,10 +29,10 @@ npm install --save-prod react-corsair
 
 # Overview
 
-URLs don't matter because they aren't a part of your domain. React Corsair is a router that abstracts URLs away from
-your application. It replaces URLs
-with [`Route`](https://smikhalevski.github.io/react-corsair/functions/createRoute.html) objects that can be used for
-location matching, params validation, navigation, type inference, etc.
+URLs don't matter since they are almost never part of the application domain logic. React Corsair is a router that
+abstracts URLs away from your application.
+Use [`Route`](https://smikhalevski.github.io/react-corsair/functions/createRoute.html) objects instead of URLs
+to match locations, validate params, navigate between pages, prefetch data, infer types, etc.
 
 React Corsair can be used in any environment and doesn't require any browser-specific API to be available. Browser
 history integration is optional.
@@ -447,17 +447,17 @@ createRoute('/foo%3Abar');
 You can access matched [pathname params](#pathname-templates) and search params in route components:
 
 ```ts
-import { createRoute, useRouteState } from 'react-corsair';
+import { createRoute, useRouteParams } from 'react-corsair';
 
 interface TeamParams {
   teamId: string;
   sortBy: 'username' | 'createdAt';
 }
 
-const teamRoute = createRoute<UserParams>('/teams/:teamId', TeamPage);
+const teamRoute = createRoute<TeamParams>('/teams/:teamId', TeamPage);
 
 function TeamPage() {
-  const { params } = useRouteState(teamRoute);
+  const params = useRouteParams(teamRoute);
 
   // 🟡 The params type was inferred from the teamRoute.
   return `Team ${params.teamId} is sorted by ${params.sortBy}.`;
@@ -589,7 +589,7 @@ function TeamPage() {
 }
 ```
 
-Here, [`navigation.push`](https://smikhalevski.github.io/react-corsair/classes/Navigation.html#push) triggers
+Here, [`navigation.push`](https://smikhalevski.github.io/react-corsair/interfaces/Navigation.html#push) triggers
 [`onPush`](https://smikhalevski.github.io/react-corsair/interfaces/RouterProps.html#onPush) with
 the location of `userRoute`.
 
@@ -657,13 +657,13 @@ This tells `<Router>` to always render `userRoute.loadingComponent` when `userRo
 loaded yet. `loadingAppearance` can be set to:
 
 <dl>
-<dt><code>"loading"</code></dt>
+<dt>"loading"</dt>
 <dd>
 
 A `loadingComponent` is always rendered if a route is matched and a component or a data loader are being loaded.
 
 </dd>
-<dt><code>"auto"</code></dt>
+<dt>"auto"</dt>
 <dd>
 
 If another route is currently rendered then it would be preserved until a component and data loader of a newly
@@ -717,10 +717,10 @@ During route component rendering, you may detect that there's not enough data to
 the [`notFound`](https://smikhalevski.github.io/react-corsair/functions/notFound.html) function in such case:
 
 ```ts
-import { notFound, useRouteState } from 'react-corsair';
+import { notFound, useRouteParams } from 'react-corsair';
 
 function UserPage() {
-  const { params } = useRouteState(userRoute);
+  const params = useRouteParams(userRoute);
 
   const user = useUser(params.userId);
 
@@ -835,11 +835,11 @@ const userRoute = createRoute({
 `<Router>` matches the route. Router waits for both component and data to be loaded and then renders the component.
 
 You can access the loaded data in your route component using
-the [useRouteState](https://smikhalevski.github.io/react-corsair/functions/useRouteState.html) hook:
+the [useRouteData](https://smikhalevski.github.io/react-corsair/functions/useRouteData.html) hook:
 
 ```ts
 function UserPage() {
-  const { data } = useRouteState(userRoute);
+  const userData = useRouteData(userRoute);
 
   // Render the data here
 }
@@ -888,7 +888,7 @@ method on a route itself:
 userRoute.prefetch({ userId: 42 });
 ```
 
-Or user [`Navigation`](https://smikhalevski.github.io/react-corsair/classes/Navigation.html) to prefetch a location:
+Or user [`Navigation`](https://smikhalevski.github.io/react-corsair/interfaces/Navigation.html) to prefetch a location:
 
 ```ts
 const navigation = useNavigation();

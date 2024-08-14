@@ -11,9 +11,10 @@ import { parseURL, toURL } from './utils';
  * @param options History options.
  */
 export function createHashHistory(options: HistoryOptions = {}): History {
-  const { base: defaultBase, searchParamsAdapter = urlSearchParamsAdapter } = options;
+  const { base, searchParamsAdapter = urlSearchParamsAdapter } = options;
   const pubSub = new PubSub();
   const handlePopstate = () => pubSub.publish();
+  const baseURL = base === undefined ? undefined : new URL(base);
 
   let prevHref: string;
   let location: Location;
@@ -22,29 +23,33 @@ export function createHashHistory(options: HistoryOptions = {}): History {
     get location() {
       const href = decodeURIComponent(window.location.hash.substring(1));
 
-      return prevHref === href ? location : (location = parseURL((prevHref = href), searchParamsAdapter));
+      if (prevHref !== href) {
+        prevHref = href;
+        location = parseURL(href, searchParamsAdapter);
+      }
+      return location;
     },
 
-    toURL(location, base = defaultBase) {
-      const url = '#' + encodeURIComponent(toURL(location, searchParamsAdapter));
+    toURL(to) {
+      const url = '#' + encodeURIComponent(toURL(toLocation(to), searchParamsAdapter));
 
-      return base === undefined ? url : new URL(url, base).toString();
+      return baseURL === undefined ? url : new URL(url, baseURL).toString();
     },
 
     push(to) {
       location = toLocation(to);
-      history.pushState(location.state, '', '#' + encodeURIComponent(toURL(location, searchParamsAdapter)));
+      window.history.pushState(location.state, '', '#' + encodeURIComponent(toURL(location, searchParamsAdapter)));
       pubSub.publish();
     },
 
     replace(to) {
       location = toLocation(to);
-      history.replaceState(location.state, '', '#' + encodeURIComponent(toURL(location, searchParamsAdapter)));
+      window.history.replaceState(location.state, '', '#' + encodeURIComponent(toURL(location, searchParamsAdapter)));
       pubSub.publish();
     },
 
     back() {
-      history.back();
+      window.history.back();
     },
 
     subscribe(listener) {

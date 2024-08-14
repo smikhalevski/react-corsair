@@ -1,5 +1,5 @@
-import React, { forwardRef, HTMLAttributes, useContext, useEffect, MouseEvent } from 'react';
-import { LocationOptions, To } from '../types';
+import React, { forwardRef, HTMLAttributes, MouseEventHandler, useContext, useEffect } from 'react';
+import { To } from '../types';
 import { useNavigation } from '../useNavigation';
 import { toLocation } from '../utils';
 import { HistoryContext } from './useHistory';
@@ -7,7 +7,7 @@ import { HistoryContext } from './useHistory';
 /**
  * Props of the {@link Link} component.
  */
-export interface LinkProps extends Omit<HTMLAttributes<HTMLAnchorElement>, 'href'>, LocationOptions {
+export interface LinkProps extends Omit<HTMLAttributes<HTMLAnchorElement>, 'href'> {
   /**
    * A location or route to navigate to when link is clicked.
    */
@@ -29,7 +29,10 @@ export interface LinkProps extends Omit<HTMLAttributes<HTMLAnchorElement>, 'href
 }
 
 /**
- * Renders an `a` tag that trigger an enclosing router navigation when clicked.
+ * Renders an `a` tag that triggers an enclosing router navigation when clicked.
+ *
+ * If there's no enclosing {@link HistoryProvider} the {@link Link} component renders `#`
+ * as an {@link !HTMLAnchorElement.href a.href}.
  */
 export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
   const { to, prefetch, replace, onClick, ...anchorProps } = props;
@@ -43,7 +46,7 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
     }
   }, []);
 
-  const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
+  const handleClick: MouseEventHandler<HTMLAnchorElement> = event => {
     if (typeof onClick === 'function') {
       onClick(event);
     }
@@ -71,10 +74,13 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
     <a
       {...anchorProps}
       ref={ref}
-      href={history?.toURL(toLocation(to))}
+      href={history === null ? '#' : history.toURL(toLocation(to))}
       onClick={handleClick}
     />
   );
 });
 
+/**
+ * @internal
+ */
 Link.displayName = 'Link';

@@ -1,13 +1,7 @@
-import React, { Component, ComponentType, ReactNode } from 'react';
-import { matchRoutes, RouteMatch } from './matchRoutes';
-import { Navigation } from './Navigation';
-import { Outlet } from './Outlet';
+import React, { ComponentType, ReactElement, ReactNode, useId } from 'react';
 import { Route } from './Route';
-import { Location } from './types';
-import { NavigationContext } from './useNavigation';
-import { SlotValueContext } from './Slot';
-import { SlotValue } from './SlotValue';
-import { isArrayEqual } from './utils';
+import { Location, RouteState } from './types';
+import { InternalRouter } from './InternalRouter';
 
 /**
  * Props of the {@link Router} component.
@@ -72,118 +66,54 @@ export interface RouterProps<Context> {
    * the {@link location}.
    */
   notFoundComponent?: ComponentType;
+
+  /**
+   * Parses a route state when route is hydrated on the client after SSR.
+   *
+   * @param stateStr A stringified state to parse.
+   * @default JSON.parse
+   */
+  stateParser?: (stateStr: string) => RouteState;
+
+  /**
+   * Stringifies a route state during SSR.
+   *
+   * @param state A route state to stringify.
+   * @default JSON.stringify
+   */
+  stateStringifier?: (state: RouteState) => string;
+
+  /**
+   * A [Content-Security-Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src)
+   * nonce that should be also passed as `script-src` directive in an HTTP header.
+   */
+  nonce?: string;
 }
 
 /**
- * Options of a {@link Router} that doesn't provide any context for a {@link RouteOptions.loader}.
+ * A router that renders a route that matches the provided location.
  */
-interface NoContextRouterProps extends Omit<RouterProps<void>, 'context'> {
-  /**
-   * An arbitrary context provided to {@link RouteOptions.loader}.
-   */
-  context?: undefined;
-}
-
-interface RouterState {
-  navigation: Navigation;
-  location: Partial<Location> | null;
-  routes: Route[];
-  slotValues: SlotValue[];
-}
+export function Router(props: Omit<RouterProps<void>, 'context'>): ReactElement;
 
 /**
  * A router that renders a route that matches the provided location.
  *
  * @template Context A context provided by a {@link Router} for a {@link RouteOptions.loader}.
  */
-export class Router<Context = void> extends Component<NoContextRouterProps | RouterProps<Context>, RouterState> {
-  /**
-   * @internal
-   */
-  static displayName = 'Router';
+export function Router<Context>(props: RouterProps<Context>): ReactElement;
 
-  /**
-   * @internal
-   */
-  static getDerivedStateFromProps(props: RouterProps<unknown>, state: RouterState): Partial<RouterState> | null {
-    if (state.location === props.location && isArrayEqual(state.routes, props.routes)) {
-      return null;
-    }
+export function Router(props: Omit<RouterProps<void>, 'context'> | RouterProps<any>): ReactElement {
+  const routerId = useId().toLowerCase();
 
-    const { pathname = '/', searchParams = {} } = props.location;
-
-    const routeMatches = matchRoutes(pathname, searchParams, props.routes);
-
-    return {
-      location: props.location,
-      routes: props.routes,
-      slotValues: createSlotValues(state.slotValues, routeMatches, props),
-    };
-  }
-
-  /**
-   * @internal
-   */
-  constructor(props: RouterProps<Context>) {
-    super(props);
-
-    this.state = {
-      navigation: new Navigation(this),
-      location: null,
-      routes: props.routes,
-      slotValues: [],
-    };
-  }
-
-  /**
-   * @internal
-   */
-  render() {
-    return (
-      <NavigationContext.Provider value={this.state.navigation}>
-        <SlotValueContext.Provider value={this.state.slotValues[0]}>
-          {this.props.children === undefined ? <Outlet /> : this.props.children}
-        </SlotValueContext.Provider>
-      </NavigationContext.Provider>
-    );
-  }
+  return (
+    <InternalRouter
+      {...props}
+      routerId={routerId}
+    />
+  );
 }
 
-export function createSlotValues(
-  oldSlotValues: SlotValue[],
-  routeMatches: RouteMatch[] | null,
-  routerProps: RouterProps<any>
-): SlotValue[] {
-  const { context, errorComponent, loadingComponent, notFoundComponent } = routerProps;
-
-  if (routeMatches === null) {
-    // Not found
-    return [
-      new SlotValue({
-        errorComponent,
-        loadingComponent,
-        notFoundComponent,
-      }),
-    ];
-  }
-
-  const slotValues: SlotValue[] = [];
-
-  // Matched a route
-  for (let i = routeMatches.length; i-- > 0; ) {
-    const route = routeMatches[i].route;
-
-    slotValues[i] = new SlotValue({
-      oldValue: oldSlotValues[i],
-      childValue: slotValues[i + 1],
-      route,
-      params: routeMatches[i].params,
-      context,
-      errorComponent: i === 0 ? errorComponent : undefined,
-      loadingComponent: i === 0 ? loadingComponent : undefined,
-      notFoundComponent: i === 0 ? notFoundComponent : undefined,
-    });
-  }
-
-  return slotValues;
-}
+/**
+ * @internal
+ */
+Router.displayName = 'Router';

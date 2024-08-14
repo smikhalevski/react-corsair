@@ -11,9 +11,10 @@ import { parseURL, toURL } from './utils';
  * @param options History options.
  */
 export function createBrowserHistory(options: HistoryOptions = {}): History {
-  const { base: defaultBase, searchParamsAdapter = urlSearchParamsAdapter } = options;
+  const { base, searchParamsAdapter = urlSearchParamsAdapter } = options;
   const pubSub = new PubSub();
   const handlePopstate = () => pubSub.publish();
+  const baseURL = base === undefined ? undefined : new URL(base);
 
   let prevHref: string;
   let location: Location;
@@ -22,27 +23,31 @@ export function createBrowserHistory(options: HistoryOptions = {}): History {
     get location() {
       const { href } = window.location;
 
-      return prevHref === href ? location : (location = parseURL((prevHref = href), searchParamsAdapter));
+      if (prevHref !== href) {
+        prevHref = href;
+        location = parseURL(href, searchParamsAdapter, baseURL);
+      }
+      return location;
     },
 
-    toURL(location, base = defaultBase) {
-      return toURL(location, searchParamsAdapter, base);
+    toURL(to) {
+      return toURL(toLocation(to), searchParamsAdapter, baseURL);
     },
 
     push(to) {
       location = toLocation(to);
-      history.pushState(location.state, '', toURL(location, searchParamsAdapter));
+      window.history.pushState(location.state, '', toURL(location, searchParamsAdapter, baseURL));
       pubSub.publish();
     },
 
     replace(to) {
       location = toLocation(to);
-      history.replaceState(location.state, '', toURL(location, searchParamsAdapter));
+      window.history.replaceState(location.state, '', toURL(location, searchParamsAdapter, baseURL));
       pubSub.publish();
     },
 
     back() {
-      history.back();
+      window.history.back();
     },
 
     subscribe(listener) {

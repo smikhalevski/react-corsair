@@ -11,6 +11,8 @@ export function notFound(message?: string): never {
 /**
  * An error that is thrown during rendering to signify that the {@link RouteOptions.notFoundComponent} must be rendered
  * instead of the matched route.
+ *
+ * Use {@link notFound} to create a {@link NotFoundError} instance.
  */
 export class NotFoundError extends Error {}
 

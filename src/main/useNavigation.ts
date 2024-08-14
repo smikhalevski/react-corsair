@@ -1,18 +1,9 @@
-import { createContext, useContext } from 'react';
-import { Navigation } from './Navigation';
-
-export const NavigationContext = createContext<Navigation | null>(null);
-
-NavigationContext.displayName = 'NavigationContext';
+import { Navigation } from './createNavigation';
+import { useInternalRouter } from './useInternalRouter';
 
 /**
- * Returns the navigation that controls the enclosing router.
+ * Returns a {@link Navigation} that controls an enclosing router.
  */
 export function useNavigation(): Navigation {
-  const navigation = useContext(NavigationContext);
-
-  if (navigation === null) {
-    throw new Error('Forbidden outside of a Router');
-  }
-  return navigation;
+  return useInternalRouter().navigation;
 }

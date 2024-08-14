@@ -6,7 +6,6 @@
   "modulePathIgnorePatterns": [
     "<rootDir>/lib"
   ],
-  "testEnvironment": "jsdom",
   "detectOpenHandles": true,
   "forceExit": true
 }

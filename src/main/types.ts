@@ -5,7 +5,7 @@ export interface Dict {
 }
 
 /**
- * A location or route.
+ * A location or route that doesn't have required search params.
  */
 export type To = Location | { getLocation(): Location };
 
@@ -55,6 +55,7 @@ export interface LocationOptions {
  * An adapter that can validate and transform route params.
  *
  * @template Params Route params.
+ * @see {@link urlSearchParamsAdapter}
  */
 export interface ParamsAdapter<Params> {
   /**
@@ -86,16 +87,27 @@ export interface ParamsAdapter<Params> {
  * What to render when {@link RouteOptions.lazyComponent} or {@link RouteOptions.loader} are being loaded.
  *
  * <dl>
- *   <dt>"loading"</dt>
- *   <dd>A {@link RouteOptions.loadingComponent} is always rendered if a route is matched and component or loader are
- *   being loaded.</dd>
- *
- *   <dt>"auto"</dt>
- *   <dd>If another route is currently rendered then it would be preserved until component and loader of a newly
- *   matched route are being loaded. Otherwise, a {@link RouteOptions.loadingComponent} is rendered.</dd>
+ * <dt>"loading"</dt>
+ * <dd>A {@link RouteOptions.loadingComponent} is always rendered if a route is matched and component or loader are
+ * being loaded.</dd>
+ * <dt>"auto"</dt>
+ * <dd>If another route is currently rendered then it would be preserved until component and loader of a newly matched
+ * route are being loaded. Otherwise, a {@link RouteOptions.loadingComponent} is rendered.</dd>
  * </dl>
  */
 export type LoadingAppearance = 'loading' | 'auto';
+
+/**
+ * Where the route is rendered.
+ *
+ * <dl>
+ * <dt>"server"</dt>
+ * <dd>Route is rendered on the server during SSR and hydrated on the client.</dd>
+ * <dt>"client"</dt>
+ * <dd>Route is rendered exclusively on the client. During SSR loading state is rendered.</dd>
+ * </dl>
+ */
+export type RenderingDisposition = 'server' | 'client';
 
 /**
  * Options of a {@link Route}.
@@ -157,11 +169,15 @@ export interface RouteOptions<Params, Data, Context> {
   /**
    * An adapter that can validate and transform params extracted from the {@link Location.pathname} and
    * {@link Location.searchParams}.
+   *
+   * Params are available in route all components via {@link useRouteParams}.
    */
   paramsAdapter?: ParamsAdapter<Params> | ParamsAdapter<Params>['parse'];
 
   /**
    * Loads data required to render a route.
+   *
+   * Loaded data is available in route {@link component} via {@link useRouteData}.
    *
    * @param params Route params extracted from a location.
    * @param context A {@link RouterProps.context} provided to a {@link Router}.
@@ -170,6 +186,8 @@ export interface RouteOptions<Params, Data, Context> {
 
   /**
    * A component that is rendered when an error was thrown during route rendering.
+   *
+   * Use {@link useRouteError} to access the thrown error.
    */
   errorComponent?: ComponentType;
 
@@ -190,4 +208,31 @@ export interface RouteOptions<Params, Data, Context> {
    * @default "auto"
    */
   loadingAppearance?: LoadingAppearance;
+
+  /**
+   * Where the route is rendered.
+   *
+   * @default "server"
+   */
+  renderingDisposition?: RenderingDisposition;
+}
+
+/**
+ * A state rendered by a route component.
+ */
+export interface RouteState {
+  /**
+   * Data available in a route component.
+   */
+  data?: unknown;
+
+  /**
+   * An error that occurred during loading or rendering.
+   */
+  error?: unknown;
+
+  /**
+   * `true` if {@link error} contains an actual error, or `false` otherwise.
+   */
+  hasError: boolean;
 }
