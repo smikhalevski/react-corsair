@@ -55,6 +55,7 @@ export interface LocationOptions {
  * An adapter that can validate and transform route params.
  *
  * @template Params Route params.
+ * @see {@link urlSearchParamsAdapter}
  */
 export interface ParamsAdapter<Params> {
   /**
@@ -168,11 +169,15 @@ export interface RouteOptions<Params, Data, Context> {
   /**
    * An adapter that can validate and transform params extracted from the {@link Location.pathname} and
    * {@link Location.searchParams}.
+   *
+   * Params are available in route all components via {@link useRouteParams}.
    */
   paramsAdapter?: ParamsAdapter<Params> | ParamsAdapter<Params>['parse'];
 
   /**
    * Loads data required to render a route.
+   *
+   * Loaded data is available in route {@link component} via {@link useRouteData}.
    *
    * @param params Route params extracted from a location.
    * @param context A {@link RouterProps.context} provided to a {@link Router}.
@@ -181,6 +186,8 @@ export interface RouteOptions<Params, Data, Context> {
 
   /**
    * A component that is rendered when an error was thrown during route rendering.
+   *
+   * Use {@link useRouteError} to access the thrown error.
    */
   errorComponent?: ComponentType;
 

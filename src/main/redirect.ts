@@ -24,6 +24,8 @@ export function redirect(to: To, options?: RedirectOptions): never {
 
 /**
  * A redirect to a location.
+ *
+ * Use {@link redirect} to create a {@link Redirect} instance.
  */
 export class Redirect {
   /**

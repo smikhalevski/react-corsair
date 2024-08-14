@@ -2,7 +2,7 @@ import React, { ReactNode, useContext } from 'react';
 import { ChildSlotControllerContext, Slot } from './Slot';
 
 /**
- * Props of an {@link Outlet}.
+ * Props of the {@link Outlet} component.
  */
 export interface OutletProps {
   /**

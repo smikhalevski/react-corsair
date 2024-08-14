@@ -28,7 +28,6 @@ export type { OutletProps } from './Outlet';
 export type { PathnameMatch } from './PathnameTemplate';
 export type { RedirectOptions } from './redirect';
 export type {
-  Dict,
   To,
   Location,
   LocationOptions,

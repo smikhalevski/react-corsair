@@ -20,6 +20,8 @@ type PartialToVoid<T> = Partial<T> extends T ? T | void : T;
 /**
  * A route that can be rendered by a router.
  *
+ * Use {@link createRoute} to create a {@link Route} instance.
+ *
  * @template Parent A parent route or `null` if there is no parent.
  * @template Params Route params.
  * @template Data Data loaded by a route.
@@ -92,7 +94,7 @@ export class Route<
   /**
    * Where the route is rendered.
    */
-  renderingDisposition?: RenderingDisposition;
+  renderingDisposition: RenderingDisposition;
 
   /**
    * Loads and caches a route component.

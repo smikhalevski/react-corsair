@@ -24,6 +24,10 @@
   "plugin": [
     "typedoc-plugin-mdn-links"
   ],
+  "intentionallyNotExported": [
+    "Dict",
+    "PartialToVoid"
+  ],
   "externalSymbolLinkMappings": {
     "react": {
       "ComponentType": "https://react.dev/reference/react/createElement",

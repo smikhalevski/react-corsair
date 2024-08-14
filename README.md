@@ -454,7 +454,7 @@ interface TeamParams {
   sortBy: 'username' | 'createdAt';
 }
 
-const teamRoute = createRoute<UserParams>('/teams/:teamId', TeamPage);
+const teamRoute = createRoute<TeamParams>('/teams/:teamId', TeamPage);
 
 function TeamPage() {
   const params = useRouteParams(teamRoute);

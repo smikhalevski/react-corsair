@@ -31,7 +31,8 @@ export interface LinkProps extends Omit<HTMLAttributes<HTMLAnchorElement>, 'href
 /**
  * Renders an `a` tag that triggers an enclosing router navigation when clicked.
  *
- * If there's no enclosing {@link HistoryProvider} the {@link Link} renders `#` as {@link !a.href}.
+ * If there's no enclosing {@link HistoryProvider} the {@link Link} component renders `#`
+ * as an {@link !HTMLAnchorElement.href a.href}.
  */
 export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
   const { to, prefetch, replace, onClick, ...anchorProps } = props;
