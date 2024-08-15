@@ -3,6 +3,7 @@ import React, { ComponentType, ReactNode } from 'react';
 import { RouteMatch } from './matchRoutes';
 import { RouteContent, RouteHydrationScript } from './content-loaders';
 import { NotFoundError } from './notFound';
+import { Redirect } from './redirect';
 import { isPromiseLike } from './utils';
 
 /**
@@ -162,6 +163,11 @@ export interface RouteSlotControllerOptions extends SlotControllerOptions {
    * A content of a matched route.
    */
   routeContent: Promise<RouteContent> | RouteContent;
+
+  /**
+   * Called when {@link redirect} is called during content loading or rendering.
+   */
+  onRedirect: (redirect: Redirect) => void;
 }
 
 /**
@@ -183,6 +189,7 @@ export class RouteSlotController implements SlotController {
   protected _pubSub = new PubSub();
   protected _errorComponent;
   protected _notFoundComponent;
+  protected _onRedirect;
 
   /**
    * @param replacedController A controller that is being replaced in a slot with this controller.
@@ -205,6 +212,7 @@ export class RouteSlotController implements SlotController {
     this._index = options.index;
     this._errorComponent = route.errorComponent || options.errorComponent;
     this._notFoundComponent = route.notFoundComponent || options.notFoundComponent;
+    this._onRedirect = options.onRedirect;
 
     this._setContent(options.routeContent);
   }
@@ -215,7 +223,14 @@ export class RouteSlotController implements SlotController {
       throw error;
     }
 
-    this.component = this._errorComponent;
+    if (error instanceof Redirect) {
+      this.component = undefined;
+      this._pubSub.publish();
+      this._onRedirect(error);
+      return;
+    }
+
+    this.component = error instanceof NotFoundError ? this._notFoundComponent : this._errorComponent;
     this.error = error;
     this.status = 'error';
     this._pubSub.publish();
@@ -258,7 +273,17 @@ export class RouteSlotController implements SlotController {
       return;
     }
 
+    this.renderedController = this;
+    this._promise = undefined;
+
     if (content.hasError) {
+      if (content.error instanceof Redirect) {
+        this.component = this.data = this.error = undefined;
+        this._pubSub.publish();
+        this._onRedirect(content.error);
+        return;
+      }
+
       this.component = content.error instanceof NotFoundError ? this._notFoundComponent : this._errorComponent;
       this.status = 'error';
     } else {
@@ -266,10 +291,8 @@ export class RouteSlotController implements SlotController {
       this.status = 'ok';
     }
 
-    this.renderedController = this;
     this.data = content.data;
     this.error = content.error;
-    this._promise = undefined;
     this._pubSub.publish();
   }
 

@@ -1,4 +1,5 @@
 import React, { ComponentType, ReactElement, ReactNode, useId } from 'react';
+import { Redirect } from './redirect';
 import { Route } from './Route';
 import { Location, RouteState } from './types';
 import { InternalRouter } from './InternalRouter';
@@ -39,6 +40,11 @@ export interface RouterProps<Context> {
    * Triggered when a router should be navigated to the previous location.
    */
   onBack?: () => void;
+
+  /**
+   * Triggered when {@link redirect} is called during content loading or rendering.
+   */
+  onRedirect?: (redirect: Redirect) => void;
 
   /**
    * Children rendered by the router. If `undefined`, then an {@link Outlet} is rendered.
