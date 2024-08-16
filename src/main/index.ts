@@ -5,6 +5,7 @@ export { Link } from './history/Link';
 export { urlSearchParamsAdapter } from './history/urlSearchParamsAdapter';
 export { useHistory, HistoryProvider } from './history/useHistory';
 export { useHistorySubscription } from './history/useHistorySubscription';
+export { parseLocation, stringifyLocation } from './history/utils';
 
 export { createRoute } from './createRoute';
 export { notFound, NotFoundError } from './notFound';
