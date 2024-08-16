@@ -3,7 +3,7 @@ import { Location } from '../types';
 import { toLocation } from '../utils';
 import { History, HistoryOptions } from './types';
 import { urlSearchParamsAdapter } from './urlSearchParamsAdapter';
-import { parseURL, toURL } from './utils';
+import { debasePathname, parseLocation, rebasePathname, stringifyLocation } from './utils';
 
 /**
  * Create the history adapter that reads and writes location to a browser's session history.
@@ -11,38 +11,42 @@ import { parseURL, toURL } from './utils';
  * @param options History options.
  */
 export function createBrowserHistory(options: HistoryOptions = {}): History {
-  const { base, searchParamsAdapter = urlSearchParamsAdapter } = options;
+  const { basePathname, searchParamsAdapter = urlSearchParamsAdapter } = options;
   const pubSub = new PubSub();
   const handlePopstate = () => pubSub.publish();
-  const baseURL = base === undefined ? undefined : new URL(base);
 
   let prevHref: string;
   let location: Location;
 
   return {
     get location() {
-      const { href } = window.location;
+      const { pathname, search, hash } = window.location;
+      const href = pathname + search + hash;
 
       if (prevHref !== href) {
         prevHref = href;
-        location = parseURL(href, searchParamsAdapter, baseURL);
+        location = parseLocation(debasePathname(basePathname, href), searchParamsAdapter);
       }
       return location;
     },
 
     toURL(to) {
-      return toURL(toLocation(to), searchParamsAdapter, baseURL);
+      return rebasePathname(basePathname, typeof to === 'string' ? to : stringifyLocation(to, searchParamsAdapter));
     },
 
     push(to) {
-      location = toLocation(to);
-      window.history.pushState(location.state, '', toURL(location, searchParamsAdapter, baseURL));
+      location = typeof to === 'string' ? parseLocation(to, searchParamsAdapter) : toLocation(to);
+
+      to = rebasePathname(basePathname, stringifyLocation(location, searchParamsAdapter));
+      window.history.pushState(location.state, '', to);
       pubSub.publish();
     },
 
     replace(to) {
-      location = toLocation(to);
-      window.history.replaceState(location.state, '', toURL(location, searchParamsAdapter, baseURL));
+      location = typeof to === 'string' ? parseLocation(to, searchParamsAdapter) : toLocation(to);
+
+      to = rebasePathname(basePathname, stringifyLocation(location, searchParamsAdapter));
+      window.history.replaceState(location.state, '', to);
       pubSub.publish();
     },
 

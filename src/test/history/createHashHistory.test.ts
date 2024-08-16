@@ -140,7 +140,7 @@ describe('createHashHistory', () => {
 
     expect(searchParamsAdapterMock.stringify).toHaveBeenCalledTimes(1);
     expect(searchParamsAdapterMock.parse).toHaveBeenCalledTimes(1);
-    expect(searchParamsAdapterMock.parse).toHaveBeenNthCalledWith(1, '?xxx=111');
+    expect(searchParamsAdapterMock.parse).toHaveBeenNthCalledWith(1, 'xxx=111');
   });
 
   test('creates a URL', async () => {
@@ -151,7 +151,11 @@ describe('createHashHistory', () => {
 
   test('creates a URL with a default base', async () => {
     expect(
-      createHashHistory({ base: 'http://bbb.ccc' }).toURL({ pathname: '/aaa', searchParams: { xxx: 111 }, hash: '' })
+      createHashHistory({ basePathname: 'http://bbb.ccc' }).toURL({
+        pathname: '/aaa',
+        searchParams: { xxx: 111 },
+        hash: '',
+      })
     ).toBe('http://bbb.ccc/#%2Faaa%3Fxxx%3D111');
   });
 });

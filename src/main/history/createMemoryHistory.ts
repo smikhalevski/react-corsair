@@ -3,7 +3,7 @@ import { Location } from '../types';
 import { toLocation } from '../utils';
 import { History, HistoryOptions } from './types';
 import { urlSearchParamsAdapter } from './urlSearchParamsAdapter';
-import { toURL } from './utils';
+import { parseLocation, rebasePathname, stringifyLocation } from './utils';
 
 /**
  * Options of {@link createMemoryHistory}.
@@ -21,10 +21,9 @@ export interface MemoryHistoryOptions extends HistoryOptions {
  * @param options History options.
  */
 export function createMemoryHistory(options: MemoryHistoryOptions): History {
-  const { base, searchParamsAdapter = urlSearchParamsAdapter } = options;
+  const { basePathname, searchParamsAdapter = urlSearchParamsAdapter } = options;
   const pubSub = new PubSub();
   const entries = options.initialEntries.slice(0);
-  const baseURL = base === undefined ? undefined : new URL(base);
 
   if (entries.length === 0) {
     throw new Error('Expected at least one initial entry');
@@ -38,17 +37,20 @@ export function createMemoryHistory(options: MemoryHistoryOptions): History {
     },
 
     toURL(to) {
-      return toURL(toLocation(to), searchParamsAdapter, baseURL);
+      return rebasePathname(basePathname, typeof to === 'string' ? to : stringifyLocation(to, searchParamsAdapter));
     },
 
     push(to) {
       cursor++;
-      entries.splice(cursor, entries.length, toLocation(to));
+
+      to = typeof to === 'string' ? parseLocation(to, searchParamsAdapter) : toLocation(to);
+      entries.splice(cursor, entries.length, to);
       pubSub.publish();
     },
 
     replace(to) {
-      entries.splice(cursor, entries.length, toLocation(to));
+      to = typeof to === 'string' ? parseLocation(to, searchParamsAdapter) : toLocation(to);
+      entries.splice(cursor, entries.length, to);
       pubSub.publish();
     },
 

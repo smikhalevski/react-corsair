@@ -3,7 +3,7 @@ import { Location } from '../types';
 import { toLocation } from '../utils';
 import { History, HistoryOptions } from './types';
 import { urlSearchParamsAdapter } from './urlSearchParamsAdapter';
-import { parseURL, toURL } from './utils';
+import { parseLocation, rebasePathname, stringifyLocation } from './utils';
 
 /**
  * Create the history adapter that reads and writes location to a browser's session history using only URL hash.
@@ -11,10 +11,9 @@ import { parseURL, toURL } from './utils';
  * @param options History options.
  */
 export function createHashHistory(options: HistoryOptions = {}): History {
-  const { base, searchParamsAdapter = urlSearchParamsAdapter } = options;
+  const { basePathname, searchParamsAdapter = urlSearchParamsAdapter } = options;
   const pubSub = new PubSub();
   const handlePopstate = () => pubSub.publish();
-  const baseURL = base === undefined ? undefined : new URL(base);
 
   let prevHref: string;
   let location: Location;
@@ -25,26 +24,31 @@ export function createHashHistory(options: HistoryOptions = {}): History {
 
       if (prevHref !== href) {
         prevHref = href;
-        location = parseURL(href, searchParamsAdapter);
+        location = parseLocation(href, searchParamsAdapter);
       }
       return location;
     },
 
     toURL(to) {
-      const url = '#' + encodeURIComponent(toURL(toLocation(to), searchParamsAdapter));
-
-      return baseURL === undefined ? url : new URL(url, baseURL).toString();
+      return rebasePathname(
+        basePathname,
+        '#' + encodeURIComponent(typeof to === 'string' ? to : stringifyLocation(to, searchParamsAdapter))
+      );
     },
 
     push(to) {
-      location = toLocation(to);
-      window.history.pushState(location.state, '', '#' + encodeURIComponent(toURL(location, searchParamsAdapter)));
+      location = typeof to === 'string' ? parseLocation(to, searchParamsAdapter) : toLocation(to);
+
+      to = stringifyLocation(location, searchParamsAdapter);
+      window.history.pushState(location.state, '', '#' + encodeURIComponent(to));
       pubSub.publish();
     },
 
     replace(to) {
-      location = toLocation(to);
-      window.history.replaceState(location.state, '', '#' + encodeURIComponent(toURL(location, searchParamsAdapter)));
+      location = typeof to === 'string' ? parseLocation(to, searchParamsAdapter) : toLocation(to);
+
+      to = stringifyLocation(location, searchParamsAdapter);
+      window.history.replaceState(location.state, '', '#' + encodeURIComponent(to));
       pubSub.publish();
     },
 

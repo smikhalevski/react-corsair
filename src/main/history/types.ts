@@ -4,7 +4,7 @@ export interface HistoryOptions {
   /**
    * A base URL.
    */
-  base?: URL | string;
+  basePathname?: string;
 
   /**
    * An adapter that extracts params from a URL search string and stringifies them back. By default, an adapter that
@@ -23,25 +23,38 @@ export interface History {
   readonly location: Location;
 
   /**
-   * Creates a URL for a given location.
+   * Creates a pathname-search-hash string for a given location.
+   *
+   * If history was initialized with a {@link HistoryOptions.basePathname basePathname} then it is prepended to the
+   * returned URL.
    *
    * @param to A location to create a URL for.
    */
-  toURL(to: To): string;
+  toURL(to: To | string): string;
 
   /**
    * Adds an entry to the history stack.
    *
    * @param to A location to navigate to.
+   * @example
+   * const userRoute = createRoute('/users/:userId');
+   * history.push(userRoute.getLocation({ userId: 42 }));
+   * // or
+   * history.push('/users/42');
    */
-  push(to: To): void;
+  push(to: To | string): void;
 
   /**
    * Modifies the current history entry, replacing it with the state object and URL passed in the method parameters.
    *
    * @param to A location to navigate to.
+   * @example
+   * const userRoute = createRoute('/users/:userId');
+   * history.replace(userRoute.getLocation({ userId: 42 }));
+   * // or
+   * history.replace('/users/42');
    */
-  replace(to: To): void;
+  replace(to: To | string): void;
 
   /**
    * Move back to the previous history entry.

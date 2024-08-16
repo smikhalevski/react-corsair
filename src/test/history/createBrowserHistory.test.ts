@@ -14,17 +14,12 @@ describe('createBrowserHistory', () => {
 
     expect(window.location.href).toBe('http://localhost/aaa/bbb');
 
-    expect(createBrowserHistory({ base: 'http://localhost/aaa' }).location).toEqual({
+    expect(createBrowserHistory({ basePathname: '/aaa' }).location).toEqual({
       pathname: '/bbb',
       searchParams: {},
       hash: '',
     });
-    expect(createBrowserHistory({ base: 'http://localhost/aaa/' }).location).toEqual({
-      pathname: '/bbb',
-      searchParams: {},
-      hash: '',
-    });
-    expect(createBrowserHistory({ base: 'http://xxx.zzz/aaa' }).location).toEqual({
+    expect(createBrowserHistory({ basePathname: '/aaa/' }).location).toEqual({
       pathname: '/bbb',
       searchParams: {},
       hash: '',
@@ -162,7 +157,7 @@ describe('createBrowserHistory', () => {
 
     expect(searchParamsAdapterMock.stringify).toHaveBeenCalledTimes(1);
     expect(searchParamsAdapterMock.parse).toHaveBeenCalledTimes(1);
-    expect(searchParamsAdapterMock.parse).toHaveBeenNthCalledWith(1, '?xxx=111');
+    expect(searchParamsAdapterMock.parse).toHaveBeenNthCalledWith(1, 'xxx=111');
   });
 
   test('creates a URL', async () => {
@@ -173,7 +168,11 @@ describe('createBrowserHistory', () => {
 
   test('creates a URL with a default base', async () => {
     expect(
-      createBrowserHistory({ base: 'http://bbb.ccc' }).toURL({ pathname: '/aaa', searchParams: { xxx: 111 }, hash: '' })
+      createBrowserHistory({ basePathname: 'http://bbb.ccc' }).toURL({
+        pathname: '/aaa',
+        searchParams: { xxx: 111 },
+        hash: '',
+      })
     ).toBe('http://bbb.ccc/aaa?xxx=111');
   });
 });
