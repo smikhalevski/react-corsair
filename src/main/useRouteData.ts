@@ -7,6 +7,7 @@ import { useSlotController } from './useSlotController';
  *
  * @param route The route to retrieve data for.
  * @template Data Data loaded by a route.
+ * @group Hooks
  */
 export function useRouteData<Data>(route: Route<any, any, Data>): Data {
   const controller = useSlotController();

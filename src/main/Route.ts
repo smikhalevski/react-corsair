@@ -26,6 +26,7 @@ type PartialToVoid<T> = Partial<T> extends T ? T | void : T;
  * @template Params Route params.
  * @template Data Data loaded by a route.
  * @template Context A context required by a data loader.
+ * @group Routing
  */
 export class Route<
   Parent extends Route<any, any, Context> | null = any,

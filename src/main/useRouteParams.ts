@@ -7,6 +7,7 @@ import { useSlotController } from './useSlotController';
  *
  * @param route The route to retrieve params for.
  * @template Params Route params.
+ * @group Hooks
  */
 export function useRouteParams<Params extends object>(route: Route<any, Params>): Params {
   const controller = useSlotController();

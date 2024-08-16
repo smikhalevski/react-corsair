@@ -3,6 +3,8 @@ import { SearchParamsAdapter } from './types';
 
 /**
  * Parses URL search params using {@link !URLSearchParams}.
+ *
+ * @group History
  */
 export const urlSearchParamsAdapter: SearchParamsAdapter = {
   parse(search) {

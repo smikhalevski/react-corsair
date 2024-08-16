@@ -7,6 +7,7 @@ import { urlSearchParamsAdapter } from './urlSearchParamsAdapter';
  *
  * @param to A pathname-search-hash string to parse.
  * @param searchParamsAdapter An adapter that parses a search string.
+ * @group History
  */
 export function parseLocation(to: string, searchParamsAdapter = urlSearchParamsAdapter): Location {
   const hashIndex = to.indexOf('#');
@@ -34,6 +35,7 @@ export function parseLocation(to: string, searchParamsAdapter = urlSearchParamsA
  *
  * @param to A location to stringify.
  * @param searchParamsAdapter An adapter that stringifies a search string.
+ * @group History
  */
 export function stringifyLocation(to: To, searchParamsAdapter = urlSearchParamsAdapter): string {
   const { pathname, searchParams, hash } = toLocation(to);

@@ -7,6 +7,8 @@ import { parseLocation, rebasePathname, stringifyLocation } from './utils';
 
 /**
  * Options of {@link createMemoryHistory}.
+ *
+ * @group History
  */
 export interface MemoryHistoryOptions extends HistoryOptions {
   /**
@@ -19,6 +21,7 @@ export interface MemoryHistoryOptions extends HistoryOptions {
  * Create the history adapter that reads and writes location to an in-memory stack.
  *
  * @param options History options.
+ * @group History
  */
 export function createMemoryHistory(options: MemoryHistoryOptions): History {
   const { basePathname, searchParamsAdapter = urlSearchParamsAdapter } = options;

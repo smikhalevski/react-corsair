@@ -2,6 +2,8 @@ import { Dict } from './types';
 
 /**
  * A result returned by {@link PathnameTemplate.match} on a successful pathname match.
+ *
+ * @group Routing
  */
 export interface PathnameMatch {
   /**
@@ -22,6 +24,8 @@ export interface PathnameMatch {
 
 /**
  * A template of a pathname pattern.
+ *
+ * @group Routing
  */
 export class PathnameTemplate {
   /**

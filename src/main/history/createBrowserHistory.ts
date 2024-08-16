@@ -9,6 +9,7 @@ import { debasePathname, parseLocation, rebasePathname, stringifyLocation } from
  * Create the history adapter that reads and writes location to a browser's session history.
  *
  * @param options History options.
+ * @group History
  */
 export function createBrowserHistory(options: HistoryOptions = {}): History {
   const { basePathname, searchParamsAdapter = urlSearchParamsAdapter } = options;

@@ -1,8 +1,11 @@
 import { Dict, Location, To } from '../types';
 
+/**
+ * @group History
+ */
 export interface HistoryOptions {
   /**
-   * A base URL.
+   * A base pathname.
    */
   basePathname?: string;
 
@@ -15,6 +18,8 @@ export interface HistoryOptions {
 
 /**
  * A history abstraction.
+ *
+ * @group History
  */
 export interface History {
   /**
@@ -72,6 +77,8 @@ export interface History {
 
 /**
  * Extracts params from a URL search string and stringifies them back.
+ *
+ * @group History
  */
 export interface SearchParamsAdapter {
   /**
