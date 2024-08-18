@@ -3,6 +3,7 @@
  * {@link RouteOptions.notFoundComponent}.
  *
  * @param message An optional message of a {@link NotFoundError}.
+ * @group Routing
  */
 export function notFound(message?: string): never {
   throw new NotFoundError(message);
@@ -13,6 +14,7 @@ export function notFound(message?: string): never {
  * instead of the matched route.
  *
  * Use {@link notFound} to create a {@link NotFoundError} instance.
+ * @group Routing
  */
 export class NotFoundError extends Error {}
 

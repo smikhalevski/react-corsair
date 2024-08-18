@@ -3,6 +3,8 @@ import { ChildSlotControllerContext, Slot } from './Slot';
 
 /**
  * Props of the {@link Outlet} component.
+ *
+ * @group Components
  */
 export interface OutletProps {
   /**
@@ -13,6 +15,8 @@ export interface OutletProps {
 
 /**
  * Renders a route provided by an enclosing {@link Router}.
+ *
+ * @group Components
  */
 export function Outlet(props: OutletProps): ReactNode {
   const controller = useContext(ChildSlotControllerContext);

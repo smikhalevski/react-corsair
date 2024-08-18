@@ -6,6 +6,8 @@ import { toLocation } from './utils';
 
 /**
  * Provides components a way to trigger router navigation.
+ *
+ * @group Routing
  */
 export interface Navigation {
   /**

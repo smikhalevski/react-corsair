@@ -3,6 +3,8 @@ import { toLocation } from './utils';
 
 /**
  * Options of the {@link redirect} function.
+ *
+ * @group Routing
  */
 export interface RedirectOptions {
   /**
@@ -17,6 +19,8 @@ export interface RedirectOptions {
  * Throws a {@link Redirect} instance that redirects router to a location.
  *
  * During SSR, redirects abort rendering. On the client, redirects trigger {@link RouterProps.onReplace}.
+ *
+ * @group Routing
  */
 export function redirect(to: To, options?: RedirectOptions): never {
   throw new Redirect(toLocation(to), options?.isPermanent);
@@ -26,6 +30,8 @@ export function redirect(to: To, options?: RedirectOptions): never {
  * A redirect to a location.
  *
  * Use {@link redirect} to create a {@link Redirect} instance.
+ *
+ * @group Routing
  */
 export class Redirect {
   /**

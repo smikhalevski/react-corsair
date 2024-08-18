@@ -1,50 +1,86 @@
-import { Location } from '../types';
+import { Location, To } from '../types';
+import { toLocation } from '../utils';
 import { urlSearchParamsAdapter } from './urlSearchParamsAdapter';
 
 /**
- * Composes a URL from a location.
+ * Parses a pathname-search-hash string as a location.
  *
- * @param location A location to compose a URL from.
- * @param searchParamsAdapter An adapter that creates a search string.
- * @param base A base URL.
+ * @param to A pathname-search-hash string to parse.
+ * @param searchParamsAdapter An adapter that parses a search string.
+ * @group History
  */
-export function toURL(location: Location, searchParamsAdapter = urlSearchParamsAdapter, base?: string | URL): string {
-  const { pathname, searchParams, hash } = location;
+export function parseLocation(to: string, searchParamsAdapter = urlSearchParamsAdapter): Location {
+  const hashIndex = to.indexOf('#');
 
-  const search = searchParamsAdapter.stringify(searchParams);
+  let searchIndex = to.indexOf('?');
+  if (hashIndex !== -1 && searchIndex > hashIndex) {
+    searchIndex = -1;
+  }
 
-  const url =
-    pathname +
-    (search === '' || search === '?' ? '' : search.charAt(0) === '?' ? search : '?' + search) +
-    (hash === '' ? '' : '#' + encodeURIComponent(hash));
+  let pathname =
+    searchIndex === -1 && hashIndex === -1 ? to : to.substring(0, searchIndex === -1 ? hashIndex : searchIndex);
 
-  return base === undefined ? url : new URL(url, base).toString();
+  return {
+    pathname: pathname === '' || pathname.charCodeAt(0) !== 47 ? '/' + pathname : pathname,
+    searchParams: searchParamsAdapter.parse(
+      searchIndex === -1 ? '' : to.substring(searchIndex + 1, hashIndex === -1 ? undefined : hashIndex)
+    ),
+    hash: hashIndex === -1 ? '' : decodeURIComponent(to.substring(hashIndex + 1)),
+    state: undefined,
+  };
 }
 
 /**
- * Parses a URL string as a location.
+ * Stringifies a location as pathname-search-hash string.
  *
- * @param url A URL to parse.
- * @param searchParamsAdapter An adapter that parses a search string.
- * @param base A base URL.
+ * @param to A location to stringify.
+ * @param searchParamsAdapter An adapter that stringifies a search string.
+ * @group History
  */
-export function parseURL(url: string, searchParamsAdapter = urlSearchParamsAdapter, base?: string | URL): Location {
-  const { pathname, search, hash } = new URL(url, 'https://0');
+export function stringifyLocation(to: To, searchParamsAdapter = urlSearchParamsAdapter): string {
+  const { pathname, searchParams, hash } = toLocation(to);
 
-  let basePathname;
+  const search = searchParamsAdapter.stringify(searchParams);
 
-  if (base !== undefined) {
-    base = typeof base === 'string' ? new URL(base) : base;
-    basePathname = base.pathname.endsWith('/') ? base.pathname.slice(0, -1) : base.pathname;
+  return (
+    pathname +
+    (search === '' || search === '?' ? '' : search.charCodeAt(0) === 63 ? search : '?' + search) +
+    (hash === '' ? '' : '#' + encodeURIComponent(hash))
+  );
+}
+
+export function rebasePathname(basePathname: string | undefined, pathname: string): string {
+  if (basePathname === undefined || basePathname === '') {
+    return pathname;
+  }
+  return (
+    (basePathname.endsWith('/') ? basePathname.slice(0, -1) : basePathname) +
+    (pathname.charCodeAt(0) === 47 ? pathname : '/' + pathname)
+  );
+}
+
+export function debasePathname(basePathname: string | undefined, pathname: string): string {
+  if (basePathname === undefined || basePathname === '') {
+    return pathname;
+  }
+  if (pathname === basePathname) {
+    return '/';
   }
 
-  return {
-    pathname:
-      basePathname !== undefined && pathname.startsWith(basePathname)
-        ? pathname.substring(basePathname.length)
-        : pathname,
-    searchParams: searchParamsAdapter.parse(search),
-    hash: decodeURIComponent(hash.substring(1)),
-    state: undefined,
-  };
+  let charCode;
+
+  if (
+    pathname.length > basePathname.length &&
+    pathname.startsWith(basePathname) &&
+    (basePathname.endsWith('/') ||
+      (charCode = pathname.charCodeAt(basePathname.length)) === 47 ||
+      charCode === 63 ||
+      charCode === 35)
+  ) {
+    pathname = pathname.substring(basePathname.length);
+
+    return pathname === '' || pathname.charCodeAt(0) !== 47 ? '/' + pathname : pathname;
+  }
+
+  throw new Error("Pathname doesn't match base pathname: " + basePathname);
 }

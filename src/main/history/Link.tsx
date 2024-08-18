@@ -6,6 +6,8 @@ import { HistoryContext } from './useHistory';
 
 /**
  * Props of the {@link Link} component.
+ *
+ * @group Components
  */
 export interface LinkProps extends Omit<HTMLAttributes<HTMLAnchorElement>, 'href'> {
   /**
@@ -33,6 +35,8 @@ export interface LinkProps extends Omit<HTMLAttributes<HTMLAnchorElement>, 'href
  *
  * If there's no enclosing {@link HistoryProvider} the {@link Link} component renders `#`
  * as an {@link !HTMLAnchorElement.href a.href}.
+ *
+ * @group Components
  */
 export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
   const { to, prefetch, replace, onClick, ...anchorProps } = props;

@@ -6,11 +6,15 @@ export interface Dict {
 
 /**
  * A location or route that doesn't have required search params.
+ *
+ * @group Routing
  */
 export type To = Location | { getLocation(): Location };
 
 /**
  * A location contains information about the URL path and history state.
+ *
+ * @group Routing
  */
 export interface Location {
   /**
@@ -36,6 +40,8 @@ export interface Location {
 
 /**
  * Non-essential {@link Location} options.
+ *
+ * @group Routing
  */
 export interface LocationOptions {
   /**
@@ -56,6 +62,7 @@ export interface LocationOptions {
  *
  * @template Params Route params.
  * @see {@link urlSearchParamsAdapter}
+ * @group Routing
  */
 export interface ParamsAdapter<Params> {
   /**
@@ -94,6 +101,8 @@ export interface ParamsAdapter<Params> {
  * <dd>If another route is currently rendered then it would be preserved until component and loader of a newly matched
  * route are being loaded. Otherwise, a {@link RouteOptions.loadingComponent} is rendered.</dd>
  * </dl>
+ *
+ * @group Routing
  */
 export type LoadingAppearance = 'loading' | 'auto';
 
@@ -106,6 +115,8 @@ export type LoadingAppearance = 'loading' | 'auto';
  * <dt>"client"</dt>
  * <dd>Route is rendered exclusively on the client. During SSR loading state is rendered.</dd>
  * </dl>
+ *
+ * @group Routing
  */
 export type RenderingDisposition = 'server' | 'client';
 
@@ -115,6 +126,7 @@ export type RenderingDisposition = 'server' | 'client';
  * @template Params Route params.
  * @template Data Data loaded by a route.
  * @template Context A context provided by a {@link Router} for a {@link loader}.
+ * @group Routing
  */
 export interface RouteOptions<Params, Data, Context> {
   /**
@@ -219,6 +231,8 @@ export interface RouteOptions<Params, Data, Context> {
 
 /**
  * A state rendered by a route component.
+ *
+ * @group Routing
  */
 export interface RouteState {
   /**

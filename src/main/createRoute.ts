@@ -9,6 +9,7 @@ import { RouteOptions } from './types';
  * @template Params Route params.
  * @template Data Data loaded by a route.
  * @template Context A context provided by a {@link Router} for a {@link RouteOptions.loader}.
+ * @group Routing
  */
 export function createRoute<Params extends object | void = object | void, Data = void, Context = any>(
   options?: RouteOptions<Params, Data, Context>
@@ -23,6 +24,7 @@ export function createRoute<Params extends object | void = object | void, Data =
  * @template Params Route params.
  * @template Data Data loaded by a route.
  * @template Context A context provided by a {@link Router} for a {@link RouteOptions.loader}.
+ * @group Routing
  */
 export function createRoute<Parent extends Route, Params extends object | void = object | void, Data = void>(
   parent: Parent,
@@ -35,6 +37,7 @@ export function createRoute<Parent extends Route, Params extends object | void =
  * @param pathname A URL {@link RouteOptions.pathname pathname} pattern.
  * @param component A component that is rendered by a route.
  * @template Params Route params.
+ * @group Routing
  */
 export function createRoute<Params extends object | void = object | void>(
   pathname: string,
@@ -49,6 +52,7 @@ export function createRoute<Params extends object | void = object | void>(
  * @param component A component that is rendered by a route.
  * @template Parent A parent route.
  * @template Params Route params.
+ * @group Routing
  */
 export function createRoute<Parent extends Route, Params extends object | void = object | void>(
   parent: Parent,
