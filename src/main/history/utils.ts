@@ -49,6 +49,9 @@ export function stringifyLocation(to: To, searchParamsAdapter = urlSearchParamsA
   );
 }
 
+/**
+ * Prepends a base pathname to a pathname.
+ */
 export function rebasePathname(basePathname: string | undefined, pathname: string): string {
   if (basePathname === undefined || basePathname === '') {
     return pathname;
@@ -59,6 +62,9 @@ export function rebasePathname(basePathname: string | undefined, pathname: strin
   );
 }
 
+/**
+ * Removes a base pathname from a pathname, or throws an error if a pathname doesn't start with a base pathname.
+ */
 export function debasePathname(basePathname: string | undefined, pathname: string): string {
   if (basePathname === undefined || basePathname === '') {
     return pathname;

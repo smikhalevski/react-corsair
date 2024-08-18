@@ -27,23 +27,24 @@ export const urlSearchParamsAdapter: SearchParamsAdapter = {
 
       if (value instanceof Set || Array.isArray(value)) {
         for (const item of value) {
-          appendParam(urlSearchParams, name, item);
+          const paramValue = toParamValue(name, item);
+
+          if (paramValue !== null) {
+            urlSearchParams.append(name, paramValue);
+          }
         }
-      } else {
-        appendParam(urlSearchParams, name, value);
+        continue;
+      }
+
+      const paramValue = toParamValue(name, value);
+
+      if (paramValue !== null) {
+        urlSearchParams.append(name, paramValue);
       }
     }
     return urlSearchParams.toString();
   },
 };
-
-function appendParam(urlSearchParams: URLSearchParams, name: string, value: unknown): void {
-  const paramValue = toParamValue(name, value);
-
-  if (paramValue !== null) {
-    urlSearchParams.append(name, paramValue);
-  }
-}
 
 function toParamValue(name: string, value: unknown): string | null {
   if (value instanceof Date) {
