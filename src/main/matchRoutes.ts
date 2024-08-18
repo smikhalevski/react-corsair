@@ -32,7 +32,11 @@ export function matchRoutes(pathname: string, searchParams: Dict, routes: Route[
       // No match or pathname cannot be consumed by a route
       continue;
     }
-    return getRouteMatches(route, searchParams, cache);
+    try {
+      return getRouteMatches(route, searchParams, cache);
+    } catch {
+      // Cannot match params, proceed to the next route
+    }
   }
 
   return null;
