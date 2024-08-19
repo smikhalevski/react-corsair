@@ -1,5 +1,6 @@
 import { Location, To } from '../types';
 import { toLocation } from '../utils';
+import { SearchParamsAdapter } from './types';
 import { urlSearchParamsAdapter } from './urlSearchParamsAdapter';
 
 /**
@@ -89,4 +90,8 @@ export function debasePathname(basePathname: string | undefined, pathname: strin
   }
 
   throw new Error("Pathname doesn't match base pathname: " + basePathname);
+}
+
+export function parseOrCastLocation(to: To | string, searchParamsAdapter: SearchParamsAdapter): Location {
+  return typeof to === 'string' ? parseLocation(to, searchParamsAdapter) : toLocation(to);
 }

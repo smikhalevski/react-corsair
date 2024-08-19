@@ -1,9 +1,8 @@
 import { PubSub } from 'parallel-universe';
 import { Location } from '../types';
-import { toLocation } from '../utils';
 import { History, HistoryOptions } from './types';
 import { urlSearchParamsAdapter } from './urlSearchParamsAdapter';
-import { parseLocation, rebasePathname, stringifyLocation } from './utils';
+import { parseOrCastLocation, rebasePathname, stringifyLocation } from './utils';
 
 /**
  * Options of {@link createMemoryHistory}.
@@ -46,14 +45,12 @@ export function createMemoryHistory(options: MemoryHistoryOptions): History {
     push(to) {
       cursor++;
 
-      to = typeof to === 'string' ? parseLocation(to, searchParamsAdapter) : toLocation(to);
-      entries.splice(cursor, entries.length, to);
+      entries.splice(cursor, entries.length, parseOrCastLocation(to, searchParamsAdapter));
       pubSub.publish();
     },
 
     replace(to) {
-      to = typeof to === 'string' ? parseLocation(to, searchParamsAdapter) : toLocation(to);
-      entries.splice(cursor, entries.length, to);
+      entries.splice(cursor, entries.length, parseOrCastLocation(to, searchParamsAdapter));
       pubSub.publish();
     },
 
