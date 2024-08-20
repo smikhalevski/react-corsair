@@ -58,7 +58,7 @@ export interface SlotController {
  */
 export interface SlotControllerOptions {
   /**
-   * A component that is rendered when an error was thrown during a slot rendering.
+   * A component that is rendered if an error was thrown during a slot rendering.
    */
   errorComponent?: ComponentType;
 
