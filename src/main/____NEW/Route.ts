@@ -1,8 +1,7 @@
 import { ComponentType } from 'react';
-import { NotFoundError } from './notFound';
 import { Outlet } from './Outlet';
 import { PathnameTemplate } from './PathnameTemplate';
-import { Redirect } from './redirect';
+import { Router } from './Router';
 import {
   Dict,
   LoadingAppearance,
@@ -110,7 +109,7 @@ export class Route<
    * @template Parent A parent route or `null` if there is no parent.
    * @template Params Route params.
    * @template Data Data loaded by a route.
-   * @template Context A context provided by a {@link Router} to a {@link RouteOptions.loader}.
+   * @template Context A context provided by a {@link Router} to a {@link RouteOptions.loader loader}.
    */
   constructor(parent: Parent, options: RouteOptions<Params, Data, Context> = {}) {
     const { lazyComponent, paramsAdapter } = options;
@@ -221,39 +220,5 @@ export class Route<
       hash: options === undefined || options.hash === undefined ? '' : options.hash,
       state: options?.state,
     };
-  }
-
-  /**
-   * Prefetches a component and data of this route and its ancestors.
-   *
-   * @param params Route params.
-   * @param context A context provided to a {@link RouteOptions.loader}.
-   */
-  prefetch(params: this['_params'], context: 0 extends 1 & Context ? void : never): void;
-
-  /**
-   * Prefetches a component and data of this route and its ancestors.
-   *
-   * @param params Route params.
-   * @param context A context provided to a {@link RouteOptions.loader}.
-   */
-  prefetch(params: this['_params'], context: Context): void;
-
-  prefetch(params: this['_params'], context: unknown): void {
-    for (let route: Route | null = this; route !== null; route = route.parent) {
-      try {
-        route.getComponent();
-        route.loader?.(params, context);
-      } catch (error) {
-        if (error instanceof NotFoundError || error instanceof Redirect) {
-          return;
-        }
-
-        setTimeout(() => {
-          // Force uncaught exception
-          throw error;
-        }, 0);
-      }
-    }
   }
 }

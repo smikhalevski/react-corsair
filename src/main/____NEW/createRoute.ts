@@ -8,7 +8,7 @@ import { RouteOptions } from './types';
  * @param options Route options.
  * @template Params Route params.
  * @template Data Data loaded by a route.
- * @template Context A context provided by a {@link Router} to a {@link RouteOptions.loader}.
+ * @template Context A context provided by a {@link Router} to a {@link RouteOptions.loader loader}.
  * @group Routing
  */
 export function createRoute<Params extends object | void = object | void, Data = void, Context = any>(
@@ -23,7 +23,7 @@ export function createRoute<Params extends object | void = object | void, Data =
  * @template Parent A parent route.
  * @template Params Route params.
  * @template Data Data loaded by a route.
- * @template Context A context provided by a {@link Router} to a {@link RouteOptions.loader}.
+ * @template Context A context provided by a {@link Router} to a {@link RouteOptions.loader loader}.
  * @group Routing
  */
 export function createRoute<Parent extends Route, Params extends object | void = object | void, Data = void>(
