@@ -1,5 +1,5 @@
 import { PubSub } from 'parallel-universe';
-import { Location } from '../types';
+import { To } from '../types';
 import { History, HistoryOptions } from './types';
 import { urlSearchParamsAdapter } from './urlSearchParamsAdapter';
 import { parseOrCastLocation, rebasePathname, stringifyLocation } from './utils';
@@ -13,7 +13,7 @@ export interface MemoryHistoryOptions extends HistoryOptions {
   /**
    * A non-empty array of initial history entries.
    */
-  initialEntries: Location[];
+  initialEntries: Array<To | string>;
 }
 
 /**
@@ -25,7 +25,7 @@ export interface MemoryHistoryOptions extends HistoryOptions {
 export function createMemoryHistory(options: MemoryHistoryOptions): History {
   const { basePathname, searchParamsAdapter = urlSearchParamsAdapter } = options;
   const pubSub = new PubSub();
-  const entries = options.initialEntries.slice(0);
+  const entries = options.initialEntries.map(entry => parseOrCastLocation(entry, searchParamsAdapter));
 
   if (entries.length === 0) {
     throw new Error('Expected at least one initial entry');

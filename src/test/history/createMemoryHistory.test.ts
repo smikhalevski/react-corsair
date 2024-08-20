@@ -1,8 +1,21 @@
-import { createMemoryHistory } from '../../main';
+import { createMemoryHistory, createRoute } from '../../main';
 
 describe('createMemoryHistory', () => {
   test('throws if there is no initial entry', () => {
     expect(() => createMemoryHistory({ initialEntries: [] })).toThrow(new Error('Expected at least one initial entry'));
+  });
+
+  test('parses initial entries', () => {
+    expect(createMemoryHistory({ initialEntries: ['/aaa?xxx=yyy'] }).location).toEqual({
+      pathname: '/aaa',
+      searchParams: { xxx: 'yyy' },
+      hash: '',
+    });
+    expect(createMemoryHistory({ initialEntries: [createRoute({ pathname: '/aaa' })] }).location).toEqual({
+      pathname: '/aaa',
+      searchParams: {},
+      hash: '',
+    });
   });
 
   test('pushes location', () => {
