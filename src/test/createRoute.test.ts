@@ -16,7 +16,7 @@ describe('createRoute', () => {
     expect(route.getComponent()).toBe(Outlet);
   });
 
-  test('(parent) signature', () => {
+  test('(parentRoute) signature', () => {
     const aaaRoute = createRoute();
     const route = createRoute(aaaRoute);
 
@@ -25,7 +25,7 @@ describe('createRoute', () => {
     expect(route.getComponent()).toBe(Outlet);
   });
 
-  test('(parent, options) signature', () => {
+  test('(parentRoute, options) signature', () => {
     const aaaRoute = createRoute();
     const route = createRoute(aaaRoute, '/rrr');
 
@@ -50,7 +50,7 @@ describe('createRoute', () => {
     expect(route.getComponent()).toBe(Component);
   });
 
-  test('(parent, pathname) signature', () => {
+  test('(parentRoute, pathname) signature', () => {
     const aaaRoute = createRoute();
     const route = createRoute(aaaRoute, '/rrr');
 
@@ -59,7 +59,7 @@ describe('createRoute', () => {
     expect(route.getComponent()).toBe(Outlet);
   });
 
-  test('(parent, pathname, component) signature', () => {
+  test('(parentRoute, pathname, component) signature', () => {
     const aaaRoute = createRoute();
     const route = createRoute(aaaRoute, '/rrr', Component);
 

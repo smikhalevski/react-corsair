@@ -78,7 +78,7 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
     <a
       {...anchorProps}
       ref={ref}
-      href={history === null ? '#' : history.toURL(toLocation(to))}
+      href={history === null ? '#' : history.toAbsoluteURL(toLocation(to))}
       onClick={handleClick}
     />
   );

@@ -2,15 +2,15 @@ import { Router } from './Router';
 import { RouterOptions } from './types';
 
 /**
- * Creates a router that matches routes with a location.
+ * Creates a router that matches a route by a location.
  *
- * @template Context A context provided by a {@link Router} to a {@link RouteOptions.loader loader}.
+ * @template Context A context provided to {@link RouteOptions.loader route loaders}.
  * @group Routing
  */
 export function createRouter<Context>(options: RouterOptions<Context>): Router<Context>;
 
 /**
- * Creates a router that matches routes with a location.
+ * Creates a router that matches a route by a location.
  *
  * @group Routing
  */

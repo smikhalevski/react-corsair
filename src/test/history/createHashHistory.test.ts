@@ -143,15 +143,15 @@ describe('createHashHistory', () => {
     expect(searchParamsAdapterMock.parse).toHaveBeenNthCalledWith(1, 'xxx=111');
   });
 
-  test('creates a URL', async () => {
-    expect(createHashHistory().toURL({ pathname: '/aaa', searchParams: { xxx: 111 }, hash: '' })).toBe(
+  test('creates an absolute URL', async () => {
+    expect(createHashHistory().toAbsoluteURL({ pathname: '/aaa', searchParams: { xxx: 111 }, hash: '' })).toBe(
       '#%2Faaa%3Fxxx%3D111'
     );
   });
 
-  test('creates a URL with a default base', async () => {
+  test('creates an absolute URL with a default base', async () => {
     expect(
-      createHashHistory({ basePathname: 'http://bbb.ccc' }).toURL({
+      createHashHistory({ basePathname: 'http://bbb.ccc' }).toAbsoluteURL({
         pathname: '/aaa',
         searchParams: { xxx: 111 },
         hash: '',

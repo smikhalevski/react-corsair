@@ -1,5 +1,6 @@
 import { ComponentType } from 'react';
-import { Route } from './Route';
+import { History } from '../history/types';
+import { Route } from './__Route';
 
 export interface Dict {
   [key: string]: any;
@@ -193,7 +194,7 @@ export interface RouteOptions<Params, Data, Context> {
    * Loaded data is available in route {@link component} via {@link useRouteData}.
    *
    * @param params Route params extracted from a location.
-   * @param context A {@link RouterProps.context} provided to a {@link Router}.
+   * @param context A {@link RouterOptions.context context} provided by a {@link Router}.
    */
   loader?: (params: Params, context: Context) => PromiseLike<Data> | Data;
 
@@ -237,7 +238,12 @@ export interface RouteOptions<Params, Data, Context> {
  */
 export interface RouterOptions<Context> {
   /**
-   * Routes that a router can render.
+   * A history that triggers a router navigation.
+   */
+  history: History;
+
+  /**
+   * Routes that a router can match.
    */
   routes: Route<any, any, any, Context>[];
 

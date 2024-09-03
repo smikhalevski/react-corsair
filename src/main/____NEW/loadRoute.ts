@@ -1,7 +1,7 @@
 import { ComponentType } from 'react';
-import { RouteMatch } from '../matchRoutes';
-import { isPromiseLike } from '../utils';
+import { RouteMatch } from './__matchRoutes';
 import { NotFoundError } from './notFound';
+import { isPromiseLike } from './utils';
 
 export type RouteState =
   | { status: 'ok'; data: unknown }
@@ -17,7 +17,7 @@ export interface RouteContent {
 /**
  * Unconditionally loads route content.
  */
-export function loadRouteContent(routeMatch: RouteMatch, context: unknown): Promise<RouteContent> | RouteContent {
+export function loadRoute(routeMatch: RouteMatch, context: unknown): Promise<RouteContent> | RouteContent {
   let component;
   let data;
 

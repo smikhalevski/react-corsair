@@ -1,6 +1,6 @@
 import { ComponentType } from 'react';
 import { Outlet } from './Outlet';
-import { PathnameTemplate } from './PathnameTemplate';
+import { PathnameTemplate } from './__PathnameTemplate';
 import { Router } from './Router';
 import {
   Dict,
@@ -21,14 +21,14 @@ type PartialToVoid<T> = Partial<T> extends T ? T | void : T;
  *
  * Use {@link createRoute} to create a {@link Route} instance.
  *
- * @template Parent A parent route or `null` if there is no parent.
+ * @template ParentRoute A parent route or `null` if there is no parent.
  * @template Params Route params.
  * @template Data Data loaded by a route.
  * @template Context A context required by a data loader.
  * @group Routing
  */
 export class Route<
-  Parent extends Route<any, any, Context> | null = any,
+  ParentRoute extends Route<any, any, Context> | null = any,
   Params extends object | void = any,
   Data = any,
   Context = any,
@@ -38,7 +38,7 @@ export class Route<
    *
    * @internal
    */
-  declare _params: PartialToVoid<Parent extends Route ? Squash<Parent['_params'] & Params> : Params>;
+  declare _params: PartialToVoid<ParentRoute extends Route ? Squash<ParentRoute['_params'] & Params> : Params>;
 
   /**
    * The type of route context.
@@ -50,7 +50,7 @@ export class Route<
   /**
    * A parent route or `null` if there is no parent.
    */
-  readonly parent: Parent;
+  readonly parentRoute: ParentRoute;
 
   /**
    * A template of a pathname pattern.
@@ -67,7 +67,7 @@ export class Route<
    * Loads data required to render a route.
    *
    * @param params Route params extracted from a location.
-   * @param context A {@link RouterProps.context} provided to a {@link Router}.
+   * @param context A {@link RouterOptions.context context} provided by a {@link Router}.
    */
   loader: ((params: Params, context: Context) => PromiseLike<Data> | Data) | undefined;
 
@@ -104,17 +104,17 @@ export class Route<
   /**
    * Creates a new instance of a {@link Route}.
    *
-   * @param parent A parent route or `null` if there is no parent.
+   * @param parentRoute A parent route or `null` if there is no parent.
    * @param options Route options.
-   * @template Parent A parent route or `null` if there is no parent.
+   * @template ParentRoute A parent route or `null` if there is no parent.
    * @template Params Route params.
    * @template Data Data loaded by a route.
    * @template Context A context provided by a {@link Router} to a {@link RouteOptions.loader loader}.
    */
-  constructor(parent: Parent, options: RouteOptions<Params, Data, Context> = {}) {
+  constructor(parentRoute: ParentRoute, options: RouteOptions<Params, Data, Context> = {}) {
     const { lazyComponent, paramsAdapter } = options;
 
-    this.parent = parent;
+    this.parentRoute = parentRoute;
     this.pathnameTemplate = new PathnameTemplate(options.pathname || '/', options.isCaseSensitive);
     this.paramsAdapter = typeof paramsAdapter === 'function' ? { parse: paramsAdapter } : paramsAdapter;
     this.loader = options.loader;
@@ -170,7 +170,7 @@ export class Route<
     let searchParams: Dict = {};
     let hasLooseParams = false;
 
-    for (let route: Route | null = this; route !== null; route = route.parent) {
+    for (let route: Route | null = this; route !== null; route = route.parentRoute) {
       const { paramsAdapter } = route;
 
       const pathnameChunk = route.pathnameTemplate.toPathname(
@@ -195,12 +195,12 @@ export class Route<
     if (hasLooseParams && params !== undefined) {
       let pathnameParamNames;
 
-      if (this.parent === null) {
+      if (this.parentRoute === null) {
         pathnameParamNames = this.pathnameTemplate.paramNames;
       } else {
         pathnameParamNames = new Set<string>();
 
-        for (let route: Route | null = this; route !== null; route = route.parent) {
+        for (let route: Route | null = this; route !== null; route = route.parentRoute) {
           for (const name of route.pathnameTemplate.paramNames) {
             pathnameParamNames.add(name);
           }

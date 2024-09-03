@@ -1,9 +1,9 @@
 import { ComponentType } from 'react';
-import { loadContent } from './loadContent';
-import { matchRoutes } from './matchRoutes';
-import { Route } from './Route';
-import { Slot } from './SlotManager';
-import { RouterOptions, To, Location } from './types';
+import { loadRoute } from './loadRoute';
+import { matchRoutes, RouteMatch } from './__matchRoutes';
+import { Route } from './__Route';
+import { Slot } from './Slot';
+import { RouterOptions, To } from './types';
 import { toLocation } from './utils';
 
 /**
@@ -11,19 +11,14 @@ import { toLocation } from './utils';
  *
  * Use {@link createRouter} to create a {@link Router} instance.
  *
- * @template Context A context provided by a {@link Router} to a {@link RouteOptions.loader loader}.
+ * @template Context A context provided to {@link RouteOptions.loader route loaders}.
  * @group Routing
  */
 export class Router<Context = any> {
   /**
-   * A location rendered by a router.
-   */
-  location: Location | undefined = undefined;
-
-  /**
    * Routes that a router can render.
    */
-  routes: Route<any, any, any, Context>[];
+  routes: readonly Route<any, any, any, Context>[];
 
   /**
    * A context provided to {@link RouteOptions.loader route loaders}.
@@ -32,19 +27,11 @@ export class Router<Context = any> {
 
   /**
    * A component that is rendered when an error was thrown during route rendering.
-   *
-   * A {@link Router}-level {@link errorComponent} is used only for root routes. Child routes must specify their own
-   * {@link RouteOptions.errorComponent error components}.
    */
   errorComponent: ComponentType | undefined;
 
   /**
-   * A component that is rendered when a {@link RouteOptions.lazyComponent lazyComponent} or
-   * a {@link RouteOptions.loader data loader} are being loaded. Render a skeleton or a spinner in this component
-   * to notify user that a new route is being loaded.
-   *
-   * A {@link Router}-level {@link loadingComponent} is used only for root routes. Child routes must specify their own
-   * {@link RouteOptions.loadingComponent loading components}.
+   * A component that is rendered when a component or data are being loaded.
    */
   loadingComponent: ComponentType | undefined;
 
@@ -55,15 +42,15 @@ export class Router<Context = any> {
   notFoundComponent: ComponentType | undefined;
 
   /**
-   * Slots
+   * A slot that is rendered in the immediate router {@link Outlet}.
    */
-  protected _slots: Slot[] | undefined;
+  slot: Slot | undefined;
 
   /**
    * Creates a new instance of a {@link Router}.
    *
    * @param options Router options.
-   * @template Context A context provided by a {@link Router} to a {@link RouteOptions.loader loader}.
+   * @template Context A context provided to {@link RouteOptions.loader route loaders}.
    */
   constructor(options: RouterOptions<Context>) {
     this.routes = options.routes;
@@ -73,47 +60,33 @@ export class Router<Context = any> {
     this.notFoundComponent = options.notFoundComponent;
   }
 
-  navigate(to: To): void {
+  match(to: To): RouteMatch[] {
     const location = toLocation(to);
-    const routeMatches = matchRoutes(location.pathname, location.searchParams, this.routes);
-
-    this.location = location;
-
-    if (routeMatches === null) {
-      // Not found
-      return;
-    }
-
-    const slots: Slot[] = [];
-
-    for (const routeMatch of routeMatches) {
-      slots.push({
-        router: this,
-        routeMatch,
-        routeContent: loadContent(routeMatch, this.context),
-      });
-    }
-
-    this._slots = slots;
+    return matchRoutes(location.pathname, location.searchParams, this.routes);
   }
+
+  // navigate(to: To): void {
+  //   const slots: Slot[] = [];
+  //
+  //   for (const routeMatch of this.match(to)) {
+  //     slots.push({
+  //       router: this,
+  //       routeMatch,
+  //       routeContent: loadRoute(routeMatch, this.context),
+  //     });
+  //   }
+  //
+  //   this._slots = slots;
+  // }
 
   /**
    * Prefetches components and data of routes matched by a location.
    *
-   * @param to A location or route.
-   * @returns `true` if a route was matched, or `false` if there's no route in the router that matches the provided
-   * location.
+   * @param to A location or a route.
    */
-  prefetch(to: To): boolean {
-    const location = toLocation(to);
-    const routeMatches = matchRoutes(location.pathname, location.searchParams, this.routes);
-
-    if (routeMatches === null) {
-      return false;
+  prefetch(to: To): void {
+    for (const routeMatch of this.match(to)) {
+      loadRoute(routeMatch, this.context);
     }
-    for (const routeMatch of routeMatches) {
-      loadContent(routeMatch, this.context);
-    }
-    return true;
   }
 }

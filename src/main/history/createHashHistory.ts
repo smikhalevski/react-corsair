@@ -19,6 +19,10 @@ export function createHashHistory(options: HistoryOptions = {}): History {
   let location: Location;
 
   return {
+    get url() {
+      return this.toURL(this.location);
+    },
+
     get location() {
       const href = decodeURIComponent(window.location.hash.substring(1));
 
@@ -30,6 +34,10 @@ export function createHashHistory(options: HistoryOptions = {}): History {
     },
 
     toURL(to) {
+      return stringifyLocation(to, searchParamsAdapter);
+    },
+
+    toAbsoluteURL(to) {
       return rebasePathname(
         basePathname,
         '#' + encodeURIComponent(typeof to === 'string' ? to : stringifyLocation(to, searchParamsAdapter))
