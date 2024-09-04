@@ -99,6 +99,7 @@ export function createSlotControllers(
         errorComponent: i === 0 ? routerProps.errorComponent : undefined,
         loadingComponent: i === 0 ? routerProps.loadingComponent : undefined,
         notFoundComponent: i === 0 ? routerProps.notFoundComponent : undefined,
+        onRedirect: redirect => routerProps.onRedirect?.(redirect),
       })
     );
   }

@@ -1,4 +1,5 @@
 import React, { ComponentType, ReactElement, ReactNode, useId } from 'react';
+import { Redirect } from './redirect';
 import { Route } from './Route';
 import { Location, RouteState } from './types';
 import { InternalRouter } from './InternalRouter';
@@ -6,7 +7,7 @@ import { InternalRouter } from './InternalRouter';
 /**
  * Props of the {@link Router} component.
  *
- * @template Context A context provided by a {@link Router} for a {@link RouteOptions.loader}.
+ * @template Context A context provided by a {@link Router} to a {@link RouteOptions.loader}.
  * @group Components
  */
 export interface RouterProps<Context> {
@@ -39,6 +40,11 @@ export interface RouterProps<Context> {
    * Triggered when a router should be navigated to the previous location.
    */
   onBack?: () => void;
+
+  /**
+   * Triggered when {@link redirect} is called during content loading or rendering.
+   */
+  onRedirect?: (redirect: Redirect) => void;
 
   /**
    * Children rendered by the router. If `undefined`, then an {@link Outlet} is rendered.
@@ -101,7 +107,7 @@ export function Router(props: Omit<RouterProps<void>, 'context'>): ReactElement;
 /**
  * A router that renders a route that matches the provided location.
  *
- * @template Context A context provided by a {@link Router} for a {@link RouteOptions.loader}.
+ * @template Context A context provided by a {@link Router} to a {@link RouteOptions.loader}.
  * @group Components
  */
 export function Router<Context>(props: RouterProps<Context>): ReactElement;

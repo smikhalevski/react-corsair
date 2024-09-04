@@ -160,19 +160,37 @@ describe('createBrowserHistory', () => {
     expect(searchParamsAdapterMock.parse).toHaveBeenNthCalledWith(1, 'xxx=111');
   });
 
-  test('creates a URL', async () => {
-    expect(createBrowserHistory().toURL({ pathname: '/aaa', searchParams: { xxx: 111 }, hash: '' })).toBe(
+  test('creates an absolute URL', async () => {
+    expect(createBrowserHistory().toAbsoluteURL({ pathname: '/aaa', searchParams: { xxx: 111 }, hash: '' })).toBe(
       '/aaa?xxx=111'
     );
   });
 
-  test('creates a URL with a default base', async () => {
+  test('creates an absolute URL with a default base', async () => {
+    expect(
+      createBrowserHistory({ basePathname: 'http://bbb.ccc' }).toAbsoluteURL({
+        pathname: '/aaa',
+        searchParams: { xxx: 111 },
+        hash: '',
+      })
+    ).toBe('http://bbb.ccc/aaa?xxx=111');
+  });
+
+  test('returns the current history-local URL', async () => {
+    const history = createBrowserHistory();
+
+    history.push({ pathname: '/aaa', searchParams: { xxx: '111' } });
+
+    expect(history.url).toBe('/aaa?xxx=111');
+  });
+
+  test('creates a history-local URL', async () => {
     expect(
       createBrowserHistory({ basePathname: 'http://bbb.ccc' }).toURL({
         pathname: '/aaa',
         searchParams: { xxx: 111 },
         hash: '',
       })
-    ).toBe('http://bbb.ccc/aaa?xxx=111');
+    ).toBe('/aaa?xxx=111');
   });
 });

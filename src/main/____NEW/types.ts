@@ -1,11 +1,13 @@
 import { ComponentType } from 'react';
+import { History } from '../history/types';
+import { Route } from './__Route';
 
 export interface Dict {
   [key: string]: any;
 }
 
 /**
- * A location or route that doesn't have required search params.
+ * A partial location or route that doesn't have any required params.
  *
  * @group Routing
  */
@@ -192,7 +194,7 @@ export interface RouteOptions<Params, Data, Context> {
    * Loaded data is available in route {@link component} via {@link useRouteData}.
    *
    * @param params Route params extracted from a location.
-   * @param context A {@link RouterProps.context} provided to a {@link Router}.
+   * @param context A {@link RouterOptions.context context} provided by a {@link Router}.
    */
   loader?: (params: Params, context: Context) => PromiseLike<Data> | Data;
 
@@ -230,23 +232,47 @@ export interface RouteOptions<Params, Data, Context> {
 }
 
 /**
- * A state rendered by a route component.
+ * Options of a {@link Router}.
  *
- * @group Routing
+ * @template Context A context provided to {@link RouteOptions.loader route loaders}.
  */
-export interface RouteState {
+export interface RouterOptions<Context> {
   /**
-   * Data available in a route component.
+   * A history that triggers a router navigation.
    */
-  data?: unknown;
+  history: History;
 
   /**
-   * An error that occurred during loading or rendering.
+   * Routes that a router can match.
    */
-  error?: unknown;
+  routes: Route<any, any, any, Context>[];
 
   /**
-   * `true` if {@link error} contains an actual error, or `false` otherwise.
+   * A context provided to {@link RouteOptions.loader route loaders}.
    */
-  hasError: boolean;
+  context: Context;
+
+  /**
+   * A component that is rendered when an error was thrown during route rendering.
+   *
+   * A {@link Router}-level {@link errorComponent} is used only for root routes. Child routes must specify their own
+   * {@link RouteOptions.errorComponent error components}.
+   */
+  errorComponent?: ComponentType;
+
+  /**
+   * A component that is rendered when a {@link RouteOptions.lazyComponent lazyComponent} or
+   * a {@link RouteOptions.loader data loader} are being loaded. Render a skeleton or a spinner in this component
+   * to notify user that a new route is being loaded.
+   *
+   * A {@link Router}-level {@link loadingComponent} is used only for root routes. Child routes must specify their own
+   * {@link RouteOptions.loadingComponent loading components}.
+   */
+  loadingComponent?: ComponentType;
+
+  /**
+   * A component that is rendered in the {@link Outlet} if there is no route in {@link routes} that matches
+   * the location that the router was navigated to.
+   */
+  notFoundComponent?: ComponentType;
 }
