@@ -19,6 +19,10 @@ export function createBrowserHistory(options: HistoryOptions = {}): History {
   let location: Location;
 
   return {
+    get url() {
+      return this.toURL(this.location);
+    },
+
     get location() {
       const { pathname, search, hash } = window.location;
       const href = pathname + search + hash;
@@ -31,6 +35,10 @@ export function createBrowserHistory(options: HistoryOptions = {}): History {
     },
 
     toURL(to) {
+      return stringifyLocation(to, searchParamsAdapter);
+    },
+
+    toAbsoluteURL(to) {
       return rebasePathname(basePathname, typeof to === 'string' ? to : stringifyLocation(to, searchParamsAdapter));
     },
 

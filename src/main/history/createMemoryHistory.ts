@@ -34,11 +34,19 @@ export function createMemoryHistory(options: MemoryHistoryOptions): History {
   let cursor = entries.length - 1;
 
   return {
+    get url() {
+      return this.toURL(this.location);
+    },
+
     get location() {
       return entries[cursor];
     },
 
     toURL(to) {
+      return stringifyLocation(to, searchParamsAdapter);
+    },
+
+    toAbsoluteURL(to) {
       return rebasePathname(basePathname, typeof to === 'string' ? to : stringifyLocation(to, searchParamsAdapter));
     },
 

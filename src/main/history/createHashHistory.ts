@@ -19,6 +19,10 @@ export function createHashHistory(options: HistoryOptions = {}): History {
   let location: Location;
 
   return {
+    get url() {
+      return this.toURL(this.location);
+    },
+
     get location() {
       const href = decodeURIComponent(window.location.hash.substring(1));
 
@@ -30,20 +34,20 @@ export function createHashHistory(options: HistoryOptions = {}): History {
     },
 
     toURL(to) {
+      return stringifyLocation(to, searchParamsAdapter);
+    },
+
+    toAbsoluteURL(to) {
       return rebasePathname(
         basePathname,
-        '#' + encodeURIComponent(typeof to === 'string' ? to : stringifyLocation(to, searchParamsAdapter))
+        '#' + encodeHash(typeof to === 'string' ? to : stringifyLocation(to, searchParamsAdapter))
       );
     },
 
     push(to) {
       location = parseOrCastLocation(to, searchParamsAdapter);
 
-      window.history.pushState(
-        location.state,
-        '',
-        '#' + encodeURIComponent(stringifyLocation(location, searchParamsAdapter))
-      );
+      window.history.pushState(location.state, '', '#' + encodeHash(stringifyLocation(location, searchParamsAdapter)));
       pubSub.publish();
     },
 
@@ -53,7 +57,7 @@ export function createHashHistory(options: HistoryOptions = {}): History {
       window.history.replaceState(
         location.state,
         '',
-        '#' + encodeURIComponent(stringifyLocation(location, searchParamsAdapter))
+        '#' + encodeHash(stringifyLocation(location, searchParamsAdapter))
       );
       pubSub.publish();
     },
@@ -78,4 +82,8 @@ export function createHashHistory(options: HistoryOptions = {}): History {
       };
     },
   };
+}
+
+function encodeHash(str: string): string {
+  return str.replace(/[^-?/:@._~!$&'()*+,;=\w]/g, encodeURIComponent);
 }

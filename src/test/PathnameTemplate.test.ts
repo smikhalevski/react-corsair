@@ -124,9 +124,13 @@ describe('PathnameTemplate', () => {
   });
 
   test("throws if non-optional param isn't provided", () => {
-    expect(() => new PathnameTemplate('/:xxx').toPathname()).toThrow(new Error('Param must be a string: xxx'));
+    expect(() => new PathnameTemplate('/:xxx').toPathname()).toThrow(
+      new Error('Param must be a non-empty string or a number: xxx')
+    );
 
-    expect(() => new PathnameTemplate('/:xxx').toPathname({})).toThrow(new Error('Param must be a string: xxx'));
+    expect(() => new PathnameTemplate('/:xxx').toPathname({})).toThrow(
+      new Error('Param must be a non-empty string or a number: xxx')
+    );
   });
 
   test("does not throw if optional param isn't provided", () => {

@@ -1,14 +1,14 @@
 import { ComponentType } from 'react';
-import { Route } from './Route';
+import { InferContext, Route } from './Route';
 import { RouteOptions } from './types';
 
 /**
- * Creates a route that is rendered in the {@link Outlet} of a {@link Router}.
+ * Creates a route that is rendered in an {@link Outlet} of a {@link Router}.
  *
  * @param options Route options.
  * @template Params Route params.
  * @template Data Data loaded by a route.
- * @template Context A context provided by a {@link Router} for a {@link RouteOptions.loader}.
+ * @template Context A router context.
  * @group Routing
  */
 export function createRoute<Params extends object | void = object | void, Data = void, Context = any>(
@@ -16,25 +16,25 @@ export function createRoute<Params extends object | void = object | void, Data =
 ): Route<null, Params, Data, Context>;
 
 /**
- * Creates a route that is rendered in the {@link Outlet} of a parent route.
+ * Creates a route that is rendered in an {@link Outlet} of a parent route.
  *
- * @param parent A parent route.
+ * @param parentRoute A parent route.
  * @param options Route options.
- * @template Parent A parent route.
+ * @template ParentRoute A parent route.
  * @template Params Route params.
  * @template Data Data loaded by a route.
- * @template Context A context provided by a {@link Router} for a {@link RouteOptions.loader}.
+ * @template Context A router context.
  * @group Routing
  */
-export function createRoute<Parent extends Route, Params extends object | void = object | void, Data = void>(
-  parent: Parent,
-  options?: RouteOptions<Params, Data, Parent['_context']>
-): Route<Parent, Params, Data, Parent['_context']>;
+export function createRoute<ParentRoute extends Route, Params extends object | void = object | void, Data = void>(
+  parentRoute: ParentRoute,
+  options?: RouteOptions<Params, Data, InferContext<ParentRoute>>
+): Route<ParentRoute, Params, Data, InferContext<ParentRoute>>;
 
 /**
- * Creates a route that is rendered in the {@link Outlet} of a {@link Router}.
+ * Creates a route that is rendered in an {@link Outlet} of a {@link Router}.
  *
- * @param pathname A URL {@link RouteOptions.pathname pathname} pattern.
+ * @param pathname A {@link RouteOptions.pathname pathname} pattern.
  * @param component A component that is rendered by a route.
  * @template Params Route params.
  * @group Routing
@@ -45,20 +45,20 @@ export function createRoute<Params extends object | void = object | void>(
 ): Route<null, Params, void>;
 
 /**
- * Creates a route that is rendered in the {@link Outlet} of a parent route.
+ * Creates a route that is rendered in an {@link Outlet} of a parent route.
  *
- * @param parent A parent route.
- * @param pathname A URL {@link RouteOptions.pathname pathname} pattern.
+ * @param parentRoute A parent route.
+ * @param pathname A {@link RouteOptions.pathname pathname} pattern.
  * @param component A component that is rendered by a route.
- * @template Parent A parent route.
+ * @template ParentRoute A parent route.
  * @template Params Route params.
  * @group Routing
  */
-export function createRoute<Parent extends Route, Params extends object | void = object | void>(
-  parent: Parent,
+export function createRoute<ParentRoute extends Route, Params extends object | void = object | void>(
+  parentRoute: ParentRoute,
   pathname: string,
   component?: ComponentType
-): Route<Parent, Params, void>;
+): Route<ParentRoute, Params, void>;
 
 export function createRoute(arg1: any, arg2?: any, component?: ComponentType): Route {
   return new Route(
@@ -71,13 +71,13 @@ export function createRoute(arg1: any, arg2?: any, component?: ComponentType): R
           component: arg2,
         }
       : arg1 instanceof Route && typeof arg2 === 'string'
-        ? // (parent, pathname, component)
+        ? // (parentRoute, pathname, component)
           {
             pathname: arg2,
             component,
           }
         : arg1 instanceof Route
-          ? // (parent, options)
+          ? // (parentRoute, options)
             arg2
           : // (options)
             arg1

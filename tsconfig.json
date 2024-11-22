@@ -4,7 +4,7 @@
     "moduleResolution": "Node",
     "esModuleInterop": true,
     "isolatedModules": true,
-    "noUnusedLocals": true,
+//    "noUnusedLocals": true,
     "downlevelIteration": true,
     "strict": true,
     "target": "ES2018",

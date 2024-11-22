@@ -75,6 +75,9 @@ export class PathnameTemplate {
 
   /**
    * Matches a pathname against a pathname pattern.
+   *
+   * @param pathname A pathname to match.
+   * @returns A matching result, or `null` if {@link pathname} doesn't match the template.
    */
   match(pathname: string): PathnameMatch | null {
     const { _segments, _flags } = this;
@@ -111,7 +114,10 @@ export class PathnameTemplate {
   }
 
   /**
-   * Creates a pathname from a template by substituting params, beginning with a "/".
+   * Creates a pathname (starts with a "/") from a template by substituting params.
+   *
+   * @param params Params to substitute into a template.
+   * @returns A pathname string.
    */
   toPathname(params?: Dict | void): string {
     const { _segments, _flags } = this;
@@ -134,8 +140,12 @@ export class PathnameTemplate {
         continue;
       }
 
-      if (typeof value !== 'string') {
-        throw new Error('Param must be a string: ' + segment);
+      if (Number.isFinite(value)) {
+        value += '';
+      }
+
+      if (typeof value !== 'string' || value === '') {
+        throw new Error('Param must be a non-empty string or a number: ' + segment);
       }
 
       pathname +=
@@ -159,7 +169,7 @@ const STAGE_OPTIONAL = 4;
 /**
  * A result of a pathname pattern parsing.
  */
-interface Template {
+export interface Template {
   /**
    * A non-empty array of segments and param names extracted from a pathname pattern.
    */
@@ -275,7 +285,9 @@ export function parsePattern(pattern: string): Template {
 /**
  * Creates a {@link !RegExp} that matches a pathname template.
  */
-export function createPatternRegExp({ segments, flags }: Template, isCaseSensitive = false): RegExp {
+export function createPatternRegExp(template: Template, isCaseSensitive = false): RegExp {
+  const { segments, flags } = template;
+
   let pattern = '^';
 
   for (let i = 0, segment, flag, segmentPattern; i < segments.length; ++i) {

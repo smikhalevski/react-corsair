@@ -1,6 +1,6 @@
 import React, { forwardRef, HTMLAttributes, MouseEventHandler, useContext, useEffect } from 'react';
+import { useRouter } from '../RouterProvider';
 import { To } from '../types';
-import { useNavigation } from '../useNavigation';
 import { toLocation } from '../utils';
 import { HistoryContext } from './useHistory';
 
@@ -41,12 +41,12 @@ export interface LinkProps extends Omit<HTMLAttributes<HTMLAnchorElement>, 'href
 export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
   const { to, prefetch, replace, onClick, ...anchorProps } = props;
 
-  const navigation = useNavigation();
+  const router = useRouter();
   const history = useContext(HistoryContext);
 
   useEffect(() => {
     if (prefetch) {
-      navigation.prefetch(to);
+      router.prefetch(to);
     }
   }, []);
 
@@ -56,6 +56,7 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
     }
 
     if (
+      history === null ||
       event.isDefaultPrevented() ||
       event.getModifierState('Alt') ||
       event.getModifierState('Control') ||
@@ -68,9 +69,9 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
     event.preventDefault();
 
     if (replace) {
-      navigation.replace(to);
+      history.replace(to);
     } else {
-      navigation.push(to);
+      history.push(to);
     }
   };
 
@@ -78,7 +79,7 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
     <a
       {...anchorProps}
       ref={ref}
-      href={history === null ? '#' : history.toURL(toLocation(to))}
+      href={history === null ? '#' : history.toAbsoluteURL(toLocation(to))}
       onClick={handleClick}
     />
   );

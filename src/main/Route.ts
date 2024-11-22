@@ -1,10 +1,9 @@
 import { ComponentType } from 'react';
-import { NotFoundError } from './notFound';
-import { Outlet } from './Outlet';
 import { PathnameTemplate } from './PathnameTemplate';
-import { Redirect } from './redirect';
 import {
   Dict,
+  Fallbacks,
+  LoaderOptions,
   LoadingAppearance,
   Location,
   LocationOptions,
@@ -12,46 +11,64 @@ import {
   RenderingDisposition,
   RouteOptions,
 } from './types';
+import { Outlet } from './Outlet';
 
-type Squash<T> = { [K in keyof T]: T[K] } & unknown;
+type Prettify<T> = { [K in keyof T]: T[K] } & {};
 
-type PartialToVoid<T> = Partial<T> extends T ? T | void : T;
+type PartialVoid<T> = Partial<T> extends T ? T | void : T;
+
+declare const PARAMS: unique symbol;
+declare const CONTEXT: unique symbol;
+
+type PARAMS = typeof PARAMS;
+type CONTEXT = typeof CONTEXT;
+
+/**
+ * Infers cumulative route params.
+ */
+export type InferParams<R extends Route> = R[PARAMS];
+
+/**
+ * Infers required router context.
+ */
+export type InferContext<R extends Route> = R[CONTEXT];
 
 /**
  * A route that can be rendered by a router.
  *
  * Use {@link createRoute} to create a {@link Route} instance.
  *
- * @template Parent A parent route or `null` if there is no parent.
+ * @template ParentRoute A parent route or `null` if there is no parent.
  * @template Params Route params.
  * @template Data Data loaded by a route.
- * @template Context A context required by a data loader.
+ * @template Context A router context.
  * @group Routing
  */
 export class Route<
-  Parent extends Route<any, any, Context> | null = any,
+  ParentRoute extends Route<any, any, Context> | null = any,
   Params extends object | void = any,
   Data = any,
   Context = any,
-> {
+> implements Fallbacks
+{
   /**
    * The type of cumulative route params.
    *
    * @internal
    */
-  declare _params: PartialToVoid<Parent extends Route ? Squash<Parent['_params'] & Params> : Params>;
+  declare readonly [PARAMS]: PartialVoid<ParentRoute extends Route ? Prettify<ParentRoute[PARAMS] & Params> : Params>;
 
   /**
-   * The type of route context.
+   * The type of required router context.
    *
    * @internal
    */
-  declare _context: Context;
+  declare readonly [CONTEXT]: Context;
 
   /**
    * A parent route or `null` if there is no parent.
    */
-  readonly parent: Parent;
+  readonly parentRoute: ParentRoute;
 
   /**
    * A template of a pathname pattern.
@@ -67,25 +84,9 @@ export class Route<
   /**
    * Loads data required to render a route.
    *
-   * @param params Route params extracted from a location.
-   * @param context A {@link RouterProps.context} provided to a {@link Router}.
+   * @param options Loader options.
    */
-  loader: ((params: Params, context: Context) => PromiseLike<Data> | Data) | undefined;
-
-  /**
-   * A component that is rendered when an error was thrown during route rendering.
-   */
-  errorComponent: ComponentType | undefined;
-
-  /**
-   * A component that is rendered when a component or data are being loaded.
-   */
-  loadingComponent: ComponentType | undefined;
-
-  /**
-   * A component that is rendered if {@link notFound} was called during route rendering.
-   */
-  notFoundComponent: ComponentType | undefined;
+  loader: ((options: LoaderOptions<Params, Context>) => PromiseLike<Data> | Data) | undefined;
 
   /**
    * What to render when a component or data are being loaded.
@@ -98,24 +99,34 @@ export class Route<
   renderingDisposition: RenderingDisposition;
 
   /**
-   * Loads and caches a route component.
+   * Loads {@link RouteOptions.lazyComponent a lazy route component} once and caches it forever, or returns an already
+   * available component.
    */
-  getComponent: () => Promise<ComponentType> | ComponentType;
+  loadComponent: () => Promise<ComponentType> | ComponentType;
+
+  /**
+   * A component rendered by the route, or `undefined` if a component {@link loadComponent wasn't loaded yet}.
+   */
+  component: ComponentType | undefined;
+
+  errorComponent: ComponentType | undefined;
+  loadingComponent: ComponentType | undefined;
+  notFoundComponent: ComponentType | undefined;
 
   /**
    * Creates a new instance of a {@link Route}.
    *
-   * @param parent A parent route or `null` if there is no parent.
+   * @param parentRoute A parent route or `null` if there is no parent.
    * @param options Route options.
-   * @template Parent A parent route or `null` if there is no parent.
+   * @template ParentRoute A parent route or `null` if there is no parent.
    * @template Params Route params.
    * @template Data Data loaded by a route.
-   * @template Context A context provided by a {@link Router} for a {@link RouteOptions.loader}.
+   * @template Context A router context.
    */
-  constructor(parent: Parent, options: RouteOptions<Params, Data, Context> = {}) {
+  constructor(parentRoute: ParentRoute, options: RouteOptions<Params, Data, Context> = {}) {
     const { lazyComponent, paramsAdapter } = options;
 
-    this.parent = parent;
+    this.parentRoute = parentRoute;
     this.pathnameTemplate = new PathnameTemplate(options.pathname || '/', options.isCaseSensitive);
     this.paramsAdapter = typeof paramsAdapter === 'function' ? { parse: paramsAdapter } : paramsAdapter;
     this.loader = options.loader;
@@ -135,7 +146,9 @@ export class Route<
       component = Outlet;
     }
 
-    this.getComponent = () => {
+    this.component = component;
+
+    this.loadComponent = () => {
       if (component !== undefined) {
         return component;
       }
@@ -145,10 +158,12 @@ export class Route<
           component = module.default;
 
           if (typeof component === 'function') {
+            this.component = component;
             return component;
           }
+
           component = undefined;
-          throw new TypeError('Module must default-export a component');
+          throw new TypeError('Module loaded by a lazyComponent must default-export a component');
         },
         error => {
           component = undefined;
@@ -166,12 +181,12 @@ export class Route<
    * @param params Route params.
    * @param options Location options.
    */
-  getLocation(params: this['_params'], options?: LocationOptions): Location {
+  getLocation(params: InferParams<this>, options?: LocationOptions): Location {
     let pathname = '';
     let searchParams: Dict = {};
     let hasLooseParams = false;
 
-    for (let route: Route | null = this; route !== null; route = route.parent) {
+    for (let route: Route | null = this; route !== null; route = route.parentRoute) {
       const { paramsAdapter } = route;
 
       const pathnameChunk = route.pathnameTemplate.toPathname(
@@ -196,12 +211,12 @@ export class Route<
     if (hasLooseParams && params !== undefined) {
       let pathnameParamNames;
 
-      if (this.parent === null) {
+      if (this.parentRoute === null) {
         pathnameParamNames = this.pathnameTemplate.paramNames;
       } else {
         pathnameParamNames = new Set<string>();
 
-        for (let route: Route | null = this; route !== null; route = route.parent) {
+        for (let route: Route | null = this; route !== null; route = route.parentRoute) {
           for (const name of route.pathnameTemplate.paramNames) {
             pathnameParamNames.add(name);
           }
@@ -221,39 +236,5 @@ export class Route<
       hash: options === undefined || options.hash === undefined ? '' : options.hash,
       state: options?.state,
     };
-  }
-
-  /**
-   * Prefetches a component and data of this route and its ancestors.
-   *
-   * @param params Route params.
-   * @param context A context provided to a {@link RouteOptions.loader}.
-   */
-  prefetch(params: this['_params'], context: 0 extends 1 & Context ? void : never): void;
-
-  /**
-   * Prefetches a component and data of this route and its ancestors.
-   *
-   * @param params Route params.
-   * @param context A context provided to a {@link RouteOptions.loader}.
-   */
-  prefetch(params: this['_params'], context: Context): void;
-
-  prefetch(params: this['_params'], context: unknown): void {
-    for (let route: Route | null = this; route !== null; route = route.parent) {
-      try {
-        route.getComponent();
-        route.loader?.(params, context);
-      } catch (error) {
-        if (error instanceof NotFoundError || error instanceof Redirect) {
-          return;
-        }
-
-        setTimeout(() => {
-          // Force uncaught exception
-          throw error;
-        }, 0);
-      }
-    }
   }
 }

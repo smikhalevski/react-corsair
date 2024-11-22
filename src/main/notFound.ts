@@ -2,20 +2,27 @@
  * Throws {@link NotFoundError} that causes an enclosing {@link Outlet} to render a
  * {@link RouteOptions.notFoundComponent}.
  *
- * @param message An optional message of a {@link NotFoundError}.
  * @group Routing
  */
-export function notFound(message?: string): never {
-  throw new NotFoundError(message);
+export function notFound(): never {
+  throw new NotFoundError();
 }
 
 /**
  * An error that is thrown during rendering to signify that the {@link RouteOptions.notFoundComponent} must be rendered
  * instead of the matched route.
  *
- * Use {@link notFound} to create a {@link NotFoundError} instance.
+ * Use {@link notFound} to create and throw a {@link NotFoundError} instance.
+ *
  * @group Routing
  */
-export class NotFoundError extends Error {}
+export class NotFoundError extends Error {
+  constructor() {
+    super();
+  }
+}
 
+/**
+ * @internal
+ */
 NotFoundError.prototype.name = 'NotFoundError';

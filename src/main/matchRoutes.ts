@@ -1,7 +1,13 @@
+import isDeepEqual from 'fast-deep-equal';
 import { PathnameMatch } from './PathnameTemplate';
 import { Route } from './Route';
 import { Dict } from './types';
 
+/**
+ * The result of matching a route by a location.
+ *
+ * @group Routing
+ */
 export interface RouteMatch {
   /**
    * A matched route.
@@ -11,18 +17,18 @@ export interface RouteMatch {
   /**
    * Parsed params extracted from a pathname and search params.
    */
-  params: object;
+  params: any;
 }
 
 /**
- * Looks up a route in routes that matches the pathname, and returns the array of its ancestors and corresponding parsed
- * params.
+ * Looks up a route in routes that matches the pathname, and returns an array of matches for a route and its ancestors.
  *
  * @param pathname The pathname to match.
  * @param searchParams Location search params.
  * @param routes Routes to match pathname against.
+ * @returns An array of route matches, can be empty if there are no matching routes.
  */
-export function matchRoutes(pathname: string, searchParams: Dict, routes: Route[]): RouteMatch[] | null {
+export function matchRoutes(pathname: string, searchParams: Dict, routes: readonly Route[]): RouteMatch[] {
   const cache = new Map<Route, PathnameMatch | null>();
 
   for (const route of routes) {
@@ -32,6 +38,7 @@ export function matchRoutes(pathname: string, searchParams: Dict, routes: Route[
       // No match or pathname cannot be consumed by a route
       continue;
     }
+
     try {
       return getRouteMatches(route, searchParams, cache);
     } catch {
@@ -39,7 +46,7 @@ export function matchRoutes(pathname: string, searchParams: Dict, routes: Route[
     }
   }
 
-  return null;
+  return [];
 }
 
 function matchPathname(pathname: string, route: Route, cache: Map<Route, PathnameMatch | null>): PathnameMatch | null {
@@ -49,8 +56,8 @@ function matchPathname(pathname: string, route: Route, cache: Map<Route, Pathnam
     return match;
   }
 
-  if (route.parent !== null) {
-    match = matchPathname(pathname, route.parent, cache);
+  if (route.parentRoute !== null) {
+    match = matchPathname(pathname, route.parentRoute, cache);
 
     if (match === null) {
       return null;
@@ -66,16 +73,21 @@ function matchPathname(pathname: string, route: Route, cache: Map<Route, Pathnam
 }
 
 function getRouteMatches(route: Route, searchParams: Dict, cache: Map<Route, PathnameMatch | null>): RouteMatch[] {
-  const routeMatches = route.parent === null ? [] : getRouteMatches(route.parent, searchParams, cache);
+  const routeMatches = route.parentRoute === null ? [] : getRouteMatches(route.parentRoute, searchParams, cache);
 
   const match = cache.get(route)!;
 
   const params =
-    route.paramsAdapter === undefined
-      ? match.params || {}
-      : route.paramsAdapter.parse({ ...searchParams, ...match.params });
+    route.paramsAdapter === undefined ? match.params : route.paramsAdapter.parse({ ...searchParams, ...match.params });
 
   routeMatches.push({ route, params });
 
   return routeMatches;
+}
+
+/**
+ * Returns `true` if route matches are equal.
+ */
+export function isEqualRouteMatch(a: RouteMatch, b: RouteMatch): boolean {
+  return a.route === b.route && isDeepEqual(a.params, b.params);
 }
