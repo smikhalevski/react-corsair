@@ -1,10 +1,7 @@
-import React, { createContext, ReactElement, ReactNode, useContext, useEffect, useState } from 'react';
+import React, { ReactElement, ReactNode, useEffect, useState } from 'react';
+import { RouterContext } from './__useRouter';
 import { ChildPresenterContext, Outlet } from './Outlet';
 import { Router } from './Router';
-
-const RouterContext = createContext<Router | null>(null);
-
-RouterContext.displayName = 'RouterContext';
 
 export interface RouterProviderProps {
   router: Router;
@@ -22,14 +19,4 @@ export function RouterProvider(props: RouterProviderProps): ReactElement {
       <ChildPresenterContext.Provider value={presenter}>{children}</ChildPresenterContext.Provider>
     </RouterContext.Provider>
   );
-}
-
-export function useRouter(): Router {
-  const router = useContext(RouterContext);
-
-  if (router === null) {
-    throw new Error('Cannot be used outside of RouterProvider');
-  }
-
-  return router;
 }

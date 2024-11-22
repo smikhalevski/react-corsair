@@ -1,7 +1,7 @@
 import isDeepEqual from 'fast-deep-equal';
-import { PathnameMatch } from './PathnameTemplate';
-import { Route } from './Route';
-import { Dict } from './types';
+import { PathnameMatch } from './__PathnameTemplate';
+import { Route } from './__Route';
+import { Dict } from './__types';
 
 /**
  * The result of matching a route by a location.

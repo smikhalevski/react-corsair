@@ -1,5 +1,5 @@
 import { ComponentType } from 'react';
-import { Route } from './Route';
+import { Route } from './__Route';
 import { Router } from './Router';
 
 export interface Dict {
@@ -283,7 +283,7 @@ export interface RouterOptions<Context> extends Partial<Fallbacks> {
   /**
    * Routes that a router can match.
    */
-  routes: readonly Route<any, any, any, Context>[];
+  routes: Route<any, any, any, Context>[];
 
   /**
    * An arbitrary context.

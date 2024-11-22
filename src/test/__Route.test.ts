@@ -1,7 +1,23 @@
-import { FC } from 'react';
 import { createRoute, Outlet, ParamsAdapter } from '../main';
 
 describe('Route', () => {
+  const Component = () => null;
+
+  describe('new', () => {
+    test('creates an outlet route', () => {
+      expect(createRoute().component).toBe(Outlet);
+    });
+
+    test('throws if both component and lazyComponent are provided', () => {
+      expect(() =>
+        createRoute({
+          component: Component,
+          lazyComponent: () => Promise.resolve({ default: Component }),
+        })
+      ).toThrow(new Error('Route must have either a component or a lazyComponent'));
+    });
+  });
+
   describe('getLocation', () => {
     test('returns a location', () => {
       const aaaRoute = createRoute('/aaa');
@@ -145,21 +161,20 @@ describe('Route', () => {
   });
 
   describe('loadComponent', () => {
-    const Component: FC = () => null;
-
     test('returns an Outlet if there is no component', () => {
       const route = createRoute();
 
       expect(route.loadComponent()).toEqual(Outlet);
     });
 
-    test('throws if both component and lazyComponent are provided', () => {
-      expect(() =>
-        createRoute({
-          component: Component,
-          lazyComponent: () => Promise.resolve({ default: Component }),
-        })
-      ).toThrow(new Error('Route must have either a component or a lazyComponent'));
+    test("throws if lazyComponent doesn't return a module", async () => {
+      const route = createRoute({
+        lazyComponent: () => Promise.resolve<any>({ foo: Component }),
+      });
+
+      await expect(route.loadComponent()).rejects.toEqual(
+        new TypeError('Module loaded by a lazyComponent must default-export a component')
+      );
     });
 
     test('returns a component', () => {
@@ -240,22 +255,4 @@ describe('Route', () => {
       expect(route.loadComponent()).toEqual(Component);
     });
   });
-
-  // describe('prefetch', () => {
-  //   test('calls contentProvider for all ancestors', () => {
-  //     const aaaLoaderMock = jest.fn(() => undefined);
-  //     const bbbLoaderMock = jest.fn(() => undefined);
-  //     const cccLoaderMock = jest.fn(() => undefined);
-  //
-  //     const aaaRoute = createRoute({ loader: aaaLoaderMock });
-  //     const bbbRoute = createRoute(aaaRoute, { loader: bbbLoaderMock });
-  //     const cccRoute = createRoute(bbbRoute, { loader: cccLoaderMock });
-  //
-  //     cccRoute.prefetch();
-  //
-  //     expect(aaaLoaderMock).toHaveBeenCalledTimes(1);
-  //     expect(bbbLoaderMock).toHaveBeenCalledTimes(1);
-  //     expect(cccLoaderMock).toHaveBeenCalledTimes(1);
-  //   });
-  // });
 });

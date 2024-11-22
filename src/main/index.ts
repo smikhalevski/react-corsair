@@ -7,19 +7,19 @@ export { useHistory, HistoryProvider } from './history/useHistory';
 export { useHistorySubscription } from './history/useHistorySubscription';
 export { parseLocation, stringifyLocation } from './history/utils';
 
-export { createRoute } from './createRoute';
-export { notFound, NotFoundError } from './notFound';
+export { createRoute } from './__createRoute';
+export { notFound, NotFoundError } from './__notFound';
 export { Outlet } from './Outlet';
-export { PathnameTemplate } from './PathnameTemplate';
-export { redirect, Redirect } from './redirect';
-export { Route } from './Route';
+export { PathnameTemplate } from './__PathnameTemplate';
+export { redirect, Redirect } from './__redirect';
+export { Route } from './__Route';
 export { Router } from './Router';
 export { useRouteParams, useRouteData, useRouteError } from './hooks';
 
 export type { LinkProps } from './history/Link';
 export type { HistoryOptions, History, SearchParamsAdapter } from './history/types';
 
-export type { PathnameMatch } from './PathnameTemplate';
+export type { PathnameMatch } from './__PathnameTemplate';
 export type {
   To,
   Location,
@@ -28,4 +28,4 @@ export type {
   ParamsAdapter,
   LoadingAppearance,
   RenderingDisposition,
-} from './types';
+} from './__types';

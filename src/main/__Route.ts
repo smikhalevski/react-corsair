@@ -1,5 +1,5 @@
 import { ComponentType } from 'react';
-import { PathnameTemplate } from './PathnameTemplate';
+import { PathnameTemplate } from './__PathnameTemplate';
 import {
   Dict,
   Fallbacks,
@@ -10,7 +10,7 @@ import {
   ParamsAdapter,
   RenderingDisposition,
   RouteOptions,
-} from './types';
+} from './__types';
 import { Outlet } from './Outlet';
 
 type Prettify<T> = { [K in keyof T]: T[K] } & {};
@@ -25,11 +25,15 @@ type CONTEXT = typeof CONTEXT;
 
 /**
  * Infers cumulative route params.
+ *
+ * @group Routing
  */
 export type InferParams<R extends Route> = R[PARAMS];
 
 /**
  * Infers required router context.
+ *
+ * @group Routing
  */
 export type InferContext<R extends Route> = R[CONTEXT];
 
@@ -105,7 +109,8 @@ export class Route<
   loadComponent: () => Promise<ComponentType> | ComponentType;
 
   /**
-   * A component rendered by the route, or `undefined` if a component {@link loadComponent wasn't loaded yet}.
+   * A component rendered by the route, or `undefined` if a {@link RouteOptions.lazyComponent} isn't yet
+   * {@link loadComponent loaded}.
    */
   component: ComponentType | undefined;
 

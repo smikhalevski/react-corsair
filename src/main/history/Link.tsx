@@ -1,7 +1,7 @@
 import React, { forwardRef, HTMLAttributes, MouseEventHandler, useEffect } from 'react';
 import { useRouter } from '../RouterProvider';
-import { To } from '../types';
-import { toLocation } from '../utils';
+import { To } from '../__types';
+import { toLocation } from '../__utils';
 import { useHistory } from './useHistory';
 
 /**

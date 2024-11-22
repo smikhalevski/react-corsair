@@ -1,5 +1,5 @@
-import { RoutePayload } from '../loadRoute';
-import { RouterOptions } from '../types';
+import { RoutePayload } from '../__loadRoute';
+import { RouterOptions } from '../__types';
 import { Router } from '../Router';
 
 export interface SSRRouterOptions<Context> extends RouterOptions<Context> {

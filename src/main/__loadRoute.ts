@@ -1,11 +1,13 @@
-import { Route } from './Route';
-import { NotFoundError } from './notFound';
-import { Redirect } from './redirect';
-import { LoaderOptions } from './types';
-import { isPromiseLike } from './utils';
+import { Route } from './__Route';
+import { NotFoundError } from './__notFound';
+import { Redirect } from './__redirect';
+import { LoaderOptions } from './__types';
+import { isPromiseLike } from './__utils';
 
 /**
  * A payload with route data.
+ *
+ * @group Routing
  */
 export interface RoutePayload {
   /**

@@ -1,4 +1,4 @@
-import { To } from './types';
+import { To } from './__types';
 
 /**
  * Throws a {@link Redirect} instance that redirects router to a location.

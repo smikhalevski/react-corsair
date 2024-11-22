@@ -1,11 +1,11 @@
 import { PubSub } from 'parallel-universe';
 import { ComponentType } from 'react';
-import { loadRoute } from './loadRoute';
-import { matchRoutes, RouteMatch } from './matchRoutes';
-import { Route } from './Route';
-import { Fallbacks, RouterOptions, To } from './types';
+import { loadRoute } from './__loadRoute';
+import { matchRoutes, RouteMatch } from './__matchRoutes';
+import { Route } from './__Route';
+import { Fallbacks, RouterOptions, To } from './__types';
 import { Presenter, reconcilePresenters } from './Presenter';
-import { toLocation } from './utils';
+import { toLocation } from './__utils';
 
 /**
  * A router that matches routes by a location.
@@ -17,7 +17,7 @@ export class Router<Context = any> implements Fallbacks {
   /**
    * Routes that a router can render.
    */
-  routes: readonly Route<any, any, any, Context>[];
+  routes: Route<any, any, any, Context>[];
 
   /**
    * A context provided to {@link RouteOptions.loader route loaders}.

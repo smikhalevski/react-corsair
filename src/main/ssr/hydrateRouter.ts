@@ -1,5 +1,5 @@
-import { RoutePayload } from '../loadRoute';
-import { To } from '../types';
+import { RoutePayload } from '../__loadRoute';
+import { To } from '../__types';
 import { Router } from '../Router';
 
 export interface HydrateRouteOptions {

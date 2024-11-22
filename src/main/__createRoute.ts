@@ -1,6 +1,6 @@
 import { ComponentType } from 'react';
-import { InferContext, Route } from './Route';
-import { RouteOptions } from './types';
+import { InferContext, Route } from './__Route';
+import { RouteOptions } from './__types';
 
 /**
  * Creates a route that is rendered in an {@link Outlet} of a {@link Router}.
@@ -10,6 +10,8 @@ import { RouteOptions } from './types';
  * @template Data Data loaded by a route.
  * @template Context A router context.
  * @group Routing
+ * @example
+ * const fooRoute = createRoute({ pathname: '/foo' });
  */
 export function createRoute<Params extends object | void = object | void, Data = void, Context = any>(
   options?: RouteOptions<Params, Data, Context>
@@ -25,6 +27,9 @@ export function createRoute<Params extends object | void = object | void, Data =
  * @template Data Data loaded by a route.
  * @template Context A router context.
  * @group Routing
+ * @example
+ * const fooRoute = createRoute({ pathname: '/foo' });
+ * const barRoute = createRoute(fooRoute, { pathname: '/bar' });
  */
 export function createRoute<ParentRoute extends Route, Params extends object | void = object | void, Data = void>(
   parentRoute: ParentRoute,
@@ -38,6 +43,12 @@ export function createRoute<ParentRoute extends Route, Params extends object | v
  * @param component A component that is rendered by a route.
  * @template Params Route params.
  * @group Routing
+ * @example
+ * function Foo() {
+ *   return 'Hello';
+ * }
+ *
+ * const fooRoute = createRoute('/foo', Foo);
  */
 export function createRoute<Params extends object | void = object | void>(
   pathname: string,
@@ -53,6 +64,13 @@ export function createRoute<Params extends object | void = object | void>(
  * @template ParentRoute A parent route.
  * @template Params Route params.
  * @group Routing
+ * @example
+ * function Bar() {
+ *   return 'Hello';
+ * }
+ *
+ * const fooRoute = createRoute('/foo');
+ * const barRoute = createRoute(fooRoute, '/bar', Bar);
  */
 export function createRoute<ParentRoute extends Route, Params extends object | void = object | void>(
   parentRoute: ParentRoute,

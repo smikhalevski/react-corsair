@@ -1,5 +1,5 @@
-import { Location, To } from '../types';
-import { toLocation } from '../utils';
+import { Location, To } from '../__types';
+import { toLocation } from '../__utils';
 import { SearchParamsAdapter } from './types';
 import { urlSearchParamsAdapter } from './urlSearchParamsAdapter';
 

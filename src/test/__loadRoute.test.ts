@@ -1,20 +1,20 @@
 import { createRoute, Outlet } from '../main';
-import { createErrorPayload, createOkPayload, loadRoute } from '../main/loadRoute';
-import { LoaderOptions } from '../main/types';
+import { createErrorPayload, createOkPayload, loadRoute } from '../main/__loadRoute';
+import { LoaderOptions } from '../main/__types';
 
-const Component1 = () => undefined;
-const Component2 = () => undefined;
+const Component = () => undefined;
 
 describe('loadRoute', () => {
   test('returns OK state for outlet route', () => {
     const route = createRoute();
 
     expect(loadRoute(route, { params: {}, context: undefined, isPreload: false })).toEqual(createOkPayload(undefined));
+    expect(route.component).toBe(Outlet);
   });
 
   test('returns OK state for route with a component', () => {
     const route = createRoute({
-      component: Component1,
+      component: Component,
     });
 
     expect(loadRoute(route, { params: {}, context: undefined, isPreload: false })).toEqual(createOkPayload(undefined));
@@ -40,23 +40,27 @@ describe('loadRoute', () => {
 
   test('returns an async OK for state for route with a lazy component', async () => {
     const route = createRoute({
-      lazyComponent: () => Promise.resolve({ default: Component1 }),
+      lazyComponent: () => Promise.resolve({ default: Component }),
     });
 
+    expect(route.component).toBe(undefined);
     await expect(loadRoute(route, { params: {}, context: undefined, isPreload: false })).resolves.toEqual(
       createOkPayload(undefined)
     );
+    expect(route.component).toBe(Component);
   });
 
   test('returns an async OK for state for route with a lazy component and loader', async () => {
     const route = createRoute({
-      lazyComponent: () => Promise.resolve({ default: Component1 }),
+      lazyComponent: () => Promise.resolve({ default: Component }),
       loader: () => Promise.resolve(111),
     });
 
+    expect(route.component).toBe(undefined);
     await expect(loadRoute(route, { params: {}, context: undefined, isPreload: false })).resolves.toEqual(
       createOkPayload(111)
     );
+    expect(route.component).toBe(Component);
   });
 
   test('returns an error state if lazy component throws during load', async () => {
@@ -67,6 +71,7 @@ describe('loadRoute', () => {
     await expect(loadRoute(route, { params: {}, context: undefined, isPreload: false })).resolves.toEqual(
       createErrorPayload(111)
     );
+    expect(route.component).toBe(undefined);
   });
 
   test('returns an error state if loader throws', () => {
@@ -76,6 +81,7 @@ describe('loadRoute', () => {
       },
     });
 
+    expect(route.component).toBe(Outlet);
     expect(loadRoute(route, { params: {}, context: undefined, isPreload: false })).toEqual(createErrorPayload(111));
   });
 

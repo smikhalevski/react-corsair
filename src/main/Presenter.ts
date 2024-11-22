@@ -1,9 +1,9 @@
 import { PubSub } from 'parallel-universe';
 import { ComponentType } from 'react';
-import { loadRoute, RoutePayload } from './loadRoute';
-import { isEqualRouteMatch, RouteMatch } from './matchRoutes';
+import { loadRoute, RoutePayload } from './__loadRoute';
+import { isEqualRouteMatch, RouteMatch } from './__matchRoutes';
 import { Router } from './Router';
-import { isPromiseLike } from './utils';
+import { isPromiseLike } from './__utils';
 
 export class Presenter {
   renderedPresenter: Presenter = this;
