@@ -5,27 +5,16 @@ import { urlSearchParamsAdapter } from './urlSearchParamsAdapter';
 import { parseOrCastLocation, rebasePathname, stringifyLocation } from './utils';
 
 /**
- * Options of {@link createMemoryHistory}.
- *
- * @group History
- */
-export interface MemoryHistoryOptions extends HistoryOptions {
-  /**
-   * A non-empty array of initial history entries.
-   */
-  initialEntries: Array<To | string>;
-}
-
-/**
  * Create the history adapter that reads and writes location to an in-memory stack.
  *
+ * @param initialEntries A non-empty array of initial history entries.
  * @param options History options.
  * @group History
  */
-export function createMemoryHistory(options: MemoryHistoryOptions): History {
+export function createMemoryHistory(initialEntries: Array<To | string>, options: HistoryOptions = {}): History {
   const { basePathname, searchParamsAdapter = urlSearchParamsAdapter } = options;
   const pubSub = new PubSub();
-  const entries = options.initialEntries.map(entry => parseOrCastLocation(entry, searchParamsAdapter));
+  const entries = initialEntries.map(entry => parseOrCastLocation(entry, searchParamsAdapter));
 
   if (entries.length === 0) {
     throw new Error('Expected at least one initial entry');

@@ -1,6 +1,5 @@
 import { createContext, useContext } from 'react';
 import { History } from './types';
-import { useHistorySubscription } from './useHistorySubscription';
 
 export const HistoryContext = createContext<History | null>(null);
 
@@ -24,8 +23,6 @@ export function useHistory(): History {
   if (history === null) {
     throw new Error('Cannot be used outside of a HistoryProvider');
   }
-
-  useHistorySubscription(history);
 
   return history;
 }

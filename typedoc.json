@@ -18,16 +18,9 @@
   "readme": "none",
   "tsconfig": "./tsconfig.build.json",
   "customCss": "./node_modules/typedoc-custom-css/custom.css",
-  "entryPoints": [
-    "./src/main/index.ts"
-  ],
-  "plugin": [
-    "typedoc-plugin-mdn-links"
-  ],
-  "intentionallyNotExported": [
-    "Dict",
-    "PartialToVoid"
-  ],
+  "entryPoints": ["./src/main/index.ts"],
+  "plugin": ["typedoc-plugin-mdn-links"],
+  "intentionallyNotExported": ["Dict", "PartialToVoid"],
   "externalSymbolLinkMappings": {
     "react": {
       "ComponentType": "https://react.dev/reference/react/createElement",

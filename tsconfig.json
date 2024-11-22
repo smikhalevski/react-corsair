@@ -4,19 +4,14 @@
     "moduleResolution": "Node",
     "esModuleInterop": true,
     "isolatedModules": true,
-//    "noUnusedLocals": true,
+    //    "noUnusedLocals": true,
     "downlevelIteration": true,
     "strict": true,
     "target": "ES2018",
     "module": "ES6",
     "outDir": "./lib",
     "jsx": "react",
-    "lib": [
-      "DOM",
-      "ESNext"
-    ]
+    "lib": ["DOM", "ESNext"]
   },
-  "include": [
-    "./src/**/*"
-  ]
+  "include": ["./src/**/*"]
 }

@@ -1,8 +1,8 @@
-import React, { forwardRef, HTMLAttributes, MouseEventHandler, useContext, useEffect } from 'react';
+import React, { forwardRef, HTMLAttributes, MouseEventHandler, useEffect } from 'react';
 import { useRouter } from '../RouterProvider';
 import { To } from '../types';
 import { toLocation } from '../utils';
-import { HistoryContext } from './useHistory';
+import { useHistory } from './useHistory';
 
 /**
  * Props of the {@link Link} component.
@@ -31,10 +31,8 @@ export interface LinkProps extends Omit<HTMLAttributes<HTMLAnchorElement>, 'href
 }
 
 /**
- * Renders an `a` tag that triggers an enclosing router navigation when clicked.
- *
- * If there's no enclosing {@link HistoryProvider} the {@link Link} component renders `#`
- * as an {@link !HTMLAnchorElement.href a.href}.
+ * Renders an `a` tag that triggers an enclosing history navigation when clicked. Prefetches routes that match
+ * the provided location when mounted.
  *
  * @group Components
  */
@@ -42,7 +40,7 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
   const { to, prefetch, replace, onClick, ...anchorProps } = props;
 
   const router = useRouter();
-  const history = useContext(HistoryContext);
+  const history = useHistory();
 
   useEffect(() => {
     if (prefetch) {
@@ -56,12 +54,13 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
     }
 
     if (
-      history === null ||
       event.isDefaultPrevented() ||
-      event.getModifierState('Alt') ||
-      event.getModifierState('Control') ||
-      event.getModifierState('Shift') ||
-      event.getModifierState('Meta')
+      event.altKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.metaKey ||
+      event.buttons !== 1 ||
+      event.button !== 0
     ) {
       return;
     }
@@ -79,7 +78,7 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
     <a
       {...anchorProps}
       ref={ref}
-      href={history === null ? '#' : history.toAbsoluteURL(toLocation(to))}
+      href={history.toAbsoluteURL(toLocation(to))}
       onClick={handleClick}
     />
   );

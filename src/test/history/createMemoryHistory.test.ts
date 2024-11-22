@@ -2,16 +2,16 @@ import { createMemoryHistory, createRoute } from '../../main';
 
 describe('createMemoryHistory', () => {
   test('throws if there is no initial entry', () => {
-    expect(() => createMemoryHistory({ initialEntries: [] })).toThrow(new Error('Expected at least one initial entry'));
+    expect(() => createMemoryHistory([])).toThrow(new Error('Expected at least one initial entry'));
   });
 
   test('parses initial entries', () => {
-    expect(createMemoryHistory({ initialEntries: ['/aaa?xxx=yyy'] }).location).toEqual({
+    expect(createMemoryHistory(['/aaa?xxx=yyy']).location).toEqual({
       pathname: '/aaa',
       searchParams: { xxx: 'yyy' },
       hash: '',
     });
-    expect(createMemoryHistory({ initialEntries: [createRoute({ pathname: '/aaa' })] }).location).toEqual({
+    expect(createMemoryHistory([createRoute({ pathname: '/aaa' })]).location).toEqual({
       pathname: '/aaa',
       searchParams: {},
       hash: '',
@@ -23,9 +23,7 @@ describe('createMemoryHistory', () => {
     const bbbLocation = { pathname: '/bbb', searchParams: {}, hash: '' };
     const cccLocation = { pathname: '/ccc', searchParams: {}, hash: '' };
 
-    const history = createMemoryHistory({
-      initialEntries: [aaaLocation],
-    });
+    const history = createMemoryHistory([aaaLocation]);
 
     expect(history.location).toEqual(aaaLocation);
 
@@ -51,9 +49,7 @@ describe('createMemoryHistory', () => {
     const bbbLocation = { pathname: '/bbb', searchParams: {}, hash: '' };
     const cccLocation = { pathname: '/ccc', searchParams: {}, hash: '' };
 
-    const history = createMemoryHistory({
-      initialEntries: [aaaLocation],
-    });
+    const history = createMemoryHistory([aaaLocation]);
 
     history.replace(bbbLocation);
 
@@ -81,9 +77,7 @@ describe('createMemoryHistory', () => {
     const bbbLocation = { pathname: '/bbb', searchParams: {}, hash: '' };
     const listenerMock = jest.fn();
 
-    const history = createMemoryHistory({
-      initialEntries: [aaaLocation],
-    });
+    const history = createMemoryHistory([aaaLocation]);
 
     history.subscribe(listenerMock);
     history.push(bbbLocation);
@@ -96,9 +90,7 @@ describe('createMemoryHistory', () => {
     const bbbLocation = { pathname: '/bbb', searchParams: {}, hash: '' };
     const listenerMock = jest.fn();
 
-    const history = createMemoryHistory({
-      initialEntries: [aaaLocation],
-    });
+    const history = createMemoryHistory([aaaLocation]);
 
     history.subscribe(listenerMock);
     history.replace(bbbLocation);
@@ -109,13 +101,14 @@ describe('createMemoryHistory', () => {
   test('calls listener on back', () => {
     const listenerMock = jest.fn();
 
-    const history = createMemoryHistory({
-      initialEntries: [
+    const history = createMemoryHistory(
+      [
         { pathname: '/aaa', searchParams: {}, hash: '' },
         { pathname: '/bbb', searchParams: {}, hash: '' },
         { pathname: '/ccc', searchParams: {}, hash: '' },
       ],
-    });
+      {}
+    );
 
     history.subscribe(listenerMock);
     history.back();

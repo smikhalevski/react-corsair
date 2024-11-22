@@ -16,7 +16,6 @@ export { Route } from './Route';
 export { Router } from './Router';
 export { useRouteParams, useRouteData, useRouteError } from './hooks';
 
-export type { MemoryHistoryOptions } from './history/createMemoryHistory';
 export type { LinkProps } from './history/Link';
 export type { HistoryOptions, History, SearchParamsAdapter } from './history/types';
 
