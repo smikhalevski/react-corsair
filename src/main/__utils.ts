@@ -9,3 +9,5 @@ export function toLocation(to: To): Location {
 
   return { pathname, searchParams, hash, state };
 }
+
+export function noop() {}

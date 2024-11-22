@@ -141,6 +141,11 @@ export interface LoaderOptions<Params = any, Context = any> {
   context: Context;
 
   /**
+   * A signal that is aborted if a loader result isn't needed anymore.
+   */
+  signal: AbortSignal;
+
+  /**
    * `true` if a loader is called during {@link Router.preload preload}.
    */
   isPreload: boolean;

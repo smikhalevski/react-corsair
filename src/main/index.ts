@@ -13,9 +13,12 @@ export { Outlet } from './Outlet';
 export { PathnameTemplate } from './__PathnameTemplate';
 export { redirect, Redirect } from './__redirect';
 export { Route } from './__Route';
+export { useRouter } from './__useRouter';
+export { usePrefetch, Prefetch } from './__usePrefetch';
 export { Router } from './Router';
 export { useRouteParams, useRouteData, useRouteError } from './hooks';
 
+export type { PrefetchProps } from './__usePrefetch';
 export type { LinkProps } from './history/Link';
 export type { HistoryOptions, History, SearchParamsAdapter } from './history/types';
 

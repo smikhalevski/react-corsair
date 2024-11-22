@@ -1,6 +1,6 @@
-import React, { forwardRef, HTMLAttributes, MouseEventHandler, useEffect } from 'react';
-import { useRouter } from '../RouterProvider';
+import React, { forwardRef, HTMLAttributes, MouseEventHandler } from 'react';
 import { To } from '../__types';
+import { Prefetch } from '../__usePrefetch';
 import { toLocation } from '../__utils';
 import { useHistory } from './useHistory';
 
@@ -37,16 +37,9 @@ export interface LinkProps extends Omit<HTMLAttributes<HTMLAnchorElement>, 'href
  * @group Components
  */
 export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
-  const { to, prefetch, replace, onClick, ...anchorProps } = props;
+  const { to, prefetch, replace, onClick, children, ...anchorProps } = props;
 
-  const router = useRouter();
   const history = useHistory();
-
-  useEffect(() => {
-    if (prefetch) {
-      router.prefetch(to);
-    }
-  }, []);
 
   const handleClick: MouseEventHandler<HTMLAnchorElement> = event => {
     if (typeof onClick === 'function') {
@@ -80,7 +73,10 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
       ref={ref}
       href={history.toAbsoluteURL(toLocation(to))}
       onClick={handleClick}
-    />
+    >
+      {prefetch && <Prefetch to={to} />}
+      {children}
+    </a>
   );
 });
 

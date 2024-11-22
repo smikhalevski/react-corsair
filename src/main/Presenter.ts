@@ -62,6 +62,7 @@ export class Presenter {
     const payload = loadRoute(routeMatch.route, {
       params: routeMatch.params,
       context: this.context,
+      signal: new AbortController().signal,
       isPreload: false,
     });
 
