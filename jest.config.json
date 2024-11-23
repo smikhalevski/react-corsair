@@ -2,7 +2,8 @@
   "transform": {
     "^.+\\.tsx?$": "@swc/jest"
   },
-  "testMatch": ["<rootDir>/src/test/**/*.test.ts"],
+  "testMatch": ["<rootDir>/src/test/**/*.test.{ts,tsx}"],
+  "testEnvironment": "jsdom",
   "modulePathIgnorePatterns": ["<rootDir>/lib"],
   "detectOpenHandles": true,
   "forceExit": true
