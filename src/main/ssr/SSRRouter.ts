@@ -1,9 +1,9 @@
-import { RoutePayload } from '../__loadRoute';
 import { RouterOptions } from '../__types';
+import { OutletPayload } from '../OutletModel';
 import { Router } from '../Router';
 
 export interface SSRRouterOptions<Context> extends RouterOptions<Context> {
-  stateStringifier?: (state: RoutePayload) => string;
+  stateStringifier?: (payload: OutletPayload) => string;
   nonce?: string;
 }
 

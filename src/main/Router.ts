@@ -5,7 +5,7 @@ import { matchRoutes, RouteMatch } from './__matchRoutes';
 import { Route } from './__Route';
 import { Fallbacks, Location, RouterOptions, To } from './__types';
 import { noop, toLocation } from './__utils';
-import { Presenter, reconcilePresenters } from './Presenter';
+import { OutletModel, reconcileOutletModel } from './OutletModel';
 
 /**
  * An event dispatched by a {@link Router} when a navigation occurs.
@@ -15,11 +15,37 @@ import { Presenter, reconcilePresenters } from './Presenter';
 export interface NavigateEvent {
   type: 'navigate';
 
+  // /**
+  //  * A route to which router was navigated.
+  //  */
+  // route: Route;
+
   /**
-   * A location to which a router has navigated.
+   * A location of a {@link route}.
    */
   location: Location;
+
+  // reason: any;
 }
+
+// /**
+//  * @group Routing
+//  */
+// export interface ReadyEvent {
+//   type: 'ready';
+//
+//   /**
+//    * A route to which router was navigated.
+//    */
+//   route: Route;
+//
+//   /**
+//    * A location of a {@link route}.
+//    */
+//   location: Location;
+//
+//   data: any;
+// }
 
 /**
  * An event dispatched by a {@link Router} when a redirect was requested by a router.
@@ -29,11 +55,54 @@ export interface NavigateEvent {
 export interface RedirectEvent {
   type: 'redirect';
 
+  // /**
+  //  * A route that triggered a redirect.
+  //  */
+  // route: Route;
+  //
+  // /**
+  //  * A location of a {@link route}.
+  //  */
+  // location: Location;
+
   /**
    * A location or a URL to which a redirect should be made.
    */
   to: To | string;
 }
+
+// export interface ErrorEvent {
+//   type: 'error';
+//
+//   /**
+//    * A route that has thrown an error.
+//    */
+//   route: Route;
+//
+//   /**
+//    * A location of a {@link route}.
+//    */
+//   location: Location;
+//
+//   /**
+//    * An error that was thrown.
+//    */
+//   error: any;
+// }
+//
+// export interface NotFoundEvent {
+//   type: 'not_found';
+//
+//   /**
+//    * A route that triggered a not-found.
+//    */
+//   route: Route;
+//
+//   /**
+//    * A location of a {@link route}.
+//    */
+//   location: Location;
+// }
 
 /**
  * An event dispatched by a {@link Router}.
@@ -60,9 +129,9 @@ export class Router<Context = any> implements Fallbacks {
   context: Context;
 
   /**
-   * Presenters that provide components for {@link Outlet outlets} to render.
+   * A model rendered in a router {@link Outlet}.
    */
-  presenters: Presenter[];
+  outletModel = new OutletModel(this, null);
 
   errorComponent: ComponentType | undefined;
   loadingComponent: ComponentType | undefined;
@@ -79,7 +148,6 @@ export class Router<Context = any> implements Fallbacks {
   constructor(options: RouterOptions<Context>) {
     this.routes = options.routes;
     this.context = options.context;
-    this.presenters = reconcilePresenters(this, [], []);
     this.errorComponent = options.errorComponent;
     this.loadingComponent = options.loadingComponent;
     this.notFoundComponent = options.notFoundComponent;
@@ -99,11 +167,7 @@ export class Router<Context = any> implements Fallbacks {
   navigate(to: To): void {
     const location = toLocation(to);
 
-    this.presenters = reconcilePresenters(
-      this,
-      this.presenters,
-      matchRoutes(location.pathname, location.searchParams, this.routes)
-    );
+    this.outletModel = reconcileOutletModel(this, matchRoutes(location.pathname, location.searchParams, this.routes));
 
     this._pubSub.publish({ type: 'navigate', location });
   }
@@ -116,16 +180,9 @@ export class Router<Context = any> implements Fallbacks {
    */
   prefetch(to: To): AbortablePromise<void> {
     return new AbortablePromise((resolve, _reject, signal) => {
-      const routePayloads = this.match(to).map(routeMatch =>
-        loadRoute(routeMatch.route, {
-          params: routeMatch.params,
-          context: this.context,
-          signal,
-          isPreload: true,
-        })
+      resolve(
+        Promise.all(this.match(to).map(routeMatch => loadRoute(routeMatch, this.context, signal, true))).then(noop)
       );
-
-      resolve(Promise.all(routePayloads).then(noop));
     });
   }
 

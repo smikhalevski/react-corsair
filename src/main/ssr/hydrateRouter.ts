@@ -1,9 +1,9 @@
-import { RoutePayload } from '../__loadRoute';
 import { To } from '../__types';
+import { OutletPayload } from '../OutletModel';
 import { Router } from '../Router';
 
 export interface HydrateRouteOptions {
-  stateParser?: (stateStr: string) => RoutePayload;
+  stateParser?: (stateStr: string) => OutletPayload;
 }
 
 export function hydrateRouter(router: Router, to: To, options: HydrateRouteOptions = {}): void {
