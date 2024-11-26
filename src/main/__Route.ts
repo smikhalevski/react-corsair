@@ -2,7 +2,7 @@ import { ComponentType } from 'react';
 import { PathnameTemplate } from './__PathnameTemplate';
 import {
   Dict,
-  Fallbacks,
+  FallbackOptions,
   LoaderOptions,
   LoadingAppearance,
   Location,
@@ -53,7 +53,7 @@ export class Route<
   Params extends object | void = any,
   Data = any,
   Context = any,
-> implements Fallbacks
+> implements FallbackOptions
 {
   /**
    * The type of cumulative route params.
@@ -103,16 +103,16 @@ export class Route<
   renderingDisposition: RenderingDisposition;
 
   /**
-   * Loads {@link RouteOptions.lazyComponent a lazy route component} once and caches it forever, or returns an already
-   * available component.
-   */
-  loadComponent: () => Promise<ComponentType> | ComponentType;
-
-  /**
    * A component rendered by the route, or `undefined` if a {@link RouteOptions.lazyComponent} isn't yet
    * {@link loadComponent loaded}.
    */
   component: ComponentType | undefined;
+
+  /**
+   * Loads {@link RouteOptions.lazyComponent a lazy route component} once and caches it forever, unless an error
+   * occurred during loading.
+   */
+  loadComponent: () => Promise<ComponentType>;
 
   errorComponent: ComponentType | undefined;
   loadingComponent: ComponentType | undefined;
@@ -155,10 +155,10 @@ export class Route<
 
     this.loadComponent = () => {
       if (component !== undefined) {
-        return component;
+        return Promise.resolve(component);
       }
 
-      component = Promise.resolve(lazyComponent!()).then(
+      component = new Promise<{ default: ComponentType }>(resolve => resolve(lazyComponent!())).then(
         module => {
           component = module.default;
 

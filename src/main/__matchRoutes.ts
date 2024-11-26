@@ -1,4 +1,3 @@
-import isDeepEqual from 'fast-deep-equal';
 import { PathnameMatch } from './__PathnameTemplate';
 import { Route } from './__Route';
 import { Dict } from './__types';
@@ -83,11 +82,4 @@ function getRouteMatches(route: Route, searchParams: Dict, cache: Map<Route, Pat
   routeMatches.push({ route, params });
 
   return routeMatches;
-}
-
-/**
- * Returns `true` if route matches are equal.
- */
-export function isEqualRouteMatch(a: RouteMatch, b: RouteMatch): boolean {
-  return a.route === b.route && isDeepEqual(a.params, b.params);
 }

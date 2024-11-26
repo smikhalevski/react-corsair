@@ -1,103 +1,145 @@
-import React, { Component, createContext, createElement, ReactElement, useContext } from 'react';
-import { createErrorPayload } from './__loadRoute';
+import React, { Component, ComponentType, createContext, ReactElement, Suspense, useContext } from 'react';
+import { createErrorState } from './__loadRoute';
 import { NotFoundError } from './__notFound';
-import { Redirect } from './__redirect';
+import { OutletState } from './__types';
 import { isPromiseLike } from './__utils';
-import { OutletModel } from './OutletModel';
+import { OutletManager } from './OutletManager';
 
-export const OutletModelContext = createContext<OutletModel | null>(null);
+export const OutletManagerContext = createContext<OutletManager | null>(null);
 
-export function Outlet(): ReactElement {
-  const model = useContext(OutletModelContext);
+OutletManagerContext.displayName = 'OutletManagerContext';
 
-  if (model === null) {
-    throw new Error('Outlet model not found');
+export const ChildOutletManagerContext = createContext<OutletManager | null>(null);
+
+ChildOutletManagerContext.displayName = 'ChildOutletManagerContext';
+
+/**
+ * Renders an {@link Router.outletManager} provided by an enclosing {@link RouterProvider}.
+ *
+ * @group Components
+ */
+export function Outlet(): ReactElement | null {
+  const manager = useContext(ChildOutletManagerContext);
+
+  if (manager === null) {
+    return null;
   }
 
-  return <InternalOutlet model={model} />;
+  return <OutletBoundary manager={manager} />;
 }
 
-interface InternalOutletProps {
-  model: OutletModel;
+interface OutletBoundaryProps {
+  manager: OutletManager;
 }
 
-interface InternalOutletState {
-  error: unknown;
-  hasError: boolean;
+interface OutletBoundaryState {
+  errorState: OutletState | null;
 }
 
-class InternalOutlet extends Component<InternalOutletProps, InternalOutletState> {
-  static getDerivedStateFromError(error: unknown): InternalOutletState {
-    return { error, hasError: true };
+class OutletBoundary extends Component<OutletBoundaryProps, OutletBoundaryState> {
+  state = { errorState: null };
+
+  static getDerivedStateFromError(error: unknown): Partial<OutletBoundaryState> | null {
+    return { errorState: createErrorState(error) };
   }
 
   static getDerivedStateFromProps(
-    nextProps: InternalOutletProps,
-    prevState: InternalOutletState
-  ): InternalOutletState | null {
-    if (prevState.hasError) {
-      nextProps.model.renderedModel.setPayload(createErrorPayload(prevState.error));
-
-      return { error: undefined, hasError: false };
-    }
-    return null;
-  }
-
-  render(): ReactElement | null {
-    const renderedModel = this.props.model.renderedModel;
-    const { routeMatch, router } = renderedModel;
-    const payload = renderedModel.getPayload();
-
-    if (isPromiseLike(payload)) {
-      throw payload;
-    }
-
-    if (payload.status === 'ok') {
-      if (routeMatch !== null && routeMatch.route.component !== undefined) {
-        return createElement(routeMatch.route.component);
-      }
+    nextProps: Readonly<OutletBoundaryProps>,
+    prevState: OutletBoundaryState
+  ): Partial<OutletBoundaryState> | null {
+    if (prevState.errorState === null) {
       return null;
     }
 
-    if (payload.status === 'not_found') {
-      if (routeMatch === null) {
-        if (renderedModel.parentModel === null && router.notFoundComponent !== undefined) {
-          return createElement(router.notFoundComponent);
-        }
-        throw new NotFoundError();
-      }
-      if (routeMatch.route.notFoundComponent !== undefined) {
-        return createElement(routeMatch.route.notFoundComponent);
-      }
+    nextProps.manager.activeManager.setState(prevState.errorState);
+
+    return { errorState: null };
+  }
+
+  render(): ReactElement | null {
+    const { manager } = this.props;
+
+    if (manager === null) {
+      return null;
+    }
+
+    const loadingComponent = getLoadingComponent(manager);
+
+    if (loadingComponent === null && manager === manager.activeManager) {
+      return renderOutlet(manager, true);
+    }
+
+    return <Suspense fallback={renderOutlet(manager.activeManager, true)}>{renderOutlet(manager, true)}</Suspense>;
+  }
+}
+
+function renderOutlet(manager: OutletManager, isSuspendable: boolean): ReactElement | null {
+  const { parentManager, router, routeMatch } = manager;
+
+  const state = manager.loadState();
+
+  if (isSuspendable && isPromiseLike(state)) {
+    return <Await promise={state} />;
+  }
+
+  let Component;
+  let childManager = null;
+
+  if (isPromiseLike(state) || state.status === 'redirect') {
+    Component = getLoadingComponent(manager);
+  } else if (state.status === 'ok') {
+    if (routeMatch === null || routeMatch.route.component === undefined) {
+      throw new Error('Unexpected outlet state');
+    }
+    Component = routeMatch.route.component;
+    childManager = manager.childManager;
+  } else if (state.status === 'error') {
+    if (routeMatch !== null && routeMatch.route.errorComponent !== undefined) {
+      Component = routeMatch.route.errorComponent;
+    } else if (parentManager === null && router.errorComponent !== undefined) {
+      Component = router.errorComponent;
+    } else {
+      throw state.error;
+    }
+  } else if (state.status === 'not_found') {
+    if (routeMatch !== null && routeMatch.route.notFoundComponent !== undefined) {
+      Component = routeMatch.route.notFoundComponent;
+    } else if (parentManager === null && router.notFoundComponent !== undefined) {
+      Component = router.notFoundComponent;
+    } else {
       throw new NotFoundError();
     }
+  } else {
+    throw new Error('Unknown outlet status');
+  }
 
-    if (payload.status === 'error') {
-      if (routeMatch === null) {
-        if (renderedModel.parentModel === null && router.errorComponent !== undefined) {
-          return createElement(router.errorComponent);
-        }
-        throw payload.error;
-      }
-      if (routeMatch.route.errorComponent !== undefined) {
-        return createElement(routeMatch.route.errorComponent);
-      }
-      throw payload.error;
-    }
-
-    if (payload.status === 'redirect') {
-      if (routeMatch === null) {
-        if (renderedModel.parentModel === null && router.loadingComponent !== undefined) {
-          return createElement(router.loadingComponent);
-        }
-        return null;
-      }
-      if (routeMatch.route.loadingComponent !== undefined) {
-        return createElement(routeMatch.route.loadingComponent);
-      }
-      throw new Redirect(payload.to);
-    }
-
+  if (Component === null) {
     return null;
   }
+
+  return (
+    <OutletManagerContext.Provider value={manager}>
+      <ChildOutletManagerContext.Provider value={childManager}>
+        <Component />
+      </ChildOutletManagerContext.Provider>
+    </OutletManagerContext.Provider>
+  );
+}
+
+function getLoadingComponent(manager: OutletManager): ComponentType | null {
+  const { parentManager, router, routeMatch } = manager;
+
+  if (routeMatch !== null && routeMatch.route.loadingComponent !== undefined) {
+    return routeMatch.route.loadingComponent;
+  }
+
+  if (parentManager === null && router.loadingComponent !== undefined) {
+    return router.loadingComponent;
+  }
+
+  return null;
+}
+
+function Await(props: { promise: Promise<any> }): never {
+  throw props.promise;
 }

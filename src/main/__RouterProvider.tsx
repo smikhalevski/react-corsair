@@ -1,6 +1,6 @@
 import React, { ReactElement, ReactNode, useEffect, useState } from 'react';
 import { RouterContext } from './__useRouter';
-import { Outlet, OutletModelContext } from './Outlet';
+import { Outlet, ChildOutletManagerContext } from './Outlet';
 import { Router } from './Router';
 
 /**
@@ -27,13 +27,13 @@ export interface RouterProviderProps {
  */
 export function RouterProvider(props: RouterProviderProps): ReactElement {
   const { router, children = <Outlet /> } = props;
-  const [outletModel, setOutletModel] = useState(router.outletModel);
+  const [outletManager, setOutletManager] = useState(router.outletManager);
 
-  useEffect(() => router.subscribe(() => setOutletModel(router.outletModel)), [router]);
+  useEffect(() => router.subscribe(() => setOutletManager(router.outletManager)), [router]);
 
   return (
     <RouterContext.Provider value={router}>
-      <OutletModelContext.Provider value={outletModel}>{children}</OutletModelContext.Provider>
+      <ChildOutletManagerContext.Provider value={outletManager}>{children}</ChildOutletManagerContext.Provider>
     </RouterContext.Provider>
   );
 }

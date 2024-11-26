@@ -1,8 +1,8 @@
 import { RouteMatch } from './__matchRoutes';
 import { NotFoundError } from './__notFound';
 import { Redirect } from './__redirect';
+import { OutletState } from './__types';
 import { isPromiseLike } from './__utils';
-import { OutletPayload } from './OutletModel';
 
 /**
  * Loads a route component and data.
@@ -11,33 +11,33 @@ export function loadRoute(
   routeMatch: RouteMatch,
   context: unknown,
   signal: AbortSignal,
-  isPreload: boolean
-): Promise<OutletPayload> | OutletPayload {
+  isPrefetch: boolean
+): Promise<OutletState> | OutletState {
   const { route, params } = routeMatch;
 
   let component;
   let data;
 
   try {
-    component = route.loadComponent();
+    component = route.component || route.loadComponent();
 
-    data = route.loader === undefined ? undefined : route.loader({ params, context, signal, isPreload });
+    data = route.loader === undefined ? undefined : route.loader({ params, context, signal, isPrefetch });
   } catch (error) {
-    return createErrorPayload(error);
+    return createErrorState(error);
   }
 
   if (isPromiseLike(component) || isPromiseLike(data)) {
-    return Promise.all([component, data]).then(result => createOkPayload(result[1]), createErrorPayload);
+    return Promise.all([component, data]).then(result => createOkState(result[1]), createErrorState);
   }
 
-  return createOkPayload(data);
+  return createOkState(data);
 }
 
-export function createOkPayload(data: unknown): OutletPayload {
+export function createOkState(data: unknown): OutletState {
   return { status: 'ok', data };
 }
 
-export function createErrorPayload(error: unknown): OutletPayload {
+export function createErrorState(error: unknown): OutletState {
   if (error instanceof NotFoundError) {
     return { status: 'not_found' };
   }

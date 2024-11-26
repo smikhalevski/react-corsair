@@ -1,4 +1,4 @@
-import { createRoute, Outlet, Route } from '../main';
+import { createRoute, OutletBoundary, Route } from '../main';
 
 describe('createRoute', () => {
   const Component = () => null;
@@ -13,7 +13,7 @@ describe('createRoute', () => {
 
     expect(route.parentRoute).toBeNull();
     expect(route.pathnameTemplate.pattern).toBe('/rrr');
-    expect(route.loadComponent()).toBe(Outlet);
+    expect(route.loadComponent()).toBe(OutletBoundary);
   });
 
   test('(parentRoute) signature', () => {
@@ -22,7 +22,7 @@ describe('createRoute', () => {
 
     expect(route.parentRoute).toBe(aaaRoute);
     expect(route.pathnameTemplate.pattern).toBe('/');
-    expect(route.loadComponent()).toBe(Outlet);
+    expect(route.loadComponent()).toBe(OutletBoundary);
   });
 
   test('(parentRoute, options) signature', () => {
@@ -31,7 +31,7 @@ describe('createRoute', () => {
 
     expect(route.parentRoute).toBe(aaaRoute);
     expect(route.pathnameTemplate.pattern).toBe('/rrr');
-    expect(route.loadComponent()).toBe(Outlet);
+    expect(route.loadComponent()).toBe(OutletBoundary);
   });
 
   test('(pathname) signature', () => {
@@ -39,7 +39,7 @@ describe('createRoute', () => {
 
     expect(route.parentRoute).toBeNull();
     expect(route.pathnameTemplate.pattern).toBe('/rrr');
-    expect(route.loadComponent()).toBe(Outlet);
+    expect(route.loadComponent()).toBe(OutletBoundary);
   });
 
   test('(pathname, component) signature', () => {
@@ -56,7 +56,7 @@ describe('createRoute', () => {
 
     expect(route.parentRoute).toBe(aaaRoute);
     expect(route.pathnameTemplate.pattern).toBe('/rrr');
-    expect(route.loadComponent()).toBe(Outlet);
+    expect(route.loadComponent()).toBe(OutletBoundary);
   });
 
   test('(parentRoute, pathname, component) signature', () => {

@@ -16,6 +16,7 @@ export { Route } from './__Route';
 export { useRouter } from './__useRouter';
 export { usePrefetch, Prefetch } from './__usePrefetch';
 export { Router } from './Router';
+export { RouterProvider } from './__RouterProvider';
 export { useRouteParams, useRouteData, useRouteError } from './hooks';
 
 export type { PrefetchProps } from './__usePrefetch';

@@ -161,10 +161,10 @@ describe('Route', () => {
   });
 
   describe('loadComponent', () => {
-    test('returns an Outlet if there is no component', () => {
+    test('returns an Outlet if there is no component', async () => {
       const route = createRoute();
 
-      expect(route.loadComponent()).toEqual(Outlet);
+      await expect(route.loadComponent()).resolves.toBe(Outlet);
     });
 
     test("throws if lazyComponent doesn't return a module", async () => {
@@ -177,12 +177,12 @@ describe('Route', () => {
       );
     });
 
-    test('returns a component', () => {
+    test('returns a component', async () => {
       const route = createRoute({
         component: Component,
       });
 
-      expect(route.loadComponent()).toEqual(Component);
+      await expect(route.loadComponent()).resolves.toBe(Component);
     });
 
     test('loads a lazy component', async () => {
@@ -229,21 +229,21 @@ describe('Route', () => {
       const lazyComponentMock = jest
         .fn()
         .mockReturnValueOnce(Promise.resolve(111))
-        .mockReturnValueOnce(Promise.resolve(222))
         .mockReturnValueOnce(Promise.resolve({ default: Component }));
 
       const route = createRoute({
         lazyComponent: lazyComponentMock,
       });
 
-      await expect(() => route.loadComponent()).rejects.toEqual(expect.any(TypeError));
-      await expect(() => route.loadComponent()).rejects.toEqual(expect.any(TypeError));
+      await expect(() => route.loadComponent()).rejects.toEqual(
+        new TypeError('Module loaded by a lazyComponent must default-export a component')
+      );
       await expect(route.loadComponent()).resolves.toEqual(Component);
 
-      expect(lazyComponentMock).toHaveBeenCalledTimes(3);
+      expect(lazyComponentMock).toHaveBeenCalledTimes(2);
     });
 
-    test('returns lazy component synchronously after the first call', async () => {
+    test('returns the cached lazy component after the first call', async () => {
       const lazyComponentMock = jest.fn(() => Promise.resolve({ default: Component }));
 
       const route = createRoute({
@@ -252,7 +252,19 @@ describe('Route', () => {
 
       await route.loadComponent();
 
-      expect(route.loadComponent()).toEqual(Component);
+      await expect(route.loadComponent()).resolves.toBe(Component);
+
+      expect(lazyComponentMock).toHaveBeenCalledTimes(1);
+    });
+
+    test('does not throw synchronously', async () => {
+      const route = createRoute({
+        lazyComponent: () => {
+          throw new Error('expected');
+        },
+      });
+
+      await expect(route.loadComponent()).rejects.toEqual(new Error('expected'));
     });
   });
 });

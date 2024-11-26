@@ -3,9 +3,10 @@ import { ComponentType } from 'react';
 import { loadRoute } from './__loadRoute';
 import { matchRoutes, RouteMatch } from './__matchRoutes';
 import { Route } from './__Route';
-import { Fallbacks, Location, RouterOptions, To } from './__types';
+import { FallbackOptions, Location, RouterOptions, To } from './__types';
 import { noop, toLocation } from './__utils';
-import { OutletModel, reconcileOutletModel } from './OutletModel';
+import { OutletManager } from './OutletManager';
+import { reconcileOutlets } from './reconcileOutlets';
 
 /**
  * An event dispatched by a {@link Router} when a navigation occurs.
@@ -117,7 +118,7 @@ export type RouterEvent = NavigateEvent | RedirectEvent;
  * @template Context A context provided to {@link RouteOptions.loader route loaders}.
  * @group Routing
  */
-export class Router<Context = any> implements Fallbacks {
+export class Router<Context = any> implements FallbackOptions {
   /**
    * Routes that a router can render.
    */
@@ -129,9 +130,9 @@ export class Router<Context = any> implements Fallbacks {
   context: Context;
 
   /**
-   * A model rendered in a router {@link Outlet}.
+   * A manager rendered in a router {@link Outlet}.
    */
-  outletModel = new OutletModel(this, null);
+  outletManager = new OutletManager(this, null);
 
   errorComponent: ComponentType | undefined;
   loadingComponent: ComponentType | undefined;
@@ -167,7 +168,7 @@ export class Router<Context = any> implements Fallbacks {
   navigate(to: To): void {
     const location = toLocation(to);
 
-    this.outletModel = reconcileOutletModel(this, matchRoutes(location.pathname, location.searchParams, this.routes));
+    this.outletManager = reconcileOutlets(this, matchRoutes(location.pathname, location.searchParams, this.routes));
 
     this._pubSub.publish({ type: 'navigate', location });
   }

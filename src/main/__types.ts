@@ -146,9 +146,9 @@ export interface LoaderOptions<Params = any, Context = any> {
   signal: AbortSignal;
 
   /**
-   * `true` if a loader is called during {@link Router.preload preload}.
+   * `true` if a loader is called during {@link Router.prefetch prefetch}.
    */
-  isPreload: boolean;
+  isPrefetch: boolean;
 }
 
 /**
@@ -156,7 +156,7 @@ export interface LoaderOptions<Params = any, Context = any> {
  *
  * @group Routing
  */
-export interface Fallbacks {
+export interface FallbackOptions {
   /**
    * A component that is rendered when an error was thrown during route rendering.
    *
@@ -197,7 +197,7 @@ export interface Fallbacks {
  * @template Context A router context.
  * @group Routing
  */
-export interface RouteOptions<Params, Data, Context> extends Partial<Fallbacks> {
+export interface RouteOptions<Params, Data, Context> extends Partial<FallbackOptions> {
   /**
    * A URL pathname pattern.
    *
@@ -283,8 +283,9 @@ export interface RouteOptions<Params, Data, Context> extends Partial<Fallbacks> 
  * Options of a {@link Router}.
  *
  * @template Context A router context.
+ * @group Routing
  */
-export interface RouterOptions<Context> extends Partial<Fallbacks> {
+export interface RouterOptions<Context> extends Partial<FallbackOptions> {
   /**
    * Routes that a router can match.
    */
@@ -295,3 +296,29 @@ export interface RouterOptions<Context> extends Partial<Fallbacks> {
    */
   context: Context;
 }
+
+interface OkState {
+  status: 'ok';
+  data: unknown;
+}
+
+interface ErrorState {
+  status: 'error';
+  error: unknown;
+}
+
+interface NotFoundState {
+  status: 'not_found';
+}
+
+interface RedirectState {
+  status: 'redirect';
+  to: To | string;
+}
+
+/**
+ * A serializable state of an {@link OutletManager}.
+ *
+ * @group Routing
+ */
+export type OutletState = OkState | ErrorState | NotFoundState | RedirectState;
