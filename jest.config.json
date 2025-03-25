@@ -1,11 +1,9 @@
 {
-  "preset": "ts-jest",
-  "testMatch": [
-    "<rootDir>/src/**/*.test.{tsx,ts}"
-  ],
-  "modulePathIgnorePatterns": [
-    "<rootDir>/lib"
-  ],
+  "transform": {
+    "^.+\\.tsx?$": "@swc/jest"
+  },
+  "testMatch": ["<rootDir>/src/test/**/*.test.{ts,tsx}"],
+  "modulePathIgnorePatterns": ["<rootDir>/lib"],
   "detectOpenHandles": true,
   "forceExit": true
 }

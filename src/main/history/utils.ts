@@ -1,6 +1,8 @@
 import { Location, To } from '../types';
 import { toLocation } from '../utils';
-import { urlSearchParamsAdapter } from './urlSearchParamsAdapter';
+import { SearchParamsAdapter } from './types';
+
+import { urlSearchParamsAdapter } from './createURLSearchParamsAdapter';
 
 /**
  * Parses a pathname-search-hash string as a location.
@@ -49,7 +51,10 @@ export function stringifyLocation(to: To, searchParamsAdapter = urlSearchParamsA
   );
 }
 
-export function rebasePathname(basePathname: string | undefined, pathname: string): string {
+/**
+ * Concatenates a base pathname and a pathname.
+ */
+export function concatPathname(basePathname: string | undefined, pathname: string): string {
   if (basePathname === undefined || basePathname === '') {
     return pathname;
   }
@@ -59,6 +64,9 @@ export function rebasePathname(basePathname: string | undefined, pathname: strin
   );
 }
 
+/**
+ * Removes a base pathname from a pathname, or throws an error if a pathname doesn't start with a base pathname.
+ */
 export function debasePathname(basePathname: string | undefined, pathname: string): string {
   if (basePathname === undefined || basePathname === '') {
     return pathname;
@@ -83,4 +91,8 @@ export function debasePathname(basePathname: string | undefined, pathname: strin
   }
 
   throw new Error("Pathname doesn't match base pathname: " + basePathname);
+}
+
+export function parseOrCastLocation(to: To | string, searchParamsAdapter: SearchParamsAdapter): Location {
+  return typeof to === 'string' ? parseLocation(to, searchParamsAdapter) : toLocation(to);
 }

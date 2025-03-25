@@ -1,9 +1,8 @@
 import { PubSub } from 'parallel-universe';
 import { Location } from '../types';
-import { toLocation } from '../utils';
 import { History, HistoryOptions } from './types';
-import { urlSearchParamsAdapter } from './urlSearchParamsAdapter';
-import { parseLocation, rebasePathname, stringifyLocation } from './utils';
+import { concatPathname, parseLocation, parseOrCastLocation, stringifyLocation } from './utils';
+import { urlSearchParamsAdapter } from './createURLSearchParamsAdapter';
 
 /**
  * Create the history adapter that reads and writes location to a browser's session history using only URL hash.
@@ -20,6 +19,10 @@ export function createHashHistory(options: HistoryOptions = {}): History {
   let location: Location;
 
   return {
+    get url() {
+      return this.toURL(this.location);
+    },
+
     get location() {
       const href = decodeURIComponent(window.location.hash.substring(1));
 
@@ -31,25 +34,31 @@ export function createHashHistory(options: HistoryOptions = {}): History {
     },
 
     toURL(to) {
-      return rebasePathname(
+      return stringifyLocation(to, searchParamsAdapter);
+    },
+
+    toAbsoluteURL(to) {
+      return concatPathname(
         basePathname,
-        '#' + encodeURIComponent(typeof to === 'string' ? to : stringifyLocation(to, searchParamsAdapter))
+        '#' + encodeHash(typeof to === 'string' ? to : stringifyLocation(to, searchParamsAdapter))
       );
     },
 
     push(to) {
-      location = typeof to === 'string' ? parseLocation(to, searchParamsAdapter) : toLocation(to);
+      location = parseOrCastLocation(to, searchParamsAdapter);
 
-      to = stringifyLocation(location, searchParamsAdapter);
-      window.history.pushState(location.state, '', '#' + encodeURIComponent(to));
+      window.history.pushState(location.state, '', '#' + encodeHash(stringifyLocation(location, searchParamsAdapter)));
       pubSub.publish();
     },
 
     replace(to) {
-      location = typeof to === 'string' ? parseLocation(to, searchParamsAdapter) : toLocation(to);
+      location = parseOrCastLocation(to, searchParamsAdapter);
 
-      to = stringifyLocation(location, searchParamsAdapter);
-      window.history.replaceState(location.state, '', '#' + encodeURIComponent(to));
+      window.history.replaceState(
+        location.state,
+        '',
+        '#' + encodeHash(stringifyLocation(location, searchParamsAdapter))
+      );
       pubSub.publish();
     },
 
@@ -73,4 +82,8 @@ export function createHashHistory(options: HistoryOptions = {}): History {
       };
     },
   };
+}
+
+function encodeHash(str: string): string {
+  return str.replace(/[^-?/:@._~!$&'()*+,;=\w]/g, encodeURIComponent);
 }

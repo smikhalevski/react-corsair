@@ -1,15 +1,18 @@
 import { ComponentType } from 'react';
+import { Route } from './Route';
+import { Router } from './Router';
+import { RouteManager } from './RouteManager';
 
 export interface Dict {
   [key: string]: any;
 }
 
 /**
- * A location or route that doesn't have required search params.
+ * A partial location or route that doesn't have any required params.
  *
  * @group Routing
  */
-export type To = Location | { getLocation(): Location };
+export type To = Partial<Location> | { getLocation(): Location };
 
 /**
  * A location contains information about the URL path and history state.
@@ -91,20 +94,20 @@ export interface ParamsAdapter<Params> {
 }
 
 /**
- * What to render when {@link RouteOptions.lazyComponent} or {@link RouteOptions.loader} are being loaded.
+ * What to render when {@link RouteOptions.lazyComponent} or {@link RouteOptions.dataLoader} are being loaded.
  *
  * <dl>
  * <dt>"loading"</dt>
- * <dd>A {@link RouteOptions.loadingComponent} is always rendered if a route is matched and component or loader are
- * being loaded.</dd>
- * <dt>"auto"</dt>
- * <dd>If another route is currently rendered then it would be preserved until component and loader of a newly matched
- * route are being loaded. Otherwise, a {@link RouteOptions.loadingComponent} is rendered.</dd>
+ * <dd>Always render {@link RouteOptions.loadingComponent} if a route requires loading.</dd>
+ * <dt>"route_loading"</dt>
+ * <dd>render {@link RouteOptions.loadingComponent} only if a route is changed during navigation.</dd>
+ * <dt>"avoid"</dt>
+ * <dd>If there's a route that is already rendered then keep it on the screen until the new route data is loaded.</dd>
  * </dl>
  *
  * @group Routing
  */
-export type LoadingAppearance = 'loading' | 'auto';
+export type LoadingAppearance = 'loading' | 'route_loading' | 'avoid';
 
 /**
  * Where the route is rendered.
@@ -113,7 +116,7 @@ export type LoadingAppearance = 'loading' | 'auto';
  * <dt>"server"</dt>
  * <dd>Route is rendered on the server during SSR and hydrated on the client.</dd>
  * <dt>"client"</dt>
- * <dd>Route is rendered exclusively on the client. During SSR loading state is rendered.</dd>
+ * <dd>Route is rendered on the client. Loading state is rendered on the server during SSR.</dd>
  * </dl>
  *
  * @group Routing
@@ -121,14 +124,81 @@ export type LoadingAppearance = 'loading' | 'auto';
 export type RenderingDisposition = 'server' | 'client';
 
 /**
+ * Options of a {@link RouteOptions.dataLoader data loader}.
+ *
+ * @template Params Route params.
+ * @template Context A router context.
+ * @group Routing
+ */
+export interface DataLoaderOptions<Params = any, Context = any> {
+  /**
+   * Route params extracted from a location.
+   */
+  params: Params;
+
+  /**
+   * A router context.
+   */
+  context: Context;
+
+  /**
+   * A signal that is aborted if a loader result isn't needed anymore.
+   */
+  signal: AbortSignal;
+
+  /**
+   * `true` if a loader is called during {@link Router.prefetch prefetch}.
+   */
+  isPrefetch: boolean;
+}
+
+/**
+ * Fallbacks that are used when a {@link RouteOptions.component} cannot be rendered.
+ *
+ * @group Routing
+ */
+export interface FallbackOptions {
+  /**
+   * A component that is rendered when an error was thrown during route rendering.
+   *
+   * Use {@link useRouteError} to access the thrown error.
+   *
+   * A {@link Router}-level {@link errorComponent} is used only for root routes. Nested routes must specify their own
+   * {@link RouteOptions.errorComponent error components}.
+   *
+   * Routes without an {@link errorComponent} don't have an error boundary.
+   */
+  errorComponent: ComponentType | undefined;
+
+  /**
+   * A component that is rendered when a {@link RouteOptions.lazyComponent} or a {@link RouteOptions.dataLoader} are being
+   * loaded. Render a skeleton or a spinner in this component to notify user that a new route is being loaded.
+   *
+   * A {@link Router}-level {@link loadingComponent} is used only for root routes. Child routes must specify their own
+   * {@link RouteOptions.loadingComponent loading components}.
+   *
+   * Routes without a {@link loadingComponent} suspend a parent route.
+   */
+  loadingComponent: ComponentType | undefined;
+
+  /**
+   * A component that is rendered if {@link notFound} was called during route rendering or if there's no route that
+   * matches the location a router was navigated to.
+   *
+   * Routes without {@link notFoundComponent} propagate {@link notFound} to a parent route.
+   */
+  notFoundComponent: ComponentType | undefined;
+}
+
+/**
  * Options of a {@link Route}.
  *
  * @template Params Route params.
  * @template Data Data loaded by a route.
- * @template Context A context provided by a {@link Router} for a {@link loader}.
+ * @template Context A router context.
  * @group Routing
  */
-export interface RouteOptions<Params, Data, Context> {
+export interface RouteOptions<Params, Data, Context> extends Partial<FallbackOptions> {
   /**
    * A URL pathname pattern.
    *
@@ -187,35 +257,16 @@ export interface RouteOptions<Params, Data, Context> {
   paramsAdapter?: ParamsAdapter<Params> | ParamsAdapter<Params>['parse'];
 
   /**
-   * Loads data required to render a route.
+   * A callback that loads data required to render a route.
    *
    * Loaded data is available in route {@link component} via {@link useRouteData}.
    *
-   * @param params Route params extracted from a location.
-   * @param context A {@link RouterProps.context} provided to a {@link Router}.
+   * @param options Loader options.
    */
-  loader?: (params: Params, context: Context) => PromiseLike<Data> | Data;
+  dataLoader?: (options: DataLoaderOptions<Params, Context>) => PromiseLike<Data> | Data;
 
   /**
-   * A component that is rendered when an error was thrown during route rendering.
-   *
-   * Use {@link useRouteError} to access the thrown error.
-   */
-  errorComponent?: ComponentType;
-
-  /**
-   * A component that is rendered when a {@link lazyComponent} or {@link loader} are being loaded. Render a skeleton or
-   * a spinner in this component to notify user that a new route is being loaded.
-   */
-  loadingComponent?: ComponentType;
-
-  /**
-   * A component that is rendered if {@link notFound} was called during route rendering.
-   */
-  notFoundComponent?: ComponentType;
-
-  /**
-   * What to render when {@link lazyComponent} or {@link loader} are being loaded.
+   * What to render when {@link lazyComponent} or {@link dataLoader} are being loaded.
    *
    * @default "auto"
    */
@@ -230,23 +281,148 @@ export interface RouteOptions<Params, Data, Context> {
 }
 
 /**
- * A state rendered by a route component.
+ * Options of a {@link Router}.
+ *
+ * @template Context A router context.
+ * @group Routing
+ */
+export interface RouterOptions<Context> extends Partial<FallbackOptions> {
+  /**
+   * Routes that a router can match.
+   */
+  routes: Route<any, any, any, Context>[];
+
+  /**
+   * An arbitrary context.
+   */
+  context: Context;
+}
+
+/**
+ * An event published by a {@link Router} after a {@link Router.navigate navigation} occurs.
+ *
+ * @template Context A router context.
+ * @group Routing
+ */
+export interface NavigateEvent<Context> {
+  /**
+   * The event type.
+   */
+  type: 'navigate';
+
+  /**
+   * A router from which an event originates.
+   */
+  router: Router<Context>;
+
+  /**
+   * A location to which a router was navigated.
+   */
+  location: Location;
+}
+
+/**
+ * An event published by a {@link Router} when an error was thrown by a component or by a data loader.
+ *
+ * @template Context A router context.
+ * @group Routing
+ */
+export interface ErrorEvent<Context> {
+  /**
+   * The event type.
+   */
+  type: 'error';
+
+  /**
+   * A route manager from which an event originates.
+   */
+  routeManager: RouteManager<Context>;
+
+  /**
+   * An error that was thrown.
+   */
+  error: any;
+}
+
+/**
+ * An event published by a {@link Router} when a {@link notFound} was called from a component or a data loader.
+ *
+ * @template Context A router context.
+ * @group Routing
+ */
+export interface NotFoundEvent<Context> {
+  /**
+   * The event type.
+   */
+  type: 'not_found';
+
+  /**
+   * A route manager from which an event originates.
+   */
+  routeManager: RouteManager<Context>;
+}
+
+/**
+ * An event published by a {@link Router} when a {@link redirect} was called from a component or a data loader.
+ *
+ * @template Context A router context.
+ * @group Routing
+ */
+export interface RedirectEvent<Context> {
+  /**
+   * The event type.
+   */
+  type: 'redirect';
+
+  /**
+   * A route manager from which an event originates.
+   */
+  routeManager: RouteManager<Context>;
+
+  /**
+   * A location or a URL to which a redirect should be made.
+   */
+  to: To | string;
+}
+
+/**
+ * An event published by a {@link Router}.
+ *
+ * @template Context A router context.
+ * @group Routing
+ */
+export type RouterEvent<Context> =
+  | NavigateEvent<Context>
+  | ErrorEvent<Context>
+  | NotFoundEvent<Context>
+  | RedirectEvent<Context>;
+
+export interface LoadingState {
+  status: 'loading';
+}
+
+export interface OkState {
+  status: 'ok';
+  data: unknown;
+}
+
+export interface ErrorState {
+  status: 'error';
+  error: unknown;
+}
+
+export interface NotFoundState {
+  status: 'not_found';
+}
+
+export interface RedirectState {
+  status: 'redirect';
+  to: To | string;
+}
+
+/**
+ * A state of a {@link RouteManager}.
  *
  * @group Routing
  */
-export interface RouteState {
-  /**
-   * Data available in a route component.
-   */
-  data?: unknown;
-
-  /**
-   * An error that occurred during loading or rendering.
-   */
-  error?: unknown;
-
-  /**
-   * `true` if {@link error} contains an actual error, or `false` otherwise.
-   */
-  hasError: boolean;
-}
+export type RouteState = LoadingState | OkState | ErrorState | NotFoundState | RedirectState;

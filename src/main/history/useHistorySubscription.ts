@@ -7,8 +7,10 @@ import { History } from './types';
  * @param history The history to subscribe to.
  * @group Hooks
  */
-export function useHistorySubscription(history: History): void {
+export function useHistorySubscription(history: History): History {
   const getLocation = () => history.location;
 
   useSyncExternalStore(history.subscribe, getLocation, getLocation);
+
+  return history;
 }

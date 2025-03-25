@@ -1,9 +1,8 @@
 import { PubSub } from 'parallel-universe';
 import { Location } from '../types';
-import { toLocation } from '../utils';
 import { History, HistoryOptions } from './types';
-import { urlSearchParamsAdapter } from './urlSearchParamsAdapter';
-import { debasePathname, parseLocation, rebasePathname, stringifyLocation } from './utils';
+import { concatPathname, debasePathname, parseLocation, parseOrCastLocation, stringifyLocation } from './utils';
+import { urlSearchParamsAdapter } from './createURLSearchParamsAdapter';
 
 /**
  * Create the history adapter that reads and writes location to a browser's session history.
@@ -20,6 +19,10 @@ export function createBrowserHistory(options: HistoryOptions = {}): History {
   let location: Location;
 
   return {
+    get url() {
+      return this.toURL(this.location);
+    },
+
     get location() {
       const { pathname, search, hash } = window.location;
       const href = pathname + search + hash;
@@ -32,22 +35,32 @@ export function createBrowserHistory(options: HistoryOptions = {}): History {
     },
 
     toURL(to) {
-      return rebasePathname(basePathname, typeof to === 'string' ? to : stringifyLocation(to, searchParamsAdapter));
+      return stringifyLocation(to, searchParamsAdapter);
+    },
+
+    toAbsoluteURL(to) {
+      return concatPathname(basePathname, typeof to === 'string' ? to : stringifyLocation(to, searchParamsAdapter));
     },
 
     push(to) {
-      location = typeof to === 'string' ? parseLocation(to, searchParamsAdapter) : toLocation(to);
+      location = parseOrCastLocation(to, searchParamsAdapter);
 
-      to = rebasePathname(basePathname, stringifyLocation(location, searchParamsAdapter));
-      window.history.pushState(location.state, '', to);
+      window.history.pushState(
+        location.state,
+        '',
+        concatPathname(basePathname, stringifyLocation(location, searchParamsAdapter))
+      );
       pubSub.publish();
     },
 
     replace(to) {
-      location = typeof to === 'string' ? parseLocation(to, searchParamsAdapter) : toLocation(to);
+      location = parseOrCastLocation(to, searchParamsAdapter);
 
-      to = rebasePathname(basePathname, stringifyLocation(location, searchParamsAdapter));
-      window.history.replaceState(location.state, '', to);
+      window.history.replaceState(
+        location.state,
+        '',
+        concatPathname(basePathname, stringifyLocation(location, searchParamsAdapter))
+      );
       pubSub.publish();
     },
 

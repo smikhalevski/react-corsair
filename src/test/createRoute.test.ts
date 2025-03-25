@@ -5,66 +5,66 @@ describe('createRoute', () => {
 
   test('no args signature', () => {
     expect(createRoute()).toBeInstanceOf(Route);
-    expect(createRoute().parent).toBeNull();
+    expect(createRoute().parentRoute).toBeNull();
   });
 
   test('(options) signature', () => {
     const route = createRoute('/rrr');
 
-    expect(route.parent).toBeNull();
+    expect(route.parentRoute).toBeNull();
     expect(route.pathnameTemplate.pattern).toBe('/rrr');
-    expect(route.getComponent()).toBe(Outlet);
+    expect(route.loadComponent()).toBe(Outlet);
   });
 
-  test('(parent) signature', () => {
+  test('(parentRoute) signature', () => {
     const aaaRoute = createRoute();
     const route = createRoute(aaaRoute);
 
-    expect(route.parent).toBe(aaaRoute);
+    expect(route.parentRoute).toBe(aaaRoute);
     expect(route.pathnameTemplate.pattern).toBe('/');
-    expect(route.getComponent()).toBe(Outlet);
+    expect(route.loadComponent()).toBe(Outlet);
   });
 
-  test('(parent, options) signature', () => {
+  test('(parentRoute, options) signature', () => {
     const aaaRoute = createRoute();
     const route = createRoute(aaaRoute, '/rrr');
 
-    expect(route.parent).toBe(aaaRoute);
+    expect(route.parentRoute).toBe(aaaRoute);
     expect(route.pathnameTemplate.pattern).toBe('/rrr');
-    expect(route.getComponent()).toBe(Outlet);
+    expect(route.loadComponent()).toBe(Outlet);
   });
 
   test('(pathname) signature', () => {
     const route = createRoute('/rrr');
 
-    expect(route.parent).toBeNull();
+    expect(route.parentRoute).toBeNull();
     expect(route.pathnameTemplate.pattern).toBe('/rrr');
-    expect(route.getComponent()).toBe(Outlet);
+    expect(route.loadComponent()).toBe(Outlet);
   });
 
   test('(pathname, component) signature', () => {
     const route = createRoute('/rrr', Component);
 
-    expect(route.parent).toBeNull();
+    expect(route.parentRoute).toBeNull();
     expect(route.pathnameTemplate.pattern).toBe('/rrr');
-    expect(route.getComponent()).toBe(Component);
+    expect(route.loadComponent()).toBe(Component);
   });
 
-  test('(parent, pathname) signature', () => {
+  test('(parentRoute, pathname) signature', () => {
     const aaaRoute = createRoute();
     const route = createRoute(aaaRoute, '/rrr');
 
-    expect(route.parent).toBe(aaaRoute);
+    expect(route.parentRoute).toBe(aaaRoute);
     expect(route.pathnameTemplate.pattern).toBe('/rrr');
-    expect(route.getComponent()).toBe(Outlet);
+    expect(route.loadComponent()).toBe(Outlet);
   });
 
-  test('(parent, pathname, component) signature', () => {
+  test('(parentRoute, pathname, component) signature', () => {
     const aaaRoute = createRoute();
     const route = createRoute(aaaRoute, '/rrr', Component);
 
-    expect(route.parent).toBe(aaaRoute);
+    expect(route.parentRoute).toBe(aaaRoute);
     expect(route.pathnameTemplate.pattern).toBe('/rrr');
-    expect(route.getComponent()).toBe(Component);
+    expect(route.loadComponent()).toBe(Component);
   });
 });

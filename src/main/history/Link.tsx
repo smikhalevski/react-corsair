@@ -1,8 +1,8 @@
-import React, { forwardRef, HTMLAttributes, MouseEventHandler, useContext, useEffect } from 'react';
+import React, { forwardRef, HTMLAttributes, MouseEventHandler } from 'react';
 import { To } from '../types';
-import { useNavigation } from '../useNavigation';
 import { toLocation } from '../utils';
-import { HistoryContext } from './useHistory';
+import { Prefetch } from '../Prefetch';
+import { useHistory } from './useHistory';
 
 /**
  * Props of the {@link Link} component.
@@ -31,24 +31,15 @@ export interface LinkProps extends Omit<HTMLAttributes<HTMLAnchorElement>, 'href
 }
 
 /**
- * Renders an `a` tag that triggers an enclosing router navigation when clicked.
- *
- * If there's no enclosing {@link HistoryProvider} the {@link Link} component renders `#`
- * as an {@link !HTMLAnchorElement.href a.href}.
+ * Renders an `a` tag that triggers an enclosing history navigation when clicked. Prefetches routes that match
+ * the provided location when mounted.
  *
  * @group Components
  */
 export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
-  const { to, prefetch, replace, onClick, ...anchorProps } = props;
+  const { to, prefetch, replace, onClick, children, ...anchorProps } = props;
 
-  const navigation = useNavigation();
-  const history = useContext(HistoryContext);
-
-  useEffect(() => {
-    if (prefetch) {
-      navigation.prefetch(to);
-    }
-  }, []);
+  const history = useHistory();
 
   const handleClick: MouseEventHandler<HTMLAnchorElement> = event => {
     if (typeof onClick === 'function') {
@@ -57,10 +48,12 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
 
     if (
       event.isDefaultPrevented() ||
-      event.getModifierState('Alt') ||
-      event.getModifierState('Control') ||
-      event.getModifierState('Shift') ||
-      event.getModifierState('Meta')
+      event.altKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.metaKey ||
+      event.buttons !== 1 ||
+      event.button !== 0
     ) {
       return;
     }
@@ -68,9 +61,9 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
     event.preventDefault();
 
     if (replace) {
-      navigation.replace(to);
+      history.replace(to);
     } else {
-      navigation.push(to);
+      history.push(to);
     }
   };
 
@@ -78,9 +71,12 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
     <a
       {...anchorProps}
       ref={ref}
-      href={history === null ? '#' : history.toURL(toLocation(to))}
+      href={history.toAbsoluteURL(toLocation(to))}
       onClick={handleClick}
-    />
+    >
+      {prefetch && <Prefetch to={to} />}
+      {children}
+    </a>
   );
 });
 

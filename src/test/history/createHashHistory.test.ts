@@ -111,13 +111,13 @@ describe('createHashHistory', () => {
 
     expect(history.location).toEqual({ pathname: '/aaa', searchParams: { xxx: '111' }, hash: '' });
 
-    expect(window.location.href).toBe('http://localhost/#%2Faaa%3Fxxx%3D111');
+    expect(window.location.href).toBe('http://localhost/#/aaa?xxx=111');
 
     history.push(bbbLocation);
 
     expect(history.location).toEqual({ pathname: '/bbb', searchParams: { yyy: ['111', '222'] }, hash: '' });
 
-    expect(window.location.href).toBe('http://localhost/#%2Fbbb%3Fyyy%3D111%26yyy%3D222');
+    expect(window.location.href).toBe('http://localhost/#/bbb?yyy=111&yyy=222');
   });
 
   test('parses query params with a custom adapter', async () => {
@@ -143,19 +143,19 @@ describe('createHashHistory', () => {
     expect(searchParamsAdapterMock.parse).toHaveBeenNthCalledWith(1, 'xxx=111');
   });
 
-  test('creates a URL', async () => {
-    expect(createHashHistory().toURL({ pathname: '/aaa', searchParams: { xxx: 111 }, hash: '' })).toBe(
-      '#%2Faaa%3Fxxx%3D111'
+  test('creates an absolute URL', async () => {
+    expect(createHashHistory().toAbsoluteURL({ pathname: '/aaa', searchParams: { xxx: 111 }, hash: '' })).toBe(
+      '#/aaa?xxx=111'
     );
   });
 
-  test('creates a URL with a default base', async () => {
+  test('creates an absolute URL with a default base', async () => {
     expect(
-      createHashHistory({ basePathname: 'http://bbb.ccc' }).toURL({
+      createHashHistory({ basePathname: 'http://bbb.ccc' }).toAbsoluteURL({
         pathname: '/aaa',
         searchParams: { xxx: 111 },
         hash: '',
       })
-    ).toBe('http://bbb.ccc/#%2Faaa%3Fxxx%3D111');
+    ).toBe('http://bbb.ccc/#/aaa?xxx=111');
   });
 });
