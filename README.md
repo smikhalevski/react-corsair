@@ -338,7 +338,7 @@ function App() {
 + const billingRoute = createRoute(settingsRoute, '/billing?', BillingPage);
 ```
 
-With this setup, user can navigate to `"/settings"` and `"/settings/billing"` and would see the same manager on
+With this setup, user can navigate to `"/settings"` and `"/settings/billing"` and would see the same content on
 different URLs which usually isn't a great idea.
 
 3. Render a redirect:
@@ -617,7 +617,7 @@ cached, so next time the `userRoute` is matched, `UserPage` would be rendered in
 
 By default, while a lazy component is being loaded, `<Router>` would still render the previously matched route.
 
-But what is rendered if the first ever route matched by the `<Router>` has a lazy component and there's no manager yet
+But what is rendered if the first ever route matched by the `<Router>` has a lazy component and there's no content yet
 on the screen? By default, in this case nothing is rendered until a lazy component is loaded. This is no a good UX,
 so you may want to provide
 a [`loadingComponent`](https://smikhalevski.github.io/react-corsair/interfaces/RouteOptions.html#loadingComponent)
