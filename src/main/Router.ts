@@ -1,121 +1,17 @@
 import { AbortablePromise, PubSub } from 'parallel-universe';
 import { ComponentType } from 'react';
-import { loadRoute } from './__loadRoute';
-import { matchRoutes, RouteMatch } from './__matchRoutes';
-import { Route } from './__Route';
-import { FallbackOptions, Location, RouterOptions, To } from './__types';
-import { noop, toLocation } from './__utils';
-import { OutletManager } from './OutletManager';
-import { reconcileOutlets } from './reconcileOutlets';
-
-/**
- * An event dispatched by a {@link Router} when a navigation occurs.
- *
- * @group Routing
- */
-export interface NavigateEvent {
-  type: 'navigate';
-
-  // /**
-  //  * A route to which router was navigated.
-  //  */
-  // route: Route;
-
-  /**
-   * A location of a {@link route}.
-   */
-  location: Location;
-
-  // reason: any;
-}
-
-// /**
-//  * @group Routing
-//  */
-// export interface ReadyEvent {
-//   type: 'ready';
-//
-//   /**
-//    * A route to which router was navigated.
-//    */
-//   route: Route;
-//
-//   /**
-//    * A location of a {@link route}.
-//    */
-//   location: Location;
-//
-//   data: any;
-// }
-
-/**
- * An event dispatched by a {@link Router} when a redirect was requested by a router.
- *
- * @group Routing
- */
-export interface RedirectEvent {
-  type: 'redirect';
-
-  // /**
-  //  * A route that triggered a redirect.
-  //  */
-  // route: Route;
-  //
-  // /**
-  //  * A location of a {@link route}.
-  //  */
-  // location: Location;
-
-  /**
-   * A location or a URL to which a redirect should be made.
-   */
-  to: To | string;
-}
-
-// export interface ErrorEvent {
-//   type: 'error';
-//
-//   /**
-//    * A route that has thrown an error.
-//    */
-//   route: Route;
-//
-//   /**
-//    * A location of a {@link route}.
-//    */
-//   location: Location;
-//
-//   /**
-//    * An error that was thrown.
-//    */
-//   error: any;
-// }
-//
-// export interface NotFoundEvent {
-//   type: 'not_found';
-//
-//   /**
-//    * A route that triggered a not-found.
-//    */
-//   route: Route;
-//
-//   /**
-//    * A location of a {@link route}.
-//    */
-//   location: Location;
-// }
-
-/**
- * An event dispatched by a {@link Router}.
- *
- * @group Routing
- */
-export type RouterEvent = NavigateEvent | RedirectEvent;
+import { loadRoute } from './loadRoute';
+import { matchRoutes, RouteMatch } from './matchRoutes';
+import { Route } from './Route';
+import { FallbackOptions, RouterEvent, RouterOptions, To } from './types';
+import { noop, toLocation } from './utils';
+import { RouteManager } from './RouteManager';
+import { reconcileRouteManagers } from './reconcileRouteManagers';
 
 /**
  * A router that matches routes by a location.
  *
- * @template Context A context provided to {@link RouteOptions.loader route loaders}.
+ * @template Context A context provided to {@link RouteOptions.dataLoader route data loaders}.
  * @group Routing
  */
 export class Router<Context = any> implements FallbackOptions {
@@ -125,26 +21,28 @@ export class Router<Context = any> implements FallbackOptions {
   routes: Route<any, any, any, Context>[];
 
   /**
-   * A context provided to {@link RouteOptions.loader route loaders}.
+   * A context provided to {@link RouteOptions.dataLoader route data loaders}.
    */
   context: Context;
 
   /**
-   * A manager rendered in a router {@link Outlet}.
+   * A manager rendered in a router {@link Outlet}, or `null` if no route is rendered.
+   *
+   * @see {@link navigate}
    */
-  outletManager = new OutletManager(this, null);
+  routeManager: RouteManager<Context> | null = null;
 
   errorComponent: ComponentType | undefined;
   loadingComponent: ComponentType | undefined;
   notFoundComponent: ComponentType | undefined;
 
-  protected _pubSub = new PubSub<RouterEvent>();
+  protected _pubSub = new PubSub<RouterEvent<Context>>();
 
   /**
    * Creates a new instance of a {@link Router}.
    *
    * @param options Router options.
-   * @template Context A context provided to {@link RouteOptions.loader route loaders}.
+   * @template Context A context provided to {@link RouteOptions.dataLoader route data loaders}.
    */
   constructor(options: RouterOptions<Context>) {
     this.routes = options.routes;
@@ -162,22 +60,37 @@ export class Router<Context = any> implements FallbackOptions {
    */
   match(to: To): RouteMatch[] {
     const location = toLocation(to);
+
     return matchRoutes(location.pathname, location.searchParams, this.routes);
   }
 
+  /**
+   * Looks up a route in {@link routes} that matches a {@link to location}, loads its data and notifies subscribers.
+   *
+   * @param to A location or a route to navigate to.
+   */
   navigate(to: To): void {
     const location = toLocation(to);
 
-    this.outletManager = reconcileOutlets(this, matchRoutes(location.pathname, location.searchParams, this.routes));
+    const routeMatches = matchRoutes(location.pathname, location.searchParams, this.routes);
+    const routeManager = reconcileRouteManagers(this, routeMatches);
 
-    this._pubSub.publish({ type: 'navigate', location });
+    for (let manager = routeManager; manager !== null; manager = manager.childManager) {
+      if (manager.state.status === 'loading' && manager.promise === null) {
+        manager.reload();
+      }
+    }
+
+    this.routeManager = routeManager;
+
+    this._pubSub.publish({ type: 'navigate', router: this, location });
   }
 
   /**
    * Prefetches components and data of routes matched by a location.
    *
    * @param to A location or a route to prefetch.
-   * @returns An promise that can be aborted is prefetch must be discarded.
+   * @returns An promise that can be aborted to discard prefetching.
    */
   prefetch(to: To): AbortablePromise<void> {
     return new AbortablePromise((resolve, _reject, signal) => {
@@ -193,7 +106,7 @@ export class Router<Context = any> implements FallbackOptions {
    * @param listener A listener to subscribe.
    * @returns A callback that unsubscribe a listener.
    */
-  subscribe(listener: (event: RouterEvent) => void): () => void {
+  subscribe(listener: (event: RouterEvent<Context>) => void): () => void {
     return this._pubSub.subscribe(listener);
   }
 }

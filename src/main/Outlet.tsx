@@ -1,145 +1,91 @@
-import React, { Component, ComponentType, createContext, ReactElement, Suspense, useContext } from 'react';
-import { createErrorState } from './__loadRoute';
-import { NotFoundError } from './__notFound';
-import { OutletState } from './__types';
-import { isPromiseLike } from './__utils';
-import { OutletManager } from './OutletManager';
+import React, { ComponentType, createContext, ReactElement, Suspense, useContext } from 'react';
+import { RouteManager } from './RouteManager';
+import { OutletErrorBoundary } from './OutletErrorBoundary';
 
-export const OutletManagerContext = createContext<OutletManager | null>(null);
+export const RouteManagerContext = createContext<RouteManager | null>(null);
 
-OutletManagerContext.displayName = 'OutletManagerContext';
+RouteManagerContext.displayName = 'RouteManagerContext';
 
-export const ChildOutletManagerContext = createContext<OutletManager | null>(null);
+export const ChildRouteManagerContext = createContext<RouteManager | null>(null);
 
-ChildOutletManagerContext.displayName = 'ChildOutletManagerContext';
+ChildRouteManagerContext.displayName = 'ChildRouteManagerContext';
 
-/**
- * Renders an {@link Router.outletManager} provided by an enclosing {@link RouterProvider}.
- *
- * @group Components
- */
 export function Outlet(): ReactElement | null {
-  const manager = useContext(ChildOutletManagerContext);
+  const manager = useContext(ChildRouteManagerContext);
 
   if (manager === null) {
     return null;
   }
 
-  return <OutletBoundary manager={manager} />;
-}
+  const children = (
+    <Xxx
+      manager={manager}
+      canSuspend={true}
+    />
+  );
 
-interface OutletBoundaryProps {
-  manager: OutletManager;
-}
-
-interface OutletBoundaryState {
-  errorState: OutletState | null;
-}
-
-class OutletBoundary extends Component<OutletBoundaryProps, OutletBoundaryState> {
-  state = { errorState: null };
-
-  static getDerivedStateFromError(error: unknown): Partial<OutletBoundaryState> | null {
-    return { errorState: createErrorState(error) };
+  if (manager.state.status === 'ok' || manager.state.status === 'loading') {
+    return (
+      <Suspense
+        fallback={
+          <Xxx
+            manager={manager.fallbackManager}
+            canSuspend={false}
+          />
+        }
+      >
+        <OutletErrorBoundary manager={manager}>{children}</OutletErrorBoundary>
+      </Suspense>
+    );
   }
 
-  static getDerivedStateFromProps(
-    nextProps: Readonly<OutletBoundaryProps>,
-    prevState: OutletBoundaryState
-  ): Partial<OutletBoundaryState> | null {
-    if (prevState.errorState === null) {
-      return null;
-    }
-
-    nextProps.manager.activeManager.setState(prevState.errorState);
-
-    return { errorState: null };
-  }
-
-  render(): ReactElement | null {
-    const { manager } = this.props;
-
-    if (manager === null) {
-      return null;
-    }
-
-    const loadingComponent = getLoadingComponent(manager);
-
-    if (loadingComponent === null && manager === manager.activeManager) {
-      return renderOutlet(manager, true);
-    }
-
-    return <Suspense fallback={renderOutlet(manager.activeManager, true)}>{renderOutlet(manager, true)}</Suspense>;
-  }
+  return children;
 }
 
-function renderOutlet(manager: OutletManager, isSuspendable: boolean): ReactElement | null {
-  const { parentManager, router, routeMatch } = manager;
+interface XxxProps {
+  manager: RouteManager;
+  canSuspend: boolean;
+}
 
-  const state = manager.loadState();
-
-  if (isSuspendable && isPromiseLike(state)) {
-    return <Await promise={state} />;
-  }
+function Xxx(props: XxxProps): ReactElement | null {
+  const { manager, canSuspend } = props;
+  const { route } = manager.routeMatch;
 
   let Component;
-  let childManager = null;
 
-  if (isPromiseLike(state) || state.status === 'redirect') {
-    Component = getLoadingComponent(manager);
-  } else if (state.status === 'ok') {
-    if (routeMatch === null || routeMatch.route.component === undefined) {
-      throw new Error('Unexpected outlet state');
-    }
-    Component = routeMatch.route.component;
-    childManager = manager.childManager;
-  } else if (state.status === 'error') {
-    if (routeMatch !== null && routeMatch.route.errorComponent !== undefined) {
-      Component = routeMatch.route.errorComponent;
-    } else if (parentManager === null && router.errorComponent !== undefined) {
-      Component = router.errorComponent;
-    } else {
-      throw state.error;
-    }
-  } else if (state.status === 'not_found') {
-    if (routeMatch !== null && routeMatch.route.notFoundComponent !== undefined) {
-      Component = routeMatch.route.notFoundComponent;
-    } else if (parentManager === null && router.notFoundComponent !== undefined) {
-      Component = router.notFoundComponent;
-    } else {
-      throw new NotFoundError();
-    }
-  } else {
-    throw new Error('Unknown outlet status');
+  switch (manager.state.status) {
+    case 'ok':
+      Component = route.loadComponent() as ComponentType;
+      break;
+
+    case 'error':
+      Component = route.errorComponent;
+      break;
+
+    case 'loading':
+      if (canSuspend) {
+        throw manager.promise;
+      }
+      Component = route.loadingComponent;
+      break;
+
+    case 'not_found':
+      Component = route.notFoundComponent;
+      break;
+
+    case 'redirect':
+      return null;
   }
 
-  if (Component === null) {
+  if (Component === undefined) {
     return null;
   }
 
   return (
-    <OutletManagerContext.Provider value={manager}>
-      <ChildOutletManagerContext.Provider value={childManager}>
+    <RouteManagerContext.Provider value={manager}>
+      <ChildRouteManagerContext.Provider value={manager.childManager}>
         <Component />
-      </ChildOutletManagerContext.Provider>
-    </OutletManagerContext.Provider>
+      </ChildRouteManagerContext.Provider>
+    </RouteManagerContext.Provider>
   );
-}
-
-function getLoadingComponent(manager: OutletManager): ComponentType | null {
-  const { parentManager, router, routeMatch } = manager;
-
-  if (routeMatch !== null && routeMatch.route.loadingComponent !== undefined) {
-    return routeMatch.route.loadingComponent;
-  }
-
-  if (parentManager === null && router.loadingComponent !== undefined) {
-    return router.loadingComponent;
-  }
-
-  return null;
-}
-
-function Await(props: { promise: Promise<any> }): never {
-  throw props.promise;
 }

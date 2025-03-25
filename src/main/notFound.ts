@@ -16,11 +16,7 @@ export function notFound(): never {
  *
  * @group Routing
  */
-export class NotFoundError extends Error {
-  constructor() {
-    super();
-  }
-}
+export class NotFoundError extends Error {}
 
 /**
  * @internal

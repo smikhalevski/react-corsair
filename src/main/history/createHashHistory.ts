@@ -1,8 +1,8 @@
 import { PubSub } from 'parallel-universe';
-import { Location } from '../__types';
+import { Location } from '../types';
 import { History, HistoryOptions } from './types';
-import { urlSearchParamsAdapter } from './urlSearchParamsAdapter';
-import { parseLocation, parseOrCastLocation, rebasePathname, stringifyLocation } from './utils';
+import { concatPathname, parseLocation, parseOrCastLocation, stringifyLocation } from './utils';
+import { urlSearchParamsAdapter } from './createURLSearchParamsAdapter';
 
 /**
  * Create the history adapter that reads and writes location to a browser's session history using only URL hash.
@@ -38,7 +38,7 @@ export function createHashHistory(options: HistoryOptions = {}): History {
     },
 
     toAbsoluteURL(to) {
-      return rebasePathname(
+      return concatPathname(
         basePathname,
         '#' + encodeHash(typeof to === 'string' ? to : stringifyLocation(to, searchParamsAdapter))
       );

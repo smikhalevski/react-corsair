@@ -1,37 +1,37 @@
 import { ComponentType } from 'react';
-import { PathnameTemplate } from './__PathnameTemplate';
+import { PathnameTemplate } from './PathnameTemplate';
 import {
+  DataLoaderOptions,
   Dict,
   FallbackOptions,
-  LoaderOptions,
   LoadingAppearance,
   Location,
   LocationOptions,
   ParamsAdapter,
   RenderingDisposition,
   RouteOptions,
-} from './__types';
+} from './types';
 import { Outlet } from './Outlet';
 
 type Prettify<T> = { [K in keyof T]: T[K] } & {};
 
 type PartialVoid<T> = Partial<T> extends T ? T | void : T;
 
-declare const PARAMS: unique symbol;
+declare const LOCATION_PARAMS: unique symbol;
 declare const CONTEXT: unique symbol;
 
-type PARAMS = typeof PARAMS;
+type LOCATION_PARAMS = typeof LOCATION_PARAMS;
 type CONTEXT = typeof CONTEXT;
 
 /**
- * Infers cumulative route params.
+ * Infers route location params.
  *
  * @group Routing
  */
-export type InferParams<R extends Route> = R[PARAMS];
+export type InferLocationParams<R extends Route> = R[LOCATION_PARAMS];
 
 /**
- * Infers required router context.
+ * Infers required route context.
  *
  * @group Routing
  */
@@ -56,11 +56,13 @@ export class Route<
 > implements FallbackOptions
 {
   /**
-   * The type of cumulative route params.
+   * The type of route location params.
    *
    * @internal
    */
-  declare readonly [PARAMS]: PartialVoid<ParentRoute extends Route ? Prettify<ParentRoute[PARAMS] & Params> : Params>;
+  declare readonly [LOCATION_PARAMS]: PartialVoid<
+    ParentRoute extends Route ? Prettify<ParentRoute[LOCATION_PARAMS] & Params> : Params
+  >;
 
   /**
    * The type of required router context.
@@ -86,11 +88,11 @@ export class Route<
   paramsAdapter: ParamsAdapter<Params> | undefined;
 
   /**
-   * Loads data required to render a route.
+   * A callback that loads data required to render a route.
    *
    * @param options Loader options.
    */
-  loader: ((options: LoaderOptions<Params, Context>) => PromiseLike<Data> | Data) | undefined;
+  dataLoader: ((options: DataLoaderOptions<Params, Context>) => PromiseLike<Data> | Data) | undefined;
 
   /**
    * What to render when a component or data are being loaded.
@@ -112,7 +114,7 @@ export class Route<
    * Loads {@link RouteOptions.lazyComponent a lazy route component} once and caches it forever, unless an error
    * occurred during loading.
    */
-  loadComponent: () => Promise<ComponentType>;
+  loadComponent: () => ComponentType | Promise<ComponentType>;
 
   errorComponent: ComponentType | undefined;
   loadingComponent: ComponentType | undefined;
@@ -134,11 +136,11 @@ export class Route<
     this.parentRoute = parentRoute;
     this.pathnameTemplate = new PathnameTemplate(options.pathname || '/', options.isCaseSensitive);
     this.paramsAdapter = typeof paramsAdapter === 'function' ? { parse: paramsAdapter } : paramsAdapter;
-    this.loader = options.loader;
+    this.dataLoader = options.dataLoader;
     this.errorComponent = options.errorComponent;
     this.loadingComponent = options.loadingComponent;
     this.notFoundComponent = options.notFoundComponent;
-    this.loadingAppearance = options.loadingAppearance || 'auto';
+    this.loadingAppearance = options.loadingAppearance || 'avoid';
     this.renderingDisposition = options.renderingDisposition || 'server';
 
     let component: Promise<ComponentType> | ComponentType | undefined = options.component;
@@ -155,7 +157,7 @@ export class Route<
 
     this.loadComponent = () => {
       if (component !== undefined) {
-        return Promise.resolve(component);
+        return component;
       }
 
       component = new Promise<{ default: ComponentType }>(resolve => resolve(lazyComponent!())).then(
@@ -186,7 +188,7 @@ export class Route<
    * @param params Route params.
    * @param options Location options.
    */
-  getLocation(params: InferParams<this>, options?: LocationOptions): Location {
+  getLocation(params: InferLocationParams<this>, options?: LocationOptions): Location {
     let pathname = '';
     let searchParams: Dict = {};
     let hasLooseParams = false;

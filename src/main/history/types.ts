@@ -1,4 +1,4 @@
-import { Dict, Location, To } from '../__types';
+import { Dict, Location, To } from '../types';
 
 /**
  * @group History
@@ -10,8 +10,9 @@ export interface HistoryOptions {
   basePathname?: string;
 
   /**
-   * An adapter that extracts params from a URL search string and stringifies them back. By default, an adapter that
-   * relies on {@link !URLSearchParams} is used.
+   * An adapter that extracts params from a URL search string and stringifies them back.
+   *
+   * @default {@link urlSearchParamsAdapter}
    */
   searchParamsAdapter?: SearchParamsAdapter;
 }

@@ -1,4 +1,4 @@
-import { toLocation } from '../main/__utils';
+import { toLocation } from '../main/utils';
 
 describe('toLocation', () => {
   test('returns a location', () => {

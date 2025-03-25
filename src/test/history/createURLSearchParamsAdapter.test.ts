@@ -15,7 +15,7 @@ describe('urlSearchParamsAdapter', () => {
 
   test('throws if param cannot be stringified', () => {
     expect(() => urlSearchParamsAdapter.stringify({ aaa: new Map() })).toThrow(
-      new TypeError('Unsupported param value type: aaa')
+      new TypeError('Unsupported param value at "aaa"')
     );
   });
 });

@@ -1,27 +1,30 @@
-import { RouteMatch } from './__matchRoutes';
-import { NotFoundError } from './__notFound';
-import { Redirect } from './__redirect';
-import { OutletState } from './__types';
-import { isPromiseLike } from './__utils';
+import { RouteMatch } from './matchRoutes';
+import { NotFoundError } from './notFound';
+import { Redirect } from './redirect';
+import { RouteState } from './types';
+import { isPromiseLike } from './utils';
 
 /**
  * Loads a route component and data.
+ *
+ * {@link Route.loadComponent A route component} is loaded once and cached forever, while data is loaded anew on every
+ * {@link loadRoute} call.
  */
 export function loadRoute(
   routeMatch: RouteMatch,
   context: unknown,
   signal: AbortSignal,
   isPrefetch: boolean
-): Promise<OutletState> | OutletState {
+): Promise<RouteState> | RouteState {
   const { route, params } = routeMatch;
 
   let component;
   let data;
 
   try {
-    component = route.component || route.loadComponent();
+    component = route.loadComponent();
 
-    data = route.loader === undefined ? undefined : route.loader({ params, context, signal, isPrefetch });
+    data = route.dataLoader === undefined ? undefined : route.dataLoader({ params, context, signal, isPrefetch });
   } catch (error) {
     return createErrorState(error);
   }
@@ -33,11 +36,11 @@ export function loadRoute(
   return createOkState(data);
 }
 
-export function createOkState(data: unknown): OutletState {
+export function createOkState(data: unknown): RouteState {
   return { status: 'ok', data };
 }
 
-export function createErrorState(error: unknown): OutletState {
+export function createErrorState(error: unknown): RouteState {
   if (error instanceof NotFoundError) {
     return { status: 'not_found' };
   }

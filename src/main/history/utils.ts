@@ -1,7 +1,8 @@
-import { Location, To } from '../__types';
-import { toLocation } from '../__utils';
+import { Location, To } from '../types';
+import { toLocation } from '../utils';
 import { SearchParamsAdapter } from './types';
-import { urlSearchParamsAdapter } from './urlSearchParamsAdapter';
+
+import { urlSearchParamsAdapter } from './createURLSearchParamsAdapter';
 
 /**
  * Parses a pathname-search-hash string as a location.
@@ -51,9 +52,9 @@ export function stringifyLocation(to: To, searchParamsAdapter = urlSearchParamsA
 }
 
 /**
- * Prepends a base pathname to a pathname.
+ * Concatenates a base pathname and a pathname.
  */
-export function rebasePathname(basePathname: string | undefined, pathname: string): string {
+export function concatPathname(basePathname: string | undefined, pathname: string): string {
   if (basePathname === undefined || basePathname === '') {
     return pathname;
   }

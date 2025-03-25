@@ -1,6 +1,6 @@
 import { ComponentType } from 'react';
-import { InferContext, Route } from './__Route';
-import { RouteOptions } from './__types';
+import { InferContext, Route } from './Route';
+import { RouteOptions } from './types';
 
 /**
  * Creates a route that is rendered in an {@link Outlet} of a {@link Router}.

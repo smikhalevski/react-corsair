@@ -1,8 +1,8 @@
 import { PubSub } from 'parallel-universe';
-import { Location } from '../__types';
+import { Location } from '../types';
 import { History, HistoryOptions } from './types';
-import { urlSearchParamsAdapter } from './urlSearchParamsAdapter';
-import { debasePathname, parseLocation, parseOrCastLocation, rebasePathname, stringifyLocation } from './utils';
+import { concatPathname, debasePathname, parseLocation, parseOrCastLocation, stringifyLocation } from './utils';
+import { urlSearchParamsAdapter } from './createURLSearchParamsAdapter';
 
 /**
  * Create the history adapter that reads and writes location to a browser's session history.
@@ -39,7 +39,7 @@ export function createBrowserHistory(options: HistoryOptions = {}): History {
     },
 
     toAbsoluteURL(to) {
-      return rebasePathname(basePathname, typeof to === 'string' ? to : stringifyLocation(to, searchParamsAdapter));
+      return concatPathname(basePathname, typeof to === 'string' ? to : stringifyLocation(to, searchParamsAdapter));
     },
 
     push(to) {
@@ -48,7 +48,7 @@ export function createBrowserHistory(options: HistoryOptions = {}): History {
       window.history.pushState(
         location.state,
         '',
-        rebasePathname(basePathname, stringifyLocation(location, searchParamsAdapter))
+        concatPathname(basePathname, stringifyLocation(location, searchParamsAdapter))
       );
       pubSub.publish();
     },
@@ -59,7 +59,7 @@ export function createBrowserHistory(options: HistoryOptions = {}): History {
       window.history.replaceState(
         location.state,
         '',
-        rebasePathname(basePathname, stringifyLocation(location, searchParamsAdapter))
+        concatPathname(basePathname, stringifyLocation(location, searchParamsAdapter))
       );
       pubSub.publish();
     },

@@ -1,4 +1,4 @@
-import { Route } from './__Route';
+import { Route } from './Route';
 
 /**
  * Returns params of a {@link route} or throws if used outside of route component.
@@ -23,7 +23,7 @@ export function useRouteData<Data>(route: Route<any, any, Data>): Data {
 }
 
 /**
- * Returns an error that occurred during route content loading, or during rendering.
+ * Returns an error that occurred during route manager loading, or during rendering.
  *
  * If there's no then `undefined` is returned.
  *

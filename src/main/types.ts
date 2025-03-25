@@ -1,6 +1,7 @@
 import { ComponentType } from 'react';
-import { Route } from './__Route';
+import { Route } from './Route';
 import { Router } from './Router';
+import { RouteManager } from './RouteManager';
 
 export interface Dict {
   [key: string]: any;
@@ -93,20 +94,20 @@ export interface ParamsAdapter<Params> {
 }
 
 /**
- * What to render when {@link RouteOptions.lazyComponent} or {@link RouteOptions.loader} are being loaded.
+ * What to render when {@link RouteOptions.lazyComponent} or {@link RouteOptions.dataLoader} are being loaded.
  *
  * <dl>
  * <dt>"loading"</dt>
- * <dd>A {@link RouteOptions.loadingComponent} is always rendered if a route is matched and component or loader are
- * being loaded.</dd>
- * <dt>"auto"</dt>
- * <dd>If another route is currently rendered then it would be preserved until component and loader of a newly matched
- * route are being loaded. Otherwise, a {@link RouteOptions.loadingComponent} is rendered.</dd>
+ * <dd>Always render {@link RouteOptions.loadingComponent} if a route requires loading.</dd>
+ * <dt>"route_loading"</dt>
+ * <dd>render {@link RouteOptions.loadingComponent} only if a route is changed during navigation.</dd>
+ * <dt>"avoid"</dt>
+ * <dd>If there's a route that is already rendered then keep it on the screen until the new route data is loaded.</dd>
  * </dl>
  *
  * @group Routing
  */
-export type LoadingAppearance = 'loading' | 'auto';
+export type LoadingAppearance = 'loading' | 'route_loading' | 'avoid';
 
 /**
  * Where the route is rendered.
@@ -123,13 +124,13 @@ export type LoadingAppearance = 'loading' | 'auto';
 export type RenderingDisposition = 'server' | 'client';
 
 /**
- * Options of a {@link RouteOptions.loader data loader}.
+ * Options of a {@link RouteOptions.dataLoader data loader}.
  *
  * @template Params Route params.
  * @template Context A router context.
  * @group Routing
  */
-export interface LoaderOptions<Params = any, Context = any> {
+export interface DataLoaderOptions<Params = any, Context = any> {
   /**
    * Route params extracted from a location.
    */
@@ -170,7 +171,7 @@ export interface FallbackOptions {
   errorComponent: ComponentType | undefined;
 
   /**
-   * A component that is rendered when a {@link RouteOptions.lazyComponent} or a {@link RouteOptions.loader} are being
+   * A component that is rendered when a {@link RouteOptions.lazyComponent} or a {@link RouteOptions.dataLoader} are being
    * loaded. Render a skeleton or a spinner in this component to notify user that a new route is being loaded.
    *
    * A {@link Router}-level {@link loadingComponent} is used only for root routes. Child routes must specify their own
@@ -256,16 +257,16 @@ export interface RouteOptions<Params, Data, Context> extends Partial<FallbackOpt
   paramsAdapter?: ParamsAdapter<Params> | ParamsAdapter<Params>['parse'];
 
   /**
-   * Loads data required to render a route.
+   * A callback that loads data required to render a route.
    *
    * Loaded data is available in route {@link component} via {@link useRouteData}.
    *
    * @param options Loader options.
    */
-  loader?: (options: LoaderOptions<Params, Context>) => PromiseLike<Data> | Data;
+  dataLoader?: (options: DataLoaderOptions<Params, Context>) => PromiseLike<Data> | Data;
 
   /**
-   * What to render when {@link lazyComponent} or {@link loader} are being loaded.
+   * What to render when {@link lazyComponent} or {@link dataLoader} are being loaded.
    *
    * @default "auto"
    */
@@ -297,28 +298,131 @@ export interface RouterOptions<Context> extends Partial<FallbackOptions> {
   context: Context;
 }
 
-interface OkState {
+/**
+ * An event published by a {@link Router} after a {@link Router.navigate navigation} occurs.
+ *
+ * @template Context A router context.
+ * @group Routing
+ */
+export interface NavigateEvent<Context> {
+  /**
+   * The event type.
+   */
+  type: 'navigate';
+
+  /**
+   * A router from which an event originates.
+   */
+  router: Router<Context>;
+
+  /**
+   * A location to which a router was navigated.
+   */
+  location: Location;
+}
+
+/**
+ * An event published by a {@link Router} when an error was thrown by a component or by a data loader.
+ *
+ * @template Context A router context.
+ * @group Routing
+ */
+export interface ErrorEvent<Context> {
+  /**
+   * The event type.
+   */
+  type: 'error';
+
+  /**
+   * A route manager from which an event originates.
+   */
+  routeManager: RouteManager<Context>;
+
+  /**
+   * An error that was thrown.
+   */
+  error: any;
+}
+
+/**
+ * An event published by a {@link Router} when a {@link notFound} was called from a component or a data loader.
+ *
+ * @template Context A router context.
+ * @group Routing
+ */
+export interface NotFoundEvent<Context> {
+  /**
+   * The event type.
+   */
+  type: 'not_found';
+
+  /**
+   * A route manager from which an event originates.
+   */
+  routeManager: RouteManager<Context>;
+}
+
+/**
+ * An event published by a {@link Router} when a {@link redirect} was called from a component or a data loader.
+ *
+ * @template Context A router context.
+ * @group Routing
+ */
+export interface RedirectEvent<Context> {
+  /**
+   * The event type.
+   */
+  type: 'redirect';
+
+  /**
+   * A route manager from which an event originates.
+   */
+  routeManager: RouteManager<Context>;
+
+  /**
+   * A location or a URL to which a redirect should be made.
+   */
+  to: To | string;
+}
+
+/**
+ * An event published by a {@link Router}.
+ *
+ * @template Context A router context.
+ * @group Routing
+ */
+export type RouterEvent<Context> =
+  | NavigateEvent<Context>
+  | ErrorEvent<Context>
+  | NotFoundEvent<Context>
+  | RedirectEvent<Context>;
+
+export interface LoadingState {
+  status: 'loading';
+}
+
+export interface OkState {
   status: 'ok';
   data: unknown;
 }
 
-interface ErrorState {
+export interface ErrorState {
   status: 'error';
   error: unknown;
 }
 
-interface NotFoundState {
+export interface NotFoundState {
   status: 'not_found';
 }
 
-interface RedirectState {
+export interface RedirectState {
   status: 'redirect';
   to: To | string;
 }
 
 /**
- * A serializable state of an {@link OutletManager}.
+ * A state of a {@link RouteManager}.
  *
  * @group Routing
  */
-export type OutletState = OkState | ErrorState | NotFoundState | RedirectState;
+export type RouteState = LoadingState | OkState | ErrorState | NotFoundState | RedirectState;

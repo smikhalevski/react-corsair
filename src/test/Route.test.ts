@@ -161,10 +161,10 @@ describe('Route', () => {
   });
 
   describe('loadComponent', () => {
-    test('returns an Outlet if there is no component', async () => {
+    test('returns an Outlet if there is no component', () => {
       const route = createRoute();
 
-      await expect(route.loadComponent()).resolves.toBe(Outlet);
+      expect(route.loadComponent()).toBe(Outlet);
     });
 
     test("throws if lazyComponent doesn't return a module", async () => {
@@ -182,7 +182,7 @@ describe('Route', () => {
         component: Component,
       });
 
-      await expect(route.loadComponent()).resolves.toBe(Component);
+      expect(route.loadComponent()).toBe(Component);
     });
 
     test('loads a lazy component', async () => {
@@ -252,7 +252,7 @@ describe('Route', () => {
 
       await route.loadComponent();
 
-      await expect(route.loadComponent()).resolves.toBe(Component);
+      expect(route.loadComponent()).toBe(Component);
 
       expect(lazyComponentMock).toHaveBeenCalledTimes(1);
     });

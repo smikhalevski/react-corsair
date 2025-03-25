@@ -1,4 +1,4 @@
-import { Dict } from './__types';
+import { Dict } from './types';
 
 /**
  * A result returned by {@link PathnameTemplate.match} on a successful pathname match.
@@ -46,7 +46,7 @@ export class PathnameTemplate {
   /**
    * An array of {@link _segments segment}-specific bitwise flags.
    */
-  protected _flags: number[];
+  protected _segmentFlags: number[];
 
   /**
    * A regex that matches the pathname.
@@ -69,7 +69,7 @@ export class PathnameTemplate {
     this.isCaseSensitive = isCaseSensitive;
 
     this._segments = template.segments;
-    this._flags = template.flags;
+    this._segmentFlags = template.segmentFlags;
     this._regExp = createPatternRegExp(template, isCaseSensitive);
   }
 
@@ -80,7 +80,7 @@ export class PathnameTemplate {
    * @returns A matching result, or `null` if {@link pathname} doesn't match the template.
    */
   match(pathname: string): PathnameMatch | null {
-    const { _segments, _flags } = this;
+    const { _segments, _segmentFlags } = this;
 
     const match = this._regExp.exec(pathname);
 
@@ -94,7 +94,7 @@ export class PathnameTemplate {
       params = {};
 
       for (let i = 0, j = 1, value; i < _segments.length; ++i) {
-        if ((_flags[i] & FLAG_PARAM) !== FLAG_PARAM) {
+        if ((_segmentFlags[i] & FLAG_PARAM) !== FLAG_PARAM) {
           continue;
         }
         value = match[j++];
@@ -120,22 +120,22 @@ export class PathnameTemplate {
    * @returns A pathname string.
    */
   toPathname(params?: Dict | void): string {
-    const { _segments, _flags } = this;
+    const { _segments, _segmentFlags } = this;
 
     let pathname = '';
 
-    for (let i = 0, segment, flag, value; i < _segments.length; i++) {
+    for (let i = 0, segment, flags, value; i < _segments.length; i++) {
       segment = _segments[i];
-      flag = _flags[i];
+      flags = _segmentFlags[i];
 
-      if ((flag & FLAG_PARAM) !== FLAG_PARAM) {
+      if ((flags & FLAG_PARAM) !== FLAG_PARAM) {
         pathname += '/' + segment;
         continue;
       }
 
       if (
         (params === undefined || (value = params[segment]) === undefined || value === null || value === '') &&
-        (flag & FLAG_OPTIONAL) === FLAG_OPTIONAL
+        (flags & FLAG_OPTIONAL) === FLAG_OPTIONAL
       ) {
         continue;
       }
@@ -149,10 +149,17 @@ export class PathnameTemplate {
       }
 
       pathname +=
-        '/' + ((flag & FLAG_WILDCARD) === FLAG_WILDCARD ? encodePathname(value) : encodePathnameComponent(value));
+        '/' + ((flags & FLAG_WILDCARD) === FLAG_WILDCARD ? encodePathname(value) : encodePathnameComponent(value));
     }
 
     return pathname === '' ? '/' : pathname;
+  }
+
+  /**
+   * @hidden
+   */
+  toString(): string {
+    return this.pattern;
   }
 }
 
@@ -178,7 +185,7 @@ export interface Template {
   /**
    * An array of bitmasks that holds {@link segments} metadata.
    */
-  flags: number[];
+  segmentFlags: number[];
 
   /**
    * Names of pattern params.
@@ -191,7 +198,7 @@ export interface Template {
  */
 export function parsePattern(pattern: string): Template {
   const segments = [];
-  const flags = [];
+  const segmentFlags = [];
   const paramNames = new Set<string>();
 
   let stage = STAGE_SEPARATOR;
@@ -224,7 +231,7 @@ export function parsePattern(pattern: string): Template {
         paramName = pattern.substring(paramIndex, i);
         paramNames.add(paramName);
         segments.push(paramName);
-        flags.push(FLAG_PARAM);
+        segmentFlags.push(FLAG_PARAM);
         stage = STAGE_PARAM;
         break;
 
@@ -232,7 +239,7 @@ export function parsePattern(pattern: string): Template {
         if (stage !== STAGE_PARAM) {
           throw new SyntaxError('Unexpected wildcard flag at ' + i);
         }
-        flags[flags.length - 1] |= FLAG_WILDCARD;
+        segmentFlags[segmentFlags.length - 1] |= FLAG_WILDCARD;
         stage = STAGE_WILDCARD;
         ++i;
         break;
@@ -240,14 +247,14 @@ export function parsePattern(pattern: string): Template {
       case 63 /* ? */:
         if (stage === STAGE_SEPARATOR || stage === STAGE_SEGMENT) {
           segments.push(pattern.substring(segmentIndex, i));
-          flags.push(FLAG_OPTIONAL);
+          segmentFlags.push(FLAG_OPTIONAL);
           stage = STAGE_OPTIONAL;
           ++i;
           break;
         }
 
         if (stage === STAGE_PARAM || stage === STAGE_WILDCARD) {
-          flags[flags.length - 1] |= FLAG_OPTIONAL;
+          segmentFlags[segmentFlags.length - 1] |= FLAG_OPTIONAL;
           stage = STAGE_OPTIONAL;
           ++i;
           break;
@@ -258,7 +265,7 @@ export function parsePattern(pattern: string): Template {
       case 47 /* / */:
         if (i !== 0 && (stage === STAGE_SEPARATOR || stage === STAGE_SEGMENT)) {
           segments.push(pattern.substring(segmentIndex, i));
-          flags.push(0);
+          segmentFlags.push(0);
         }
         stage = STAGE_SEPARATOR;
         segmentIndex = ++i;
@@ -276,35 +283,35 @@ export function parsePattern(pattern: string): Template {
 
   if (stage === STAGE_SEPARATOR || stage === STAGE_SEGMENT) {
     segments.push(pattern.substring(segmentIndex));
-    flags.push(0);
+    segmentFlags.push(0);
   }
 
-  return { segments, flags, paramNames };
+  return { segments, segmentFlags, paramNames };
 }
 
 /**
  * Creates a {@link !RegExp} that matches a pathname template.
  */
 export function createPatternRegExp(template: Template, isCaseSensitive = false): RegExp {
-  const { segments, flags } = template;
+  const { segments, segmentFlags } = template;
 
   let pattern = '^';
 
-  for (let i = 0, segment, flag, segmentPattern; i < segments.length; ++i) {
+  for (let i = 0, segment, flags, segmentPattern; i < segments.length; ++i) {
     segment = segments[i];
-    flag = flags[i];
+    flags = segmentFlags[i];
 
-    if ((flag & FLAG_PARAM) !== FLAG_PARAM) {
+    if ((flags & FLAG_PARAM) !== FLAG_PARAM) {
       segmentPattern = segment.length === 0 ? '/' : '/' + escapeRegExp(segment);
 
-      pattern += (flag & FLAG_OPTIONAL) === FLAG_OPTIONAL ? '(?:' + segmentPattern + ')?' : segmentPattern;
+      pattern += (flags & FLAG_OPTIONAL) === FLAG_OPTIONAL ? '(?:' + segmentPattern + ')?' : segmentPattern;
       continue;
     }
 
-    if ((flag & FLAG_WILDCARD) === FLAG_WILDCARD) {
-      pattern += (flag & FLAG_OPTIONAL) === FLAG_OPTIONAL ? '(?:/(.+))?' : '/(.+)';
+    if ((flags & FLAG_WILDCARD) === FLAG_WILDCARD) {
+      pattern += (flags & FLAG_OPTIONAL) === FLAG_OPTIONAL ? '(?:/(.+))?' : '/(.+)';
     } else {
-      pattern += (flag & FLAG_OPTIONAL) === FLAG_OPTIONAL ? '(?:/([^/]+))?' : '/([^/]+)';
+      pattern += (flags & FLAG_OPTIONAL) === FLAG_OPTIONAL ? '(?:/([^/]+))?' : '/([^/]+)';
     }
   }
 

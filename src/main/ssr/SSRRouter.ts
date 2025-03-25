@@ -1,8 +1,8 @@
-import { OutletState, RouterOptions } from '../__types';
+import { RouterOptions, RouteState } from '../types';
 import { Router } from '../Router';
 
 export interface SSRRouterOptions<Context> extends RouterOptions<Context> {
-  stateStringifier?: (payload: OutletState) => string;
+  stateStringifier?: (payload: RouteState) => string;
   nonce?: string;
 }
 

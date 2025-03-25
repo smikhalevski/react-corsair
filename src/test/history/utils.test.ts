@@ -1,5 +1,5 @@
 import { parseLocation, stringifyLocation } from '../../main';
-import { debasePathname, rebasePathname } from '../../main/history/utils';
+import { debasePathname, concatPathname } from '../../main/history/utils';
 
 describe('stringifyLocation', () => {
   test('returns a URL', () => {
@@ -32,16 +32,16 @@ describe('parseLocation', () => {
   });
 });
 
-describe('rebasePathname', () => {
+describe('concatPathname', () => {
   test('prepends base pathname', () => {
-    expect(rebasePathname('aaa', '/bbb')).toBe('aaa/bbb');
-    expect(rebasePathname('/aaa', '/bbb')).toBe('/aaa/bbb');
-    expect(rebasePathname('/aaa', 'bbb')).toBe('/aaa/bbb');
-    expect(rebasePathname('/aaa/', '/bbb')).toBe('/aaa/bbb');
-    expect(rebasePathname('/aaa/', 'bbb')).toBe('/aaa/bbb');
-    expect(rebasePathname('', 'aaa')).toBe('aaa');
-    expect(rebasePathname('', '/aaa')).toBe('/aaa');
-    expect(rebasePathname('/', 'aaa')).toBe('/aaa');
+    expect(concatPathname('aaa', '/bbb')).toBe('aaa/bbb');
+    expect(concatPathname('/aaa', '/bbb')).toBe('/aaa/bbb');
+    expect(concatPathname('/aaa', 'bbb')).toBe('/aaa/bbb');
+    expect(concatPathname('/aaa/', '/bbb')).toBe('/aaa/bbb');
+    expect(concatPathname('/aaa/', 'bbb')).toBe('/aaa/bbb');
+    expect(concatPathname('', 'aaa')).toBe('aaa');
+    expect(concatPathname('', '/aaa')).toBe('/aaa');
+    expect(concatPathname('/', 'aaa')).toBe('/aaa');
   });
 });
 

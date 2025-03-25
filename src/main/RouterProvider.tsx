@@ -1,6 +1,6 @@
-import React, { ReactElement, ReactNode, useEffect, useState } from 'react';
-import { RouterContext } from './__useRouter';
-import { Outlet, ChildOutletManagerContext } from './Outlet';
+import React, { ReactElement, ReactNode, useLayoutEffect, useState } from 'react';
+import { RouterContext } from './useRouter';
+import { ChildRouteManagerContext, Outlet } from './Outlet';
 import { Router } from './Router';
 
 /**
@@ -27,13 +27,13 @@ export interface RouterProviderProps {
  */
 export function RouterProvider(props: RouterProviderProps): ReactElement {
   const { router, children = <Outlet /> } = props;
-  const [outletManager, setOutletManager] = useState(router.outletManager);
+  const [routeManager, setRouteManager] = useState(router.routeManager);
 
-  useEffect(() => router.subscribe(() => setOutletManager(router.outletManager)), [router]);
+  useLayoutEffect(() => router.subscribe(() => setRouteManager(router.routeManager)), [router]);
 
   return (
     <RouterContext.Provider value={router}>
-      <ChildOutletManagerContext.Provider value={outletManager}>{children}</ChildOutletManagerContext.Provider>
+      <ChildRouteManagerContext.Provider value={routeManager}>{children}</ChildRouteManagerContext.Provider>
     </RouterContext.Provider>
   );
 }
