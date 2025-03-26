@@ -63,7 +63,7 @@ export class Router<Context = any> implements FallbackOptions {
     const rootPresenter = reconcilePresenters(this, routeMatches);
 
     for (let presenter = rootPresenter; presenter !== null; presenter = presenter.childPresenter) {
-      if (presenter.state.status === 'loading' && presenter.pendingPromise === null) {
+      if (presenter.state.status === 'loading' && presenter.loadingPromise === null) {
         presenter.reload();
       }
     }

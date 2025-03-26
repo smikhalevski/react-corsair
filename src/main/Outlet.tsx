@@ -96,8 +96,8 @@ function RouteOutlet(props: RouteOutletProps): ReactElement | null {
       break;
 
     case 'loading':
-      if (canSuspend && presenter.pendingPromise !== null) {
-        throw presenter.pendingPromise;
+      if (canSuspend && presenter.loadingPromise !== null) {
+        throw presenter.loadingPromise;
       }
       Component = route.loadingComponent || fallbacks.loadingComponent;
       break;

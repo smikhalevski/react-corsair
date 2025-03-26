@@ -37,7 +37,7 @@ export function reconcilePresenters(router: Router, routeMatches: RouteMatch[]):
       // Route and params are unchanged, reuse the existing state
 
       presenter.state = replacedPresenter.state;
-      presenter.pendingPromise = replacedPresenter.pendingPromise;
+      presenter.loadingPromise = replacedPresenter.loadingPromise;
 
       replacedPresenter = replacedPresenter.childPresenter;
     }

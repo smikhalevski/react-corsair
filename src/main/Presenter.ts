@@ -66,7 +66,7 @@ export class Presenter {
   /**
    * A promise that resolves when the route loading is completed, or `null` if there's not active loading.
    */
-  pendingPromise: AbortablePromise<void> | null = null;
+  loadingPromise: AbortablePromise<void> | null = null;
 
   /**
    * Create a new {@link Presenter} instance.
@@ -125,8 +125,8 @@ export class Presenter {
 
     const promise = new AbortablePromise<void>((resolve, _reject, signal) => {
       signal.addEventListener('abort', () => {
-        if (this.pendingPromise === promise) {
-          this.pendingPromise = null;
+        if (this.loadingPromise === promise) {
+          this.loadingPromise = null;
         }
         abortController.abort(signal.reason);
       });
@@ -135,19 +135,19 @@ export class Presenter {
         if (signal.aborted) {
           return;
         }
-        this.pendingPromise = null;
+        this.loadingPromise = null;
         this.setState(state);
         resolve();
       });
     });
 
-    const { pendingPromise } = this;
+    const { loadingPromise } = this;
 
-    this.pendingPromise = promise;
+    this.loadingPromise = promise;
 
-    pendingPromise?.abort();
+    loadingPromise?.abort();
 
-    if (this.state.status === 'loading' ? pendingPromise === undefined : this.route.loadingAppearance === 'loading') {
+    if (this.state.status === 'loading' ? loadingPromise === undefined : this.route.loadingAppearance === 'loading') {
       this.setState({ status: 'loading' });
     }
 
