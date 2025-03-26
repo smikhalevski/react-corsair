@@ -130,7 +130,7 @@ export type RenderingDisposition = 'server' | 'client';
  * @template Context A router context.
  * @group Routing
  */
-export interface DataLoaderOptions<Params = any, Context = any> {
+export interface DataLoaderOptions<Params, Context> {
   /**
    * Route params extracted from a location.
    */
@@ -198,7 +198,7 @@ export interface FallbackOptions {
  * @template Context A router context.
  * @group Routing
  */
-export interface RouteOptions<Params, Data, Context> extends Partial<FallbackOptions> {
+export interface RouteOptions<Params extends object | void, Data, Context> extends Partial<FallbackOptions> {
   /**
    * A URL pathname pattern.
    *

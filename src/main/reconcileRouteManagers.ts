@@ -1,5 +1,5 @@
 import isDeepEqual from 'fast-deep-equal';
-import { RouteMatch } from './matchRoutes';
+import { RouteMatch } from './__matchRoutes';
 import { RouteManager } from './RouteManager';
 import { Router } from './Router';
 

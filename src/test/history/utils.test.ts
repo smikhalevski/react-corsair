@@ -1,5 +1,5 @@
 import { parseLocation, stringifyLocation } from '../../main';
-import { debasePathname, concatPathname } from '../../main/history/utils';
+import { concatPathname, debasePathname } from '../../main/history/utils';
 
 describe('stringifyLocation', () => {
   test('returns a URL', () => {

@@ -1,4 +1,4 @@
-import { RouteMatch } from './matchRoutes';
+import { RouteMatch } from './__matchRoutes';
 import { RouteState } from './types';
 import { Router } from './Router';
 import { AbortablePromise, PubSub } from 'parallel-universe';

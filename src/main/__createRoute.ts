@@ -1,5 +1,5 @@
 import { ComponentType } from 'react';
-import { InferRouteContext, Route } from './__Route';
+import { InferContext, Route } from './__Route';
 import { RouteOptions } from './types';
 
 /**
@@ -33,8 +33,8 @@ export function createRoute<Params extends object | void = object | void, Data =
  */
 export function createRoute<ParentRoute extends Route, Params extends object | void = object | void, Data = void>(
   parentRoute: ParentRoute,
-  options?: RouteOptions<Params, Data, InferRouteContext<ParentRoute>>
-): Route<ParentRoute, Params, Data, InferRouteContext<ParentRoute>>;
+  options?: RouteOptions<Params, Data, InferContext<ParentRoute>>
+): Route<ParentRoute, Params, Data, InferContext<ParentRoute>>;
 
 /**
  * Creates a route that is rendered in an {@link Outlet} of a {@link Router}.

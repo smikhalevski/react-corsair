@@ -1,4 +1,4 @@
-import React, { ComponentType, createContext, ReactElement, Suspense, useContext } from 'react';
+import React, { createContext, ReactElement, Suspense, useContext } from 'react';
 import { RouteManager } from './RouteManager';
 import { OutletErrorBoundary } from './OutletErrorBoundary';
 
@@ -74,6 +74,7 @@ function Xxx(props: XxxProps): ReactElement | null {
       break;
 
     case 'redirect':
+      Component = route.loadingComponent;
       return null;
   }
 

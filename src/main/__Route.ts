@@ -1,5 +1,5 @@
 import { ComponentType } from 'react';
-import { PathnameTemplate } from './PathnameTemplate';
+import { PathnameTemplate } from './__PathnameTemplate';
 import {
   DataLoaderOptions,
   Dict,
@@ -30,21 +30,21 @@ type DATA = typeof DATA;
  *
  * @group Routing
  */
-export type InferRouteLocationParams<R extends Route> = R[LOCATION_PARAMS];
+export type InferLocationParams<R extends Route> = R[LOCATION_PARAMS];
 
 /**
- * Infers required route context.
+ * Infers route context.
  *
  * @group Routing
  */
-export type InferRouteContext<R extends Route> = R[CONTEXT];
+export type InferContext<R extends Route> = R[CONTEXT];
 
 /**
- * Infers required route context.
+ * Infers route data.
  *
  * @group Routing
  */
-export type InferRouteData<R extends Route> = R[DATA];
+export type InferData<R extends Route> = R[DATA];
 
 /**
  * A route that can be rendered by a router.
@@ -100,6 +100,8 @@ export class Route<
   /**
    * An adapter that can validate and transform params extracted from the {@link Location.pathname} and
    * {@link Location.searchParams}.
+   *
+   * If {@link paramsAdapter} throws during parsing, then route isn't matched and error is ignored.
    */
   paramsAdapter: ParamsAdapter<Params> | undefined;
 
@@ -204,7 +206,7 @@ export class Route<
    * @param params Route params.
    * @param options Location options.
    */
-  getLocation(params: InferRouteLocationParams<this>, options?: LocationOptions): Location {
+  getLocation(params: InferLocationParams<this>, options?: LocationOptions): Location {
     let pathname = '';
     let searchParams: Dict = {};
     let hasLooseParams = false;

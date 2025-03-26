@@ -13,11 +13,11 @@ export { parseLocation, stringifyLocation } from './history/utils';
 export { type HistoryOptions, type History, type SearchParamsAdapter } from './history/types';
 
 export { createRoute } from './__createRoute';
-export { notFound, NotFoundError } from './notFound';
+export { notFound, NotFoundError } from './__notFound';
 export { Outlet } from './Outlet';
-export { PathnameTemplate, type PathnameMatch } from './PathnameTemplate';
-export { redirect, Redirect } from './redirect';
-export { Route, type InferRouteData, type InferRouteContext, type InferRouteLocationParams } from './__Route';
+export { PathnameTemplate, type PathnameMatch } from './__PathnameTemplate';
+export { redirect, Redirect } from './__redirect';
+export { Route, type InferData, type InferContext, type InferLocationParams } from './__Route';
 export { useRouter } from './useRouter';
 export { usePrefetch } from './usePrefetch';
 export { Router } from './Router';
