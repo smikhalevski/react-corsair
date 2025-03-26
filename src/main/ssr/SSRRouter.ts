@@ -1,9 +1,9 @@
 import { RouterOptions } from '../types';
 import { Router } from '../Router';
-import { RoutePresenterState } from '../RoutePresenter';
+import { PresenterState } from '../Presenter';
 
 export interface SSRRouterOptions<Context> extends RouterOptions<Context> {
-  stateStringifier?: (payload: RoutePresenterState) => string;
+  stateStringifier?: (payload: PresenterState) => string;
   nonce?: string;
 }
 

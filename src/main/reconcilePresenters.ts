@@ -1,12 +1,12 @@
 import isDeepEqual from 'fast-deep-equal';
 import { RouteMatch } from './__matchRoutes';
-import { RoutePresenter } from './RoutePresenter';
+import { Presenter } from './Presenter';
 import { Router } from './Router';
 
 /**
- * Returns a root route presenter for a given array of route matches.
+ * Returns a root presenter for a given array of route matches.
  */
-export function reconcilePresenters(router: Router, routeMatches: RouteMatch[]): RoutePresenter | null {
+export function reconcilePresenters(router: Router, routeMatches: RouteMatch[]): Presenter | null {
   let rootPresenter = null;
   let parentPresenter = null;
   let replacedPresenter =
@@ -14,7 +14,7 @@ export function reconcilePresenters(router: Router, routeMatches: RouteMatch[]):
 
   for (let i = 0; i < routeMatches.length; ++i) {
     const routeMatch = routeMatches[i];
-    const presenter = new RoutePresenter(router, routeMatch);
+    const presenter = new Presenter(router, routeMatch);
     const { loadingAppearance } = routeMatch.route;
 
     if (replacedPresenter === null || replacedPresenter.routeMatch.route !== routeMatch.route) {

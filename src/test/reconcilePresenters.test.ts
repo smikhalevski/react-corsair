@@ -23,7 +23,7 @@ describe('reconcilePresenters', () => {
   //
   //   expect(routeAaa.loadingAppearance).toBe('avoid');
   //
-  //   router.presenter = new RoutePresenter(router, null);
+  //   router.presenter = new Presenter(router, null);
   //
   //   const routeMatch = { route: routeAaa, params: undefined };
   //   const presenter = reconcilePresenters(router, [routeMatch]);
@@ -40,7 +40,7 @@ describe('reconcilePresenters', () => {
   //
   //   const routeAaa = createRoute({ pathname: '/aaa', loadingAppearance: 'loading' });
   //
-  //   router.presenter = new RoutePresenter(router, null);
+  //   router.presenter = new Presenter(router, null);
   //
   //   const routeMatch = { route: routeAaa, params: undefined };
   //   const presenter = reconcilePresenters(router, [routeMatch]);
@@ -57,7 +57,7 @@ describe('reconcilePresenters', () => {
   //
   //   const route = createRoute('/aaa');
   //
-  //   router.presenter = new RoutePresenter(router, { route, params: undefined });
+  //   router.presenter = new Presenter(router, { route, params: undefined });
   //
   //   const presenter = reconcilePresenters(router, [{ route, params: undefined }]);
   //

@@ -1,9 +1,8 @@
 import { Component, ReactNode } from 'react';
-import { RoutePresenter } from './RoutePresenter';
-import { createErrorState } from './loadRoute';
+import { createErrorState, Presenter } from './Presenter';
 
 export interface ErrorBoundaryProps {
-  presenter: RoutePresenter;
+  presenter: Presenter;
   children: ReactNode;
 }
 

@@ -1,9 +1,10 @@
 import { RouteMatch } from './__matchRoutes';
 import { Router } from './Router';
 import { AbortablePromise } from 'parallel-universe';
-import { loadRoute } from './loadRoute';
 import { isPromiseLike } from './utils';
 import { Location } from './types';
+import { NotFoundError } from './__notFound';
+import { Redirect } from './__redirect';
 
 export interface LoadingState {
   status: 'loading';
@@ -29,11 +30,11 @@ export interface RedirectState {
 }
 
 /**
- * A state of a {@link RoutePresenter}.
+ * A state of a {@link Presenter}.
  *
  * @group Routing
  */
-export type RoutePresenterState = LoadingState | OkState | ErrorState | NotFoundState | RedirectState;
+export type PresenterState = LoadingState | OkState | ErrorState | NotFoundState | RedirectState;
 
 /**
  * Manages route rendering in an {@link Outlet}.
@@ -41,26 +42,26 @@ export type RoutePresenterState = LoadingState | OkState | ErrorState | NotFound
  * @template Context A router context.
  * @group Routing
  */
-export class RoutePresenter {
+export class Presenter {
   /**
    * A fallback presenter that is rendered in an {@link Outlet} while this presenter loads route component and data.
    */
-  fallbackPresenter: RoutePresenter | null = null;
+  fallbackPresenter: Presenter | null = null;
 
   /**
    * A presenter rendered in an enclosing {@link Outlet}.
    */
-  parentPresenter: RoutePresenter | null = null;
+  parentPresenter: Presenter | null = null;
 
   /**
    * A presenter rendered in a nested {@link Outlet}.
    */
-  childPresenter: RoutePresenter | null = null;
+  childPresenter: Presenter | null = null;
 
   /**
    * The current presenter state.
    */
-  state: RoutePresenterState = { status: 'loading' };
+  state: PresenterState = { status: 'loading' };
 
   /**
    * A promise that resolves when the route loading is completed, or `null` if there's not active loading.
@@ -68,7 +69,7 @@ export class RoutePresenter {
   pendingPromise: AbortablePromise<void> | null = null;
 
   /**
-   * Create a new {@link RoutePresenter} instance.
+   * Create a new {@link Presenter} instance.
    *
    * @param router A router to which a presenter belongs.
    * @param routeMatch A matched route and params managed by the presenter.
@@ -83,7 +84,7 @@ export class RoutePresenter {
    *
    * @param state The new presenter state.
    */
-  setState(state: RoutePresenterState): void {
+  setState(state: PresenterState): void {
     const pubSub = this.router['_pubSub'];
 
     this.fallbackPresenter = null;
@@ -117,7 +118,7 @@ export class RoutePresenter {
    */
   reload(): void {
     const abortController = new AbortController();
-    const state = loadRoute(this.routeMatch, this.router.context, abortController.signal, false);
+    const state = getOrLoadPresenterState(this.routeMatch, this.router.context, abortController.signal, false);
 
     if (!isPromiseLike(state)) {
       this.setState(state);
@@ -158,4 +159,51 @@ export class RoutePresenter {
 
     promise.withSignal(abortController.signal);
   }
+}
+
+/**
+ * Loads a route component and data.
+ *
+ * A route component is loaded once and cached forever, while data is loaded anew on every call.
+ */
+export function getOrLoadPresenterState(
+  routeMatch: RouteMatch,
+  context: unknown,
+  signal: AbortSignal,
+  isPrefetch: boolean
+): PresenterState | Promise<PresenterState> {
+  const { route, params } = routeMatch;
+
+  let component;
+  let data;
+
+  try {
+    component = route.getOrLoadComponent();
+
+    data = route.dataLoader === undefined ? undefined : route.dataLoader({ params, context, signal, isPrefetch });
+  } catch (error) {
+    return createErrorState(error);
+  }
+
+  if (isPromiseLike(component) || isPromiseLike(data)) {
+    return Promise.all([component, data]).then(result => createOkState(result[1]), createErrorState);
+  }
+
+  return createOkState(data);
+}
+
+export function createOkState(data: unknown): PresenterState {
+  return { status: 'ok', data };
+}
+
+export function createErrorState(error: unknown): PresenterState {
+  if (error instanceof NotFoundError) {
+    return { status: 'not_found' };
+  }
+
+  if (error instanceof Redirect) {
+    return { status: 'redirect', to: error.to };
+  }
+
+  return { status: 'error', error };
 }

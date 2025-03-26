@@ -1,7 +1,7 @@
 import { ComponentType } from 'react';
 import { Route } from './Route';
 import { Router } from './Router';
-import { RoutePresenter } from './RoutePresenter';
+import { Presenter } from './Presenter';
 
 export interface Dict {
   [key: string]: any;
@@ -329,9 +329,9 @@ export interface LoadingEvent {
   type: 'loading';
 
   /**
-   * A route presenter from which an event originates.
+   * A presenter from which an event originates.
    */
-  presenter: RoutePresenter;
+  presenter: Presenter;
 }
 
 /**
@@ -343,9 +343,9 @@ export interface ReadyEvent {
   type: 'ready';
 
   /**
-   * A route presenter from which an event originates.
+   * A presenter from which an event originates.
    */
-  presenter: RoutePresenter;
+  presenter: Presenter;
 }
 
 /**
@@ -360,9 +360,9 @@ export interface ErrorEvent {
   type: 'error';
 
   /**
-   * A route presenter from which an event originates.
+   * A presenter from which an event originates.
    */
-  presenter: RoutePresenter;
+  presenter: Presenter;
 
   /**
    * An error that was thrown.
@@ -382,9 +382,9 @@ export interface NotFoundEvent {
   type: 'not_found';
 
   /**
-   * A route presenter from which an event originates.
+   * A presenter from which an event originates.
    */
-  presenter: RoutePresenter;
+  presenter: Presenter;
 }
 
 /**
@@ -399,9 +399,9 @@ export interface RedirectEvent {
   type: 'redirect';
 
   /**
-   * A route presenter from which an event originates.
+   * A presenter from which an event originates.
    */
-  presenter: RoutePresenter;
+  presenter: Presenter;
 
   /**
    * A location or a URL to which a redirect should be made.

@@ -1,11 +1,10 @@
 import { AbortablePromise, PubSub } from 'parallel-universe';
 import { ComponentType } from 'react';
-import { loadRoute } from './loadRoute';
-import { matchRoutes, RouteMatch } from './__matchRoutes';
+import { matchRoutes } from './__matchRoutes';
 import { Route } from './Route';
 import { FallbackOptions, RouterEvent, RouterOptions, To } from './types';
 import { noop, toLocation } from './utils';
-import { RoutePresenter } from './RoutePresenter';
+import { getOrLoadPresenterState, Presenter } from './Presenter';
 import { reconcilePresenters } from './reconcilePresenters';
 
 /**
@@ -26,11 +25,11 @@ export class Router<Context = any> implements FallbackOptions {
   context: Context;
 
   /**
-   * A root route presenter rendered in a router {@link Outlet}, or `null` if no route is rendered.
+   * A root presenter rendered in a router {@link Outlet}, or `null` if no route is rendered.
    *
    * @see {@link navigate}
    */
-  rootPresenter: RoutePresenter | null = null;
+  rootPresenter: Presenter | null = null;
 
   errorComponent: ComponentType | undefined;
   loadingComponent: ComponentType | undefined;
@@ -87,7 +86,9 @@ export class Router<Context = any> implements FallbackOptions {
       const routeMatches = matchRoutes(location.pathname, location.searchParams, this.routes);
 
       resolve(
-        Promise.all(routeMatches.map(routeMatch => loadRoute(routeMatch, this.context, signal, true))).then(noop)
+        Promise.all(
+          routeMatches.map(routeMatch => getOrLoadPresenterState(routeMatch, this.context, signal, true))
+        ).then(noop)
       );
     });
   }

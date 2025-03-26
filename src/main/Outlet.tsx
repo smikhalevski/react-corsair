@@ -1,18 +1,18 @@
 import React, { createContext, ReactElement, Suspense, useContext } from 'react';
-import { RoutePresenter } from './RoutePresenter';
+import { Presenter } from './Presenter';
 import { ErrorBoundary } from './ErrorBoundary';
 import { Router } from './Router';
 
-export const RoutePresenterContext = createContext<RoutePresenter | null>(null);
+export const PresenterContext = createContext<Presenter | null>(null);
 
-RoutePresenterContext.displayName = 'RoutePresenterContext';
+PresenterContext.displayName = 'PresenterContext';
 
-export const OutletContext = createContext<RoutePresenter | Router | null>(null);
+export const OutletContext = createContext<Presenter | Router | null>(null);
 
 OutletContext.displayName = 'OutletContext';
 
 /**
- * Renders route presenter {@link RouterProvider provided by an enclosing router}.
+ * Renders presenter {@link RouterProvider provided by an enclosing router}.
  *
  * @group Components
  */
@@ -74,7 +74,7 @@ export function Outlet(): ReactElement | null {
 Outlet.displayName = 'Outlet';
 
 interface RouteOutletProps {
-  presenter: RoutePresenter;
+  presenter: Presenter;
   canSuspend: boolean;
 }
 
@@ -116,13 +116,13 @@ function RouteOutlet(props: RouteOutletProps): ReactElement | null {
   }
 
   return (
-    <RoutePresenterContext.Provider value={presenter}>
+    <PresenterContext.Provider value={presenter}>
       <OutletContext.Provider value={presenter.childPresenter}>
         <ErrorBoundary presenter={presenter}>
           <Component />
         </ErrorBoundary>
       </OutletContext.Provider>
-    </RoutePresenterContext.Provider>
+    </PresenterContext.Provider>
   );
 }
 

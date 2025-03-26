@@ -51,5 +51,5 @@ export {
   type ErrorState,
   type NotFoundState,
   type RedirectState,
-  type RoutePresenterState,
-} from './RoutePresenter';
+  type PresenterState,
+} from './Presenter';
