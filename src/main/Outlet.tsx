@@ -11,30 +11,32 @@ export const ChildRoutePresenterContext = createContext<RoutePresenter | null>(n
 ChildRoutePresenterContext.displayName = 'ChildRoutePresenterContext';
 
 export function Outlet(): ReactElement | null {
-  const manager = useContext(ChildRoutePresenterContext);
+  const presenter = useContext(ChildRoutePresenterContext);
 
-  if (manager === null) {
+  if (presenter === null) {
     return null;
   }
 
   const children = (
     <Xxx
-      manager={manager}
+      presenter={presenter}
       canSuspend={true}
     />
   );
 
-  if (manager.state.status === 'ok' || manager.state.status === 'loading') {
+  if (presenter.state.status === 'ok' || presenter.state.status === 'loading') {
     return (
       <Suspense
         fallback={
-          <Xxx
-            manager={manager.fallbackPresenter}
-            canSuspend={false}
-          />
+          presenter.fallbackPresenter ? (
+            <Xxx
+              presenter={presenter.fallbackPresenter}
+              canSuspend={false}
+            />
+          ) : null
         }
       >
-        <OutletErrorBoundary manager={manager}>{children}</OutletErrorBoundary>
+        <OutletErrorBoundary presenter={presenter}>{children}</OutletErrorBoundary>
       </Suspense>
     );
   }
@@ -43,17 +45,17 @@ export function Outlet(): ReactElement | null {
 }
 
 interface XxxProps {
-  manager: RoutePresenter;
+  presenter: RoutePresenter;
   canSuspend: boolean;
 }
 
 function Xxx(props: XxxProps): ReactElement | null {
-  const { manager, canSuspend } = props;
-  const { route } = manager.routeMatch;
+  const { presenter, canSuspend } = props;
+  const { route } = presenter.routeMatch;
 
   let Component;
 
-  switch (manager.state.status) {
+  switch (presenter.state.status) {
     case 'ok':
       Component = route.component;
       break;
@@ -64,7 +66,7 @@ function Xxx(props: XxxProps): ReactElement | null {
 
     case 'loading':
       if (canSuspend) {
-        throw manager.promise;
+        throw presenter.promise;
       }
       Component = route.loadingComponent;
       break;
@@ -83,8 +85,8 @@ function Xxx(props: XxxProps): ReactElement | null {
   }
 
   return (
-    <RoutePresenterContext.Provider value={manager}>
-      <ChildRoutePresenterContext.Provider value={manager.childPresenter}>
+    <RoutePresenterContext.Provider value={presenter}>
+      <ChildRoutePresenterContext.Provider value={presenter.childPresenter}>
         <Component />
       </ChildRoutePresenterContext.Provider>
     </RoutePresenterContext.Provider>

@@ -36,27 +36,24 @@ export interface RedirectState {
 export type RoutePresenterState = LoadingState | OkState | ErrorState | NotFoundState | RedirectState;
 
 /**
- * Manages route state and route rendering in an {@link Outlet}.
+ * Manages route rendering in an {@link Outlet}.
  *
  * @template Context A router context.
  * @group Routing
  */
 export class RoutePresenter<Context = any> {
   /**
-   * A manager that is rendered in an {@link Outlet} while this manager loads route component and data.
-   *
-   * Usually this is a self-reference, but if {@link RouteOptions.loadingAppearance} is set to "auto" then this property
-   * may reference a manager of the previous navigation while component and data are being loaded.
+   * A fallback presenter that is rendered in an {@link Outlet} while this presenter loads route component and data.
    */
-  fallbackPresenter: RoutePresenter<Context> = this;
+  fallbackPresenter: RoutePresenter<Context> | null = null;
 
   /**
-   * A manager rendered in an enclosing {@link Outlet}.
+   * A presenter rendered in an enclosing {@link Outlet}.
    */
   parentPresenter: RoutePresenter<Context> | null = null;
 
   /**
-   * A manager rendered in a nested {@link Outlet}.
+   * A presenter rendered in a nested {@link Outlet}.
    */
   childPresenter: RoutePresenter<Context> | null = null;
 
@@ -134,7 +131,7 @@ export class RoutePresenter<Context = any> {
   setState(state: RoutePresenterState): void {
     const pubSub = this.router['_pubSub'];
 
-    this.fallbackPresenter = this;
+    this.fallbackPresenter = null;
     this.state = state;
 
     switch (state.status) {
@@ -155,7 +152,7 @@ export class RoutePresenter<Context = any> {
   }
 
   /**
-   * Subscribes a listener to manager state changes.
+   * Subscribes a listener to presenter state changes.
    *
    * @param listener A listener to subscribe.
    * @returns A callback that unsubscribe a listener.

@@ -4,7 +4,7 @@ import { RoutePresenter } from './RoutePresenter';
 import { Router } from './Router';
 
 /**
- * Returns a root route manager for a given array of route matches.
+ * Returns a root route presenter for a given array of route matches.
  */
 export function reconcileRoutePresenters<Context>(
   router: Router<Context>,
@@ -16,14 +16,14 @@ export function reconcileRoutePresenters<Context>(
 
   for (let i = 0; i < routeMatches.length; ++i) {
     const routeMatch = routeMatches[i];
-    const manager = new RoutePresenter(router, routeMatch);
+    const presenter = new RoutePresenter(router, routeMatch);
     const { loadingAppearance } = routeMatch.route;
 
     if (replacedPresenter === null || replacedPresenter.routeMatch.route !== routeMatch.route) {
       // Route has changed
 
       if (replacedPresenter !== null && loadingAppearance === 'avoid') {
-        manager.fallbackPresenter = replacedPresenter;
+        presenter.fallbackPresenter = replacedPresenter;
       }
 
       replacedPresenter = null;
@@ -31,27 +31,27 @@ export function reconcileRoutePresenters<Context>(
       // Route is unchanged, but params have changed
 
       if (loadingAppearance === 'route_loading' || loadingAppearance === 'avoid') {
-        manager.fallbackPresenter = replacedPresenter;
+        presenter.fallbackPresenter = replacedPresenter;
       }
 
       replacedPresenter = replacedPresenter.childPresenter;
     } else {
       // Route and params are unchanged, reuse the existing state
 
-      manager.state = replacedPresenter.state;
-      manager.promise = replacedPresenter.promise;
+      presenter.state = replacedPresenter.state;
+      presenter.promise = replacedPresenter.promise;
 
       replacedPresenter = replacedPresenter.childPresenter;
     }
 
     if (parentPresenter === null) {
-      rootPresenter = manager;
+      rootPresenter = presenter;
     } else {
-      parentPresenter.childPresenter = manager;
+      parentPresenter.childPresenter = presenter;
     }
 
-    manager.parentPresenter = parentPresenter;
-    parentPresenter = manager;
+    presenter.parentPresenter = parentPresenter;
+    parentPresenter = presenter;
   }
 
   return rootPresenter;

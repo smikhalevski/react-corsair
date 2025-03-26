@@ -8,13 +8,13 @@ export class ReadableSSRRouter<Context = any> extends SSRRouter<Context> impleme
     super(options);
 
     const transformer = new TransformStream({
-      transform: (chunk, manager) => {
-        manager.enqueue(chunk);
+      transform: (chunk, presenter) => {
+        presenter.enqueue(chunk);
 
         const hydrationChunk = this.nextHydrationChunk();
 
         if (hydrationChunk !== '') {
-          manager.enqueue(hydrationChunk);
+          presenter.enqueue(hydrationChunk);
         }
       },
     });

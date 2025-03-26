@@ -14,7 +14,7 @@ export function hydrateRouter(router: Router, to: To, options: HydrateRouteOptio
 
   // if (Array.isArray(ssrState)) {
   //   for (const stateStr of ssrState) {
-  //     manager.hydrate(stateParser(stateStr));
+  //     presenter.hydrate(stateParser(stateStr));
   //   }
   // } else if (ssrState !== undefined) {
   //   throw new Error('SSR hydration already enabled');
@@ -23,7 +23,7 @@ export function hydrateRouter(router: Router, to: To, options: HydrateRouteOptio
   // window.__REACT_CORSAIR_SSR_STATE__ = {
   //   set(routeIndex, stateStr) {
   //     for (let i = 0; i < arguments.length; ++i) {
-  //       manager.hydrate(stateParser(arguments[i]));
+  //       presenter.hydrate(stateParser(arguments[i]));
   //     }
   //   },
   // };

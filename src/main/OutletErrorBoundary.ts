@@ -3,7 +3,7 @@ import { createErrorState } from './__loadRoute';
 import { RoutePresenterState, RoutePresenter } from './RoutePresenter';
 
 export interface OutletErrorBoundaryProps {
-  manager: RoutePresenter;
+  presenter: RoutePresenter;
   children: ReactNode;
 }
 
@@ -28,7 +28,7 @@ export class OutletErrorBoundary extends Component<OutletErrorBoundaryProps, Out
       return null;
     }
 
-    nextProps.manager.setState(prevState.routeState);
+    nextProps.presenter.setState(prevState.routeState);
 
     return { routeState: null };
   }

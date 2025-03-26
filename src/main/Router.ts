@@ -26,7 +26,7 @@ export class Router<Context = any> implements FallbackOptions {
   context: Context;
 
   /**
-   * A manager rendered in a router {@link Outlet}, or `null` if no route is rendered.
+   * A presenter rendered in a router {@link Outlet}, or `null` if no route is rendered.
    *
    * @see {@link navigate}
    */
@@ -75,9 +75,9 @@ export class Router<Context = any> implements FallbackOptions {
     const routeMatches = matchRoutes(location.pathname, location.searchParams, this.routes);
     const routePresenter = reconcileRoutePresenters(this, routeMatches);
 
-    for (let manager = routePresenter; manager !== null; manager = manager.childPresenter) {
-      if (manager.state.status === 'loading' && manager.promise === null) {
-        manager.reload();
+    for (let presenter = routePresenter; presenter !== null; presenter = presenter.childPresenter) {
+      if (presenter.state.status === 'loading' && presenter.promise === null) {
+        presenter.reload();
       }
     }
 

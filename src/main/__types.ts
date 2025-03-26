@@ -334,7 +334,7 @@ export interface ErrorEvent<Context> {
   type: 'error';
 
   /**
-   * A route manager from which an event originates.
+   * A route presenter from which an event originates.
    */
   routePresenter: RoutePresenter<Context>;
 
@@ -357,7 +357,7 @@ export interface NotFoundEvent<Context> {
   type: 'not_found';
 
   /**
-   * A route manager from which an event originates.
+   * A route presenter from which an event originates.
    */
   routePresenter: RoutePresenter<Context>;
 }
@@ -375,7 +375,7 @@ export interface RedirectEvent<Context> {
   type: 'redirect';
 
   /**
-   * A route manager from which an event originates.
+   * A route presenter from which an event originates.
    */
   routePresenter: RoutePresenter<Context>;
 

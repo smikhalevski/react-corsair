@@ -45,4 +45,11 @@ export {
 export { Prefetch, type PrefetchProps } from './Prefetch';
 
 export { urlSearchParamsAdapter } from './history/createURLSearchParamsAdapter';
-export { type RoutePresenterState } from './RoutePresenter';
+export {
+  type LoadingState,
+  type OkState,
+  type ErrorState,
+  type NotFoundState,
+  type RedirectState,
+  type RoutePresenterState,
+} from './RoutePresenter';
