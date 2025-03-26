@@ -1,57 +1,88 @@
 import React, { createContext, ReactElement, Suspense, useContext } from 'react';
 import { RoutePresenter } from './RoutePresenter';
 import { ErrorBoundary } from './__ErrorBoundary';
+import { Router } from './Router';
 
 export const RoutePresenterContext = createContext<RoutePresenter | null>(null);
 
 RoutePresenterContext.displayName = 'RoutePresenterContext';
 
-export const ChildRoutePresenterContext = createContext<RoutePresenter | null>(null);
+export const OutletContext = createContext<RoutePresenter | Router | null>(null);
 
-ChildRoutePresenterContext.displayName = 'ChildRoutePresenterContext';
+OutletContext.displayName = 'OutletContext';
 
+/**
+ * Renders route presenter {@link RouterProvider provided by an enclosing router}.
+ *
+ * @group Components
+ */
 export function Outlet(): ReactElement | null {
-  const presenter = useContext(ChildRoutePresenterContext);
+  const presenter = useContext(OutletContext);
 
   if (presenter === null) {
+    // Nothing to render
     return null;
   }
 
-  const children = (
-    <Xxx
-      presenter={presenter}
-      canSuspend={true}
-    />
-  );
+  if (presenter instanceof Router) {
+    // No route was matched
 
-  if (presenter.state.status === 'ok' || presenter.state.status === 'loading') {
+    const Component = presenter.notFoundComponent;
+
+    if (Component === undefined) {
+      return null;
+    }
+
     return (
-      <Suspense
-        fallback={
-          presenter.fallbackPresenter ? (
-            <Xxx
-              presenter={presenter.fallbackPresenter}
-              canSuspend={false}
-            />
-          ) : null
-        }
-      >
-        <ErrorBoundary presenter={presenter}>{children}</ErrorBoundary>
-      </Suspense>
+      <OutletContext.Provider value={null}>
+        <Component />
+      </OutletContext.Provider>
     );
   }
 
-  return children;
+  const { status } = presenter.state;
+
+  if (status === 'error' || status === 'not_found' || status === 'redirect') {
+    return (
+      <RouteOutlet
+        presenter={presenter}
+        canSuspend={false}
+      />
+    );
+  }
+
+  return (
+    <Suspense
+      fallback={
+        <RouteOutlet
+          presenter={presenter.fallbackPresenter || presenter}
+          canSuspend={false}
+        />
+      }
+    >
+      <RouteOutlet
+        presenter={presenter}
+        canSuspend={true}
+      />
+    </Suspense>
+  );
 }
 
-interface XxxProps {
+/**
+ * @hidden
+ */
+Outlet.displayName = 'Outlet';
+
+interface RouteOutletProps {
   presenter: RoutePresenter;
   canSuspend: boolean;
 }
 
-function Xxx(props: XxxProps): ReactElement | null {
+function RouteOutlet(props: RouteOutletProps): ReactElement | null {
   const { presenter, canSuspend } = props;
   const { route } = presenter.routeMatch;
+
+  const fallbacks = presenter.parentPresenter === null ? presenter.router : route;
 
   let Component;
 
@@ -61,23 +92,23 @@ function Xxx(props: XxxProps): ReactElement | null {
       break;
 
     case 'error':
-      Component = route.errorComponent;
+      Component = route.errorComponent || fallbacks.errorComponent;
       break;
 
     case 'loading':
-      if (canSuspend) {
-        throw presenter.promise;
+      if (canSuspend && presenter.pendingPromise !== null) {
+        throw presenter.pendingPromise;
       }
-      Component = route.loadingComponent;
+      Component = route.loadingComponent || fallbacks.loadingComponent;
       break;
 
     case 'not_found':
-      Component = route.notFoundComponent;
+      Component = route.notFoundComponent || fallbacks.notFoundComponent;
       break;
 
     case 'redirect':
-      Component = route.loadingComponent;
-      return null;
+      Component = route.loadingComponent || fallbacks.loadingComponent;
+      break;
   }
 
   if (Component === undefined) {
@@ -86,9 +117,13 @@ function Xxx(props: XxxProps): ReactElement | null {
 
   return (
     <RoutePresenterContext.Provider value={presenter}>
-      <ChildRoutePresenterContext.Provider value={presenter.childPresenter}>
-        <Component />
-      </ChildRoutePresenterContext.Provider>
+      <OutletContext.Provider value={presenter.childPresenter}>
+        <ErrorBoundary presenter={presenter}>
+          <Component />
+        </ErrorBoundary>
+      </OutletContext.Provider>
     </RoutePresenterContext.Provider>
   );
 }
+
+RouteOutlet.displayName = 'RouteOutlet';

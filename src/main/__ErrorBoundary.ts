@@ -1,5 +1,6 @@
 import { Component, ReactNode } from 'react';
 import { RoutePresenter } from './RoutePresenter';
+import { createErrorState } from './__loadRoute';
 
 export interface ErrorBoundaryProps {
   presenter: RoutePresenter;
@@ -31,9 +32,25 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       return null;
     }
 
-    nextProps.presenter.revealError(prevState.error);
+    const state = createErrorState(prevState.error);
 
-    return { hasError: false, error: null };
+    const prevStatus = nextProps.presenter.state.status;
+    const nextStatus = state.status;
+
+    if (
+      prevStatus === 'ok' ||
+      prevStatus === 'loading' ||
+      (prevStatus === 'error' && nextStatus === 'redirect') ||
+      (prevStatus === 'redirect' && nextStatus !== 'redirect') ||
+      (prevStatus === 'not_found' && (nextStatus === 'redirect' || nextStatus === 'error'))
+    ) {
+      nextProps.presenter.setState(state);
+
+      return { hasError: false, error: null };
+    }
+
+    // Propagate error to the parent presenter
+    throw prevState.error;
   }
 
   render(): ReactNode {

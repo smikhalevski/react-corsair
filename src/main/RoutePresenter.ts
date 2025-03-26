@@ -1,7 +1,7 @@
 import { RouteMatch } from './__matchRoutes';
 import { Router } from './Router';
 import { AbortablePromise } from 'parallel-universe';
-import { createErrorState, loadRoute } from './__loadRoute';
+import { loadRoute } from './__loadRoute';
 import { isPromiseLike } from './utils';
 import { Location } from './__types';
 
@@ -63,20 +63,20 @@ export class RoutePresenter {
   state: RoutePresenterState = { status: 'loading' };
 
   /**
-   * Forces presenter to show a {@link RouteOptions.notFoundComponent}.
+   * A promise that resolves when the route loading is completed, or `null` if there's not active loading.
    */
-  revealNotFound(): void {
-    this.setState({ status: 'not_found' });
-  }
+  pendingPromise: AbortablePromise<void> | null = null;
 
   /**
-   * Forces presenter to show an {@link RouteOptions.errorComponent}.
+   * Create a new {@link RoutePresenter} instance.
    *
-   * @param error An error to render.
+   * @param router A router to which a presenter belongs.
+   * @param routeMatch A matched route and params managed by the presenter.
    */
-  revealError(error?: unknown): void {
-    this.setState({ status: 'error', error });
-  }
+  constructor(
+    readonly router: Router,
+    readonly routeMatch: RouteMatch
+  ) {}
 
   /**
    * Updates the presenter state and notifies router subscribers.
@@ -84,53 +84,33 @@ export class RoutePresenter {
    * @param state The new presenter state.
    */
   setState(state: RoutePresenterState): void {
-    const { router } = this;
+    const pubSub = this.router['_pubSub'];
 
     this.fallbackPresenter = null;
     this.state = state;
 
     switch (state.status) {
+      case 'loading':
+        pubSub.publish({ type: 'loading', presenter: this });
+        break;
+
+      case 'ok':
+        pubSub.publish({ type: 'ready', presenter: this });
+        break;
+
       case 'error':
-        router['_publish']({ type: 'error', presenter: this, error: state.error });
+        pubSub.publish({ type: 'error', presenter: this, error: state.error });
         break;
 
       case 'not_found':
-        router['_publish']({ type: 'not_found', presenter: this });
+        pubSub.publish({ type: 'not_found', presenter: this });
         break;
 
       case 'redirect':
-        router['_publish']({ type: 'redirect', presenter: this, to: state.to });
+        pubSub.publish({ type: 'redirect', presenter: this, to: state.to });
         break;
     }
   }
-
-  // -----------------------------
-  // -----------------------------
-  // -----------------------------
-  // -----------------------------
-  // -----------------------------
-  // -----------------------------
-  // -----------------------------
-  // -----------------------------
-  // -----------------------------
-  // -----------------------------
-  // -----------------------------
-
-  /**
-   * A promise that is resolved when route loading is completed.
-   */
-  promise: AbortablePromise<void> | null = null;
-
-  /**
-   * Create a new {@link RoutePresenter} instance.
-   *
-   * @param router A router to which an outlet belongs.
-   * @param routeMatch A matched route and params.
-   */
-  constructor(
-    readonly router: Router,
-    readonly routeMatch: RouteMatch
-  ) {}
 
   /**
    * Reloads route data and notifies subscribers.
@@ -146,8 +126,8 @@ export class RoutePresenter {
 
     const promise = new AbortablePromise<void>((resolve, _reject, signal) => {
       signal.addEventListener('abort', () => {
-        if (this.promise === promise) {
-          this.promise = null;
+        if (this.pendingPromise === promise) {
+          this.pendingPromise = null;
         }
         abortController.abort(signal.reason);
       });
@@ -156,19 +136,23 @@ export class RoutePresenter {
         if (signal.aborted) {
           return;
         }
-        this.promise = null;
+        this.pendingPromise = null;
         this.setState(state);
         resolve();
       });
     });
 
-    const prevPromise = this.promise;
+    const { pendingPromise } = this;
 
-    this.promise = promise;
+    this.pendingPromise = promise;
 
-    prevPromise?.abort();
+    pendingPromise?.abort();
 
-    if (this.state.status !== 'loading' && this.routeMatch.route.loadingAppearance === 'loading') {
+    if (
+      this.state.status === 'loading'
+        ? pendingPromise === undefined
+        : this.routeMatch.route.loadingAppearance === 'loading'
+    ) {
       this.setState({ status: 'loading' });
     }
 

@@ -1,7 +1,5 @@
 import { Route } from './__Route';
 import { Dict } from './__types';
-import { useRouter } from './useRouter';
-import { useEffect, useState } from 'react';
 
 /**
  * Returns params of a {@link route} or throws if used outside of route component.
@@ -11,14 +9,7 @@ import { useEffect, useState } from 'react';
  * @group Hooks
  */
 export function useRouteParams<Params extends Dict>(route: Route<any, Params>): Params | undefined {
-  const router = useRouter();
-  const [params, setParams] = useState(router.getPresenter(route)?.routeMatch.params);
-
-  useEffect(() => {
-    setParams(router.getPresenter(route)?.routeMatch.params);
-  }, [router]);
-
-  return params as Params | undefined;
+  return undefined;
 }
 
 /**

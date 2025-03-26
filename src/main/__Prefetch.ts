@@ -1,5 +1,5 @@
 import { To } from './__types';
-import { usePrefetch } from './usePrefetch';
+import { usePrefetch } from './__usePrefetch';
 
 /**
  * Props of the {@link Prefetch} component.

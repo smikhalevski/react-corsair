@@ -9,7 +9,8 @@ import { Router } from './Router';
 export function reconcilePresenters(router: Router, routeMatches: RouteMatch[]): RoutePresenter | null {
   let rootPresenter = null;
   let parentPresenter = null;
-  let replacedPresenter = router.rootPresenter !== null ? router.rootPresenter.fallbackPresenter : null;
+  let replacedPresenter =
+    router.rootPresenter !== null ? router.rootPresenter.fallbackPresenter || router.rootPresenter : null;
 
   for (let i = 0; i < routeMatches.length; ++i) {
     const routeMatch = routeMatches[i];
@@ -36,7 +37,7 @@ export function reconcilePresenters(router: Router, routeMatches: RouteMatch[]):
       // Route and params are unchanged, reuse the existing state
 
       presenter.state = replacedPresenter.state;
-      presenter.promise = replacedPresenter.promise;
+      presenter.pendingPromise = replacedPresenter.pendingPromise;
 
       replacedPresenter = replacedPresenter.childPresenter;
     }

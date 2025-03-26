@@ -301,7 +301,6 @@ export interface RouterOptions<Context> extends Partial<FallbackOptions> {
 /**
  * An event published by a {@link Router} after a {@link Router.navigate navigation} occurs.
  *
- * @template Context A router context.
  * @group Routing
  */
 export interface NavigateEvent {
@@ -322,9 +321,36 @@ export interface NavigateEvent {
 }
 
 /**
+ * An event published by a {@link Router} when a route component or its data are being loaded.
+ *
+ * @group Routing
+ */
+export interface LoadingEvent {
+  type: 'loading';
+
+  /**
+   * A route presenter from which an event originates.
+   */
+  presenter: RoutePresenter;
+}
+
+/**
+ * An event published by a {@link Router} when a route component and its data are successfully loaded.
+ *
+ * @group Routing
+ */
+export interface ReadyEvent {
+  type: 'ready';
+
+  /**
+   * A route presenter from which an event originates.
+   */
+  presenter: RoutePresenter;
+}
+
+/**
  * An event published by a {@link Router} when an error was thrown by a component or by a data loader.
  *
- * @template Context A router context.
  * @group Routing
  */
 export interface ErrorEvent {
@@ -347,7 +373,6 @@ export interface ErrorEvent {
 /**
  * An event published by a {@link Router} when a {@link notFound} was called from a component or a data loader.
  *
- * @template Context A router context.
  * @group Routing
  */
 export interface NotFoundEvent {
@@ -365,7 +390,6 @@ export interface NotFoundEvent {
 /**
  * An event published by a {@link Router} when a {@link redirect} was called from a component or a data loader.
  *
- * @template Context A router context.
  * @group Routing
  */
 export interface RedirectEvent {
@@ -388,7 +412,6 @@ export interface RedirectEvent {
 /**
  * An event published by a {@link Router}.
  *
- * @template Context A router context.
  * @group Routing
  */
-export type RouterEvent = NavigateEvent | ErrorEvent | NotFoundEvent | RedirectEvent;
+export type RouterEvent = NavigateEvent | LoadingEvent | ReadyEvent | ErrorEvent | NotFoundEvent | RedirectEvent;

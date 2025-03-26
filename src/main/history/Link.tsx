@@ -1,7 +1,7 @@
 import React, { forwardRef, HTMLAttributes, MouseEventHandler } from 'react';
 import { To } from '../__types';
 import { toLocation } from '../utils';
-import { Prefetch } from '../Prefetch';
+import { Prefetch } from '../__Prefetch';
 import { useHistory } from './useHistory';
 
 /**
