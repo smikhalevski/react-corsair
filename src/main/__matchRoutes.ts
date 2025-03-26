@@ -1,4 +1,4 @@
-import { PathnameMatch } from './PathnameTemplate';
+import { PathnameMatch } from './__PathnameTemplate';
 import { Route } from './Route';
 import { Dict } from './types';
 

@@ -1,5 +1,5 @@
 import { ComponentType } from 'react';
-import { PathnameTemplate } from './PathnameTemplate';
+import { PathnameTemplate } from './__PathnameTemplate';
 import {
   DataLoaderOptions,
   Dict,
