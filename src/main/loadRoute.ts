@@ -7,8 +7,7 @@ import { isPromiseLike } from './utils';
 /**
  * Loads a route component and data.
  *
- * {@link Route.loadComponent A route component} is loaded once and cached forever, while data is loaded anew on every
- * {@link loadRoute} call.
+ *  A route component is loaded once and cached forever, while data is loaded anew on every call.
  */
 export function loadRoute(
   routeMatch: RouteMatch,

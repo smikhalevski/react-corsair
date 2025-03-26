@@ -1,4 +1,4 @@
-import { Route } from './Route';
+import { Route } from './__Route';
 
 /**
  * Returns params of a {@link route} or throws if used outside of route component.

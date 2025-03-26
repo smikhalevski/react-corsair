@@ -15,27 +15,36 @@ import { Outlet } from './Outlet';
 
 type Prettify<T> = { [K in keyof T]: T[K] } & {};
 
-type PartialVoid<T> = Partial<T> extends T ? T | void : T;
+type PartialToVoid<T> = Partial<T> extends T ? T | void : T;
 
 declare const LOCATION_PARAMS: unique symbol;
 declare const CONTEXT: unique symbol;
+declare const DATA: unique symbol;
 
 type LOCATION_PARAMS = typeof LOCATION_PARAMS;
 type CONTEXT = typeof CONTEXT;
+type DATA = typeof DATA;
 
 /**
  * Infers route location params.
  *
  * @group Routing
  */
-export type InferLocationParams<R extends Route> = R[LOCATION_PARAMS];
+export type InferRouteLocationParams<R extends Route> = R[LOCATION_PARAMS];
 
 /**
  * Infers required route context.
  *
  * @group Routing
  */
-export type InferContext<R extends Route> = R[CONTEXT];
+export type InferRouteContext<R extends Route> = R[CONTEXT];
+
+/**
+ * Infers required route context.
+ *
+ * @group Routing
+ */
+export type InferRouteData<R extends Route> = R[DATA];
 
 /**
  * A route that can be rendered by a router.
@@ -56,20 +65,27 @@ export class Route<
 > implements FallbackOptions
 {
   /**
-   * The type of route location params.
+   * The type of the route location params.
    *
    * @internal
    */
-  declare readonly [LOCATION_PARAMS]: PartialVoid<
+  declare readonly [LOCATION_PARAMS]: PartialToVoid<
     ParentRoute extends Route ? Prettify<ParentRoute[LOCATION_PARAMS] & Params> : Params
   >;
 
   /**
-   * The type of required router context.
+   * The type of the route context.
    *
    * @internal
    */
   declare readonly [CONTEXT]: Context;
+
+  /**
+   * The type of data loaded by the route.
+   *
+   * @internal
+   */
+  declare readonly [DATA]: Data;
 
   /**
    * A parent route or `null` if there is no parent.
@@ -188,7 +204,7 @@ export class Route<
    * @param params Route params.
    * @param options Location options.
    */
-  getLocation(params: InferLocationParams<this>, options?: LocationOptions): Location {
+  getLocation(params: InferRouteLocationParams<this>, options?: LocationOptions): Location {
     let pathname = '';
     let searchParams: Dict = {};
     let hasLooseParams = false;

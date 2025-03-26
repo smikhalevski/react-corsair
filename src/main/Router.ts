@@ -2,7 +2,7 @@ import { AbortablePromise, PubSub } from 'parallel-universe';
 import { ComponentType } from 'react';
 import { loadRoute } from './loadRoute';
 import { matchRoutes, RouteMatch } from './matchRoutes';
-import { Route } from './Route';
+import { Route } from './__Route';
 import { FallbackOptions, RouterEvent, RouterOptions, To } from './types';
 import { noop, toLocation } from './utils';
 import { RouteManager } from './RouteManager';

@@ -1,5 +1,5 @@
 import { PathnameMatch } from './PathnameTemplate';
-import { Route } from './Route';
+import { Route } from './__Route';
 import { Dict } from './types';
 
 /**

@@ -12,19 +12,18 @@ export { useHistorySubscription } from './history/useHistorySubscription';
 export { parseLocation, stringifyLocation } from './history/utils';
 export { type HistoryOptions, type History, type SearchParamsAdapter } from './history/types';
 
-export { createRoute } from './createRoute';
+export { createRoute } from './__createRoute';
 export { notFound, NotFoundError } from './notFound';
 export { Outlet } from './Outlet';
-export { PathnameTemplate } from './PathnameTemplate';
+export { PathnameTemplate, type PathnameMatch } from './PathnameTemplate';
 export { redirect, Redirect } from './redirect';
-export { Route } from './Route';
+export { Route, type InferRouteData, type InferRouteContext, type InferRouteLocationParams } from './__Route';
 export { useRouter } from './useRouter';
 export { usePrefetch } from './usePrefetch';
 export { Router } from './Router';
 export { RouterProvider } from './RouterProvider';
 export { useRouteParams, useRouteData, useRouteError } from './hooks';
 
-export type { PathnameMatch } from './PathnameTemplate';
 export type {
   To,
   Location,

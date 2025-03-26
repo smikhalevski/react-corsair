@@ -55,7 +55,7 @@ function Xxx(props: XxxProps): ReactElement | null {
 
   switch (manager.state.status) {
     case 'ok':
-      Component = route.loadComponent() as ComponentType;
+      Component = route.component;
       break;
 
     case 'error':
