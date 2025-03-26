@@ -1,9 +1,39 @@
 import { RouteMatch } from './__matchRoutes';
-import { RouteState } from './types';
 import { Router } from './Router';
 import { AbortablePromise, PubSub } from 'parallel-universe';
-import { loadRoute } from './loadRoute';
+import { loadRoute } from './__loadRoute';
 import { isPromiseLike } from './utils';
+import { Location } from './__types';
+
+export interface LoadingState {
+  status: 'loading';
+}
+
+export interface OkState {
+  status: 'ok';
+  data: unknown;
+}
+
+export interface ErrorState {
+  status: 'error';
+  error: unknown;
+}
+
+export interface NotFoundState {
+  status: 'not_found';
+}
+
+export interface RedirectState {
+  status: 'redirect';
+  to: Location | string;
+}
+
+/**
+ * A state of a {@link RoutePresenter}.
+ *
+ * @group Routing
+ */
+export type RoutePresenterState = LoadingState | OkState | ErrorState | NotFoundState | RedirectState;
 
 /**
  * Manages route state and route rendering in an {@link Outlet}.
@@ -11,29 +41,29 @@ import { isPromiseLike } from './utils';
  * @template Context A router context.
  * @group Routing
  */
-export class RouteManager<Context = any> {
+export class RoutePresenter<Context = any> {
   /**
    * A manager that is rendered in an {@link Outlet} while this manager loads route component and data.
    *
    * Usually this is a self-reference, but if {@link RouteOptions.loadingAppearance} is set to "auto" then this property
    * may reference a manager of the previous navigation while component and data are being loaded.
    */
-  fallbackManager: RouteManager<Context> = this;
+  fallbackPresenter: RoutePresenter<Context> = this;
 
   /**
    * A manager rendered in an enclosing {@link Outlet}.
    */
-  parentManager: RouteManager<Context> | null = null;
+  parentPresenter: RoutePresenter<Context> | null = null;
 
   /**
    * A manager rendered in a nested {@link Outlet}.
    */
-  childManager: RouteManager<Context> | null = null;
+  childPresenter: RoutePresenter<Context> | null = null;
 
   /**
    * An route state.
    */
-  state: RouteState = { status: 'loading' };
+  state: RoutePresenterState = { status: 'loading' };
 
   /**
    * A promise that is resolved when route loading is completed.
@@ -43,7 +73,7 @@ export class RouteManager<Context = any> {
   private _pubSub = new PubSub();
 
   /**
-   * Create a new {@link RouteManager} instance.
+   * Create a new {@link RoutePresenter} instance.
    *
    * @param router A router to which an outlet belongs.
    * @param routeMatch A matched route and params.
@@ -101,23 +131,23 @@ export class RouteManager<Context = any> {
    *
    * @param state The route state.
    */
-  setState(state: RouteState): void {
+  setState(state: RoutePresenterState): void {
     const pubSub = this.router['_pubSub'];
 
-    this.fallbackManager = this;
+    this.fallbackPresenter = this;
     this.state = state;
 
     switch (state.status) {
       case 'error':
-        pubSub.publish({ type: 'error', routeManager: this, error: state.error });
+        pubSub.publish({ type: 'error', routePresenter: this, error: state.error });
         break;
 
       case 'not_found':
-        pubSub.publish({ type: 'not_found', routeManager: this });
+        pubSub.publish({ type: 'not_found', routePresenter: this });
         break;
 
       case 'redirect':
-        pubSub.publish({ type: 'redirect', routeManager: this, to: state.to });
+        pubSub.publish({ type: 'redirect', routePresenter: this, to: state.to });
         break;
     }
 

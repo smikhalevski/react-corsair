@@ -1,15 +1,14 @@
 import { Component, ReactNode } from 'react';
-import { createErrorState } from './loadRoute';
-import { RouteState } from './types';
-import { RouteManager } from './RouteManager';
+import { createErrorState } from './__loadRoute';
+import { RoutePresenterState, RoutePresenter } from './RoutePresenter';
 
 export interface OutletErrorBoundaryProps {
-  manager: RouteManager;
+  manager: RoutePresenter;
   children: ReactNode;
 }
 
 interface OutletErrorBoundaryState {
-  routeState: RouteState | null;
+  routeState: RoutePresenterState | null;
 }
 
 export class OutletErrorBoundary extends Component<OutletErrorBoundaryProps, OutletErrorBoundaryState> {

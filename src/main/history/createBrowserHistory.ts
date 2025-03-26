@@ -1,5 +1,5 @@
 import { PubSub } from 'parallel-universe';
-import { Location } from '../types';
+import { Location } from '../__types';
 import { History, HistoryOptions } from './types';
 import { concatPathname, debasePathname, parseLocation, parseOrCastLocation, stringifyLocation } from './utils';
 import { urlSearchParamsAdapter } from './createURLSearchParamsAdapter';

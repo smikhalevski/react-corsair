@@ -1,5 +1,5 @@
 import React, { forwardRef, HTMLAttributes, MouseEventHandler } from 'react';
-import { To } from '../types';
+import { To } from '../__types';
 import { toLocation } from '../utils';
 import { Prefetch } from '../Prefetch';
 import { useHistory } from './useHistory';

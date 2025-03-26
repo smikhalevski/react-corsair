@@ -1,8 +1,9 @@
-import { RouteState, To } from '../types';
+import { To } from '../__types';
 import { Router } from '../Router';
+import { RoutePresenterState } from '../RoutePresenter';
 
 export interface HydrateRouteOptions {
-  stateParser?: (stateStr: string) => RouteState;
+  stateParser?: (stateStr: string) => RoutePresenterState;
 }
 
 export function hydrateRouter(router: Router, to: To, options: HydrateRouteOptions = {}): void {

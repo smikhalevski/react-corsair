@@ -1,8 +1,8 @@
 import { RouteMatch } from './__matchRoutes';
 import { NotFoundError } from './__notFound';
 import { Redirect } from './__redirect';
-import { RouteState } from './types';
 import { isPromiseLike } from './utils';
+import { RoutePresenterState } from './RoutePresenter';
 
 /**
  * Loads a route component and data.
@@ -14,14 +14,14 @@ export function loadRoute(
   context: unknown,
   signal: AbortSignal,
   isPrefetch: boolean
-): Promise<RouteState> | RouteState {
+): Promise<RoutePresenterState> | RoutePresenterState {
   const { route, params } = routeMatch;
 
   let component;
   let data;
 
   try {
-    component = route.loadComponent();
+    component = route.getOrLoadComponent();
 
     data = route.dataLoader === undefined ? undefined : route.dataLoader({ params, context, signal, isPrefetch });
   } catch (error) {
@@ -35,11 +35,11 @@ export function loadRoute(
   return createOkState(data);
 }
 
-export function createOkState(data: unknown): RouteState {
+export function createOkState(data: unknown): RoutePresenterState {
   return { status: 'ok', data };
 }
 
-export function createErrorState(error: unknown): RouteState {
+export function createErrorState(error: unknown): RoutePresenterState {
   if (error instanceof NotFoundError) {
     return { status: 'not_found' };
   }

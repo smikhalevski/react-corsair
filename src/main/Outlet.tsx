@@ -1,17 +1,17 @@
 import React, { createContext, ReactElement, Suspense, useContext } from 'react';
-import { RouteManager } from './RouteManager';
+import { RoutePresenter } from './RoutePresenter';
 import { OutletErrorBoundary } from './OutletErrorBoundary';
 
-export const RouteManagerContext = createContext<RouteManager | null>(null);
+export const RoutePresenterContext = createContext<RoutePresenter | null>(null);
 
-RouteManagerContext.displayName = 'RouteManagerContext';
+RoutePresenterContext.displayName = 'RoutePresenterContext';
 
-export const ChildRouteManagerContext = createContext<RouteManager | null>(null);
+export const ChildRoutePresenterContext = createContext<RoutePresenter | null>(null);
 
-ChildRouteManagerContext.displayName = 'ChildRouteManagerContext';
+ChildRoutePresenterContext.displayName = 'ChildRoutePresenterContext';
 
 export function Outlet(): ReactElement | null {
-  const manager = useContext(ChildRouteManagerContext);
+  const manager = useContext(ChildRoutePresenterContext);
 
   if (manager === null) {
     return null;
@@ -29,7 +29,7 @@ export function Outlet(): ReactElement | null {
       <Suspense
         fallback={
           <Xxx
-            manager={manager.fallbackManager}
+            manager={manager.fallbackPresenter}
             canSuspend={false}
           />
         }
@@ -43,7 +43,7 @@ export function Outlet(): ReactElement | null {
 }
 
 interface XxxProps {
-  manager: RouteManager;
+  manager: RoutePresenter;
   canSuspend: boolean;
 }
 
@@ -83,10 +83,10 @@ function Xxx(props: XxxProps): ReactElement | null {
   }
 
   return (
-    <RouteManagerContext.Provider value={manager}>
-      <ChildRouteManagerContext.Provider value={manager.childManager}>
+    <RoutePresenterContext.Provider value={manager}>
+      <ChildRoutePresenterContext.Provider value={manager.childPresenter}>
         <Component />
-      </ChildRouteManagerContext.Provider>
-    </RouteManagerContext.Provider>
+      </ChildRoutePresenterContext.Provider>
+    </RoutePresenterContext.Provider>
   );
 }

@@ -1,7 +1,7 @@
 import { ComponentType } from 'react';
 import { Route } from './__Route';
 import { Router } from './Router';
-import { RouteManager } from './RouteManager';
+import { RoutePresenter } from './RoutePresenter';
 
 export interface Dict {
   [key: string]: any;
@@ -336,7 +336,7 @@ export interface ErrorEvent<Context> {
   /**
    * A route manager from which an event originates.
    */
-  routeManager: RouteManager<Context>;
+  routePresenter: RoutePresenter<Context>;
 
   /**
    * An error that was thrown.
@@ -359,7 +359,7 @@ export interface NotFoundEvent<Context> {
   /**
    * A route manager from which an event originates.
    */
-  routeManager: RouteManager<Context>;
+  routePresenter: RoutePresenter<Context>;
 }
 
 /**
@@ -377,7 +377,7 @@ export interface RedirectEvent<Context> {
   /**
    * A route manager from which an event originates.
    */
-  routeManager: RouteManager<Context>;
+  routePresenter: RoutePresenter<Context>;
 
   /**
    * A location or a URL to which a redirect should be made.
@@ -396,33 +396,3 @@ export type RouterEvent<Context> =
   | ErrorEvent<Context>
   | NotFoundEvent<Context>
   | RedirectEvent<Context>;
-
-export interface LoadingState {
-  status: 'loading';
-}
-
-export interface OkState {
-  status: 'ok';
-  data: unknown;
-}
-
-export interface ErrorState {
-  status: 'error';
-  error: unknown;
-}
-
-export interface NotFoundState {
-  status: 'not_found';
-}
-
-export interface RedirectState {
-  status: 'redirect';
-  to: To | string;
-}
-
-/**
- * A state of a {@link RouteManager}.
- *
- * @group Routing
- */
-export type RouteState = LoadingState | OkState | ErrorState | NotFoundState | RedirectState;

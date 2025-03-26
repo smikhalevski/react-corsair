@@ -10,7 +10,7 @@ import {
   ParamsAdapter,
   RenderingDisposition,
   RouteOptions,
-} from './types';
+} from './__types';
 import { Outlet } from './Outlet';
 
 type Prettify<T> = { [K in keyof T]: T[K] } & {};
@@ -124,7 +124,7 @@ export class Route<
 
   /**
    * A component rendered by the route, or `undefined` if a {@link RouteOptions.lazyComponent} isn't yet
-   * {@link loadComponent loaded}.
+   * {@link getOrLoadComponent loaded}.
    */
   component: ComponentType | undefined;
 
@@ -132,7 +132,7 @@ export class Route<
    * Loads {@link RouteOptions.lazyComponent a lazy route component} once and caches it forever, unless an error
    * occurred during loading.
    */
-  loadComponent: () => ComponentType | Promise<ComponentType>;
+  getOrLoadComponent: () => ComponentType | Promise<ComponentType>;
 
   errorComponent: ComponentType | undefined;
   loadingComponent: ComponentType | undefined;
@@ -173,7 +173,7 @@ export class Route<
 
     this.component = component;
 
-    this.loadComponent = () => {
+    this.getOrLoadComponent = () => {
       if (component !== undefined) {
         return component;
       }

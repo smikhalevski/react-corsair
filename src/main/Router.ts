@@ -1,12 +1,12 @@
 import { AbortablePromise, PubSub } from 'parallel-universe';
 import { ComponentType } from 'react';
-import { loadRoute } from './loadRoute';
+import { loadRoute } from './__loadRoute';
 import { matchRoutes, RouteMatch } from './__matchRoutes';
 import { Route } from './__Route';
-import { FallbackOptions, RouterEvent, RouterOptions, To } from './types';
+import { FallbackOptions, RouterEvent, RouterOptions, To } from './__types';
 import { noop, toLocation } from './utils';
-import { RouteManager } from './RouteManager';
-import { reconcileRouteManagers } from './reconcileRouteManagers';
+import { RoutePresenter } from './RoutePresenter';
+import { reconcileRoutePresenters } from './reconcileRoutePresenters';
 
 /**
  * A router that matches routes by a location.
@@ -30,7 +30,7 @@ export class Router<Context = any> implements FallbackOptions {
    *
    * @see {@link navigate}
    */
-  routeManager: RouteManager<Context> | null = null;
+  routePresenter: RoutePresenter<Context> | null = null;
 
   errorComponent: ComponentType | undefined;
   loadingComponent: ComponentType | undefined;
@@ -73,15 +73,15 @@ export class Router<Context = any> implements FallbackOptions {
     const location = toLocation(to);
 
     const routeMatches = matchRoutes(location.pathname, location.searchParams, this.routes);
-    const routeManager = reconcileRouteManagers(this, routeMatches);
+    const routePresenter = reconcileRoutePresenters(this, routeMatches);
 
-    for (let manager = routeManager; manager !== null; manager = manager.childManager) {
+    for (let manager = routePresenter; manager !== null; manager = manager.childPresenter) {
       if (manager.state.status === 'loading' && manager.promise === null) {
         manager.reload();
       }
     }
 
-    this.routeManager = routeManager;
+    this.routePresenter = routePresenter;
 
     this._pubSub.publish({ type: 'navigate', router: this, location });
   }

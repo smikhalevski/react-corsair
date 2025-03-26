@@ -1,5 +1,5 @@
 import { Route } from './__Route';
-import { Dict } from './types';
+import { Dict } from './__types';
 
 /**
  * Returns params of a {@link route} or throws if used outside of route component.

@@ -1,6 +1,6 @@
 import isDeepEqual from 'fast-deep-equal';
 import { useEffect, useRef } from 'react';
-import { To } from './types';
+import { To } from './__types';
 import { useRouter } from './useRouter';
 
 /**

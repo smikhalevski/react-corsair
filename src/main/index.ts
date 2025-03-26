@@ -24,20 +24,25 @@ export { Router } from './Router';
 export { RouterProvider } from './RouterProvider';
 export { useRouteParams, useRouteData, useRouteError } from './hooks';
 
-export type {
-  To,
-  Location,
-  LocationOptions,
-  RouteOptions,
-  ParamsAdapter,
-  LoadingAppearance,
-  RenderingDisposition,
-  FallbackOptions,
-  RouterOptions,
-  DataLoaderOptions,
-  RouteState,
-  Dict,
-} from './types';
+export {
+  type To,
+  type Location,
+  type LocationOptions,
+  type ParamsAdapter,
+  type LoadingAppearance,
+  type RenderingDisposition,
+  type DataLoaderOptions,
+  type FallbackOptions,
+  type RouteOptions,
+  type RouterOptions,
+  type NavigateEvent,
+  type ErrorEvent,
+  type NotFoundEvent,
+  type RedirectEvent,
+  type RouterEvent,
+} from './__types';
+
 export { Prefetch, type PrefetchProps } from './Prefetch';
 
 export { urlSearchParamsAdapter } from './history/createURLSearchParamsAdapter';
+export { type RoutePresenterState } from './RoutePresenter';
