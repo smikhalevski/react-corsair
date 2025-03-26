@@ -19,7 +19,7 @@ export { PathnameTemplate, type PathnameMatch } from './__PathnameTemplate';
 export { redirect, Redirect } from './__redirect';
 export { Route, type InferData, type InferContext, type InferLocationParams } from './Route';
 export { useRouter } from './useRouter';
-export { usePrefetch } from './usePrefetch';
+export { usePrefetch } from './__usePrefetch';
 export { Router } from './Router';
 export { RouterProvider } from './RouterProvider';
 export { useRouteParams, useRouteData, useRouteError } from './hooks';
@@ -42,7 +42,7 @@ export {
   type RouterEvent,
 } from './types';
 
-export { Prefetch, type PrefetchProps } from './Prefetch';
+export { Prefetch, type PrefetchProps } from './__Prefetch';
 
 export { urlSearchParamsAdapter } from './history/createURLSearchParamsAdapter';
 export {
