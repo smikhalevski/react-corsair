@@ -1,4 +1,5 @@
 import { Route } from './__Route';
+import { Dict } from './types';
 
 /**
  * Returns params of a {@link route} or throws if used outside of route component.
@@ -7,7 +8,7 @@ import { Route } from './__Route';
  * @template Params Route params.
  * @group Hooks
  */
-export function useRouteParams<Params extends object | void>(route: Route<any, Params>): Params {
+export function useRouteParams<Params extends Dict>(route: Route<any, Params>): Params {
   return undefined!;
 }
 

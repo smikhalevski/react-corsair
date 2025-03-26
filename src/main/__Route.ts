@@ -17,13 +17,13 @@ type Prettify<T> = { [K in keyof T]: T[K] } & {};
 
 type PartialToVoid<T> = Partial<T> extends T ? T | void : T;
 
-declare const LOCATION_PARAMS: unique symbol;
-declare const CONTEXT: unique symbol;
-declare const DATA: unique symbol;
+export declare const LOCATION_PARAMS: unique symbol;
+export declare const CONTEXT: unique symbol;
+export declare const DATA: unique symbol;
 
-type LOCATION_PARAMS = typeof LOCATION_PARAMS;
-type CONTEXT = typeof CONTEXT;
-type DATA = typeof DATA;
+export type LOCATION_PARAMS = typeof LOCATION_PARAMS;
+export type CONTEXT = typeof CONTEXT;
+export type DATA = typeof DATA;
 
 /**
  * Infers route location params.
@@ -59,7 +59,7 @@ export type InferData<R extends Route> = R[DATA];
  */
 export class Route<
   ParentRoute extends Route<any, any, Context> | null = any,
-  Params extends object | void = any,
+  Params extends Dict = any,
   Data = any,
   Context = any,
 > implements FallbackOptions
@@ -70,7 +70,7 @@ export class Route<
    * @internal
    */
   declare readonly [LOCATION_PARAMS]: PartialToVoid<
-    ParentRoute extends Route ? Prettify<ParentRoute[LOCATION_PARAMS] & Params> : Params
+    ParentRoute extends Route ? Prettify<Exclude<ParentRoute[LOCATION_PARAMS], void> & Params> : Params
   >;
 
   /**
