@@ -304,7 +304,7 @@ export interface RouterOptions<Context> extends Partial<FallbackOptions> {
  * @template Context A router context.
  * @group Routing
  */
-export interface NavigateEvent<Context> {
+export interface NavigateEvent {
   /**
    * The event type.
    */
@@ -313,7 +313,7 @@ export interface NavigateEvent<Context> {
   /**
    * A router from which an event originates.
    */
-  router: Router<Context>;
+  router: Router;
 
   /**
    * A location to which a router was navigated.
@@ -327,7 +327,7 @@ export interface NavigateEvent<Context> {
  * @template Context A router context.
  * @group Routing
  */
-export interface ErrorEvent<Context> {
+export interface ErrorEvent {
   /**
    * The event type.
    */
@@ -336,7 +336,7 @@ export interface ErrorEvent<Context> {
   /**
    * A route presenter from which an event originates.
    */
-  routePresenter: RoutePresenter<Context>;
+  presenter: RoutePresenter;
 
   /**
    * An error that was thrown.
@@ -350,7 +350,7 @@ export interface ErrorEvent<Context> {
  * @template Context A router context.
  * @group Routing
  */
-export interface NotFoundEvent<Context> {
+export interface NotFoundEvent {
   /**
    * The event type.
    */
@@ -359,7 +359,7 @@ export interface NotFoundEvent<Context> {
   /**
    * A route presenter from which an event originates.
    */
-  routePresenter: RoutePresenter<Context>;
+  presenter: RoutePresenter;
 }
 
 /**
@@ -368,7 +368,7 @@ export interface NotFoundEvent<Context> {
  * @template Context A router context.
  * @group Routing
  */
-export interface RedirectEvent<Context> {
+export interface RedirectEvent {
   /**
    * The event type.
    */
@@ -377,7 +377,7 @@ export interface RedirectEvent<Context> {
   /**
    * A route presenter from which an event originates.
    */
-  routePresenter: RoutePresenter<Context>;
+  presenter: RoutePresenter;
 
   /**
    * A location or a URL to which a redirect should be made.
@@ -391,8 +391,4 @@ export interface RedirectEvent<Context> {
  * @template Context A router context.
  * @group Routing
  */
-export type RouterEvent<Context> =
-  | NavigateEvent<Context>
-  | ErrorEvent<Context>
-  | NotFoundEvent<Context>
-  | RedirectEvent<Context>;
+export type RouterEvent = NavigateEvent | ErrorEvent | NotFoundEvent | RedirectEvent;

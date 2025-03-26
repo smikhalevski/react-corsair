@@ -1,7 +1,7 @@
 import { RouteMatch } from './__matchRoutes';
 import { Router } from './Router';
-import { AbortablePromise, PubSub } from 'parallel-universe';
-import { loadRoute } from './__loadRoute';
+import { AbortablePromise } from 'parallel-universe';
+import { createErrorState, loadRoute } from './__loadRoute';
 import { isPromiseLike } from './utils';
 import { Location } from './__types';
 
@@ -41,33 +41,85 @@ export type RoutePresenterState = LoadingState | OkState | ErrorState | NotFound
  * @template Context A router context.
  * @group Routing
  */
-export class RoutePresenter<Context = any> {
+export class RoutePresenter {
   /**
    * A fallback presenter that is rendered in an {@link Outlet} while this presenter loads route component and data.
    */
-  fallbackPresenter: RoutePresenter<Context> | null = null;
+  fallbackPresenter: RoutePresenter | null = null;
 
   /**
    * A presenter rendered in an enclosing {@link Outlet}.
    */
-  parentPresenter: RoutePresenter<Context> | null = null;
+  parentPresenter: RoutePresenter | null = null;
 
   /**
    * A presenter rendered in a nested {@link Outlet}.
    */
-  childPresenter: RoutePresenter<Context> | null = null;
+  childPresenter: RoutePresenter | null = null;
 
   /**
-   * An route state.
+   * The current presenter state.
    */
   state: RoutePresenterState = { status: 'loading' };
+
+  /**
+   * Forces presenter to show a {@link RouteOptions.notFoundComponent}.
+   */
+  revealNotFound(): void {
+    this.setState({ status: 'not_found' });
+  }
+
+  /**
+   * Forces presenter to show an {@link RouteOptions.errorComponent}.
+   *
+   * @param error An error to render.
+   */
+  revealError(error?: unknown): void {
+    this.setState({ status: 'error', error });
+  }
+
+  /**
+   * Updates the presenter state and notifies router subscribers.
+   *
+   * @param state The new presenter state.
+   */
+  setState(state: RoutePresenterState): void {
+    const { router } = this;
+
+    this.fallbackPresenter = null;
+    this.state = state;
+
+    switch (state.status) {
+      case 'error':
+        router['_publish']({ type: 'error', presenter: this, error: state.error });
+        break;
+
+      case 'not_found':
+        router['_publish']({ type: 'not_found', presenter: this });
+        break;
+
+      case 'redirect':
+        router['_publish']({ type: 'redirect', presenter: this, to: state.to });
+        break;
+    }
+  }
+
+  // -----------------------------
+  // -----------------------------
+  // -----------------------------
+  // -----------------------------
+  // -----------------------------
+  // -----------------------------
+  // -----------------------------
+  // -----------------------------
+  // -----------------------------
+  // -----------------------------
+  // -----------------------------
 
   /**
    * A promise that is resolved when route loading is completed.
    */
   promise: AbortablePromise<void> | null = null;
-
-  private _pubSub = new PubSub();
 
   /**
    * Create a new {@link RoutePresenter} instance.
@@ -76,7 +128,7 @@ export class RoutePresenter<Context = any> {
    * @param routeMatch A matched route and params.
    */
   constructor(
-    readonly router: Router<Context>,
+    readonly router: Router,
     readonly routeMatch: RouteMatch
   ) {}
 
@@ -121,43 +173,5 @@ export class RoutePresenter<Context = any> {
     }
 
     promise.withSignal(abortController.signal);
-  }
-
-  /**
-   * Sets the new route state and notifies subscribers.
-   *
-   * @param state The route state.
-   */
-  setState(state: RoutePresenterState): void {
-    const pubSub = this.router['_pubSub'];
-
-    this.fallbackPresenter = null;
-    this.state = state;
-
-    switch (state.status) {
-      case 'error':
-        pubSub.publish({ type: 'error', routePresenter: this, error: state.error });
-        break;
-
-      case 'not_found':
-        pubSub.publish({ type: 'not_found', routePresenter: this });
-        break;
-
-      case 'redirect':
-        pubSub.publish({ type: 'redirect', routePresenter: this, to: state.to });
-        break;
-    }
-
-    this._pubSub.publish();
-  }
-
-  /**
-   * Subscribes a listener to presenter state changes.
-   *
-   * @param listener A listener to subscribe.
-   * @returns A callback that unsubscribe a listener.
-   */
-  subscribe(listener: () => void): () => void {
-    return this._pubSub.subscribe(listener);
   }
 }

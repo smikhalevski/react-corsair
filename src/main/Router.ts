@@ -6,7 +6,7 @@ import { Route } from './__Route';
 import { FallbackOptions, RouterEvent, RouterOptions, To } from './__types';
 import { noop, toLocation } from './utils';
 import { RoutePresenter } from './RoutePresenter';
-import { reconcileRoutePresenters } from './reconcileRoutePresenters';
+import { reconcilePresenters } from './reconcilePresenters';
 
 /**
  * A router that matches routes by a location.
@@ -26,17 +26,17 @@ export class Router<Context = any> implements FallbackOptions {
   context: Context;
 
   /**
-   * A presenter rendered in a router {@link Outlet}, or `null` if no route is rendered.
+   * A root route presenter rendered in a router {@link Outlet}, or `null` if no route is rendered.
    *
    * @see {@link navigate}
    */
-  routePresenter: RoutePresenter<Context> | null = null;
+  rootPresenter: RoutePresenter | null = null;
 
   errorComponent: ComponentType | undefined;
   loadingComponent: ComponentType | undefined;
   notFoundComponent: ComponentType | undefined;
 
-  protected _pubSub = new PubSub<RouterEvent<Context>>();
+  protected _pubSub = new PubSub<RouterEvent>();
 
   /**
    * Creates a new instance of a {@link Router}.
@@ -50,6 +50,30 @@ export class Router<Context = any> implements FallbackOptions {
     this.errorComponent = options.errorComponent;
     this.loadingComponent = options.loadingComponent;
     this.notFoundComponent = options.notFoundComponent;
+  }
+
+  /**
+   * Returns `true` if router has the {@link route}.
+   *
+   * @param route The route to look for.
+   */
+  hasRoute(route: Route): boolean {
+    return this.routes.includes(route);
+  }
+
+  /**
+   * Returns a presenter of a rendered {@link route}.
+   *
+   * @param route The route for which route presenter must be retrieved.
+   * @returns A route presenter or `null` if {@link route} isn't rendered.
+   */
+  getPresenter(route: Route): RoutePresenter | null {
+    for (let presenter = this.rootPresenter; presenter !== null; presenter = presenter.childPresenter) {
+      if (presenter.routeMatch.route === route) {
+        return presenter;
+      }
+    }
+    return null;
   }
 
   /**
@@ -73,15 +97,15 @@ export class Router<Context = any> implements FallbackOptions {
     const location = toLocation(to);
 
     const routeMatches = matchRoutes(location.pathname, location.searchParams, this.routes);
-    const routePresenter = reconcileRoutePresenters(this, routeMatches);
+    const rootPresenter = reconcilePresenters(this, routeMatches);
 
-    for (let presenter = routePresenter; presenter !== null; presenter = presenter.childPresenter) {
+    for (let presenter = rootPresenter; presenter !== null; presenter = presenter.childPresenter) {
       if (presenter.state.status === 'loading' && presenter.promise === null) {
         presenter.reload();
       }
     }
 
-    this.routePresenter = routePresenter;
+    this.rootPresenter = rootPresenter;
 
     this._pubSub.publish({ type: 'navigate', router: this, location });
   }
@@ -106,7 +130,16 @@ export class Router<Context = any> implements FallbackOptions {
    * @param listener A listener to subscribe.
    * @returns A callback that unsubscribe a listener.
    */
-  subscribe(listener: (event: RouterEvent<Context>) => void): () => void {
+  subscribe(listener: (event: RouterEvent) => void): () => void {
     return this._pubSub.subscribe(listener);
+  }
+
+  /**
+   * Publishes an event to router subscribers.
+   *
+   * @param event The event to publish.
+   */
+  protected _publish(event: RouterEvent): void {
+    this._pubSub.publish(event);
   }
 }

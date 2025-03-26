@@ -1,6 +1,6 @@
 import React, { createContext, ReactElement, Suspense, useContext } from 'react';
 import { RoutePresenter } from './RoutePresenter';
-import { OutletErrorBoundary } from './OutletErrorBoundary';
+import { ErrorBoundary } from './__ErrorBoundary';
 
 export const RoutePresenterContext = createContext<RoutePresenter | null>(null);
 
@@ -36,7 +36,7 @@ export function Outlet(): ReactElement | null {
           ) : null
         }
       >
-        <OutletErrorBoundary presenter={presenter}>{children}</OutletErrorBoundary>
+        <ErrorBoundary presenter={presenter}>{children}</ErrorBoundary>
       </Suspense>
     );
   }

@@ -1,14 +1,14 @@
 import { Router } from '../main';
-import { reconcileRoutePresenters } from '../main/reconcileRoutePresenters';
+import { reconcilePresenters } from '../main/reconcilePresenters';
 
-describe('reconcileRoutePresenters', () => {
+describe('reconcilePresenters', () => {
   test('returns not found route', () => {
     const router = new Router({
       routes: [],
       context: 111,
     });
 
-    const presenter = reconcileRoutePresenters(router, []);
+    const presenter = reconcilePresenters(router, []);
 
     expect(presenter).toBe(null);
   });
@@ -23,12 +23,12 @@ describe('reconcileRoutePresenters', () => {
   //
   //   expect(routeAaa.loadingAppearance).toBe('avoid');
   //
-  //   router.routePresenter = new RoutePresenter(router, null);
+  //   router.presenter = new RoutePresenter(router, null);
   //
   //   const routeMatch = { route: routeAaa, params: undefined };
-  //   const presenter = reconcileRoutePresenters(router, [routeMatch]);
+  //   const presenter = reconcilePresenters(router, [routeMatch]);
   //
-  //   expect(presenter.fallbackPresenter).toBe(router.routePresenter);
+  //   expect(presenter.fallbackPresenter).toBe(router.presenter);
   //   expect(presenter.state).toBe(undefined);
   // });
   //
@@ -40,10 +40,10 @@ describe('reconcileRoutePresenters', () => {
   //
   //   const routeAaa = createRoute({ pathname: '/aaa', loadingAppearance: 'loading' });
   //
-  //   router.routePresenter = new RoutePresenter(router, null);
+  //   router.presenter = new RoutePresenter(router, null);
   //
   //   const routeMatch = { route: routeAaa, params: undefined };
-  //   const presenter = reconcileRoutePresenters(router, [routeMatch]);
+  //   const presenter = reconcilePresenters(router, [routeMatch]);
   //
   //   expect(presenter.fallbackPresenter).toBe(presenter);
   //   expect(presenter.state).toBe(undefined);
@@ -57,9 +57,9 @@ describe('reconcileRoutePresenters', () => {
   //
   //   const route = createRoute('/aaa');
   //
-  //   router.routePresenter = new RoutePresenter(router, { route, params: undefined });
+  //   router.presenter = new RoutePresenter(router, { route, params: undefined });
   //
-  //   const presenter = reconcileRoutePresenters(router, [{ route, params: undefined }]);
+  //   const presenter = reconcilePresenters(router, [{ route, params: undefined }]);
   //
   //   expect(presenter.surrogatePresenter).toBe(presenter);
   //   expect(presenter.parentPresenter).toBe(null);

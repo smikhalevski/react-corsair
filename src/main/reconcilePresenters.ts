@@ -6,13 +6,10 @@ import { Router } from './Router';
 /**
  * Returns a root route presenter for a given array of route matches.
  */
-export function reconcileRoutePresenters<Context>(
-  router: Router<Context>,
-  routeMatches: RouteMatch[]
-): RoutePresenter<Context> | null {
+export function reconcilePresenters(router: Router, routeMatches: RouteMatch[]): RoutePresenter | null {
   let rootPresenter = null;
   let parentPresenter = null;
-  let replacedPresenter = router.routePresenter !== null ? router.routePresenter.fallbackPresenter : null;
+  let replacedPresenter = router.rootPresenter !== null ? router.rootPresenter.fallbackPresenter : null;
 
   for (let i = 0; i < routeMatches.length; ++i) {
     const routeMatch = routeMatches[i];

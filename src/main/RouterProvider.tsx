@@ -27,13 +27,13 @@ export interface RouterProviderProps {
  */
 export function RouterProvider(props: RouterProviderProps): ReactElement {
   const { router, children = <Outlet /> } = props;
-  const [routePresenter, setRoutePresenter] = useState(router.routePresenter);
+  const [presenter, setRoutePresenter] = useState(router.rootPresenter);
 
-  useLayoutEffect(() => router.subscribe(() => setRoutePresenter(router.routePresenter)), [router]);
+  useLayoutEffect(() => router.subscribe(() => setRoutePresenter(router.rootPresenter)), [router]);
 
   return (
     <RouterContext.Provider value={router}>
-      <ChildRoutePresenterContext.Provider value={routePresenter}>{children}</ChildRoutePresenterContext.Provider>
+      <ChildRoutePresenterContext.Provider value={presenter}>{children}</ChildRoutePresenterContext.Provider>
     </RouterContext.Provider>
   );
 }
