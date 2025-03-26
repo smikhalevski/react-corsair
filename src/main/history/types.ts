@@ -1,4 +1,4 @@
-import { Dict, Location, To } from '../__types';
+import { Dict, Location, To } from '../types';
 
 /**
  * @group History

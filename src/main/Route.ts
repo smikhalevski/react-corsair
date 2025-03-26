@@ -1,5 +1,5 @@
 import { ComponentType } from 'react';
-import { PathnameTemplate } from './__PathnameTemplate';
+import { PathnameTemplate } from './PathnameTemplate';
 import {
   DataLoaderOptions,
   Dict,
@@ -10,7 +10,7 @@ import {
   ParamsAdapter,
   RenderingDisposition,
   RouteOptions,
-} from './__types';
+} from './types';
 import { Outlet } from './Outlet';
 
 type Prettify<T> = { [K in keyof T]: T[K] } & {};

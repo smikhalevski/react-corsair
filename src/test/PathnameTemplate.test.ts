@@ -1,4 +1,4 @@
-import { createPatternRegExp, parsePattern, PathnameTemplate } from '../main/__PathnameTemplate';
+import { createPatternRegExp, parsePattern, PathnameTemplate } from '../main/PathnameTemplate';
 
 describe('parsePattern', () => {
   const FLAG_PARAM = 1;

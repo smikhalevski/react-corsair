@@ -1,5 +1,5 @@
 import { createRoute } from '../main';
-import { matchRoutes } from '../main/__matchRoutes';
+import { matchRoutes } from '../main/matchRoutes';
 
 describe('matchRoutes', () => {
   const aaaRoute = createRoute('/aaa');

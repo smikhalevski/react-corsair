@@ -1,9 +1,9 @@
 import { AbortablePromise, PubSub } from 'parallel-universe';
 import { ComponentType } from 'react';
-import { loadRoute } from './__loadRoute';
-import { matchRoutes, RouteMatch } from './__matchRoutes';
-import { Route } from './__Route';
-import { FallbackOptions, RouterEvent, RouterOptions, To } from './__types';
+import { loadRoute } from './loadRoute';
+import { matchRoutes, RouteMatch } from './matchRoutes';
+import { Route } from './Route';
+import { FallbackOptions, RouterEvent, RouterOptions, To } from './types';
 import { noop, toLocation } from './utils';
 import { RoutePresenter } from './RoutePresenter';
 import { reconcilePresenters } from './reconcilePresenters';

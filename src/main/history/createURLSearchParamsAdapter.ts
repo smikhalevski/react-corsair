@@ -1,4 +1,4 @@
-import { Dict } from '../__types';
+import { Dict } from '../types';
 import { SearchParamsAdapter } from './types';
 
 /**

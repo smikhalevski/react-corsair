@@ -1,4 +1,4 @@
-import { RouterOptions } from '../__types';
+import { RouterOptions } from '../types';
 import { Router } from '../Router';
 import { RoutePresenterState } from '../RoutePresenter';
 

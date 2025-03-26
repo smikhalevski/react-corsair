@@ -1,6 +1,6 @@
-import { RouteMatch } from './__matchRoutes';
-import { NotFoundError } from './__notFound';
-import { Redirect } from './__redirect';
+import { RouteMatch } from './matchRoutes';
+import { NotFoundError } from './notFound';
+import { Redirect } from './redirect';
 import { isPromiseLike } from './utils';
 import { RoutePresenterState } from './RoutePresenter';
 

@@ -1,9 +1,9 @@
-import { RouteMatch } from './__matchRoutes';
+import { RouteMatch } from './matchRoutes';
 import { Router } from './Router';
 import { AbortablePromise } from 'parallel-universe';
-import { loadRoute } from './__loadRoute';
+import { loadRoute } from './loadRoute';
 import { isPromiseLike } from './utils';
-import { Location } from './__types';
+import { Location } from './types';
 
 export interface LoadingState {
   status: 'loading';

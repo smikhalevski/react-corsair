@@ -1,6 +1,6 @@
 import React, { createContext, ReactElement, Suspense, useContext } from 'react';
 import { RoutePresenter } from './RoutePresenter';
-import { ErrorBoundary } from './__ErrorBoundary';
+import { ErrorBoundary } from './ErrorBoundary';
 import { Router } from './Router';
 
 export const RoutePresenterContext = createContext<RoutePresenter | null>(null);

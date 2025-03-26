@@ -1,5 +1,5 @@
 import { ComponentType } from 'react';
-import { Route } from './__Route';
+import { Route } from './Route';
 import { Router } from './Router';
 import { RoutePresenter } from './RoutePresenter';
 
