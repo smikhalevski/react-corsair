@@ -80,7 +80,7 @@ interface RouteOutletProps {
 
 function RouteOutlet(props: RouteOutletProps): ReactElement | null {
   const { presenter, canSuspend } = props;
-  const { route } = presenter.routeMatch;
+  const { route } = presenter;
 
   const fallbacks = presenter.parentPresenter === null ? presenter.router : route;
 

@@ -87,7 +87,9 @@ export class Router<Context = any> implements FallbackOptions {
 
       resolve(
         Promise.all(
-          routeMatches.map(routeMatch => getOrLoadPresenterState(routeMatch, this.context, signal, true))
+          routeMatches.map(routeMatch =>
+            getOrLoadPresenterState(routeMatch.route, routeMatch.params, this.context, signal, true)
+          )
         ).then(noop)
       );
     });

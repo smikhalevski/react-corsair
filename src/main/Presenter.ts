@@ -1,10 +1,10 @@
-import { RouteMatch } from './__matchRoutes';
 import { Router } from './Router';
 import { AbortablePromise } from 'parallel-universe';
 import { isPromiseLike } from './utils';
-import { Location } from './types';
+import { Dict, Location } from './types';
 import { NotFoundError } from './__notFound';
 import { Redirect } from './__redirect';
+import { Route } from './Route';
 
 export interface LoadingState {
   status: 'loading';
@@ -70,13 +70,11 @@ export class Presenter {
 
   /**
    * Create a new {@link Presenter} instance.
-   *
-   * @param router A router to which a presenter belongs.
-   * @param routeMatch A matched route and params managed by the presenter.
    */
   constructor(
     readonly router: Router,
-    readonly routeMatch: RouteMatch
+    readonly route: Route,
+    readonly params: Dict
   ) {}
 
   /**
@@ -118,7 +116,7 @@ export class Presenter {
    */
   reload(): void {
     const abortController = new AbortController();
-    const state = getOrLoadPresenterState(this.routeMatch, this.router.context, abortController.signal, false);
+    const state = getOrLoadPresenterState(this.route, this.params, this.router.context, abortController.signal, false);
 
     if (!isPromiseLike(state)) {
       this.setState(state);
@@ -149,11 +147,7 @@ export class Presenter {
 
     pendingPromise?.abort();
 
-    if (
-      this.state.status === 'loading'
-        ? pendingPromise === undefined
-        : this.routeMatch.route.loadingAppearance === 'loading'
-    ) {
+    if (this.state.status === 'loading' ? pendingPromise === undefined : this.route.loadingAppearance === 'loading') {
       this.setState({ status: 'loading' });
     }
 
@@ -167,13 +161,12 @@ export class Presenter {
  * A route component is loaded once and cached forever, while data is loaded anew on every call.
  */
 export function getOrLoadPresenterState(
-  routeMatch: RouteMatch,
+  route: Route,
+  params: Dict,
   context: unknown,
   signal: AbortSignal,
   isPrefetch: boolean
 ): PresenterState | Promise<PresenterState> {
-  const { route, params } = routeMatch;
-
   let component;
   let data;
 

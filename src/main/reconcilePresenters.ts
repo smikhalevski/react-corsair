@@ -14,10 +14,10 @@ export function reconcilePresenters(router: Router, routeMatches: RouteMatch[]):
 
   for (let i = 0; i < routeMatches.length; ++i) {
     const routeMatch = routeMatches[i];
-    const presenter = new Presenter(router, routeMatch);
+    const presenter = new Presenter(router, routeMatch.route, routeMatch.params);
     const { loadingAppearance } = routeMatch.route;
 
-    if (replacedPresenter === null || replacedPresenter.routeMatch.route !== routeMatch.route) {
+    if (replacedPresenter === null || replacedPresenter.route !== routeMatch.route) {
       // Route has changed
 
       if (replacedPresenter !== null && loadingAppearance === 'avoid') {
@@ -25,7 +25,7 @@ export function reconcilePresenters(router: Router, routeMatches: RouteMatch[]):
       }
 
       replacedPresenter = null;
-    } else if (!isDeepEqual(replacedPresenter.routeMatch.params, routeMatch.params)) {
+    } else if (!isDeepEqual(replacedPresenter.params, routeMatch.params)) {
       // Route is unchanged, but params have changed
 
       if (loadingAppearance === 'route_loading' || loadingAppearance === 'avoid') {
