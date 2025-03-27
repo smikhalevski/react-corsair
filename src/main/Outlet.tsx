@@ -1,4 +1,4 @@
-import React, { createContext, ReactElement, Suspense, useContext } from 'react';
+import React, { ComponentType, createContext, memo, ReactElement, Suspense, useContext } from 'react';
 import { Presenter } from './Presenter';
 import { ErrorBoundary } from './ErrorBoundary';
 import { Router } from './Router';
@@ -16,62 +16,60 @@ OutletContext.displayName = 'OutletContext';
  *
  * @group Components
  */
-export function Outlet(): ReactElement | null {
-  const presenter = useContext(OutletContext);
+export const Outlet = memo(
+  () => {
+    const presenter = useContext(OutletContext);
 
-  if (presenter === null) {
-    // Nothing to render
-    return null;
-  }
-
-  if (presenter instanceof Router) {
-    // No route was matched
-
-    const Component = presenter.notFoundComponent;
-
-    if (Component === undefined) {
+    if (presenter === null) {
+      // Nothing to render
       return null;
     }
 
-    return (
-      <OutletContext.Provider value={null}>
-        <Component />
-      </OutletContext.Provider>
-    );
-  }
+    if (presenter instanceof Router) {
+      // No route was matched
 
-  const { status } = presenter.state;
+      const Component = presenter.notFoundComponent;
 
-  if (status === 'error' || status === 'not_found' || status === 'redirect') {
-    return (
-      <RouteOutlet
-        presenter={presenter}
-        canSuspend={false}
-      />
-    );
-  }
+      if (Component === undefined) {
+        return null;
+      }
 
-  return (
-    <Suspense
-      fallback={
+      return (
+        <OutletContext.Provider value={null}>
+          <Component />
+        </OutletContext.Provider>
+      );
+    }
+
+    const { status } = presenter.state;
+
+    if (status === 'error' || status === 'not_found' || status === 'redirect') {
+      return (
         <RouteOutlet
-          presenter={presenter.fallbackPresenter || presenter}
+          presenter={presenter}
           canSuspend={false}
         />
-      }
-    >
-      <RouteOutlet
-        presenter={presenter}
-        canSuspend={true}
-      />
-    </Suspense>
-  );
-}
+      );
+    }
 
-/**
- * @hidden
- */
-Outlet.displayName = 'Outlet';
+    return (
+      <Suspense
+        fallback={
+          <RouteOutlet
+            presenter={presenter.fallbackPresenter || presenter}
+            canSuspend={false}
+          />
+        }
+      >
+        <RouteOutlet
+          presenter={presenter}
+          canSuspend={true}
+        />
+      </Suspense>
+    );
+  },
+  (_prevProps, _nextProps) => true
+);
 
 interface RouteOutletProps {
   presenter: Presenter;
@@ -119,7 +117,7 @@ function RouteOutlet(props: RouteOutletProps): ReactElement | null {
     <PresenterContext.Provider value={presenter}>
       <OutletContext.Provider value={presenter.childPresenter}>
         <ErrorBoundary presenter={presenter}>
-          <Component />
+          <RenderBoundary Component={Component} />
         </ErrorBoundary>
       </OutletContext.Provider>
     </PresenterContext.Provider>
@@ -127,3 +125,8 @@ function RouteOutlet(props: RouteOutletProps): ReactElement | null {
 }
 
 RouteOutlet.displayName = 'RouteOutlet';
+
+const RenderBoundary = memo<{ Component: ComponentType }>(
+  props => <props.Component />,
+  (prevProps, nextProps) => prevProps.Component === nextProps.Component
+);
