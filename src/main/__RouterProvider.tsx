@@ -1,7 +1,7 @@
 import React, { ReactElement, ReactNode, useLayoutEffect, useState } from 'react';
 import { RouterContext } from './__useRouter';
 import { Outlet, OutletContext, PresenterContext } from './Outlet';
-import { Router } from './Router';
+import { Router } from './__Router';
 
 /**
  * Props of the {@link RouterProvider} component.

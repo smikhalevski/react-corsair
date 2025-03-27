@@ -1,7 +1,7 @@
 import isDeepEqual from 'fast-deep-equal';
 import { RouteMatch } from './__matchRoutes';
 import { RoutePresenter } from './RoutePresenter';
-import { Router } from './Router';
+import { Router } from './__Router';
 
 /**
  * Returns a root presenter for a given array of route matches.

@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import { Router } from './Router';
+import { Router } from './__Router';
 
 export const RouterContext = createContext<Router | null>(null);
 

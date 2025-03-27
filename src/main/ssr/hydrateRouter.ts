@@ -1,5 +1,5 @@
 import { To } from '../__types';
-import { Router } from '../Router';
+import { Router } from '../__Router';
 import { RoutePresenterState } from '../RoutePresenter';
 
 export interface HydrateRouteOptions {

@@ -1,5 +1,5 @@
 import { RouterOptions } from '../__types';
-import { Router } from '../Router';
+import { Router } from '../__Router';
 import { RoutePresenterState } from '../RoutePresenter';
 
 export interface SSRRouterOptions<Context> extends RouterOptions<Context> {

@@ -1,4 +1,4 @@
-import { Router } from './Router';
+import { Router } from './__Router';
 import { AbortablePromise } from 'parallel-universe';
 import { isPromiseLike } from './__utils';
 import { Dict, Location } from './__types';
@@ -43,12 +43,6 @@ export type RoutePresenterState = LoadingState | OkState | ErrorState | NotFound
  * @group Routing
  */
 export class RoutePresenter {
-  /**
-   * `true` if this route presenter is the primary rendering source, or `false` if this presenter was superseded by
-   * another presenter after navigation.
-   */
-  isActive = true;
-
   /**
    * A fallback presenter that is rendered in an {@link Outlet} while this presenter loads route component and data.
    */
@@ -122,17 +116,16 @@ export class RoutePresenter {
   }
 
   /**
-   * Reloads route data and notifies subscribers.
+   * If route isn't being loaded, then loads route data and notifies subscribers.
    */
   reload(): void {
+    if (this.pendingPromise !== null) {
+      // Loading is already in progress
+      return;
+    }
+
     const abortController = new AbortController();
-    const state = getOrLoadRoutePresenterState(
-      this.route,
-      this.params,
-      this.router.context,
-      abortController.signal,
-      false
-    );
+    const state = loadRoute(this.route, this.params, this.router.context, abortController.signal, false);
 
     if (!isPromiseLike(state)) {
       this.setState(state);
@@ -161,7 +154,7 @@ export class RoutePresenter {
 
     this.pendingPromise = promise;
 
-    pendingPromise?.abort();
+    // pendingPromise?.abort();
 
     if (this.state.status === 'loading' ? pendingPromise === undefined : this.route.loadingAppearance === 'loading') {
       this.setState({ status: 'loading' });
@@ -176,7 +169,7 @@ export class RoutePresenter {
  *
  * A route component is loaded once and cached forever, while data is loaded anew on every call.
  */
-export function getOrLoadRoutePresenterState(
+export function loadRoute(
   route: Route,
   params: Dict,
   context: unknown,

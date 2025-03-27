@@ -4,7 +4,7 @@ import { matchRoutes } from './__matchRoutes';
 import { Route } from './__Route';
 import { Fallbacks, RouterEvent, RouterOptions, To } from './__types';
 import { noop, toLocation } from './__utils';
-import { getOrLoadRoutePresenterState, RoutePresenter } from './RoutePresenter';
+import { loadRoute, RoutePresenter } from './RoutePresenter';
 import { reconcilePresenters } from './reconcilePresenters';
 
 /**
@@ -64,13 +64,16 @@ export class Router<Context = any> implements Fallbacks {
 
     this.rootPresenter = rootPresenter;
 
-    for (let presenter = rootPresenter; presenter !== null; presenter = presenter.childPresenter) {
-      if (presenter.state.status === 'loading' && presenter.pendingPromise === null) {
-        presenter.reload();
-      }
+    this._pubSub.publish({ type: 'navigate', router: this, location });
+
+    if (this.rootPresenter !== rootPresenter) {
+      // Navigation was superseded
+      return;
     }
 
-    this._pubSub.publish({ type: 'navigate', router: this, location });
+    for (let presenter = rootPresenter; presenter !== null; presenter = presenter.childPresenter) {
+      presenter.reload();
+    }
   }
 
   /**
@@ -87,16 +90,14 @@ export class Router<Context = any> implements Fallbacks {
 
       resolve(
         Promise.all(
-          routeMatches.map(routeMatch =>
-            getOrLoadRoutePresenterState(routeMatch.route, routeMatch.params, this.context, signal, true)
-          )
+          routeMatches.map(routeMatch => loadRoute(routeMatch.route, routeMatch.params, this.context, signal, true))
         ).then(noop)
       );
     });
   }
 
   /**
-   * Subscribes a listener to events dispatched by a router.
+   * Subscribes a listener to events published by a router.
    *
    * @param listener A listener to subscribe.
    * @returns A callback that unsubscribe a listener.

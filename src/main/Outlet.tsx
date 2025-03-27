@@ -1,7 +1,7 @@
 import React, { ComponentType, createContext, memo, ReactElement, Suspense, useContext } from 'react';
 import { RoutePresenter } from './RoutePresenter';
 import { OutletErrorBoundary } from './__OutletErrorBoundary';
-import { Router } from './Router';
+import { Router } from './__Router';
 
 export const PresenterContext = createContext<RoutePresenter | null>(null);
 

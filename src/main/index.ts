@@ -16,7 +16,7 @@ export { redirect, Redirect } from './__redirect';
 export { Route, type InferData, type InferContext, type InferLocationParams } from './__Route';
 export { useRouter } from './__useRouter';
 export { usePrefetch } from './__usePrefetch';
-export { Router } from './Router';
+export { Router } from './__Router';
 export { RouterProvider } from './__RouterProvider';
 export { useRouteParams, useRouteData, useRouteError } from './hooks';
 

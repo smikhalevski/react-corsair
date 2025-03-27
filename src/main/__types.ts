@@ -1,6 +1,6 @@
 import { ComponentType } from 'react';
 import { Route } from './__Route';
-import { Router } from './Router';
+import { Router } from './__Router';
 import { RoutePresenter } from './RoutePresenter';
 
 export interface Dict {
