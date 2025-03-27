@@ -40,16 +40,16 @@ export const Outlet: FunctionComponent = memo(
 
     if (presenter instanceof Router) {
       // No route was matched
-      const Component = presenter.notFoundComponent;
+      const component = presenter.notFoundComponent;
 
-      if (Component === undefined) {
+      if (component === undefined) {
         return null;
       }
 
       return (
         <PresenterProvider value={null}>
           <OutletProvider value={null}>
-            <RenderBoundary Component={Component} />
+            <RenderBoundary component={component} />
           </OutletProvider>
         </PresenterProvider>
       );
@@ -85,6 +85,8 @@ export const Outlet: FunctionComponent = memo(
   (_prevProps, _nextProps) => true
 );
 
+Outlet.displayName = 'Outlet';
+
 interface RouteContentProps {
   presenter: RoutePresenter;
   canSuspend: boolean;
@@ -96,13 +98,13 @@ function RouteContent(props: RouteContentProps): ReactElement | null {
 
   const fallbacks = presenter.parentPresenter === null ? presenter.router : route;
 
-  let Component;
+  let component;
 
   switch (presenter.state.status) {
     case 'ok':
-      Component = route.component;
+      component = route.component;
 
-      if (Component === undefined) {
+      if (component === undefined) {
         return null;
       }
 
@@ -110,16 +112,16 @@ function RouteContent(props: RouteContentProps): ReactElement | null {
         <PresenterProvider value={presenter}>
           <OutletProvider value={presenter.childPresenter}>
             <OutletErrorBoundary presenter={presenter}>
-              <RenderBoundary Component={Component} />
+              <RenderBoundary component={component} />
             </OutletErrorBoundary>
           </OutletProvider>
         </PresenterProvider>
       );
 
     case 'error':
-      Component = route.errorComponent || fallbacks.errorComponent;
+      component = route.errorComponent || fallbacks.errorComponent;
 
-      if (Component === undefined) {
+      if (component === undefined) {
         throw presenter.state.error;
       }
       break;
@@ -129,34 +131,34 @@ function RouteContent(props: RouteContentProps): ReactElement | null {
         throw presenter.pendingPromise;
       }
 
-      Component = route.loadingComponent || fallbacks.loadingComponent;
+      component = route.loadingComponent || fallbacks.loadingComponent;
 
-      if (Component === undefined) {
+      if (component === undefined) {
         throw presenter.pendingPromise;
       }
       break;
 
     case 'not_found':
-      Component = route.notFoundComponent || fallbacks.notFoundComponent;
+      component = route.notFoundComponent || fallbacks.notFoundComponent;
 
-      if (Component === undefined) {
+      if (component === undefined) {
         notFound();
       }
       break;
 
     case 'redirect':
-      Component = route.loadingComponent || fallbacks.loadingComponent;
+      component = route.loadingComponent || fallbacks.loadingComponent;
       break;
   }
 
-  if (Component === undefined) {
+  if (component === undefined) {
     return null;
   }
 
   return (
     <PresenterProvider value={presenter}>
       <OutletProvider value={null}>
-        <RenderBoundary Component={Component} />
+        <RenderBoundary component={component} />
       </OutletProvider>
     </PresenterProvider>
   );
@@ -164,7 +166,9 @@ function RouteContent(props: RouteContentProps): ReactElement | null {
 
 RouteContent.displayName = 'RouteContent';
 
-const RenderBoundary = memo<{ Component: ComponentType }>(
-  props => <props.Component />,
-  (prevProps, nextProps) => prevProps.Component === nextProps.Component
+const RenderBoundary = memo<{ component: ComponentType }>(
+  props => <props.component />,
+  (prevProps, nextProps) => prevProps.component === nextProps.component
 );
+
+RenderBoundary.displayName = 'RenderBoundary';
