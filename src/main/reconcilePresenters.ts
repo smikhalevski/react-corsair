@@ -20,23 +20,31 @@ export function reconcilePresenters(router: Router, routeMatches: RouteMatch[]):
     if (replacedPresenter === null || replacedPresenter.route !== routeMatch.route) {
       // Route has changed
 
-      if (replacedPresenter !== null && loadingAppearance === 'avoid') {
+      if (replacedPresenter !== null && replacedPresenter.state.status === 'ok' && loadingAppearance === 'avoid') {
+        // Keep the current page on screen
         presenter.fallbackPresenter = replacedPresenter;
       }
 
       replacedPresenter = null;
     } else if (!isDeepEqual(replacedPresenter.params, routeMatch.params)) {
-      // Route is unchanged, but params have changed
+      // Params have changed
 
-      if (loadingAppearance === 'route_loading' || loadingAppearance === 'avoid') {
+      if (
+        replacedPresenter.state.status === 'ok' &&
+        (loadingAppearance === 'route_loading' || loadingAppearance === 'avoid')
+      ) {
+        // Keep the current page on screen
         presenter.fallbackPresenter = replacedPresenter;
       }
 
+      presenter.params = replacedPresenter.params;
+
       replacedPresenter = replacedPresenter.childPresenter;
     } else {
-      // Route and params are unchanged, reuse the existing state
+      // Nothing has changed
 
       presenter.state = replacedPresenter.state;
+      presenter.params = replacedPresenter.params;
       presenter.pendingPromise = replacedPresenter.pendingPromise;
 
       replacedPresenter = replacedPresenter.childPresenter;

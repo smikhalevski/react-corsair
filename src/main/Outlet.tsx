@@ -1,4 +1,12 @@
-import React, { ComponentType, createContext, memo, ReactElement, Suspense, useContext } from 'react';
+import React, {
+  ComponentType,
+  createContext,
+  FunctionComponent,
+  memo,
+  ReactElement,
+  Suspense,
+  useContext,
+} from 'react';
 import { RoutePresenter } from './RoutePresenter';
 import { OutletErrorBoundary } from './__OutletErrorBoundary';
 import { Router } from './__Router';
@@ -16,7 +24,7 @@ OutletContext.displayName = 'OutletContext';
  *
  * @group Components
  */
-export const Outlet = memo(
+export const Outlet: FunctionComponent = memo(
   () => {
     const presenter = useContext(OutletContext);
 

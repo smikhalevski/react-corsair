@@ -78,7 +78,7 @@ export class RoutePresenter {
   constructor(
     readonly router: Router,
     readonly route: Route,
-    readonly params: Dict
+    public params: Dict
   ) {}
 
   /**
@@ -116,11 +116,10 @@ export class RoutePresenter {
   }
 
   /**
-   * If route isn't being loaded, then loads route data and notifies subscribers.
+   * Reloads route data and notifies subscribers.
    */
   reload(): void {
     if (this.pendingPromise !== null) {
-      // Loading is already in progress
       return;
     }
 
@@ -134,10 +133,16 @@ export class RoutePresenter {
 
     const promise = new AbortablePromise<void>((resolve, _reject, signal) => {
       signal.addEventListener('abort', () => {
-        if (this.pendingPromise === promise) {
-          this.pendingPromise = null;
+        if (this.pendingPromise !== promise) {
+          return;
         }
+
+        this.pendingPromise = null;
         abortController.abort(signal.reason);
+
+        if (this.state.status === 'loading') {
+          this.setState({ status: 'error', error: signal.reason });
+        }
       });
 
       state.then(state => {
@@ -150,17 +155,20 @@ export class RoutePresenter {
       });
     });
 
-    const { pendingPromise } = this;
-
-    this.pendingPromise = promise;
-
-    // pendingPromise?.abort();
-
-    if (this.state.status === 'loading' ? pendingPromise === undefined : this.route.loadingAppearance === 'loading') {
+    if (this.state.status === 'loading' || this.route.loadingAppearance === 'loading') {
       this.setState({ status: 'loading' });
     }
 
-    promise.withSignal(abortController.signal);
+    this.pendingPromise = promise;
+  }
+
+  /**
+   * Instantly aborts pending route loading.
+   *
+   * @param reason The abort reason that is used for rejection of the pending promise.
+   */
+  abort(reason?: unknown): void {
+    this.pendingPromise?.abort(reason);
   }
 }
 
