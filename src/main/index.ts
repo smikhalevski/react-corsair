@@ -1,11 +1,7 @@
 export { createBrowserHistory } from './history/createBrowserHistory';
 export { createHashHistory } from './history/createHashHistory';
 export { createMemoryHistory } from './history/createMemoryHistory';
-export {
-  createURLSearchParamsAdapter,
-  type NameEncoder,
-  type URLSearchParamsAdapterOptions,
-} from './history/createURLSearchParamsAdapter';
+export { JSONSearchParamsAdapter } from './history/JSONSearchParamsAdapter';
 export { Link, type LinkProps } from './history/Link';
 export { useHistory, HistoryProvider } from './history/useHistory';
 export { useHistorySubscription } from './history/useHistorySubscription';
@@ -44,7 +40,6 @@ export {
 
 export { Prefetch, type PrefetchProps } from './__Prefetch';
 
-export { urlSearchParamsAdapter } from './history/createURLSearchParamsAdapter';
 export {
   type LoadingState,
   type OkState,

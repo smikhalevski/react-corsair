@@ -12,7 +12,7 @@ export interface HistoryOptions {
   /**
    * An adapter that extracts params from a URL search string and stringifies them back.
    *
-   * @default {@link urlSearchParamsAdapter}
+   * @default {@link jsonSearchParamsAdapter}
    */
   searchParamsAdapter?: SearchParamsAdapter;
 }

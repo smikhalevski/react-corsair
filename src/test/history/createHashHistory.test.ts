@@ -1,6 +1,7 @@
 import { JSDOM } from 'jsdom';
 import { delay } from 'parallel-universe';
-import { createHashHistory, SearchParamsAdapter, urlSearchParamsAdapter } from '../../main';
+import { createHashHistory, SearchParamsAdapter } from '../../main';
+import { jsonSearchParamsAdapter } from '../../main/history/utils';
 
 describe('createHashHistory', () => {
   beforeEach(() => {
@@ -109,38 +110,36 @@ describe('createHashHistory', () => {
 
     history.push(aaaLocation);
 
-    expect(history.location).toEqual({ pathname: '/aaa', searchParams: { xxx: '111' }, hash: '' });
+    expect(history.location).toEqual({ pathname: '/aaa', searchParams: { xxx: 111 }, hash: '' });
 
     expect(window.location.href).toBe('http://localhost/#/aaa?xxx=111');
 
     history.push(bbbLocation);
 
-    expect(history.location).toEqual({ pathname: '/bbb', searchParams: { yyy: ['111', '222'] }, hash: '' });
+    expect(history.location).toEqual({ pathname: '/bbb', searchParams: { yyy: [111, 222] }, hash: '' });
 
-    expect(window.location.href).toBe('http://localhost/#/bbb?yyy=111&yyy=222');
+    expect(window.location.href).toBe('http://localhost/#/bbb?yyy=%255B111%252C222%255D');
   });
 
   test('parses query params with a custom adapter', async () => {
-    const searchParamsAdapterMock: SearchParamsAdapter = {
-      parse: jest.fn(urlSearchParamsAdapter.parse),
-      stringify: jest.fn(urlSearchParamsAdapter.stringify),
-    };
+    jest.spyOn(jsonSearchParamsAdapter, 'parse');
+    jest.spyOn(jsonSearchParamsAdapter, 'stringify');
 
     const aaaLocation = { pathname: '/aaa', searchParams: { xxx: 111 }, hash: '' };
 
-    const history = createHashHistory({ searchParamsAdapter: searchParamsAdapterMock });
+    const history = createHashHistory();
 
     history.push(aaaLocation);
 
-    expect(searchParamsAdapterMock.parse).toHaveBeenCalledTimes(0);
-    expect(searchParamsAdapterMock.stringify).toHaveBeenCalledTimes(1);
-    expect(searchParamsAdapterMock.stringify).toHaveBeenNthCalledWith(1, { xxx: 111 });
+    expect(jsonSearchParamsAdapter.parse).toHaveBeenCalledTimes(0);
+    expect(jsonSearchParamsAdapter.stringify).toHaveBeenCalledTimes(1);
+    expect(jsonSearchParamsAdapter.stringify).toHaveBeenNthCalledWith(1, { xxx: 111 });
 
     history.location;
 
-    expect(searchParamsAdapterMock.stringify).toHaveBeenCalledTimes(1);
-    expect(searchParamsAdapterMock.parse).toHaveBeenCalledTimes(1);
-    expect(searchParamsAdapterMock.parse).toHaveBeenNthCalledWith(1, 'xxx=111');
+    expect(jsonSearchParamsAdapter.stringify).toHaveBeenCalledTimes(1);
+    expect(jsonSearchParamsAdapter.parse).toHaveBeenCalledTimes(1);
+    expect(jsonSearchParamsAdapter.parse).toHaveBeenNthCalledWith(1, 'xxx=111');
   });
 
   test('creates an absolute URL', async () => {

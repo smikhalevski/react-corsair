@@ -1,8 +1,13 @@
 import { PubSub } from 'parallel-universe';
 import { Location } from '../types';
 import { History, HistoryOptions } from './types';
-import { concatPathname, parseLocation, parseOrCastLocation, stringifyLocation } from './utils';
-import { urlSearchParamsAdapter } from './createURLSearchParamsAdapter';
+import {
+  concatPathname,
+  jsonSearchParamsAdapter,
+  parseLocation,
+  parseOrCastLocation,
+  stringifyLocation,
+} from './utils';
 
 /**
  * Create the history adapter that reads and writes location to a browser's session history using only URL hash.
@@ -11,7 +16,7 @@ import { urlSearchParamsAdapter } from './createURLSearchParamsAdapter';
  * @group History
  */
 export function createHashHistory(options: HistoryOptions = {}): History {
-  const { basePathname, searchParamsAdapter = urlSearchParamsAdapter } = options;
+  const { basePathname, searchParamsAdapter = jsonSearchParamsAdapter } = options;
   const pubSub = new PubSub();
   const handlePopstate = () => pubSub.publish();
 

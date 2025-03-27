@@ -64,7 +64,7 @@ export interface LocationOptions {
  * An adapter that can validate and transform route params.
  *
  * @template Params Route params.
- * @see {@link urlSearchParamsAdapter}
+ * @see {@link jsonSearchParamsAdapter}
  * @group Routing
  */
 export interface ParamsAdapter<Params> {

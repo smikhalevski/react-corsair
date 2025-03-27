@@ -20,7 +20,7 @@ describe('parseLocation', () => {
 
     expect(parseLocation('/aaa?xxx=111')).toEqual({
       pathname: '/aaa',
-      searchParams: { xxx: '111' },
+      searchParams: { xxx: 111 },
       hash: '',
     });
 

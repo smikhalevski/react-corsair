@@ -1,7 +1,12 @@
 import { Location, To } from '../types';
 import { toLocation } from '../utils';
 import { SearchParamsAdapter } from './types';
-import { urlSearchParamsAdapter } from './createURLSearchParamsAdapter';
+import { JSONSearchParamsAdapter } from './JSONSearchParamsAdapter';
+
+/**
+ * The default search params adapter.
+ */
+export const jsonSearchParamsAdapter: SearchParamsAdapter = new JSONSearchParamsAdapter();
 
 /**
  * Parses a pathname-search-hash string as a location.
@@ -10,7 +15,7 @@ import { urlSearchParamsAdapter } from './createURLSearchParamsAdapter';
  * @param searchParamsAdapter An adapter that parses a search string.
  * @group History
  */
-export function parseLocation(to: string, searchParamsAdapter = urlSearchParamsAdapter): Location {
+export function parseLocation(to: string, searchParamsAdapter = jsonSearchParamsAdapter): Location {
   const hashIndex = to.indexOf('#');
 
   let searchIndex = to.indexOf('?');
@@ -38,7 +43,7 @@ export function parseLocation(to: string, searchParamsAdapter = urlSearchParamsA
  * @param searchParamsAdapter An adapter that stringifies a search string.
  * @group History
  */
-export function stringifyLocation(to: To, searchParamsAdapter = urlSearchParamsAdapter): string {
+export function stringifyLocation(to: To, searchParamsAdapter = jsonSearchParamsAdapter): string {
   const { pathname, searchParams, hash } = toLocation(to);
 
   const search = searchParamsAdapter.stringify(searchParams);

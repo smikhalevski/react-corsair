@@ -1,8 +1,7 @@
 import { PubSub } from 'parallel-universe';
 import { To } from '../types';
 import { History, HistoryOptions } from './types';
-import { concatPathname, parseOrCastLocation, stringifyLocation } from './utils';
-import { urlSearchParamsAdapter } from './createURLSearchParamsAdapter';
+import { concatPathname, jsonSearchParamsAdapter, parseOrCastLocation, stringifyLocation } from './utils';
 
 /**
  * Create the history adapter that reads and writes location to an in-memory stack.
@@ -12,7 +11,7 @@ import { urlSearchParamsAdapter } from './createURLSearchParamsAdapter';
  * @group History
  */
 export function createMemoryHistory(initialEntries: Array<To | string>, options: HistoryOptions = {}): History {
-  const { basePathname, searchParamsAdapter = urlSearchParamsAdapter } = options;
+  const { basePathname, searchParamsAdapter = jsonSearchParamsAdapter } = options;
   const pubSub = new PubSub();
   const entries = initialEntries.map(entry => parseOrCastLocation(entry, searchParamsAdapter));
 
