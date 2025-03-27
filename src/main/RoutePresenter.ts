@@ -89,7 +89,6 @@ export class RoutePresenter {
   setState(state: RoutePresenterState): void {
     const routerPubSub = this.router['_pubSub'];
 
-    this.fallbackPresenter = null;
     this.state = state;
 
     switch (state.status) {
@@ -98,18 +97,22 @@ export class RoutePresenter {
         break;
 
       case 'ok':
+        this.fallbackPresenter = null;
         routerPubSub.publish({ type: 'ready', presenter: this });
         break;
 
       case 'error':
+        this.fallbackPresenter = null;
         routerPubSub.publish({ type: 'error', presenter: this, error: state.error });
         break;
 
       case 'not_found':
+        this.fallbackPresenter = null;
         routerPubSub.publish({ type: 'not_found', presenter: this });
         break;
 
       case 'redirect':
+        this.fallbackPresenter = null;
         routerPubSub.publish({ type: 'redirect', presenter: this, to: state.to });
         break;
     }

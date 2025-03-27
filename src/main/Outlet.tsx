@@ -10,14 +10,19 @@ import React, {
 import { RoutePresenter } from './RoutePresenter';
 import { OutletErrorBoundary } from './__OutletErrorBoundary';
 import { Router } from './__Router';
+import { notFound } from './__notFound';
 
-export const PresenterContext = createContext<RoutePresenter | null>(null);
+const PresenterContext = createContext<RoutePresenter | null>(null);
 
 PresenterContext.displayName = 'PresenterContext';
 
-export const OutletContext = createContext<RoutePresenter | Router | null>(null);
+export const PresenterProvider = PresenterContext.Provider;
+
+const OutletContext = createContext<RoutePresenter | Router | null>(null);
 
 OutletContext.displayName = 'OutletContext';
+
+export const OutletProvider = OutletContext.Provider;
 
 /**
  * Renders presenter {@link RouterProvider provided by an enclosing router}.
@@ -35,7 +40,6 @@ export const Outlet: FunctionComponent = memo(
 
     if (presenter instanceof Router) {
       // No route was matched
-
       const Component = presenter.notFoundComponent;
 
       if (Component === undefined) {
@@ -43,9 +47,11 @@ export const Outlet: FunctionComponent = memo(
       }
 
       return (
-        <OutletContext.Provider value={null}>
-          <RenderBoundary Component={Component} />
-        </OutletContext.Provider>
+        <PresenterProvider value={null}>
+          <OutletProvider value={null}>
+            <RenderBoundary Component={Component} />
+          </OutletProvider>
+        </PresenterProvider>
       );
     }
 
@@ -53,7 +59,7 @@ export const Outlet: FunctionComponent = memo(
 
     if (status === 'error' || status === 'not_found' || status === 'redirect') {
       return (
-        <RouteOutlet
+        <RouteContent
           presenter={presenter}
           canSuspend={false}
         />
@@ -63,13 +69,13 @@ export const Outlet: FunctionComponent = memo(
     return (
       <Suspense
         fallback={
-          <RouteOutlet
+          <RouteContent
             presenter={presenter.fallbackPresenter || presenter}
             canSuspend={false}
           />
         }
       >
-        <RouteOutlet
+        <RouteContent
           presenter={presenter}
           canSuspend={true}
         />
@@ -79,12 +85,12 @@ export const Outlet: FunctionComponent = memo(
   (_prevProps, _nextProps) => true
 );
 
-interface RouteOutletProps {
+interface RouteContentProps {
   presenter: RoutePresenter;
   canSuspend: boolean;
 }
 
-function RouteOutlet(props: RouteOutletProps): ReactElement | null {
+function RouteContent(props: RouteContentProps): ReactElement | null {
   const { presenter, canSuspend } = props;
   const { route } = presenter;
 
@@ -95,21 +101,47 @@ function RouteOutlet(props: RouteOutletProps): ReactElement | null {
   switch (presenter.state.status) {
     case 'ok':
       Component = route.component;
-      break;
+
+      if (Component === undefined) {
+        return null;
+      }
+
+      return (
+        <PresenterProvider value={presenter}>
+          <OutletProvider value={presenter.childPresenter}>
+            <OutletErrorBoundary presenter={presenter}>
+              <RenderBoundary Component={Component} />
+            </OutletErrorBoundary>
+          </OutletProvider>
+        </PresenterProvider>
+      );
 
     case 'error':
       Component = route.errorComponent || fallbacks.errorComponent;
+
+      if (Component === undefined) {
+        throw presenter.state.error;
+      }
       break;
 
     case 'loading':
-      if (canSuspend && presenter.pendingPromise !== null) {
+      if (canSuspend) {
         throw presenter.pendingPromise;
       }
+
       Component = route.loadingComponent || fallbacks.loadingComponent;
+
+      if (Component === undefined) {
+        throw presenter.pendingPromise;
+      }
       break;
 
     case 'not_found':
       Component = route.notFoundComponent || fallbacks.notFoundComponent;
+
+      if (Component === undefined) {
+        notFound();
+      }
       break;
 
     case 'redirect':
@@ -122,17 +154,15 @@ function RouteOutlet(props: RouteOutletProps): ReactElement | null {
   }
 
   return (
-    <PresenterContext.Provider value={presenter}>
-      <OutletContext.Provider value={presenter.childPresenter}>
-        <OutletErrorBoundary presenter={presenter}>
-          <RenderBoundary Component={Component} />
-        </OutletErrorBoundary>
-      </OutletContext.Provider>
-    </PresenterContext.Provider>
+    <PresenterProvider value={presenter}>
+      <OutletProvider value={null}>
+        <RenderBoundary Component={Component} />
+      </OutletProvider>
+    </PresenterProvider>
   );
 }
 
-RouteOutlet.displayName = 'RouteOutlet';
+RouteContent.displayName = 'RouteContent';
 
 const RenderBoundary = memo<{ Component: ComponentType }>(
   props => <props.Component />,
