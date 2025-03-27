@@ -1,6 +1,6 @@
 import { PathnameMatch } from './__PathnameTemplate';
-import { Route } from './Route';
-import { Dict } from './types';
+import { Route } from './__Route';
+import { Dict } from './__types';
 
 /**
  * The result of matching a route by a location.

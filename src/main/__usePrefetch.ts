@@ -1,8 +1,8 @@
 import isDeepEqual from 'fast-deep-equal';
 import { useEffect, useRef } from 'react';
-import { To } from './types';
-import { useRouter } from './useRouter';
-import { Route } from './Route';
+import { To } from './__types';
+import { useRouter } from './__useRouter';
+import { Route } from './__Route';
 
 /**
  * Prefetches components and data of routes matched by a location after a component has mounted.

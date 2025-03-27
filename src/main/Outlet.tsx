@@ -1,13 +1,13 @@
 import React, { ComponentType, createContext, memo, ReactElement, Suspense, useContext } from 'react';
-import { Presenter } from './Presenter';
-import { ErrorBoundary } from './ErrorBoundary';
+import { RoutePresenter } from './RoutePresenter';
+import { OutletErrorBoundary } from './__OutletErrorBoundary';
 import { Router } from './Router';
 
-export const PresenterContext = createContext<Presenter | null>(null);
+export const PresenterContext = createContext<RoutePresenter | null>(null);
 
 PresenterContext.displayName = 'PresenterContext';
 
-export const OutletContext = createContext<Presenter | Router | null>(null);
+export const OutletContext = createContext<RoutePresenter | Router | null>(null);
 
 OutletContext.displayName = 'OutletContext';
 
@@ -36,7 +36,7 @@ export const Outlet = memo(
 
       return (
         <OutletContext.Provider value={null}>
-          <Component />
+          <RenderBoundary Component={Component} />
         </OutletContext.Provider>
       );
     }
@@ -72,7 +72,7 @@ export const Outlet = memo(
 );
 
 interface RouteOutletProps {
-  presenter: Presenter;
+  presenter: RoutePresenter;
   canSuspend: boolean;
 }
 
@@ -94,8 +94,8 @@ function RouteOutlet(props: RouteOutletProps): ReactElement | null {
       break;
 
     case 'loading':
-      if (canSuspend && presenter.loadingPromise !== null) {
-        throw presenter.loadingPromise;
+      if (canSuspend && presenter.pendingPromise !== null) {
+        throw presenter.pendingPromise;
       }
       Component = route.loadingComponent || fallbacks.loadingComponent;
       break;
@@ -116,9 +116,9 @@ function RouteOutlet(props: RouteOutletProps): ReactElement | null {
   return (
     <PresenterContext.Provider value={presenter}>
       <OutletContext.Provider value={presenter.childPresenter}>
-        <ErrorBoundary presenter={presenter}>
+        <OutletErrorBoundary presenter={presenter}>
           <RenderBoundary Component={Component} />
-        </ErrorBoundary>
+        </OutletErrorBoundary>
       </OutletContext.Provider>
     </PresenterContext.Provider>
   );

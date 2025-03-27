@@ -1,10 +1,10 @@
 import { AbortablePromise, PubSub } from 'parallel-universe';
 import { ComponentType } from 'react';
 import { matchRoutes } from './__matchRoutes';
-import { Route } from './Route';
-import { FallbackOptions, RouterEvent, RouterOptions, To } from './types';
-import { noop, toLocation } from './utils';
-import { getOrLoadPresenterState, Presenter } from './Presenter';
+import { Route } from './__Route';
+import { Fallbacks, RouterEvent, RouterOptions, To } from './__types';
+import { noop, toLocation } from './__utils';
+import { getOrLoadRoutePresenterState, RoutePresenter } from './RoutePresenter';
 import { reconcilePresenters } from './reconcilePresenters';
 
 /**
@@ -13,7 +13,7 @@ import { reconcilePresenters } from './reconcilePresenters';
  * @template Context A context provided to {@link RouteOptions.dataLoader route data loaders}.
  * @group Routing
  */
-export class Router<Context = any> implements FallbackOptions {
+export class Router<Context = any> implements Fallbacks {
   /**
    * Routes that a router can render.
    */
@@ -29,7 +29,7 @@ export class Router<Context = any> implements FallbackOptions {
    *
    * @see {@link navigate}
    */
-  rootPresenter: Presenter | null = null;
+  rootPresenter: RoutePresenter | null = null;
 
   errorComponent: ComponentType | undefined;
   loadingComponent: ComponentType | undefined;
@@ -62,13 +62,13 @@ export class Router<Context = any> implements FallbackOptions {
     const routeMatches = matchRoutes(location.pathname, location.searchParams, this.routes);
     const rootPresenter = reconcilePresenters(this, routeMatches);
 
+    this.rootPresenter = rootPresenter;
+
     for (let presenter = rootPresenter; presenter !== null; presenter = presenter.childPresenter) {
-      if (presenter.state.status === 'loading' && presenter.loadingPromise === null) {
+      if (presenter.state.status === 'loading' && presenter.pendingPromise === null) {
         presenter.reload();
       }
     }
-
-    this.rootPresenter = rootPresenter;
 
     this._pubSub.publish({ type: 'navigate', router: this, location });
   }
@@ -88,7 +88,7 @@ export class Router<Context = any> implements FallbackOptions {
       resolve(
         Promise.all(
           routeMatches.map(routeMatch =>
-            getOrLoadPresenterState(routeMatch.route, routeMatch.params, this.context, signal, true)
+            getOrLoadRoutePresenterState(routeMatch.route, routeMatch.params, this.context, signal, true)
           )
         ).then(noop)
       );

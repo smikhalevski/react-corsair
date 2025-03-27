@@ -1,5 +1,5 @@
-import { Location, To } from './types';
-import { toLocation } from './utils';
+import { Location, To } from './__types';
+import { toLocation } from './__utils';
 
 /**
  * Throws a {@link Redirect} instance that redirects router to a location.

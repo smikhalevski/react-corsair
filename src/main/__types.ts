@@ -1,7 +1,7 @@
 import { ComponentType } from 'react';
-import { Route } from './Route';
+import { Route } from './__Route';
 import { Router } from './Router';
-import { Presenter } from './Presenter';
+import { RoutePresenter } from './RoutePresenter';
 
 export interface Dict {
   [key: string]: any;
@@ -157,7 +157,7 @@ export interface DataLoaderOptions<Params, Context> {
  *
  * @group Routing
  */
-export interface FallbackOptions {
+export interface Fallbacks {
   /**
    * A component that is rendered when an error was thrown during route rendering.
    *
@@ -168,7 +168,7 @@ export interface FallbackOptions {
    *
    * Routes without an {@link errorComponent} don't have an error boundary.
    */
-  errorComponent: ComponentType | undefined;
+  errorComponent?: ComponentType;
 
   /**
    * A component that is rendered when a {@link RouteOptions.lazyComponent} or a {@link RouteOptions.dataLoader} are being
@@ -179,7 +179,7 @@ export interface FallbackOptions {
    *
    * Routes without a {@link loadingComponent} suspend a parent route.
    */
-  loadingComponent: ComponentType | undefined;
+  loadingComponent?: ComponentType;
 
   /**
    * A component that is rendered if {@link notFound} was called during route rendering or if there's no route that
@@ -187,7 +187,7 @@ export interface FallbackOptions {
    *
    * Routes without {@link notFoundComponent} propagate {@link notFound} to a parent route.
    */
-  notFoundComponent: ComponentType | undefined;
+  notFoundComponent?: ComponentType;
 }
 
 /**
@@ -198,7 +198,7 @@ export interface FallbackOptions {
  * @template Context A router context.
  * @group Routing
  */
-export interface RouteOptions<Params extends Dict, Data, Context> extends Partial<FallbackOptions> {
+export interface RouteOptions<Params extends Dict, Data, Context> extends Fallbacks {
   /**
    * A URL pathname pattern.
    *
@@ -286,7 +286,7 @@ export interface RouteOptions<Params extends Dict, Data, Context> extends Partia
  * @template Context A router context.
  * @group Routing
  */
-export interface RouterOptions<Context> extends Partial<FallbackOptions> {
+export interface RouterOptions<Context> extends Fallbacks {
   /**
    * Routes that a router can match.
    */
@@ -331,7 +331,7 @@ export interface LoadingEvent {
   /**
    * A presenter from which an event originates.
    */
-  presenter: Presenter;
+  presenter: RoutePresenter;
 }
 
 /**
@@ -345,7 +345,7 @@ export interface ReadyEvent {
   /**
    * A presenter from which an event originates.
    */
-  presenter: Presenter;
+  presenter: RoutePresenter;
 }
 
 /**
@@ -362,7 +362,7 @@ export interface ErrorEvent {
   /**
    * A presenter from which an event originates.
    */
-  presenter: Presenter;
+  presenter: RoutePresenter;
 
   /**
    * An error that was thrown.
@@ -384,7 +384,7 @@ export interface NotFoundEvent {
   /**
    * A presenter from which an event originates.
    */
-  presenter: Presenter;
+  presenter: RoutePresenter;
 }
 
 /**
@@ -401,7 +401,7 @@ export interface RedirectEvent {
   /**
    * A presenter from which an event originates.
    */
-  presenter: Presenter;
+  presenter: RoutePresenter;
 
   /**
    * A location or a URL to which a redirect should be made.

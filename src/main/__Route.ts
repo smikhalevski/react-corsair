@@ -3,14 +3,14 @@ import { PathnameTemplate } from './__PathnameTemplate';
 import {
   DataLoaderOptions,
   Dict,
-  FallbackOptions,
+  Fallbacks,
   LoadingAppearance,
   Location,
   LocationOptions,
   ParamsAdapter,
   RenderingDisposition,
   RouteOptions,
-} from './types';
+} from './__types';
 import { Outlet } from './Outlet';
 
 type Prettify<T> = { [K in keyof T]: T[K] } & {};
@@ -62,7 +62,7 @@ export class Route<
   Params extends Dict = any,
   Data = any,
   Context = any,
-> implements FallbackOptions
+> implements Fallbacks
 {
   /**
    * The type of the route location params.

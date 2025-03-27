@@ -1,5 +1,5 @@
 import React, { ReactElement, ReactNode, useLayoutEffect, useState } from 'react';
-import { RouterContext } from './useRouter';
+import { RouterContext } from './__useRouter';
 import { Outlet, OutletContext, PresenterContext } from './Outlet';
 import { Router } from './Router';
 
@@ -27,14 +27,14 @@ export interface RouterProviderProps {
  */
 export function RouterProvider(props: RouterProviderProps): ReactElement {
   const { router, children = <Outlet /> } = props;
-  const [presenter, setPresenter] = useState(router.rootPresenter);
+  const [rootPresenter, setRootPresenter] = useState(router.rootPresenter);
 
-  useLayoutEffect(() => router.subscribe(() => setPresenter(router.rootPresenter)), [router]);
+  useLayoutEffect(() => router.subscribe(() => setRootPresenter(router.rootPresenter)), [router]);
 
   return (
     <RouterContext.Provider value={router}>
       <PresenterContext.Provider value={null}>
-        <OutletContext.Provider value={presenter || router}>{children}</OutletContext.Provider>
+        <OutletContext.Provider value={rootPresenter || router}>{children}</OutletContext.Provider>
       </PresenterContext.Provider>
     </RouterContext.Provider>
   );

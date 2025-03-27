@@ -13,11 +13,11 @@ export { notFound, NotFoundError } from './__notFound';
 export { Outlet } from './Outlet';
 export { PathnameTemplate, type PathnameMatch } from './__PathnameTemplate';
 export { redirect, Redirect } from './__redirect';
-export { Route, type InferData, type InferContext, type InferLocationParams } from './Route';
-export { useRouter } from './useRouter';
+export { Route, type InferData, type InferContext, type InferLocationParams } from './__Route';
+export { useRouter } from './__useRouter';
 export { usePrefetch } from './__usePrefetch';
 export { Router } from './Router';
-export { RouterProvider } from './RouterProvider';
+export { RouterProvider } from './__RouterProvider';
 export { useRouteParams, useRouteData, useRouteError } from './hooks';
 
 export {
@@ -28,7 +28,7 @@ export {
   type LoadingAppearance,
   type RenderingDisposition,
   type DataLoaderOptions,
-  type FallbackOptions,
+  type Fallbacks,
   type RouteOptions,
   type RouterOptions,
   type NavigateEvent,
@@ -36,7 +36,7 @@ export {
   type NotFoundEvent,
   type RedirectEvent,
   type RouterEvent,
-} from './types';
+} from './__types';
 
 export { Prefetch, type PrefetchProps } from './__Prefetch';
 
@@ -46,5 +46,5 @@ export {
   type ErrorState,
   type NotFoundState,
   type RedirectState,
-  type PresenterState,
-} from './Presenter';
+  type RoutePresenterState,
+} from './RoutePresenter';

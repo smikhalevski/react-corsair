@@ -1,5 +1,5 @@
 import { SearchParamsAdapter } from './types';
-import { Dict } from '../types';
+import { Dict } from '../__types';
 
 /**
  * An adapter that uses {@link !URLSearchParams} to serialize query and uses {@link JSON} to serialize param values.

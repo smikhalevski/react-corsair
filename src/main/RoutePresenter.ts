@@ -1,10 +1,10 @@
 import { Router } from './Router';
 import { AbortablePromise } from 'parallel-universe';
-import { isPromiseLike } from './utils';
-import { Dict, Location } from './types';
+import { isPromiseLike } from './__utils';
+import { Dict, Location } from './__types';
 import { NotFoundError } from './__notFound';
 import { Redirect } from './__redirect';
-import { Route } from './Route';
+import { Route } from './__Route';
 
 export interface LoadingState {
   status: 'loading';
@@ -30,11 +30,11 @@ export interface RedirectState {
 }
 
 /**
- * A state of a {@link Presenter}.
+ * State of a {@link RoutePresenter}.
  *
  * @group Routing
  */
-export type PresenterState = LoadingState | OkState | ErrorState | NotFoundState | RedirectState;
+export type RoutePresenterState = LoadingState | OkState | ErrorState | NotFoundState | RedirectState;
 
 /**
  * Manages route rendering in an {@link Outlet}.
@@ -42,34 +42,44 @@ export type PresenterState = LoadingState | OkState | ErrorState | NotFoundState
  * @template Context A router context.
  * @group Routing
  */
-export class Presenter {
+export class RoutePresenter {
+  /**
+   * `true` if this route presenter is the primary rendering source, or `false` if this presenter was superseded by
+   * another presenter after navigation.
+   */
+  isActive = true;
+
   /**
    * A fallback presenter that is rendered in an {@link Outlet} while this presenter loads route component and data.
    */
-  fallbackPresenter: Presenter | null = null;
+  fallbackPresenter: RoutePresenter | null = null;
 
   /**
    * A presenter rendered in an enclosing {@link Outlet}.
    */
-  parentPresenter: Presenter | null = null;
+  parentPresenter: RoutePresenter | null = null;
 
   /**
    * A presenter rendered in a nested {@link Outlet}.
    */
-  childPresenter: Presenter | null = null;
+  childPresenter: RoutePresenter | null = null;
 
   /**
    * The current presenter state.
    */
-  state: PresenterState = { status: 'loading' };
+  state: RoutePresenterState = { status: 'loading' };
 
   /**
    * A promise that resolves when the route loading is completed, or `null` if there's not active loading.
    */
-  loadingPromise: AbortablePromise<void> | null = null;
+  pendingPromise: AbortablePromise<void> | null = null;
 
   /**
-   * Create a new {@link Presenter} instance.
+   * Create a new {@link RoutePresenter} instance.
+   *
+   * @param router The router that this presenter belongs to.
+   * @param route The route this presenter loads.
+   * @param params Route params.
    */
   constructor(
     readonly router: Router,
@@ -78,35 +88,35 @@ export class Presenter {
   ) {}
 
   /**
-   * Updates the presenter state and notifies router subscribers.
+   * Sets the presenter state and notifies router subscribers.
    *
    * @param state The new presenter state.
    */
-  setState(state: PresenterState): void {
-    const pubSub = this.router['_pubSub'];
+  setState(state: RoutePresenterState): void {
+    const routerPubSub = this.router['_pubSub'];
 
     this.fallbackPresenter = null;
     this.state = state;
 
     switch (state.status) {
       case 'loading':
-        pubSub.publish({ type: 'loading', presenter: this });
+        routerPubSub.publish({ type: 'loading', presenter: this });
         break;
 
       case 'ok':
-        pubSub.publish({ type: 'ready', presenter: this });
+        routerPubSub.publish({ type: 'ready', presenter: this });
         break;
 
       case 'error':
-        pubSub.publish({ type: 'error', presenter: this, error: state.error });
+        routerPubSub.publish({ type: 'error', presenter: this, error: state.error });
         break;
 
       case 'not_found':
-        pubSub.publish({ type: 'not_found', presenter: this });
+        routerPubSub.publish({ type: 'not_found', presenter: this });
         break;
 
       case 'redirect':
-        pubSub.publish({ type: 'redirect', presenter: this, to: state.to });
+        routerPubSub.publish({ type: 'redirect', presenter: this, to: state.to });
         break;
     }
   }
@@ -116,7 +126,13 @@ export class Presenter {
    */
   reload(): void {
     const abortController = new AbortController();
-    const state = getOrLoadPresenterState(this.route, this.params, this.router.context, abortController.signal, false);
+    const state = getOrLoadRoutePresenterState(
+      this.route,
+      this.params,
+      this.router.context,
+      abortController.signal,
+      false
+    );
 
     if (!isPromiseLike(state)) {
       this.setState(state);
@@ -125,8 +141,8 @@ export class Presenter {
 
     const promise = new AbortablePromise<void>((resolve, _reject, signal) => {
       signal.addEventListener('abort', () => {
-        if (this.loadingPromise === promise) {
-          this.loadingPromise = null;
+        if (this.pendingPromise === promise) {
+          this.pendingPromise = null;
         }
         abortController.abort(signal.reason);
       });
@@ -135,19 +151,19 @@ export class Presenter {
         if (signal.aborted) {
           return;
         }
-        this.loadingPromise = null;
+        this.pendingPromise = null;
         this.setState(state);
         resolve();
       });
     });
 
-    const { loadingPromise } = this;
+    const { pendingPromise } = this;
 
-    this.loadingPromise = promise;
+    this.pendingPromise = promise;
 
-    loadingPromise?.abort();
+    pendingPromise?.abort();
 
-    if (this.state.status === 'loading' ? loadingPromise === undefined : this.route.loadingAppearance === 'loading') {
+    if (this.state.status === 'loading' ? pendingPromise === undefined : this.route.loadingAppearance === 'loading') {
       this.setState({ status: 'loading' });
     }
 
@@ -160,13 +176,13 @@ export class Presenter {
  *
  * A route component is loaded once and cached forever, while data is loaded anew on every call.
  */
-export function getOrLoadPresenterState(
+export function getOrLoadRoutePresenterState(
   route: Route,
   params: Dict,
   context: unknown,
   signal: AbortSignal,
   isPrefetch: boolean
-): PresenterState | Promise<PresenterState> {
+): RoutePresenterState | Promise<RoutePresenterState> {
   let component;
   let data;
 
@@ -185,11 +201,11 @@ export function getOrLoadPresenterState(
   return createOkState(data);
 }
 
-export function createOkState(data: unknown): PresenterState {
+export function createOkState(data: unknown): RoutePresenterState {
   return { status: 'ok', data };
 }
 
-export function createErrorState(error: unknown): PresenterState {
+export function createErrorState(error: unknown): RoutePresenterState {
   if (error instanceof NotFoundError) {
     return { status: 'not_found' };
   }
