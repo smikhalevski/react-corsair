@@ -5,6 +5,7 @@ import { Dict, Location } from './__types';
 import { NotFoundError } from './__notFound';
 import { Redirect } from './__redirect';
 import { Route } from './__Route';
+import { ComponentType } from 'react';
 
 export interface LoadingState {
   status: 'loading';
@@ -80,6 +81,20 @@ export class RoutePresenter {
     readonly route: Route,
     public params: Dict
   ) {}
+
+  get errorComponent(): ComponentType | undefined {
+    return this.route.errorComponent || (this.route.parentRoute === null ? this.router.errorComponent : undefined);
+  }
+
+  get loadingComponent(): ComponentType | undefined {
+    return this.route.loadingComponent || (this.route.parentRoute === null ? this.router.loadingComponent : undefined);
+  }
+
+  get notFoundComponent(): ComponentType | undefined {
+    return (
+      this.route.notFoundComponent || (this.route.parentRoute === null ? this.router.notFoundComponent : undefined)
+    );
+  }
 
   /**
    * Sets the presenter state and notifies router subscribers.

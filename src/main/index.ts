@@ -14,10 +14,9 @@ export { Outlet } from './Outlet';
 export { PathnameTemplate, type PathnameMatch } from './__PathnameTemplate';
 export { redirect, Redirect } from './__redirect';
 export { Route, type InferData, type InferContext, type InferLocationParams } from './__Route';
-export { useRouter } from './__useRouter';
 export { usePrefetch } from './__usePrefetch';
 export { Router } from './__Router';
-export { RouterProvider } from './__RouterProvider';
+export { useRouter, RouterProvider, type RouterProviderProps } from './__useRouter';
 export { useRouteParams, useRouteData, useRouteError } from './hooks';
 
 export {

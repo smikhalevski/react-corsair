@@ -11,3 +11,7 @@ export function toLocation(to: To): Location {
 }
 
 export function noop() {}
+
+export function die(error: any): never {
+  throw error;
+}

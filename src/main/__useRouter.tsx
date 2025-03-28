@@ -1,7 +1,25 @@
-import React, { ReactElement, ReactNode, useLayoutEffect, useState } from 'react';
-import { RouterContext } from './__useRouter';
-import { Outlet, OutletProvider, PresenterProvider } from './Outlet';
+import React, { createContext, ReactElement, ReactNode, useContext, useLayoutEffect, useState } from 'react';
+import { Outlet, OutletContentProvider, RoutePresenterProvider } from './Outlet';
 import { Router } from './__Router';
+
+const RouterContext = createContext<Router | null>(null);
+
+RouterContext.displayName = 'RouterContext';
+
+/**
+ * Returns a router provided by an enclosing {@link RouterProvider}.
+ *
+ * @group Hooks
+ */
+export function useRouter(): Router {
+  const router = useContext(RouterContext);
+
+  if (router === null) {
+    throw new Error('Cannot be used outside of RouterProvider');
+  }
+
+  return router;
+}
 
 /**
  * Props of the {@link RouterProvider} component.
@@ -33,9 +51,9 @@ export function RouterProvider(props: RouterProviderProps): ReactElement {
 
   return (
     <RouterContext.Provider value={router}>
-      <PresenterProvider value={null}>
-        <OutletProvider value={rootPresenter || router}>{children}</OutletProvider>
-      </PresenterProvider>
+      <RoutePresenterProvider value={null}>
+        <OutletContentProvider value={rootPresenter || router}>{children}</OutletContentProvider>
+      </RoutePresenterProvider>
     </RouterContext.Provider>
   );
 }

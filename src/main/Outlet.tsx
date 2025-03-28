@@ -1,174 +1,203 @@
 import React, {
+  Component,
   ComponentType,
   createContext,
   FunctionComponent,
   memo,
-  ReactElement,
+  ReactNode,
   Suspense,
   useContext,
 } from 'react';
-import { RoutePresenter } from './RoutePresenter';
-import { OutletErrorBoundary } from './__OutletErrorBoundary';
+import { createErrorState, RoutePresenter } from './RoutePresenter';
 import { Router } from './__Router';
+import { redirect } from './__redirect';
 import { notFound } from './__notFound';
+import { die } from './__utils';
 
-const PresenterContext = createContext<RoutePresenter | null>(null);
+const RoutePresenterContext = createContext<RoutePresenter | null>(null);
 
-PresenterContext.displayName = 'PresenterContext';
+RoutePresenterContext.displayName = 'RoutePresenterContext';
 
-export const PresenterProvider = PresenterContext.Provider;
+export const RoutePresenterProvider = RoutePresenterContext.Provider;
 
-const OutletContext = createContext<RoutePresenter | Router | null>(null);
+const OutletContentContext = createContext<RoutePresenter | Router | null>(null);
 
-OutletContext.displayName = 'OutletContext';
+OutletContentContext.displayName = 'OutletContentContext';
 
-export const OutletProvider = OutletContext.Provider;
+export const OutletContentProvider = OutletContentContext.Provider;
 
 /**
- * Renders presenter {@link RouterProvider provided by an enclosing router}.
+ * Renders a presenter {@link RouterProvider provided by an enclosing router}.
  *
  * @group Components
  */
-export const Outlet: FunctionComponent = memo(
-  () => {
-    const presenter = useContext(OutletContext);
+export const Outlet: FunctionComponent = memo(() => {
+  const content = useContext(OutletContentContext);
 
-    if (presenter === null) {
-      // Nothing to render
+  if (content instanceof RoutePresenter) {
+    return <OutletErrorBoundary presenter={content} />;
+  }
+
+  if (content === null || content.notFoundComponent === undefined) {
+    return null;
+  }
+
+  return (
+    <RoutePresenterProvider value={null}>
+      <OutletContentProvider value={null}>
+        <OutletRenderBoundary component={content.notFoundComponent} />
+      </OutletContentProvider>
+    </RoutePresenterProvider>
+  );
+});
+
+Outlet.displayName = 'Outlet';
+
+interface OutletErrorBoundaryProps {
+  presenter: RoutePresenter;
+}
+
+interface OutletErrorBoundaryState {
+  hasError: boolean;
+  error: unknown;
+}
+
+class OutletErrorBoundary extends Component<OutletErrorBoundaryProps, OutletErrorBoundaryState> {
+  static displayName = 'OutletErrorBoundary';
+
+  state = { hasError: false, error: null };
+
+  static getDerivedStateFromError(error: unknown): Partial<OutletErrorBoundaryState> | null {
+    return { hasError: true, error };
+  }
+
+  static getDerivedStateFromProps(
+    nextProps: Readonly<OutletErrorBoundaryProps>,
+    prevState: OutletErrorBoundaryState
+  ): Partial<OutletErrorBoundaryState> | null {
+    if (!prevState.hasError) {
       return null;
     }
 
-    if (presenter instanceof Router) {
-      // No route was matched
-      const component = presenter.notFoundComponent;
+    const state = createErrorState(prevState.error);
+    const prevStatus = nextProps.presenter.state.status;
+    const nextStatus = state.status;
 
-      if (component === undefined) {
-        return null;
-      }
-
-      return (
-        <PresenterProvider value={null}>
-          <OutletProvider value={null}>
-            <RenderBoundary component={component} />
-          </OutletProvider>
-        </PresenterProvider>
-      );
+    if (nextStatus === prevStatus) {
+      console.log('PROPAGATE ' + nextProps.presenter.route.pathnameTemplate.pattern);
+      // Propagate error to the parent presenter
+      throw prevState.error;
     }
 
-    const { status } = presenter.state;
+    nextProps.presenter.setState(state);
 
-    if (status === 'error' || status === 'not_found' || status === 'redirect') {
-      return (
-        <RouteContent
-          presenter={presenter}
-          canSuspend={false}
-        />
-      );
-    }
+    return { hasError: false, error: null };
+  }
+
+  render(): ReactNode {
+    const { presenter } = this.props;
 
     return (
       <Suspense
         fallback={
-          <RouteContent
-            presenter={presenter.fallbackPresenter || presenter}
-            canSuspend={false}
-          />
+          presenter.fallbackPresenter !== null ? (
+            <OutletErrorBoundary presenter={presenter.fallbackPresenter} />
+          ) : (
+            <OutletContent
+              presenter={presenter}
+              canSuspend={false}
+            />
+          )
         }
       >
-        <RouteContent
+        <OutletContent
           presenter={presenter}
           canSuspend={true}
         />
       </Suspense>
     );
-  },
-  (_prevProps, _nextProps) => true
-);
+  }
+}
 
-Outlet.displayName = 'Outlet';
-
-interface RouteContentProps {
+interface OutletContentProps {
   presenter: RoutePresenter;
   canSuspend: boolean;
 }
 
-function RouteContent(props: RouteContentProps): ReactElement | null {
+/**
+ * Renders route presenter according to its status.
+ */
+function OutletContent(props: OutletContentProps): ReactNode {
   const { presenter, canSuspend } = props;
-  const { route } = presenter;
+  const { status } = presenter.state;
 
-  const fallbacks = presenter.parentPresenter === null ? presenter.router : route;
-
-  let component;
-
-  switch (presenter.state.status) {
-    case 'ok':
-      component = route.component;
-
-      if (component === undefined) {
-        return null;
-      }
-
-      return (
-        <PresenterProvider value={presenter}>
-          <OutletProvider value={presenter.childPresenter}>
-            <OutletErrorBoundary presenter={presenter}>
-              <RenderBoundary component={component} />
-            </OutletErrorBoundary>
-          </OutletProvider>
-        </PresenterProvider>
-      );
-
-    case 'error':
-      component = route.errorComponent || fallbacks.errorComponent;
-
-      if (component === undefined) {
-        throw presenter.state.error;
-      }
-      break;
-
-    case 'loading':
-      if (canSuspend) {
-        throw presenter.pendingPromise;
-      }
-
-      component = route.loadingComponent || fallbacks.loadingComponent;
-
-      if (component === undefined) {
-        throw presenter.pendingPromise;
-      }
-      break;
-
-    case 'not_found':
-      component = route.notFoundComponent || fallbacks.notFoundComponent;
-
-      if (component === undefined) {
-        notFound();
-      }
-      break;
-
-    case 'redirect':
-      component = route.loadingComponent || fallbacks.loadingComponent;
-      break;
+  if (status === 'ok') {
+    return (
+      <RoutePresenterProvider value={presenter}>
+        <OutletContentProvider value={presenter.childPresenter}>
+          <OutletRenderBoundary
+            component={presenter.route.component || die(new Error("Route component wasn't loaded"))}
+          />
+        </OutletContentProvider>
+      </RoutePresenterProvider>
+    );
   }
 
-  if (component === undefined) {
-    return null;
+  if (status === 'error' || status === 'not_found' || status === 'redirect') {
+    let component;
+
+    switch (status) {
+      case 'error':
+        component = presenter.errorComponent || die(presenter.state.error);
+        break;
+
+      case 'not_found':
+        component = presenter.notFoundComponent || notFound();
+        break;
+
+      case 'redirect':
+        component = presenter.loadingComponent || redirect(presenter.state.to);
+        break;
+    }
+
+    return (
+      <RoutePresenterProvider value={presenter}>
+        <OutletContentProvider value={null}>
+          <OutletRenderBoundary component={component} />
+        </OutletContentProvider>
+      </RoutePresenterProvider>
+    );
+  }
+
+  if (status !== 'loading') {
+    throw new Error('Unexpected route presenter status: ' + status);
+  }
+
+  if (presenter.loadingComponent === undefined || canSuspend) {
+    throw presenter.pendingPromise || new Error('Loading route presenter must have a pending promise');
   }
 
   return (
-    <PresenterProvider value={presenter}>
-      <OutletProvider value={null}>
-        <RenderBoundary component={component} />
-      </OutletProvider>
-    </PresenterProvider>
+    <RoutePresenterProvider value={presenter}>
+      <OutletContentProvider value={null}>
+        <OutletRenderBoundary component={presenter.loadingComponent} />
+      </OutletContentProvider>
+    </RoutePresenterProvider>
   );
 }
 
-RouteContent.displayName = 'RouteContent';
+OutletContent.displayName = 'OutletContent';
 
-const RenderBoundary = memo<{ component: ComponentType }>(
+interface OutletRenderBoundaryProps {
+  component: ComponentType;
+}
+
+/**
+ * Renders a component and prevents its re-rendering.
+ */
+const OutletRenderBoundary = memo<OutletRenderBoundaryProps>(
   props => <props.component />,
   (prevProps, nextProps) => prevProps.component === nextProps.component
 );
 
-RenderBoundary.displayName = 'RenderBoundary';
+OutletRenderBoundary.displayName = 'OutletRenderBoundary';
