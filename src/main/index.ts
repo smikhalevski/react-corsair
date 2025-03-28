@@ -18,6 +18,7 @@ export { usePrefetch } from './__usePrefetch';
 export { Router } from './__Router';
 export { useRouter, RouterProvider, type RouterProviderProps } from './__useRouter';
 export { useRouteParams, useRouteData, useRouteError } from './hooks';
+export { hydrateRouter } from './hydrateRouter';
 
 export {
   type To,

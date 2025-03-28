@@ -1,9 +1,21 @@
 import { Writable } from 'stream';
-import { SSRRouter, SSRRouterOptions } from './SSRRouter';
+import { SSRRouter, SSRRouterOptions } from '../SSRRouter';
 
+/**
+ * Streaming executor manager for NodeJS environment.
+ */
 export class PipeableSSRRouter<Context> extends SSRRouter<Context> {
+  /**
+   * The stream that includes both React rendering chunks and executor hydration chunks.
+   */
   readonly stream: NodeJS.WritableStream;
 
+  /**
+   * Creates a new {@link PipeableSSRRouter} instance.
+   *
+   * @param stream The output stream to which both React chunks and executor hydration chunks are written.
+   * @param options Router options.
+   */
   constructor(stream: NodeJS.WritableStream, options: SSRRouterOptions<Context>) {
     super(options);
 
