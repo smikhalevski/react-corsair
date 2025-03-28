@@ -4,12 +4,7 @@ import { Router } from './__Router';
 import { redirect } from './__redirect';
 import { notFound } from './__notFound';
 import { Fallbacks } from './__types';
-
-const RoutePresenterContext = createContext<RoutePresenter | null>(null);
-
-RoutePresenterContext.displayName = 'RoutePresenterContext';
-
-export const RoutePresenterProvider = RoutePresenterContext.Provider;
+import { RoutePresenterProvider } from './__useRoutePresenter';
 
 const OutletContentContext = createContext<RoutePresenter | Router | null>(null);
 

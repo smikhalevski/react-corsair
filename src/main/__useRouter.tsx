@@ -1,6 +1,7 @@
 import React, { createContext, ReactElement, ReactNode, useContext, useLayoutEffect, useState } from 'react';
-import { Outlet, OutletContentProvider, RoutePresenterProvider } from './__Outlet';
+import { Outlet, OutletContentProvider } from './__Outlet';
 import { Router } from './__Router';
+import { RoutePresenterProvider } from './__useRoutePresenter';
 
 const RouterContext = createContext<Router | null>(null);
 
