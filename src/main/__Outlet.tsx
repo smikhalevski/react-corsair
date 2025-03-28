@@ -1,4 +1,14 @@
-import React, { Component, ComponentType, createContext, memo, ReactNode, Suspense, useContext } from 'react';
+import React, {
+  Component,
+  ComponentType,
+  createContext,
+  memo,
+  ReactNode,
+  Suspense,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 import { createErrorState, RoutePresenter } from './RoutePresenter';
 import { Router } from './__Router';
 import { redirect } from './__redirect';
@@ -22,7 +32,14 @@ const OutletMemo = memo(Outlet, (_prevProps, _nextProps) => true);
 export { OutletMemo as Outlet };
 
 function Outlet(_props: {}): ReactNode {
+  const [, setState] = useState<unknown>();
   const content = useContext(OutletContentContext);
+
+  useEffect(() => {
+    if (content instanceof RoutePresenter) {
+      return content.router.subscribe(() => setState(content.state));
+    }
+  }, [content]);
 
   if (content instanceof RoutePresenter) {
     return <OutletErrorBoundary presenter={content} />;

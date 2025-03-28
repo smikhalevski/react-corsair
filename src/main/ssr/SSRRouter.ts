@@ -88,15 +88,19 @@ export class SSRRouter<Context = any> extends Router<Context> {
       this._hydratedPresenterStates.set(presenter, presenter.state);
 
       if (script === '') {
-        script = 'window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();';
+        script = '(function(){var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();';
       }
 
       script +=
-        'window.__REACT_CORSAIR_SSR_STATE__.set(' +
+        's.set(' +
         presenterIndex +
         ',' +
         JSON.stringify(this._stateStringifier(presenter.state)).replace(/</g, '\\u003C') +
-        ');var e=document.currentScript;e&&e.parentNode.removeChild(e);';
+        ');';
+    }
+
+    if (script !== '') {
+      script += 'var e=document.currentScript;e&&e.parentNode.removeChild(e);})();';
     }
 
     return script;

@@ -21,13 +21,22 @@ export class PipeableSSRRouter<Context> extends SSRRouter<Context> {
 
     this.stream = new Writable({
       write: (chunk, encoding, callback) => {
+        console.log('---------CHUNK------------\n' + chunk + '\n----------END OF CHUNK-----------\n\n\n');
+
         stream.write(chunk, encoding, error => {
           if (error) {
             callback(error);
             return;
           }
 
+          if (!chunk.toString().endsWith('</script>')) {
+            callback();
+            return;
+          }
+
           const hydrationChunk = this.nextHydrationChunk();
+
+          console.log('----------STATE-----------\n' + hydrationChunk + '\n----------END OF STATE-----------\n\n\n');
 
           if (hydrationChunk !== '') {
             stream.write(hydrationChunk, callback);

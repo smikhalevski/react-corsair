@@ -21,6 +21,10 @@ export class ReadableSSRRouter<Context = any> extends SSRRouter<Context> impleme
       transform: (chunk, presenter) => {
         presenter.enqueue(chunk);
 
+        if (!chunk.toString().endsWith('</script>')) {
+          return;
+        }
+
         const hydrationChunk = this.nextHydrationChunk();
 
         if (hydrationChunk !== '') {

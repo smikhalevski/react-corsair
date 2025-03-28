@@ -1,4 +1,4 @@
-import React, { createContext, ReactElement, ReactNode, useContext, useLayoutEffect, useState } from 'react';
+import React, { createContext, ReactElement, ReactNode, useContext, useEffect, useState } from 'react';
 import { Outlet, OutletContentProvider } from './__Outlet';
 import { Router } from './__Router';
 import { RoutePresenterProvider } from './__useRoutePresenter';
@@ -48,7 +48,7 @@ export function RouterProvider(props: RouterProviderProps): ReactElement {
   const { router, children = <Outlet /> } = props;
   const [rootPresenter, setRootPresenter] = useState(router.rootPresenter);
 
-  useLayoutEffect(() => router.subscribe(() => setRootPresenter(router.rootPresenter)), [router]);
+  useEffect(() => router.subscribe(() => setRootPresenter(router.rootPresenter)), [router]);
 
   return (
     <RouterContext.Provider value={router}>
