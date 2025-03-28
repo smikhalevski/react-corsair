@@ -11,7 +11,7 @@ import {
   RenderingDisposition,
   RouteOptions,
 } from './__types';
-import { Outlet } from './Outlet';
+import { Outlet } from './__Outlet';
 
 type Prettify<T> = { [K in keyof T]: T[K] } & {};
 

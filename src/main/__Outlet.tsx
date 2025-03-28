@@ -1,18 +1,9 @@
-import React, {
-  Component,
-  ComponentType,
-  createContext,
-  FunctionComponent,
-  memo,
-  ReactNode,
-  Suspense,
-  useContext,
-} from 'react';
+import React, { Component, ComponentType, createContext, memo, ReactNode, Suspense, useContext } from 'react';
 import { createErrorState, RoutePresenter } from './RoutePresenter';
 import { Router } from './__Router';
 import { redirect } from './__redirect';
 import { notFound } from './__notFound';
-import { die } from './__utils';
+import { Fallbacks } from './__types';
 
 const RoutePresenterContext = createContext<RoutePresenter | null>(null);
 
@@ -31,7 +22,11 @@ export const OutletContentProvider = OutletContentContext.Provider;
  *
  * @group Components
  */
-export const Outlet: FunctionComponent = memo(() => {
+const OutletMemo = memo(Outlet, (_prevProps, _nextProps) => true);
+
+export { OutletMemo as Outlet };
+
+function Outlet(_props: {}): ReactNode {
   const content = useContext(OutletContentContext);
 
   if (content instanceof RoutePresenter) {
@@ -45,11 +40,11 @@ export const Outlet: FunctionComponent = memo(() => {
   return (
     <RoutePresenterProvider value={null}>
       <OutletContentProvider value={null}>
-        <OutletRenderBoundary component={content.notFoundComponent} />
+        <OutletRendererMemo component={content.notFoundComponent} />
       </OutletContentProvider>
     </RoutePresenterProvider>
   );
-});
+}
 
 Outlet.displayName = 'Outlet';
 
@@ -79,17 +74,7 @@ class OutletErrorBoundary extends Component<OutletErrorBoundaryProps, OutletErro
       return null;
     }
 
-    const state = createErrorState(prevState.error);
-    const prevStatus = nextProps.presenter.state.status;
-    const nextStatus = state.status;
-
-    if (nextStatus === prevStatus) {
-      console.log('PROPAGATE ' + nextProps.presenter.route.pathnameTemplate.pattern);
-      // Propagate error to the parent presenter
-      throw prevState.error;
-    }
-
-    nextProps.presenter.setState(state);
+    nextProps.presenter.setState(createErrorState(prevState.error));
 
     return { hasError: false, error: null };
   }
@@ -129,58 +114,56 @@ interface OutletContentProps {
  */
 function OutletContent(props: OutletContentProps): ReactNode {
   const { presenter, canSuspend } = props;
+  const { route } = presenter;
   const { status } = presenter.state;
 
-  if (status === 'ok') {
-    return (
-      <RoutePresenterProvider value={presenter}>
-        <OutletContentProvider value={presenter.childPresenter}>
-          <OutletRenderBoundary
-            component={presenter.route.component || die(new Error("Route component wasn't loaded"))}
-          />
-        </OutletContentProvider>
-      </RoutePresenterProvider>
-    );
-  }
+  const fallbacks: Fallbacks = presenter.parentPresenter === null ? presenter.router : route;
 
-  if (status === 'error' || status === 'not_found' || status === 'redirect') {
-    let component;
+  let component;
+  let childPresenter = null;
 
-    switch (status) {
-      case 'error':
-        component = presenter.errorComponent || die(presenter.state.error);
-        break;
+  switch (status) {
+    case 'ok':
+      component = route.component;
+      childPresenter = presenter.childPresenter;
 
-      case 'not_found':
-        component = presenter.notFoundComponent || notFound();
-        break;
+      if (component === undefined) {
+        throw new Error("Route component wasn't loaded");
+      }
+      break;
 
-      case 'redirect':
-        component = presenter.loadingComponent || redirect(presenter.state.to);
-        break;
-    }
+    case 'error':
+      component = route.errorComponent || fallbacks.errorComponent;
 
-    return (
-      <RoutePresenterProvider value={presenter}>
-        <OutletContentProvider value={null}>
-          <OutletRenderBoundary component={component} />
-        </OutletContentProvider>
-      </RoutePresenterProvider>
-    );
-  }
+      if (component === undefined) {
+        throw presenter.state.error;
+      }
+      break;
 
-  if (status !== 'loading') {
-    throw new Error('Unexpected route presenter status: ' + status);
-  }
+    case 'not_found':
+      component = route.notFoundComponent || fallbacks.notFoundComponent || notFound();
+      break;
 
-  if (presenter.loadingComponent === undefined || canSuspend) {
-    throw presenter.pendingPromise || new Error('Loading route presenter must have a pending promise');
+    case 'redirect':
+      component = route.loadingComponent || fallbacks.loadingComponent || redirect(presenter.state.to);
+      break;
+
+    case 'loading':
+      component = route.loadingComponent || fallbacks.loadingComponent;
+
+      if (component === undefined || canSuspend) {
+        throw presenter.pendingPromise || new Error('Loading route presenter has no pending promise');
+      }
+      break;
+
+    default:
+      throw new Error('Unexpected route presenter status: ' + status);
   }
 
   return (
     <RoutePresenterProvider value={presenter}>
-      <OutletContentProvider value={null}>
-        <OutletRenderBoundary component={presenter.loadingComponent} />
+      <OutletContentProvider value={childPresenter}>
+        <OutletRendererMemo component={component} />
       </OutletContentProvider>
     </RoutePresenterProvider>
   );
@@ -188,16 +171,17 @@ function OutletContent(props: OutletContentProps): ReactNode {
 
 OutletContent.displayName = 'OutletContent';
 
-interface OutletRenderBoundaryProps {
+interface OutletRendererProps {
   component: ComponentType;
 }
 
 /**
  * Renders a component and prevents its re-rendering.
  */
-const OutletRenderBoundary = memo<OutletRenderBoundaryProps>(
-  props => <props.component />,
-  (prevProps, nextProps) => prevProps.component === nextProps.component
-);
+const OutletRendererMemo = memo(OutletRenderer, (prevProps, nextProps) => prevProps.component === nextProps.component);
 
-OutletRenderBoundary.displayName = 'OutletRenderBoundary';
+function OutletRenderer(props: OutletRendererProps): ReactNode {
+  return <props.component />;
+}
+
+OutletRenderer.displayName = 'OutletRenderer';

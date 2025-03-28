@@ -10,7 +10,7 @@ export { type HistoryOptions, type History, type SearchParamsAdapter } from './h
 
 export { createRoute } from './__createRoute';
 export { notFound, NotFoundError } from './__notFound';
-export { Outlet } from './Outlet';
+export { Outlet } from './__Outlet';
 export { PathnameTemplate, type PathnameMatch } from './__PathnameTemplate';
 export { redirect, Redirect } from './__redirect';
 export { Route, type InferData, type InferContext, type InferLocationParams } from './__Route';
