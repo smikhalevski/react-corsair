@@ -6,57 +6,57 @@ describe('parsePattern', () => {
   const FLAG_OPTIONAL = 1 << 2;
 
   test('parses pathname as a template', () => {
-    expect(parsePattern('')).toEqual({ segments: [''], segmentFlags: [0], paramNames: new Set() });
-    expect(parsePattern('/')).toEqual({ segments: [''], segmentFlags: [0], paramNames: new Set() });
-    expect(parsePattern('//')).toEqual({ segments: ['', ''], segmentFlags: [0, 0], paramNames: new Set() });
-    expect(parsePattern('///')).toEqual({ segments: ['', '', ''], segmentFlags: [0, 0, 0], paramNames: new Set() });
-    expect(parsePattern('aaa')).toEqual({ segments: ['aaa'], segmentFlags: [0], paramNames: new Set() });
-    expect(parsePattern('/aaa')).toEqual({ segments: ['aaa'], segmentFlags: [0], paramNames: new Set() });
-    expect(parsePattern('/aaa/bbb')).toEqual({ segments: ['aaa', 'bbb'], segmentFlags: [0, 0], paramNames: new Set() });
-    expect(parsePattern('/aaa?')).toEqual({ segments: ['aaa'], segmentFlags: [FLAG_OPTIONAL], paramNames: new Set() });
+    expect(parsePattern('')).toEqual({ segments: [''], flags: [0], paramNames: new Set() });
+    expect(parsePattern('/')).toEqual({ segments: [''], flags: [0], paramNames: new Set() });
+    expect(parsePattern('//')).toEqual({ segments: ['', ''], flags: [0, 0], paramNames: new Set() });
+    expect(parsePattern('///')).toEqual({ segments: ['', '', ''], flags: [0, 0, 0], paramNames: new Set() });
+    expect(parsePattern('aaa')).toEqual({ segments: ['aaa'], flags: [0], paramNames: new Set() });
+    expect(parsePattern('/aaa')).toEqual({ segments: ['aaa'], flags: [0], paramNames: new Set() });
+    expect(parsePattern('/aaa/bbb')).toEqual({ segments: ['aaa', 'bbb'], flags: [0, 0], paramNames: new Set() });
+    expect(parsePattern('/aaa?')).toEqual({ segments: ['aaa'], flags: [FLAG_OPTIONAL], paramNames: new Set() });
     expect(parsePattern('/aaa?/')).toEqual({
       segments: ['aaa', ''],
-      segmentFlags: [FLAG_OPTIONAL, 0],
+      flags: [FLAG_OPTIONAL, 0],
       paramNames: new Set(),
     });
     expect(parsePattern('/aaa?/bbb?')).toEqual({
       segments: ['aaa', 'bbb'],
-      segmentFlags: [FLAG_OPTIONAL, FLAG_OPTIONAL],
+      flags: [FLAG_OPTIONAL, FLAG_OPTIONAL],
       paramNames: new Set(),
     });
     expect(parsePattern(':xxx')).toEqual({
       segments: ['xxx'],
-      segmentFlags: [FLAG_PARAM],
+      flags: [FLAG_PARAM],
       paramNames: new Set(['xxx']),
     });
     expect(parsePattern('/:xxx')).toEqual({
       segments: ['xxx'],
-      segmentFlags: [FLAG_PARAM],
+      flags: [FLAG_PARAM],
       paramNames: new Set(['xxx']),
     });
     expect(parsePattern('/:xxx')).toEqual({
       segments: ['xxx'],
-      segmentFlags: [FLAG_PARAM],
+      flags: [FLAG_PARAM],
       paramNames: new Set(['xxx']),
     });
     expect(parsePattern('/:xxx?')).toEqual({
       segments: ['xxx'],
-      segmentFlags: [FLAG_PARAM | FLAG_OPTIONAL],
+      flags: [FLAG_PARAM | FLAG_OPTIONAL],
       paramNames: new Set(['xxx']),
     });
     expect(parsePattern('/:xxx*')).toEqual({
       segments: ['xxx'],
-      segmentFlags: [FLAG_PARAM | FLAG_WILDCARD],
+      flags: [FLAG_PARAM | FLAG_WILDCARD],
       paramNames: new Set(['xxx']),
     });
     expect(parsePattern('/:xxx*?')).toEqual({
       segments: ['xxx'],
-      segmentFlags: [FLAG_PARAM | FLAG_WILDCARD | FLAG_OPTIONAL],
+      flags: [FLAG_PARAM | FLAG_WILDCARD | FLAG_OPTIONAL],
       paramNames: new Set(['xxx']),
     });
     expect(parsePattern('/:xxx*?/:yyy?')).toEqual({
       segments: ['xxx', 'yyy'],
-      segmentFlags: [FLAG_PARAM | FLAG_WILDCARD | FLAG_OPTIONAL, FLAG_PARAM | FLAG_OPTIONAL],
+      flags: [FLAG_PARAM | FLAG_WILDCARD | FLAG_OPTIONAL, FLAG_PARAM | FLAG_OPTIONAL],
       paramNames: new Set(['xxx', 'yyy']),
     });
   });
@@ -103,14 +103,18 @@ describe('createPatternRegExp', () => {
 
 describe('PathnameTemplate', () => {
   test('matches a pathname without params', () => {
-    expect(new PathnameTemplate('').match('/')).toEqual({ pathname: '/', childPathname: '/' });
-    expect(new PathnameTemplate('').match('/aaa')).toEqual({ pathname: '/', childPathname: '/aaa' });
-    expect(new PathnameTemplate('/aaa').match('/aaa')).toEqual({ pathname: '/aaa', childPathname: '/' });
-    expect(new PathnameTemplate('/aaa').match('/aaa/')).toEqual({ pathname: '/aaa', childPathname: '/' });
-    expect(new PathnameTemplate('/AAA').match('/aaa')).toEqual({ pathname: '/aaa', childPathname: '/' });
-    expect(new PathnameTemplate('/aaa').match('/AAA')).toEqual({ pathname: '/AAA', childPathname: '/' });
-    expect(new PathnameTemplate('/aaa').match('/aaa/bbb')).toEqual({ pathname: '/aaa', childPathname: '/bbb' });
-    expect(new PathnameTemplate('/aaa').match('/aaa/')).toEqual({ pathname: '/aaa', childPathname: '/' });
+    expect(new PathnameTemplate('').match('/')).toEqual({ pathname: '/', childPathname: '/', params: {} });
+    expect(new PathnameTemplate('').match('/aaa')).toEqual({ pathname: '/', childPathname: '/aaa', params: {} });
+    expect(new PathnameTemplate('/aaa').match('/aaa')).toEqual({ pathname: '/aaa', childPathname: '/', params: {} });
+    expect(new PathnameTemplate('/aaa').match('/aaa/')).toEqual({ pathname: '/aaa', childPathname: '/', params: {} });
+    expect(new PathnameTemplate('/AAA').match('/aaa')).toEqual({ pathname: '/aaa', childPathname: '/', params: {} });
+    expect(new PathnameTemplate('/aaa').match('/AAA')).toEqual({ pathname: '/AAA', childPathname: '/', params: {} });
+    expect(new PathnameTemplate('/aaa').match('/aaa/bbb')).toEqual({
+      pathname: '/aaa',
+      childPathname: '/bbb',
+      params: {},
+    });
+    expect(new PathnameTemplate('/aaa').match('/aaa/')).toEqual({ pathname: '/aaa', childPathname: '/', params: {} });
   });
 
   test('does not match a pathname without params', () => {

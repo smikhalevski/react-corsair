@@ -1,12 +1,11 @@
 import { AbortablePromise, PubSub } from 'parallel-universe';
 import { ComponentType } from 'react';
-import { loadRoute } from './loadRoute';
-import { matchRoutes, RouteMatch } from './matchRoutes';
+import { matchRoutes } from './matchRoutes';
 import { Route } from './Route';
-import { FallbackOptions, RouterEvent, RouterOptions, To } from './types';
+import { Fallbacks, RouterEvent, RouterOptions, To } from './types';
 import { noop, toLocation } from './utils';
-import { RouteManager } from './RouteManager';
-import { reconcileRouteManagers } from './reconcileRouteManagers';
+import { loadRoute, RoutePresenter } from './RoutePresenter';
+import { reconcilePresenters } from './reconcilePresenters';
 
 /**
  * A router that matches routes by a location.
@@ -14,7 +13,7 @@ import { reconcileRouteManagers } from './reconcileRouteManagers';
  * @template Context A context provided to {@link RouteOptions.dataLoader route data loaders}.
  * @group Routing
  */
-export class Router<Context = any> implements FallbackOptions {
+export class Router<Context = any> implements Fallbacks {
   /**
    * Routes that a router can render.
    */
@@ -26,17 +25,17 @@ export class Router<Context = any> implements FallbackOptions {
   context: Context;
 
   /**
-   * A manager rendered in a router {@link Outlet}, or `null` if no route is rendered.
+   * A root presenter rendered in a router {@link Outlet}, or `null` if no route is rendered.
    *
    * @see {@link navigate}
    */
-  routeManager: RouteManager<Context> | null = null;
+  rootPresenter: RoutePresenter | null = null;
 
   errorComponent: ComponentType | undefined;
   loadingComponent: ComponentType | undefined;
   notFoundComponent: ComponentType | undefined;
 
-  protected _pubSub = new PubSub<RouterEvent<Context>>();
+  protected _pubSub = new PubSub<RouterEvent>();
 
   /**
    * Creates a new instance of a {@link Router}.
@@ -53,18 +52,6 @@ export class Router<Context = any> implements FallbackOptions {
   }
 
   /**
-   * Looks up a route in {@link routes} that matches a location, and returns an array of matches for a route and its
-   * ancestors.
-   *
-   * @param to A location or a route to match.
-   */
-  match(to: To): RouteMatch[] {
-    const location = toLocation(to);
-
-    return matchRoutes(location.pathname, location.searchParams, this.routes);
-  }
-
-  /**
    * Looks up a route in {@link routes} that matches a {@link to location}, loads its data and notifies subscribers.
    *
    * @param to A location or a route to navigate to.
@@ -73,17 +60,20 @@ export class Router<Context = any> implements FallbackOptions {
     const location = toLocation(to);
 
     const routeMatches = matchRoutes(location.pathname, location.searchParams, this.routes);
-    const routeManager = reconcileRouteManagers(this, routeMatches);
+    const rootPresenter = reconcilePresenters(this, routeMatches);
 
-    for (let manager = routeManager; manager !== null; manager = manager.childManager) {
-      if (manager.state.status === 'loading' && manager.promise === null) {
-        manager.reload();
-      }
-    }
-
-    this.routeManager = routeManager;
+    this.rootPresenter = rootPresenter;
 
     this._pubSub.publish({ type: 'navigate', router: this, location });
+
+    if (this.rootPresenter !== rootPresenter) {
+      // Navigation was superseded
+      return;
+    }
+
+    for (let presenter = rootPresenter; presenter !== null; presenter = presenter.childPresenter) {
+      presenter.reload();
+    }
   }
 
   /**
@@ -94,19 +84,25 @@ export class Router<Context = any> implements FallbackOptions {
    */
   prefetch(to: To): AbortablePromise<void> {
     return new AbortablePromise((resolve, _reject, signal) => {
+      const location = toLocation(to);
+
+      const routeMatches = matchRoutes(location.pathname, location.searchParams, this.routes);
+
       resolve(
-        Promise.all(this.match(to).map(routeMatch => loadRoute(routeMatch, this.context, signal, true))).then(noop)
+        Promise.all(
+          routeMatches.map(routeMatch => loadRoute(routeMatch.route, routeMatch.params, this.context, signal, true))
+        ).then(noop)
       );
     });
   }
 
   /**
-   * Subscribes a listener to events dispatched by a router.
+   * Subscribes a listener to events published by a router.
    *
    * @param listener A listener to subscribe.
    * @returns A callback that unsubscribe a listener.
    */
-  subscribe(listener: (event: RouterEvent<Context>) => void): () => void {
+  subscribe(listener: (event: RouterEvent) => void): () => void {
     return this._pubSub.subscribe(listener);
   }
 }

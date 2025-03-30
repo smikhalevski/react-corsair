@@ -1,6 +1,7 @@
 import isDeepEqual from 'fast-deep-equal';
 import { useEffect, useRef } from 'react';
 import { To } from './types';
+import { Route } from './Route';
 import { useRouter } from './useRouter';
 
 /**
@@ -19,7 +20,7 @@ export function usePrefetch(to: To): void {
   const router = useRouter();
 
   useEffect(() => {
-    if (isDeepEqual(toRef.current, to)) {
+    if (toRef.current instanceof Route && to instanceof Route ? toRef.current === to : isDeepEqual(toRef.current, to)) {
       return;
     }
     toRef.current = to;

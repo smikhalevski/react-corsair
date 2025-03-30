@@ -7,29 +7,29 @@ describe('matchRoutes', () => {
   const cccRoute = createRoute(bbbRoute, '/ccc');
 
   test('matches routes', () => {
-    expect(matchRoutes('/aaa', {}, [aaaRoute])).toEqual([{ route: aaaRoute, params: undefined }]);
+    expect(matchRoutes('/aaa', {}, [aaaRoute])).toEqual([{ route: aaaRoute, params: {} }]);
 
     expect(matchRoutes('/aaa/bbb', {}, [aaaRoute])).toEqual([]);
 
-    expect(matchRoutes('/aaa', {}, [aaaRoute, bbbRoute])).toEqual([{ route: aaaRoute, params: undefined }]);
+    expect(matchRoutes('/aaa', {}, [aaaRoute, bbbRoute])).toEqual([{ route: aaaRoute, params: {} }]);
 
     expect(matchRoutes('/aaa/bbb', {}, [aaaRoute, bbbRoute])).toEqual([
-      { route: aaaRoute, params: undefined },
-      { route: bbbRoute, params: undefined },
+      { route: aaaRoute, params: {} },
+      { route: bbbRoute, params: {} },
     ]);
 
     expect(matchRoutes('/bbb', {}, [bbbRoute, aaaRoute])).toEqual([]);
   });
 
   test('does not match intermediate routes', () => {
-    expect(matchRoutes('/aaa', {}, [aaaRoute, cccRoute])).toEqual([{ route: aaaRoute, params: undefined }]);
+    expect(matchRoutes('/aaa', {}, [aaaRoute, cccRoute])).toEqual([{ route: aaaRoute, params: {} }]);
 
     expect(matchRoutes('/aaa/bbb', {}, [aaaRoute, cccRoute])).toEqual([]);
 
     expect(matchRoutes('/aaa/bbb/ccc', {}, [aaaRoute, cccRoute])).toEqual([
-      { route: aaaRoute, params: undefined },
-      { route: bbbRoute, params: undefined },
-      { route: cccRoute, params: undefined },
+      { route: aaaRoute, params: {} },
+      { route: bbbRoute, params: {} },
+      { route: cccRoute, params: {} },
     ]);
   });
 
@@ -45,18 +45,24 @@ describe('matchRoutes', () => {
 
     expect(matchRoutes('/aaa/ppp/bbb/qqq', {}, [bbbRoute])).toEqual([
       { route: aaaRoute, params: { xxx: 'ppp' } },
-      { route: bbbRoute, params: { yyy: 'qqq' } },
+      { route: bbbRoute, params: { xxx: 'ppp', yyy: 'qqq' } },
     ]);
   });
 
-  test('ignores search params without paramsAdapted', () => {
+  test('merges pathname params and search params', () => {
     const aaaRoute = createRoute('/aaa/:xxx');
     const bbbRoute = createRoute(aaaRoute, '/bbb/:yyy');
 
     expect(matchRoutes('/aaa/ppp/bbb/qqq', { ttt: '111', lll: '222' }, [bbbRoute])).toEqual([
-      { route: aaaRoute, params: { xxx: 'ppp' } },
-      { route: bbbRoute, params: { yyy: 'qqq' } },
+      { route: aaaRoute, params: { lll: '222', ttt: '111', xxx: 'ppp' } },
+      { route: bbbRoute, params: { lll: '222', ttt: '111', xxx: 'ppp', yyy: 'qqq' } },
     ]);
+  });
+
+  test('pathname params have precedence over search params', () => {
+    const aaaRoute = createRoute({ pathname: '/aaa/:xxx' });
+
+    expect(matchRoutes('/aaa/111', { xxx: 222 }, [aaaRoute])).toEqual([{ route: aaaRoute, params: { xxx: '111' } }]);
   });
 
   test('uses params adapter to parse params', () => {
@@ -75,12 +81,6 @@ describe('matchRoutes', () => {
     expect(aaaParamsAdapterMock).toHaveBeenNthCalledWith(1, { lll: '222', ttt: '111', xxx: 'ppp' });
 
     expect(bbbParamsAdapterMock).toHaveBeenCalledTimes(1);
-    expect(bbbParamsAdapterMock).toHaveBeenNthCalledWith(1, { lll: '222', ttt: '111', yyy: 'qqq' });
-  });
-
-  test('pathname params have precedence over search params', () => {
-    const aaaRoute = createRoute({ pathname: '/aaa/:xxx', paramsAdapter: params => params });
-
-    expect(matchRoutes('/aaa/111', { xxx: 222 }, [aaaRoute])).toEqual([{ route: aaaRoute, params: { xxx: '111' } }]);
+    expect(bbbParamsAdapterMock).toHaveBeenNthCalledWith(1, { lll: '222', ttt: '111', xxx: 'ppp', yyy: 'qqq' });
   });
 });

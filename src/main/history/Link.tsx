@@ -52,7 +52,6 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
       event.ctrlKey ||
       event.shiftKey ||
       event.metaKey ||
-      event.buttons !== 1 ||
       event.button !== 0
     ) {
       return;
