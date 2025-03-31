@@ -5,7 +5,6 @@ import { Dict, Location } from './types';
 import { NotFoundError } from './notFound';
 import { Redirect } from './redirect';
 import { Route } from './Route';
-import { ComponentType } from 'react';
 
 export interface LoadingState {
   status: 'loading';

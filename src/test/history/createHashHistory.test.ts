@@ -1,6 +1,6 @@
 import { JSDOM } from 'jsdom';
 import { delay } from 'parallel-universe';
-import { createHashHistory, SearchParamsAdapter } from '../../main';
+import { createHashHistory } from '../../main';
 import { jsonSearchParamsAdapter } from '../../main/history/utils';
 
 describe('createHashHistory', () => {

@@ -1,6 +1,6 @@
 import { JSDOM } from 'jsdom';
 import { delay } from 'parallel-universe';
-import { createBrowserHistory, SearchParamsAdapter } from '../../main';
+import { createBrowserHistory } from '../../main';
 import { jsonSearchParamsAdapter } from '../../main/history/utils';
 
 describe('createBrowserHistory', () => {

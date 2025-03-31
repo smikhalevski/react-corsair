@@ -7,7 +7,6 @@ import React, {
   Suspense,
   useContext,
   useEffect,
-  useReducer,
 } from 'react';
 import { createErrorState, RoutePresenter } from './RoutePresenter';
 import { Router } from './Router';
