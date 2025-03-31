@@ -6,8 +6,6 @@
   </picture></a>
 </p>
 
-<br>
-
 ```sh
 npm install --save-prod react-corsair
 ```
