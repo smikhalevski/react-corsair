@@ -1,11 +1,7 @@
 export { createBrowserHistory } from './history/createBrowserHistory';
 export { createHashHistory } from './history/createHashHistory';
 export { createMemoryHistory } from './history/createMemoryHistory';
-export {
-  createURLSearchParamsAdapter,
-  type NameEncoder,
-  type URLSearchParamsAdapterOptions,
-} from './history/createURLSearchParamsAdapter';
+export { JSONSearchParamsAdapter } from './history/JSONSearchParamsAdapter';
 export { Link, type LinkProps } from './history/Link';
 export { useHistory, HistoryProvider } from './history/useHistory';
 export { useHistorySubscription } from './history/useHistorySubscription';
@@ -15,30 +11,42 @@ export { type HistoryOptions, type History, type SearchParamsAdapter } from './h
 export { createRoute } from './createRoute';
 export { notFound, NotFoundError } from './notFound';
 export { Outlet } from './Outlet';
-export { PathnameTemplate } from './PathnameTemplate';
+export { PathnameTemplate, type PathnameMatch } from './PathnameTemplate';
 export { redirect, Redirect } from './redirect';
-export { Route } from './Route';
-export { useRouter } from './useRouter';
+export { Route, type InferData, type InferContext, type InferLocationParams } from './Route';
 export { usePrefetch } from './usePrefetch';
 export { Router } from './Router';
-export { RouterProvider } from './RouterProvider';
-export { useRouteParams, useRouteData, useRouteError } from './hooks';
+export { useRouter, RouterProvider, type RouterProviderProps } from './useRouter';
+export { useRouteData } from './useRouteData';
+export { useRouteError } from './useRouteError';
+export { useRouteParams } from './useRouteParams';
+export { hydrateRouter } from './hydrateRouter';
 
-export type { PathnameMatch } from './PathnameTemplate';
-export type {
-  To,
-  Location,
-  LocationOptions,
-  RouteOptions,
-  ParamsAdapter,
-  LoadingAppearance,
-  RenderingDisposition,
-  FallbackOptions,
-  RouterOptions,
-  DataLoaderOptions,
-  RouteState,
-  Dict,
+export {
+  type To,
+  type Location,
+  type LocationOptions,
+  type ParamsAdapter,
+  type LoadingAppearance,
+  type RenderingDisposition,
+  type DataLoaderOptions,
+  type Fallbacks,
+  type RouteOptions,
+  type RouterOptions,
+  type NavigateEvent,
+  type ErrorEvent,
+  type NotFoundEvent,
+  type RedirectEvent,
+  type RouterEvent,
 } from './types';
+
 export { Prefetch, type PrefetchProps } from './Prefetch';
 
-export { urlSearchParamsAdapter } from './history/createURLSearchParamsAdapter';
+export {
+  type LoadingState,
+  type OkState,
+  type ErrorState,
+  type NotFoundState,
+  type RedirectState,
+  type RoutePresenterState,
+} from './RoutePresenter';

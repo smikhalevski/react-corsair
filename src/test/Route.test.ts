@@ -160,11 +160,11 @@ describe('Route', () => {
     });
   });
 
-  describe('loadComponent', () => {
+  describe('getOrLoadComponent', () => {
     test('returns an Outlet if there is no component', () => {
       const route = createRoute();
 
-      expect(route.loadComponent()).toBe(Outlet);
+      expect(route.getOrLoadComponent()).toBe(Outlet);
     });
 
     test("throws if lazyComponent doesn't return a module", async () => {
@@ -172,7 +172,7 @@ describe('Route', () => {
         lazyComponent: () => Promise.resolve<any>({ foo: Component }),
       });
 
-      await expect(route.loadComponent()).rejects.toEqual(
+      await expect(route.getOrLoadComponent()).rejects.toEqual(
         new TypeError('Module loaded by a lazyComponent must default-export a component')
       );
     });
@@ -182,7 +182,7 @@ describe('Route', () => {
         component: Component,
       });
 
-      expect(route.loadComponent()).toBe(Component);
+      expect(route.getOrLoadComponent()).toBe(Component);
     });
 
     test('loads a lazy component', async () => {
@@ -190,7 +190,7 @@ describe('Route', () => {
         lazyComponent: () => Promise.resolve({ default: Component }),
       });
 
-      await expect(route.loadComponent()).resolves.toEqual(Component);
+      await expect(route.getOrLoadComponent()).resolves.toEqual(Component);
     });
 
     test('throws if lazy component module does not default-export a function', async () => {
@@ -198,7 +198,7 @@ describe('Route', () => {
         lazyComponent: () => Promise.resolve({ default: 'not_a_function' as any }),
       });
 
-      await expect(() => route.loadComponent()).rejects.toEqual(
+      await expect(() => route.getOrLoadComponent()).rejects.toEqual(
         new TypeError('Module loaded by a lazyComponent must default-export a component')
       );
     });
@@ -208,7 +208,7 @@ describe('Route', () => {
         lazyComponent: () => Promise.reject(111),
       });
 
-      await expect(() => route.loadComponent()).rejects.toBe(111);
+      await expect(() => route.getOrLoadComponent()).rejects.toBe(111);
     });
 
     test('does not load a lazy component twice', async () => {
@@ -218,9 +218,9 @@ describe('Route', () => {
         lazyComponent: lazyComponentMock,
       });
 
-      await route.loadComponent();
-      await route.loadComponent();
-      await route.loadComponent();
+      await route.getOrLoadComponent();
+      await route.getOrLoadComponent();
+      await route.getOrLoadComponent();
 
       expect(lazyComponentMock).toHaveBeenCalledTimes(1);
     });
@@ -235,10 +235,10 @@ describe('Route', () => {
         lazyComponent: lazyComponentMock,
       });
 
-      await expect(() => route.loadComponent()).rejects.toEqual(
+      await expect(() => route.getOrLoadComponent()).rejects.toEqual(
         new TypeError('Module loaded by a lazyComponent must default-export a component')
       );
-      await expect(route.loadComponent()).resolves.toEqual(Component);
+      await expect(route.getOrLoadComponent()).resolves.toEqual(Component);
 
       expect(lazyComponentMock).toHaveBeenCalledTimes(2);
     });
@@ -250,9 +250,9 @@ describe('Route', () => {
         lazyComponent: lazyComponentMock,
       });
 
-      await route.loadComponent();
+      await route.getOrLoadComponent();
 
-      expect(route.loadComponent()).toBe(Component);
+      expect(route.getOrLoadComponent()).toBe(Component);
 
       expect(lazyComponentMock).toHaveBeenCalledTimes(1);
     });
@@ -264,7 +264,7 @@ describe('Route', () => {
         },
       });
 
-      await expect(route.loadComponent()).rejects.toEqual(new Error('expected'));
+      await expect(route.getOrLoadComponent()).rejects.toEqual(new Error('expected'));
     });
   });
 });

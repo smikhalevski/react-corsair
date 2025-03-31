@@ -3,7 +3,7 @@ import { PathnameTemplate } from './PathnameTemplate';
 import {
   DataLoaderOptions,
   Dict,
-  FallbackOptions,
+  Fallbacks,
   LoadingAppearance,
   Location,
   LocationOptions,
@@ -15,13 +15,15 @@ import { Outlet } from './Outlet';
 
 type Prettify<T> = { [K in keyof T]: T[K] } & {};
 
-type PartialVoid<T> = Partial<T> extends T ? T | void : T;
+type PartialToVoid<T> = Partial<T> extends T ? T | void : T;
 
-declare const LOCATION_PARAMS: unique symbol;
-declare const CONTEXT: unique symbol;
+export declare const LOCATION_PARAMS: unique symbol;
+export declare const CONTEXT: unique symbol;
+export declare const DATA: unique symbol;
 
-type LOCATION_PARAMS = typeof LOCATION_PARAMS;
-type CONTEXT = typeof CONTEXT;
+export type LOCATION_PARAMS = typeof LOCATION_PARAMS;
+export type CONTEXT = typeof CONTEXT;
+export type DATA = typeof DATA;
 
 /**
  * Infers route location params.
@@ -31,11 +33,18 @@ type CONTEXT = typeof CONTEXT;
 export type InferLocationParams<R extends Route> = R[LOCATION_PARAMS];
 
 /**
- * Infers required route context.
+ * Infers route context.
  *
  * @group Routing
  */
 export type InferContext<R extends Route> = R[CONTEXT];
+
+/**
+ * Infers route data.
+ *
+ * @group Routing
+ */
+export type InferData<R extends Route> = R[DATA];
 
 /**
  * A route that can be rendered by a router.
@@ -50,26 +59,33 @@ export type InferContext<R extends Route> = R[CONTEXT];
  */
 export class Route<
   ParentRoute extends Route<any, any, Context> | null = any,
-  Params extends object | void = any,
+  Params extends Dict = any,
   Data = any,
   Context = any,
-> implements FallbackOptions
+> implements Fallbacks
 {
   /**
-   * The type of route location params.
+   * The type of the route location params.
    *
    * @internal
    */
-  declare readonly [LOCATION_PARAMS]: PartialVoid<
-    ParentRoute extends Route ? Prettify<ParentRoute[LOCATION_PARAMS] & Params> : Params
+  declare readonly [LOCATION_PARAMS]: PartialToVoid<
+    ParentRoute extends Route ? Prettify<Exclude<ParentRoute[LOCATION_PARAMS], void> & Params> : Params
   >;
 
   /**
-   * The type of required router context.
+   * The type of the route context.
    *
    * @internal
    */
   declare readonly [CONTEXT]: Context;
+
+  /**
+   * The type of data loaded by the route.
+   *
+   * @internal
+   */
+  declare readonly [DATA]: Data;
 
   /**
    * A parent route or `null` if there is no parent.
@@ -84,6 +100,8 @@ export class Route<
   /**
    * An adapter that can validate and transform params extracted from the {@link Location.pathname} and
    * {@link Location.searchParams}.
+   *
+   * If {@link paramsAdapter} throws during parsing, then route isn't matched and error is ignored.
    */
   paramsAdapter: ParamsAdapter<Params> | undefined;
 
@@ -106,7 +124,7 @@ export class Route<
 
   /**
    * A component rendered by the route, or `undefined` if a {@link RouteOptions.lazyComponent} isn't yet
-   * {@link loadComponent loaded}.
+   * {@link getOrLoadComponent loaded}.
    */
   component: ComponentType | undefined;
 
@@ -114,7 +132,7 @@ export class Route<
    * Loads {@link RouteOptions.lazyComponent a lazy route component} once and caches it forever, unless an error
    * occurred during loading.
    */
-  loadComponent: () => ComponentType | Promise<ComponentType>;
+  getOrLoadComponent: () => ComponentType | Promise<ComponentType>;
 
   errorComponent: ComponentType | undefined;
   loadingComponent: ComponentType | undefined;
@@ -155,7 +173,7 @@ export class Route<
 
     this.component = component;
 
-    this.loadComponent = () => {
+    this.getOrLoadComponent = () => {
       if (component !== undefined) {
         return component;
       }

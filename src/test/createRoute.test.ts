@@ -13,7 +13,7 @@ describe('createRoute', () => {
 
     expect(route.parentRoute).toBeNull();
     expect(route.pathnameTemplate.pattern).toBe('/rrr');
-    expect(route.loadComponent()).toBe(Outlet);
+    expect(route.getOrLoadComponent()).toBe(Outlet);
   });
 
   test('(parentRoute) signature', () => {
@@ -22,7 +22,7 @@ describe('createRoute', () => {
 
     expect(route.parentRoute).toBe(aaaRoute);
     expect(route.pathnameTemplate.pattern).toBe('/');
-    expect(route.loadComponent()).toBe(Outlet);
+    expect(route.getOrLoadComponent()).toBe(Outlet);
   });
 
   test('(parentRoute, options) signature', () => {
@@ -31,7 +31,7 @@ describe('createRoute', () => {
 
     expect(route.parentRoute).toBe(aaaRoute);
     expect(route.pathnameTemplate.pattern).toBe('/rrr');
-    expect(route.loadComponent()).toBe(Outlet);
+    expect(route.getOrLoadComponent()).toBe(Outlet);
   });
 
   test('(pathname) signature', () => {
@@ -39,7 +39,7 @@ describe('createRoute', () => {
 
     expect(route.parentRoute).toBeNull();
     expect(route.pathnameTemplate.pattern).toBe('/rrr');
-    expect(route.loadComponent()).toBe(Outlet);
+    expect(route.getOrLoadComponent()).toBe(Outlet);
   });
 
   test('(pathname, component) signature', () => {
@@ -47,7 +47,7 @@ describe('createRoute', () => {
 
     expect(route.parentRoute).toBeNull();
     expect(route.pathnameTemplate.pattern).toBe('/rrr');
-    expect(route.loadComponent()).toBe(Component);
+    expect(route.getOrLoadComponent()).toBe(Component);
   });
 
   test('(parentRoute, pathname) signature', () => {
@@ -56,7 +56,7 @@ describe('createRoute', () => {
 
     expect(route.parentRoute).toBe(aaaRoute);
     expect(route.pathnameTemplate.pattern).toBe('/rrr');
-    expect(route.loadComponent()).toBe(Outlet);
+    expect(route.getOrLoadComponent()).toBe(Outlet);
   });
 
   test('(parentRoute, pathname, component) signature', () => {
@@ -65,6 +65,6 @@ describe('createRoute', () => {
 
     expect(route.parentRoute).toBe(aaaRoute);
     expect(route.pathnameTemplate.pattern).toBe('/rrr');
-    expect(route.loadComponent()).toBe(Component);
+    expect(route.getOrLoadComponent()).toBe(Component);
   });
 });

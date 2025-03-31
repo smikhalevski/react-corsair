@@ -16,7 +16,7 @@ export interface RouteMatch {
   /**
    * Parsed params extracted from a pathname and search params.
    */
-  params: any;
+  params: Dict;
 }
 
 /**
@@ -72,14 +72,17 @@ function matchPathname(pathname: string, route: Route, cache: Map<Route, Pathnam
 }
 
 function getRouteMatches(route: Route, searchParams: Dict, cache: Map<Route, PathnameMatch | null>): RouteMatch[] {
-  const routeMatches = route.parentRoute === null ? [] : getRouteMatches(route.parentRoute, searchParams, cache);
+  const { parentRoute, paramsAdapter } = route;
 
   const match = cache.get(route)!;
 
-  const params =
-    route.paramsAdapter === undefined ? match.params : route.paramsAdapter.parse({ ...searchParams, ...match.params });
+  const routeMatches = parentRoute === null ? [] : getRouteMatches(parentRoute, searchParams, cache);
 
-  routeMatches.push({ route, params });
+  const pathnameParams = parentRoute === null ? match.params : { ...match.params, ...cache.get(parentRoute)!.params };
+
+  const params = { ...searchParams, ...pathnameParams };
+
+  routeMatches.push({ route, params: paramsAdapter === undefined ? params : paramsAdapter.parse(params) });
 
   return routeMatches;
 }

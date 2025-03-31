@@ -1,5 +1,5 @@
 import { parseLocation, stringifyLocation } from '../../main';
-import { debasePathname, concatPathname } from '../../main/history/utils';
+import { concatPathname, debasePathname } from '../../main/history/utils';
 
 describe('stringifyLocation', () => {
   test('returns a URL', () => {
@@ -20,7 +20,7 @@ describe('parseLocation', () => {
 
     expect(parseLocation('/aaa?xxx=111')).toEqual({
       pathname: '/aaa',
-      searchParams: { xxx: '111' },
+      searchParams: { xxx: 111 },
       hash: '',
     });
 

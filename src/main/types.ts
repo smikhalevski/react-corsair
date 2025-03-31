@@ -1,7 +1,7 @@
 import { ComponentType } from 'react';
 import { Route } from './Route';
 import { Router } from './Router';
-import { RouteManager } from './RouteManager';
+import { RoutePresenter } from './RoutePresenter';
 
 export interface Dict {
   [key: string]: any;
@@ -64,7 +64,7 @@ export interface LocationOptions {
  * An adapter that can validate and transform route params.
  *
  * @template Params Route params.
- * @see {@link urlSearchParamsAdapter}
+ * @see {@link jsonSearchParamsAdapter}
  * @group Routing
  */
 export interface ParamsAdapter<Params> {
@@ -130,7 +130,7 @@ export type RenderingDisposition = 'server' | 'client';
  * @template Context A router context.
  * @group Routing
  */
-export interface DataLoaderOptions<Params = any, Context = any> {
+export interface DataLoaderOptions<Params, Context> {
   /**
    * Route params extracted from a location.
    */
@@ -157,7 +157,7 @@ export interface DataLoaderOptions<Params = any, Context = any> {
  *
  * @group Routing
  */
-export interface FallbackOptions {
+export interface Fallbacks {
   /**
    * A component that is rendered when an error was thrown during route rendering.
    *
@@ -168,7 +168,7 @@ export interface FallbackOptions {
    *
    * Routes without an {@link errorComponent} don't have an error boundary.
    */
-  errorComponent: ComponentType | undefined;
+  errorComponent?: ComponentType;
 
   /**
    * A component that is rendered when a {@link RouteOptions.lazyComponent} or a {@link RouteOptions.dataLoader} are being
@@ -179,7 +179,7 @@ export interface FallbackOptions {
    *
    * Routes without a {@link loadingComponent} suspend a parent route.
    */
-  loadingComponent: ComponentType | undefined;
+  loadingComponent?: ComponentType;
 
   /**
    * A component that is rendered if {@link notFound} was called during route rendering or if there's no route that
@@ -187,7 +187,7 @@ export interface FallbackOptions {
    *
    * Routes without {@link notFoundComponent} propagate {@link notFound} to a parent route.
    */
-  notFoundComponent: ComponentType | undefined;
+  notFoundComponent?: ComponentType;
 }
 
 /**
@@ -198,7 +198,7 @@ export interface FallbackOptions {
  * @template Context A router context.
  * @group Routing
  */
-export interface RouteOptions<Params, Data, Context> extends Partial<FallbackOptions> {
+export interface RouteOptions<Params extends Dict, Data, Context> extends Fallbacks {
   /**
    * A URL pathname pattern.
    *
@@ -286,7 +286,7 @@ export interface RouteOptions<Params, Data, Context> extends Partial<FallbackOpt
  * @template Context A router context.
  * @group Routing
  */
-export interface RouterOptions<Context> extends Partial<FallbackOptions> {
+export interface RouterOptions<Context> extends Fallbacks {
   /**
    * Routes that a router can match.
    */
@@ -301,10 +301,9 @@ export interface RouterOptions<Context> extends Partial<FallbackOptions> {
 /**
  * An event published by a {@link Router} after a {@link Router.navigate navigation} occurs.
  *
- * @template Context A router context.
  * @group Routing
  */
-export interface NavigateEvent<Context> {
+export interface NavigateEvent {
   /**
    * The event type.
    */
@@ -313,7 +312,7 @@ export interface NavigateEvent<Context> {
   /**
    * A router from which an event originates.
    */
-  router: Router<Context>;
+  router: Router;
 
   /**
    * A location to which a router was navigated.
@@ -322,21 +321,48 @@ export interface NavigateEvent<Context> {
 }
 
 /**
- * An event published by a {@link Router} when an error was thrown by a component or by a data loader.
+ * An event published by a {@link Router} when a route component or its data are being loaded.
  *
- * @template Context A router context.
  * @group Routing
  */
-export interface ErrorEvent<Context> {
+export interface LoadingEvent {
+  type: 'loading';
+
+  /**
+   * A presenter from which an event originates.
+   */
+  presenter: RoutePresenter;
+}
+
+/**
+ * An event published by a {@link Router} when a route component and its data are successfully loaded.
+ *
+ * @group Routing
+ */
+export interface ReadyEvent {
+  type: 'ready';
+
+  /**
+   * A presenter from which an event originates.
+   */
+  presenter: RoutePresenter;
+}
+
+/**
+ * An event published by a {@link Router} when an error was thrown by a component or by a data loader.
+ *
+ * @group Routing
+ */
+export interface ErrorEvent {
   /**
    * The event type.
    */
   type: 'error';
 
   /**
-   * A route manager from which an event originates.
+   * A presenter from which an event originates.
    */
-  routeManager: RouteManager<Context>;
+  presenter: RoutePresenter;
 
   /**
    * An error that was thrown.
@@ -347,37 +373,35 @@ export interface ErrorEvent<Context> {
 /**
  * An event published by a {@link Router} when a {@link notFound} was called from a component or a data loader.
  *
- * @template Context A router context.
  * @group Routing
  */
-export interface NotFoundEvent<Context> {
+export interface NotFoundEvent {
   /**
    * The event type.
    */
   type: 'not_found';
 
   /**
-   * A route manager from which an event originates.
+   * A presenter from which an event originates.
    */
-  routeManager: RouteManager<Context>;
+  presenter: RoutePresenter;
 }
 
 /**
  * An event published by a {@link Router} when a {@link redirect} was called from a component or a data loader.
  *
- * @template Context A router context.
  * @group Routing
  */
-export interface RedirectEvent<Context> {
+export interface RedirectEvent {
   /**
    * The event type.
    */
   type: 'redirect';
 
   /**
-   * A route manager from which an event originates.
+   * A presenter from which an event originates.
    */
-  routeManager: RouteManager<Context>;
+  presenter: RoutePresenter;
 
   /**
    * A location or a URL to which a redirect should be made.
@@ -388,41 +412,6 @@ export interface RedirectEvent<Context> {
 /**
  * An event published by a {@link Router}.
  *
- * @template Context A router context.
  * @group Routing
  */
-export type RouterEvent<Context> =
-  | NavigateEvent<Context>
-  | ErrorEvent<Context>
-  | NotFoundEvent<Context>
-  | RedirectEvent<Context>;
-
-export interface LoadingState {
-  status: 'loading';
-}
-
-export interface OkState {
-  status: 'ok';
-  data: unknown;
-}
-
-export interface ErrorState {
-  status: 'error';
-  error: unknown;
-}
-
-export interface NotFoundState {
-  status: 'not_found';
-}
-
-export interface RedirectState {
-  status: 'redirect';
-  to: To | string;
-}
-
-/**
- * A state of a {@link RouteManager}.
- *
- * @group Routing
- */
-export type RouteState = LoadingState | OkState | ErrorState | NotFoundState | RedirectState;
+export type RouterEvent = NavigateEvent | LoadingEvent | ReadyEvent | ErrorEvent | NotFoundEvent | RedirectEvent;

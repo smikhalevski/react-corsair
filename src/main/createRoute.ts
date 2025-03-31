@@ -1,6 +1,6 @@
 import { ComponentType } from 'react';
 import { InferContext, Route } from './Route';
-import { RouteOptions } from './types';
+import { Dict, RouteOptions } from './types';
 
 /**
  * Creates a route that is rendered in an {@link Outlet} of a {@link Router}.
@@ -13,7 +13,7 @@ import { RouteOptions } from './types';
  * @example
  * const fooRoute = createRoute({ pathname: '/foo' });
  */
-export function createRoute<Params extends object | void = object | void, Data = void, Context = any>(
+export function createRoute<Params extends Dict = Dict, Data = void, Context = any>(
   options?: RouteOptions<Params, Data, Context>
 ): Route<null, Params, Data, Context>;
 
@@ -31,7 +31,7 @@ export function createRoute<Params extends object | void = object | void, Data =
  * const fooRoute = createRoute({ pathname: '/foo' });
  * const barRoute = createRoute(fooRoute, { pathname: '/bar' });
  */
-export function createRoute<ParentRoute extends Route, Params extends object | void = object | void, Data = void>(
+export function createRoute<ParentRoute extends Route, Params extends Dict = Dict, Data = void>(
   parentRoute: ParentRoute,
   options?: RouteOptions<Params, Data, InferContext<ParentRoute>>
 ): Route<ParentRoute, Params, Data, InferContext<ParentRoute>>;
@@ -50,7 +50,7 @@ export function createRoute<ParentRoute extends Route, Params extends object | v
  *
  * const fooRoute = createRoute('/foo', Foo);
  */
-export function createRoute<Params extends object | void = object | void>(
+export function createRoute<Params extends Dict = Dict>(
   pathname: string,
   component?: ComponentType
 ): Route<null, Params, void>;
@@ -72,7 +72,7 @@ export function createRoute<Params extends object | void = object | void>(
  * const fooRoute = createRoute('/foo');
  * const barRoute = createRoute(fooRoute, '/bar', Bar);
  */
-export function createRoute<ParentRoute extends Route, Params extends object | void = object | void>(
+export function createRoute<ParentRoute extends Route, Params extends Dict = Dict>(
   parentRoute: ParentRoute,
   pathname: string,
   component?: ComponentType
