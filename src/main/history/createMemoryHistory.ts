@@ -1,7 +1,8 @@
 import { PubSub } from 'parallel-universe';
 import { To } from '../types';
 import { History, HistoryOptions } from './types';
-import { concatPathname, jsonSearchParamsAdapter, parseOrCastLocation, stringifyLocation } from './utils';
+import { concatPathname, parseOrCastLocation, stringifyLocation } from './utils';
+import { jsonSearchParamsAdapter } from './jsonSearchParamsAdapter';
 
 /**
  * Create the history adapter that reads and writes location to an in-memory stack.

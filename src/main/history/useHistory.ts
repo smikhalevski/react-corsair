@@ -15,6 +15,9 @@ export const HistoryProvider = HistoryContext.Provider;
 /**
  * Returns a history provided by an enclosing {@link HistoryProvider}.
  *
+ * **Note:** {@link useHistory} doesn't re-render a component when a history gets updated.
+ * Use {@link useHistorySubscription} to re-render a component when a location is changed.
+ *
  * @group Hooks
  */
 export function useHistory(): History {

@@ -1,7 +1,8 @@
 import { JSDOM } from 'jsdom';
 import { delay } from 'parallel-universe';
 import { createHashHistory } from '../../main';
-import { jsonSearchParamsAdapter } from '../../main/history/utils';
+
+import { jsonSearchParamsAdapter } from '../../main/history/jsonSearchParamsAdapter';
 
 describe('createHashHistory', () => {
   beforeEach(() => {
@@ -143,8 +144,8 @@ describe('createHashHistory', () => {
   });
 
   test('creates an absolute URL', async () => {
-    expect(createHashHistory().toAbsoluteURL({ pathname: '/aaa', searchParams: { xxx: 111 }, hash: '' })).toBe(
-      '#/aaa?xxx=111'
+    expect(createHashHistory().toAbsoluteURL({ pathname: '/aaa/bbb', searchParams: { xxx: 111 }, hash: '' })).toBe(
+      '#/aaa/bbb?xxx=111'
     );
   });
 

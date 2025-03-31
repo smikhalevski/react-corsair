@@ -1,7 +1,7 @@
 export { createBrowserHistory } from './history/createBrowserHistory';
 export { createHashHistory } from './history/createHashHistory';
 export { createMemoryHistory } from './history/createMemoryHistory';
-export { JSONSearchParamsAdapter } from './history/JSONSearchParamsAdapter';
+export { jsonSearchParamsAdapter } from './history/jsonSearchParamsAdapter';
 export { Link, type LinkProps } from './history/Link';
 export { useHistory, HistoryProvider } from './history/useHistory';
 export { useHistorySubscription } from './history/useHistorySubscription';
