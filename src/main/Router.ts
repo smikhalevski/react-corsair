@@ -15,6 +15,11 @@ import { reconcilePresenters } from './reconcilePresenters';
  */
 export class Router<Context = any> implements Fallbacks {
   /**
+   * `true` for SSR router.
+   */
+  readonly isSSR: boolean = false;
+
+  /**
    * Routes that a router can render.
    */
   routes: readonly Route<any, any, any, Context>[];
@@ -79,7 +84,9 @@ export class Router<Context = any> implements Fallbacks {
     }
 
     for (let presenter = rootPresenter; presenter !== null; presenter = presenter.childPresenter) {
-      presenter.reload();
+      if (this.isSSR && presenter.route.renderingDisposition === 'server') {
+        presenter.reload();
+      }
     }
   }
 

@@ -31,6 +31,8 @@ export interface SSRRouterOptions<Context> extends RouterOptions<Context> {
  * @group SSR
  */
 export class SSRRouter<Context = any> extends Router<Context> {
+  readonly isSSR: boolean = true;
+
   /**
    * Map from a route presenter instance to its latest state that was sent to the client for hydration.
    */
