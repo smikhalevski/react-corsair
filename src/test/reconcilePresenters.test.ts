@@ -1,5 +1,5 @@
 import { Router } from '../main';
-import { reconcilePresenters } from '../main/reconcilePresenters';
+import { reconcileControllers } from '../main/reconcileControllers';
 
 test('returns not found route', () => {
   const router = new Router({
@@ -7,12 +7,12 @@ test('returns not found route', () => {
     context: 111,
   });
 
-  const presenter = reconcilePresenters(router, []);
+  const controller = reconcileControllers(router, []);
 
-  expect(presenter).toBe(null);
+  expect(controller).toBe(null);
 });
 
-// test('show previous active presenter during loading if loadingAppearance is auto', () => {
+// test('show previous active controller during loading if loadingAppearance is auto', () => {
 //   const router = new Router({
 //     routes: [],
 //     context: 111,
@@ -22,13 +22,13 @@ test('returns not found route', () => {
 //
 //   expect(routeAaa.loadingAppearance).toBe('avoid');
 //
-//   router.presenter = new Presenter(router, null);
+//   router.controller = new Controller(router, null);
 //
 //   const routeMatch = { route: routeAaa, params: undefined };
-//   const presenter = reconcilePresenters(router, [routeMatch]);
+//   const controller = reconcileControllers(router, [routeMatch]);
 //
-//   expect(presenter.fallbackPresenter).toBe(router.presenter);
-//   expect(presenter.state).toBe(undefined);
+//   expect(controller.fallbackController).toBe(router.controller);
+//   expect(controller.state).toBe(undefined);
 // });
 //
 // test('show self during loading if loadingAppearance is loading', () => {
@@ -39,13 +39,13 @@ test('returns not found route', () => {
 //
 //   const routeAaa = createRoute({ pathname: '/aaa', loadingAppearance: 'loading' });
 //
-//   router.presenter = new Presenter(router, null);
+//   router.controller = new Controller(router, null);
 //
 //   const routeMatch = { route: routeAaa, params: undefined };
-//   const presenter = reconcilePresenters(router, [routeMatch]);
+//   const controller = reconcileControllers(router, [routeMatch]);
 //
-//   expect(presenter.fallbackPresenter).toBe(presenter);
-//   expect(presenter.state).toBe(undefined);
+//   expect(controller.fallbackController).toBe(controller);
+//   expect(controller.state).toBe(undefined);
 // });
 
 // test('returns not found route', () => {
@@ -56,15 +56,15 @@ test('returns not found route', () => {
 //
 //   const route = createRoute('/aaa');
 //
-//   router.presenter = new Presenter(router, { route, params: undefined });
+//   router.controller = new Controller(router, { route, params: undefined });
 //
-//   const presenter = reconcilePresenters(router, [{ route, params: undefined }]);
+//   const controller = reconcileControllers(router, [{ route, params: undefined }]);
 //
-//   expect(presenter.surrogatePresenter).toBe(presenter);
-//   expect(presenter.parentPresenter).toBe(null);
-//   expect(presenter.childPresenter).toBe(null);
-//   expect(presenter.state).toBe(undefined);
-//   expect(presenter.context).toBe(111);
-//   expect(presenter.router).toBe(router);
-//   expect(presenter.routeMatch).toEqual({ route, params: undefined });
+//   expect(controller.surrogateController).toBe(controller);
+//   expect(controller.parentController).toBe(null);
+//   expect(controller.childController).toBe(null);
+//   expect(controller.state).toBe(undefined);
+//   expect(controller.context).toBe(111);
+//   expect(controller.router).toBe(router);
+//   expect(controller.routeMatch).toEqual({ route, params: undefined });
 // });

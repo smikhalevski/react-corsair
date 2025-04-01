@@ -1,6 +1,6 @@
 import { Dict } from './types';
 import { Route } from './Route';
-import { useRoutePresenter } from './useRoutePresenter';
+import { useRouteController } from './useRouteController';
 
 /**
  * Returns params of a {@link route} or throws if used outside of route component.
@@ -10,5 +10,5 @@ import { useRoutePresenter } from './useRoutePresenter';
  * @group Hooks
  */
 export function useRouteParams<Params extends Dict>(route: Route<any, Params>): Params | undefined {
-  return useRoutePresenter(route)?.params as Params | undefined;
+  return useRouteController(route)?.params as Params | undefined;
 }

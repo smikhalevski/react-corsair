@@ -1,5 +1,5 @@
 import { createRoute, hydrateRouter, Router } from '../main';
-import { RoutePresenterState } from '../main/RoutePresenter';
+import { RouteState } from '../main/RouteController';
 
 beforeEach(() => {
   window.__REACT_CORSAIR_SSR_STATE__ = undefined;
@@ -11,36 +11,33 @@ test('returns the provided router', () => {
   expect(hydrateRouter(router, {})).toBe(router);
 });
 
-test('hydrates a post-populated root route presenter', async () => {
+test('hydrates a post-populated root controller', async () => {
   const route0 = createRoute('/aaa');
 
   const router = new Router({ routes: [route0], context: undefined });
 
   hydrateRouter(router, { pathname: '/aaa' });
 
-  expect(router.rootPresenter).not.toBe(null);
-  expect(router.rootPresenter!.route).toBe(route0);
-  expect(router.rootPresenter!.state.status).toBe('loading');
-  expect(router.rootPresenter!.parentPresenter).toBe(null);
-  expect(router.rootPresenter!.childPresenter).toBe(null);
+  expect(router.rootController).not.toBe(null);
+  expect(router.rootController!.route).toBe(route0);
+  expect(router.rootController!.state.status).toBe('loading');
+  expect(router.rootController!.parentController).toBe(null);
+  expect(router.rootController!.childController).toBe(null);
 
-  const promise0 = router.rootPresenter!.loadingPromise;
+  const promise0 = router.rootController!.promise;
 
   expect(promise0).not.toBe(null);
 
-  window.__REACT_CORSAIR_SSR_STATE__!.set(
-    0,
-    JSON.stringify({ status: 'ok', data: 'xxx' } satisfies RoutePresenterState)
-  );
+  window.__REACT_CORSAIR_SSR_STATE__!.set(0, JSON.stringify({ status: 'ok', data: 'xxx' } satisfies RouteState));
 
-  expect(router.rootPresenter!.state.status).toBe('ok');
-  expect(router.rootPresenter!.state).toEqual({ status: 'ok', data: 'xxx' });
-  expect(router.rootPresenter!.loadingPromise).toBe(null);
+  expect(router.rootController!.state.status).toBe('ok');
+  expect(router.rootController!.state).toEqual({ status: 'ok', data: 'xxx' });
+  expect(router.rootController!.promise).toBe(null);
 
   await expect(promise0).rejects.toEqual(new DOMException('The operation was aborted.', 'AbortError'));
 });
 
-test('hydrates a post-populated nested route presenter', async () => {
+test('hydrates a post-populated nested controller', async () => {
   const route0 = createRoute('/aaa');
   const route1 = createRoute(route0, '/bbb');
 
@@ -48,39 +45,36 @@ test('hydrates a post-populated nested route presenter', async () => {
 
   hydrateRouter(router, { pathname: '/aaa/bbb' });
 
-  expect(router.rootPresenter).not.toBe(null);
-  expect(router.rootPresenter!.route).toBe(route0);
-  expect(router.rootPresenter!.state.status).toBe('loading');
-  expect(router.rootPresenter!.parentPresenter).toBe(null);
-  expect(router.rootPresenter!.childPresenter).not.toBe(null);
-  expect(router.rootPresenter!.loadingPromise).not.toBe(null);
+  expect(router.rootController).not.toBe(null);
+  expect(router.rootController!.route).toBe(route0);
+  expect(router.rootController!.state.status).toBe('loading');
+  expect(router.rootController!.parentController).toBe(null);
+  expect(router.rootController!.childController).not.toBe(null);
+  expect(router.rootController!.promise).not.toBe(null);
 
-  expect(router.rootPresenter!.childPresenter!.route).toBe(route1);
-  expect(router.rootPresenter!.childPresenter!.state.status).toBe('loading');
-  expect(router.rootPresenter!.childPresenter!.parentPresenter).toBe(router.rootPresenter);
-  expect(router.rootPresenter!.childPresenter!.childPresenter).toBe(null);
+  expect(router.rootController!.childController!.route).toBe(route1);
+  expect(router.rootController!.childController!.state.status).toBe('loading');
+  expect(router.rootController!.childController!.parentController).toBe(router.rootController);
+  expect(router.rootController!.childController!.childController).toBe(null);
 
-  const promise1 = router.rootPresenter!.childPresenter!.loadingPromise;
+  const promise1 = router.rootController!.childController!.promise;
 
   expect(promise1).not.toBe(null);
 
-  window.__REACT_CORSAIR_SSR_STATE__!.set(
-    1,
-    JSON.stringify({ status: 'ok', data: 'xxx' } satisfies RoutePresenterState)
-  );
+  window.__REACT_CORSAIR_SSR_STATE__!.set(1, JSON.stringify({ status: 'ok', data: 'xxx' } satisfies RouteState));
 
-  expect(router.rootPresenter!.state.status).toBe('loading');
+  expect(router.rootController!.state.status).toBe('loading');
 
-  expect(router.rootPresenter!.childPresenter!.state.status).toBe('ok');
-  expect(router.rootPresenter!.childPresenter!.state).toEqual({ status: 'ok', data: 'xxx' });
-  expect(router.rootPresenter!.childPresenter!.loadingPromise).toBe(null);
+  expect(router.rootController!.childController!.state.status).toBe('ok');
+  expect(router.rootController!.childController!.state).toEqual({ status: 'ok', data: 'xxx' });
+  expect(router.rootController!.childController!.promise).toBe(null);
 
   await expect(promise1).rejects.toEqual(new DOMException('The operation was aborted.', 'AbortError'));
 });
 
-test('hydrates a pre-populated root route presenter with OK state', () => {
+test('hydrates a pre-populated root controller with OK state', () => {
   window.__REACT_CORSAIR_SSR_STATE__ = new Map([
-    [0, JSON.stringify({ status: 'ok', data: 'xxx' } satisfies RoutePresenterState)],
+    [0, JSON.stringify({ status: 'ok', data: 'xxx' } satisfies RouteState)],
   ]);
 
   const route0 = createRoute('/aaa');
@@ -89,18 +83,16 @@ test('hydrates a pre-populated root route presenter with OK state', () => {
 
   hydrateRouter(router, { pathname: '/aaa' });
 
-  expect(router.rootPresenter).not.toBe(null);
-  expect(router.rootPresenter!.route).toBe(route0);
-  expect(router.rootPresenter!.state).toEqual({ status: 'ok', data: 'xxx' });
-  expect(router.rootPresenter!.parentPresenter).toBe(null);
-  expect(router.rootPresenter!.childPresenter).toBe(null);
-  expect(router.rootPresenter!.loadingPromise).toBe(null);
+  expect(router.rootController).not.toBe(null);
+  expect(router.rootController!.route).toBe(route0);
+  expect(router.rootController!.state).toEqual({ status: 'ok', data: 'xxx' });
+  expect(router.rootController!.parentController).toBe(null);
+  expect(router.rootController!.childController).toBe(null);
+  expect(router.rootController!.promise).toBe(null);
 });
 
-test('hydrates a pre-populated root route presenter with loading state', () => {
-  window.__REACT_CORSAIR_SSR_STATE__ = new Map([
-    [0, JSON.stringify({ status: 'loading' } satisfies RoutePresenterState)],
-  ]);
+test('hydrates a pre-populated root controller with loading state', () => {
+  window.__REACT_CORSAIR_SSR_STATE__ = new Map([[0, JSON.stringify({ status: 'loading' } satisfies RouteState)]]);
 
   const route0 = createRoute('/aaa');
 
@@ -108,17 +100,17 @@ test('hydrates a pre-populated root route presenter with loading state', () => {
 
   hydrateRouter(router, { pathname: '/aaa' });
 
-  expect(router.rootPresenter).not.toBe(null);
-  expect(router.rootPresenter!.route).toBe(route0);
-  expect(router.rootPresenter!.state).toEqual({ status: 'loading' });
-  expect(router.rootPresenter!.parentPresenter).toBe(null);
-  expect(router.rootPresenter!.childPresenter).toBe(null);
-  expect(router.rootPresenter!.loadingPromise).not.toBe(null);
+  expect(router.rootController).not.toBe(null);
+  expect(router.rootController!.route).toBe(route0);
+  expect(router.rootController!.state).toEqual({ status: 'loading' });
+  expect(router.rootController!.parentController).toBe(null);
+  expect(router.rootController!.childController).toBe(null);
+  expect(router.rootController!.promise).not.toBe(null);
 });
 
-test('hydrates a pre-populated nested route presenter', () => {
+test('hydrates a pre-populated nested controller', () => {
   window.__REACT_CORSAIR_SSR_STATE__ = new Map([
-    [1, JSON.stringify({ status: 'ok', data: 'xxx' } satisfies RoutePresenterState)],
+    [1, JSON.stringify({ status: 'ok', data: 'xxx' } satisfies RouteState)],
   ]);
 
   const route0 = createRoute('/aaa');
@@ -128,18 +120,18 @@ test('hydrates a pre-populated nested route presenter', () => {
 
   hydrateRouter(router, { pathname: '/aaa/bbb' });
 
-  expect(router.rootPresenter).not.toBe(null);
-  expect(router.rootPresenter!.route).toBe(route0);
-  expect(router.rootPresenter!.state.status).toEqual('loading');
-  expect(router.rootPresenter!.parentPresenter).toBe(null);
-  expect(router.rootPresenter!.childPresenter).not.toBe(null);
-  expect(router.rootPresenter!.loadingPromise).not.toBe(null);
+  expect(router.rootController).not.toBe(null);
+  expect(router.rootController!.route).toBe(route0);
+  expect(router.rootController!.state.status).toEqual('loading');
+  expect(router.rootController!.parentController).toBe(null);
+  expect(router.rootController!.childController).not.toBe(null);
+  expect(router.rootController!.promise).not.toBe(null);
 
-  expect(router.rootPresenter!.childPresenter!.route).toBe(route1);
-  expect(router.rootPresenter!.childPresenter!.parentPresenter).toBe(router.rootPresenter);
-  expect(router.rootPresenter!.childPresenter!.childPresenter).toBe(null);
-  expect(router.rootPresenter!.childPresenter!.state).toEqual({ status: 'ok', data: 'xxx' });
-  expect(router.rootPresenter!.childPresenter!.loadingPromise).toBe(null);
+  expect(router.rootController!.childController!.route).toBe(route1);
+  expect(router.rootController!.childController!.parentController).toBe(router.rootController);
+  expect(router.rootController!.childController!.childController).toBe(null);
+  expect(router.rootController!.childController!.state).toEqual({ status: 'ok', data: 'xxx' });
+  expect(router.rootController!.childController!.promise).toBe(null);
 });
 
 test('hydration is superseded by navigation', () => {
@@ -159,12 +151,12 @@ test('hydration is superseded by navigation', () => {
 
   hydrateRouter(router, { pathname: '/aaa' });
 
-  expect(router.rootPresenter).not.toBe(null);
-  expect(router.rootPresenter!.route).toBe(route1);
-  expect(router.rootPresenter!.state.status).toEqual('ok');
-  expect(router.rootPresenter!.parentPresenter).toBe(null);
-  expect(router.rootPresenter!.childPresenter).toBe(null);
-  expect(router.rootPresenter!.loadingPromise).toBe(null);
+  expect(router.rootController).not.toBe(null);
+  expect(router.rootController!.route).toBe(route1);
+  expect(router.rootController!.state.status).toEqual('ok');
+  expect(router.rootController!.parentController).toBe(null);
+  expect(router.rootController!.childController).toBe(null);
+  expect(router.rootController!.promise).toBe(null);
 });
 
 test('throws if hydration is started twice for the same router', () => {

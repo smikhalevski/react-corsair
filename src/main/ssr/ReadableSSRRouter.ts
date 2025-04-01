@@ -22,8 +22,8 @@ export class ReadableSSRRouter<Context = any> extends SSRRouter<Context> impleme
     super(options);
 
     const transformer = new TransformStream({
-      transform: (chunk, presenter) => {
-        presenter.enqueue(chunk);
+      transform: (chunk, controller) => {
+        controller.enqueue(chunk);
 
         if (!chunk.toString().endsWith('</script>')) {
           return;
@@ -32,7 +32,7 @@ export class ReadableSSRRouter<Context = any> extends SSRRouter<Context> impleme
         const hydrationChunk = this.nextHydrationChunk();
 
         if (hydrationChunk !== '') {
-          presenter.enqueue(hydrationChunk);
+          controller.enqueue(hydrationChunk);
         }
       },
     });

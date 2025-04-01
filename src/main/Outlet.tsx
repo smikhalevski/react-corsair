@@ -8,22 +8,22 @@ import React, {
   useContext,
   useEffect,
 } from 'react';
-import { RoutePresenter } from './RoutePresenter';
+import { RouteController } from './RouteController';
 import { Router } from './Router';
 import { redirect } from './redirect';
 import { notFound } from './notFound';
 import { Fallbacks } from './types';
-import { RoutePresenterProvider } from './useRoutePresenter';
+import { RouteControllerProvider } from './useRouteController';
 import { useRerender } from './useRerender';
 
-const OutletContentContext = createContext<RoutePresenter | Router | null>(null);
+const OutletContext = createContext<RouteController | Router | null>(null);
 
-OutletContentContext.displayName = 'OutletContentContext';
+OutletContext.displayName = 'OutletContext';
 
-export const OutletContentProvider = OutletContentContext.Provider;
+export const OutletProvider = OutletContext.Provider;
 
 /**
- * Renders a presenter {@link RouterProvider provided by an enclosing router}.
+ * Renders a controller {@link RouterProvider provided by an enclosing router}.
  *
  * @group Components
  */
@@ -32,17 +32,17 @@ const OutletMemo = memo(Outlet, (_prevProps, _nextProps) => true);
 export { OutletMemo as Outlet };
 
 function Outlet(_props: {}): ReactNode {
-  const content = useContext(OutletContentContext);
+  const content = useContext(OutletContext);
   const rerender = useRerender();
 
   useEffect(() => {
-    if (content instanceof RoutePresenter) {
+    if (content instanceof RouteController) {
       return content.router.subscribe(rerender);
     }
   }, [content]);
 
-  if (content instanceof RoutePresenter) {
-    return <OutletErrorBoundary presenter={content} />;
+  if (content instanceof RouteController) {
+    return <OutletErrorBoundary controller={content} />;
   }
 
   if (content === null || content.notFoundComponent === undefined) {
@@ -50,18 +50,18 @@ function Outlet(_props: {}): ReactNode {
   }
 
   return (
-    <RoutePresenterProvider value={null}>
-      <OutletContentProvider value={null}>
+    <RouteControllerProvider value={null}>
+      <OutletProvider value={null}>
         <OutletRendererMemo component={content.notFoundComponent} />
-      </OutletContentProvider>
-    </RoutePresenterProvider>
+      </OutletProvider>
+    </RouteControllerProvider>
   );
 }
 
 Outlet.displayName = 'Outlet';
 
 interface OutletErrorBoundaryProps {
-  presenter: RoutePresenter;
+  controller: RouteController;
 }
 
 interface OutletErrorBoundaryState {
@@ -86,29 +86,29 @@ class OutletErrorBoundary extends Component<OutletErrorBoundaryProps, OutletErro
       return null;
     }
 
-    nextProps.presenter.setError(prevState.error);
+    nextProps.controller.setError(prevState.error);
 
     return { hasError: false, error: null };
   }
 
   render(): ReactNode {
-    const { presenter } = this.props;
+    const { controller } = this.props;
 
     return (
       <Suspense
         fallback={
-          presenter.fallbackPresenter !== null ? (
-            <OutletErrorBoundary presenter={presenter.fallbackPresenter} />
+          controller.fallbackController !== null ? (
+            <OutletErrorBoundary controller={controller.fallbackController} />
           ) : (
             <OutletContent
-              presenter={presenter}
+              controller={controller}
               canSuspend={false}
             />
           )
         }
       >
         <OutletContent
-          presenter={presenter}
+          controller={controller}
           canSuspend={true}
         />
       </Suspense>
@@ -117,27 +117,27 @@ class OutletErrorBoundary extends Component<OutletErrorBoundaryProps, OutletErro
 }
 
 interface OutletContentProps {
-  presenter: RoutePresenter;
+  controller: RouteController;
   canSuspend: boolean;
 }
 
 /**
- * Renders route presenter according to its status.
+ * Renders controller according to its status.
  */
 function OutletContent(props: OutletContentProps): ReactNode {
-  const { presenter, canSuspend } = props;
-  const { route } = presenter;
-  const { status } = presenter.state;
+  const { controller, canSuspend } = props;
+  const { route } = controller;
+  const { status } = controller.state;
 
-  const fallbacks: Fallbacks = presenter.parentPresenter === null ? presenter.router : route;
+  const fallbacks: Fallbacks = controller.parentController === null ? controller.router : route;
 
   let component;
-  let childPresenter = null;
+  let childController = null;
 
   switch (status) {
     case 'ok':
       component = route.component;
-      childPresenter = presenter.childPresenter;
+      childController = controller.childController;
 
       if (component === undefined) {
         throw new Error("Route component wasn't loaded");
@@ -148,7 +148,7 @@ function OutletContent(props: OutletContentProps): ReactNode {
       component = route.errorComponent || fallbacks.errorComponent;
 
       if (component === undefined) {
-        throw presenter.state.error;
+        throw controller.state.error;
       }
       break;
 
@@ -157,27 +157,27 @@ function OutletContent(props: OutletContentProps): ReactNode {
       break;
 
     case 'redirect':
-      component = route.loadingComponent || fallbacks.loadingComponent || redirect(presenter.state.to);
+      component = route.loadingComponent || fallbacks.loadingComponent || redirect(controller.state.to);
       break;
 
     case 'loading':
       component = route.loadingComponent || fallbacks.loadingComponent;
 
       if (component === undefined || canSuspend) {
-        throw presenter.loadingPromise || new Error('Loading route presenter has no promise');
+        throw controller.promise || new Error('Loading controller has no promise');
       }
       break;
 
     default:
-      throw new Error('Unexpected route presenter status: ' + status);
+      throw new Error('Unexpected controller status: ' + status);
   }
 
   return (
-    <RoutePresenterProvider value={presenter}>
-      <OutletContentProvider value={childPresenter}>
+    <RouteControllerProvider value={controller}>
+      <OutletProvider value={childController}>
         <OutletRendererMemo component={component} />
-      </OutletContentProvider>
-    </RoutePresenterProvider>
+      </OutletProvider>
+    </RouteControllerProvider>
   );
 }
 

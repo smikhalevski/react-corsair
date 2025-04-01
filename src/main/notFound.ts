@@ -1,6 +1,6 @@
 /**
  * Throws {@link NotFoundError} that causes an enclosing {@link Outlet} to render a
- * {@link RouteOptions.notFoundComponent}.
+ * {@link RouteOptions.notFoundComponent notFoundComponent}.
  *
  * @group Routing
  */
@@ -9,8 +9,8 @@ export function notFound(): never {
 }
 
 /**
- * An error that is thrown during rendering to signify that the {@link RouteOptions.notFoundComponent} must be rendered
- * instead of the matched route.
+ * An error that is thrown during rendering to signify that the {@link RouteOptions.notFoundComponent notFoundComponent}
+ * must be rendered instead of the matched route component.
  *
  * Use {@link notFound} to create and throw a {@link NotFoundError} instance.
  *

@@ -18,7 +18,7 @@ test('creates a new router instance', () => {
 
   expect(router.routes).toBe(routes);
   expect(router.context).toBe(context);
-  expect(router.rootPresenter).toBe(null);
+  expect(router.rootController).toBe(null);
   expect(router.errorComponent).toBe(errorComponent);
   expect(router.loadingComponent).toBe(loadingComponent);
   expect(router.notFoundComponent).toBe(notFoundComponent);
@@ -37,7 +37,7 @@ describe('navigate', () => {
 
     router.navigate(routeAaa);
 
-    expect(router.rootPresenter!.route).toBe(routeAaa);
+    expect(router.rootController!.route).toBe(routeAaa);
     expect(router.location).toStrictEqual({ pathname: '/aaa', searchParams: {}, hash: '', state: undefined });
     expect(listenerMock).toHaveBeenCalledTimes(2);
     expect(listenerMock).toHaveBeenNthCalledWith(1, {
@@ -47,12 +47,12 @@ describe('navigate', () => {
     });
     expect(listenerMock).toHaveBeenNthCalledWith(2, {
       type: 'ready',
-      presenter: router.rootPresenter,
+      controller: router.rootController,
     });
 
     router.navigate(routeBbb.getLocation({ xxx: 111 }));
 
-    expect(router.rootPresenter!.route).toBe(routeBbb);
+    expect(router.rootController!.route).toBe(routeBbb);
     expect(router.location).toStrictEqual({
       pathname: '/bbb',
       searchParams: { xxx: 111 },
@@ -67,7 +67,7 @@ describe('navigate', () => {
     });
     expect(listenerMock).toHaveBeenNthCalledWith(4, {
       type: 'ready',
-      presenter: router.rootPresenter,
+      controller: router.rootController,
     });
   });
 
@@ -105,7 +105,7 @@ describe('navigate', () => {
     const router = new Router({ routes: [routeAaa, routeBbb], context: undefined });
 
     router.subscribe(event => {
-      if (event.type === 'navigate' && event.router.rootPresenter!.route === routeAaa) {
+      if (event.type === 'navigate' && event.router.rootController!.route === routeAaa) {
         event.router.navigate(routeBbb);
       }
     });
@@ -113,7 +113,7 @@ describe('navigate', () => {
     router.navigate(routeAaa);
 
     expect(dataLoaderMock).not.toHaveBeenCalled();
-    expect(router.rootPresenter!.route).toBe(routeBbb);
+    expect(router.rootController!.route).toBe(routeBbb);
   });
 });
 

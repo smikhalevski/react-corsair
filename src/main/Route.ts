@@ -17,13 +17,18 @@ type Prettify<T> = { [K in keyof T]: T[K] } & {};
 
 type PartialAsVoid<T> = Partial<T> extends T ? T | void : T;
 
+/**
+ * For testing purposes only!
+ *
+ * @internal
+ */
 export declare const LOCATION_PARAMS: unique symbol;
-export declare const CONTEXT: unique symbol;
-export declare const DATA: unique symbol;
 
 export type LOCATION_PARAMS = typeof LOCATION_PARAMS;
-export type CONTEXT = typeof CONTEXT;
-export type DATA = typeof DATA;
+
+declare const CONTEXT: unique symbol;
+
+declare const DATA: unique symbol;
 
 /**
  * Infers route location params.
@@ -36,7 +41,7 @@ export type InferLocationParams<R extends Route> = R[LOCATION_PARAMS];
 /**
  * A route that can be rendered by a router.
  *
- * {@link createRoute} provides the streamlined API for creating {@link Route} instances.
+ * **Note:** Prefer {@link createRoute} over a direct {@link Route} instantiation.
  *
  * @template ParentRoute A parent route or `null` if there is no parent.
  * @template Params Route params.
@@ -110,7 +115,7 @@ export class Route<
   renderingDisposition: RenderingDisposition;
 
   /**
-   * A component rendered by the route, or `undefined` if a {@link RouteOptions.lazyComponent} isn't yet
+   * A component rendered by the route, or `undefined` if a {@link RouteOptions.lazyComponent lazyComponent} isn't yet
    * {@link getOrLoadComponent loaded}.
    */
   component: ComponentType | undefined;

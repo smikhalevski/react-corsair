@@ -1,5 +1,5 @@
 import { Route } from './Route';
-import { useRoutePresenter } from './useRoutePresenter';
+import { useRouteController } from './useRouteController';
 
 /**
  * Returns data loaded for a {@link route} or throws if used outside of route component.
@@ -9,10 +9,10 @@ import { useRoutePresenter } from './useRoutePresenter';
  * @group Hooks
  */
 export function useRouteData<Data>(route: Route<any, any, Data>): Data | undefined {
-  const presenter = useRoutePresenter(route);
+  const controller = useRouteController(route);
 
-  if (presenter === null || presenter.state.status !== 'ok') {
+  if (controller === null || controller.state.status !== 'ok') {
     return;
   }
-  return presenter.state.data as Data;
+  return controller.state.data as Data;
 }

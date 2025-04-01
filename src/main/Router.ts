@@ -4,8 +4,8 @@ import { matchRoutes } from './matchRoutes';
 import { Route } from './Route';
 import { Fallbacks, RouterEvent, RouterOptions, To, Location } from './types';
 import { noop, toLocation } from './utils';
-import { loadRoute, RoutePresenter } from './RoutePresenter';
-import { reconcilePresenters } from './reconcilePresenters';
+import { loadRoute, RouteController } from './RouteController';
+import { reconcileControllers } from './reconcileControllers';
 
 /**
  * A router that matches routes by a location.
@@ -35,12 +35,12 @@ export class Router<Context = any> implements Fallbacks {
   location: Location | null = null;
 
   /**
-   * A root presenter rendered in a router {@link react-corsair!Outlet}, or `null` if there's no matching route or if
+   * A root controller rendered in a router {@link react-corsair!Outlet}, or `null` if there's no matching route or if
    * {@link navigate navigation} didn't occur yet.
    *
    * @see {@link navigate}
    */
-  rootPresenter: RoutePresenter | null = null;
+  rootController: RouteController | null = null;
 
   errorComponent: ComponentType | undefined;
   loadingComponent: ComponentType | undefined;
@@ -71,21 +71,21 @@ export class Router<Context = any> implements Fallbacks {
     const location = toLocation(to);
 
     const routeMatches = matchRoutes(location.pathname, location.searchParams, this.routes);
-    const rootPresenter = reconcilePresenters(this, routeMatches);
+    const rootController = reconcileControllers(this, routeMatches);
 
-    this.rootPresenter = rootPresenter;
+    this.rootController = rootController;
     this.location = location;
 
     this._pubSub.publish({ type: 'navigate', router: this, location });
 
-    if (this.rootPresenter !== rootPresenter) {
+    if (this.rootController !== rootController) {
       // Navigation was superseded
       return;
     }
 
-    for (let presenter = rootPresenter; presenter !== null; presenter = presenter.childPresenter) {
-      if (this.isSSR && presenter.route.renderingDisposition === 'server') {
-        presenter.reload();
+    for (let controller = rootController; controller !== null; controller = controller.childController) {
+      if (!this.isSSR || controller.route.renderingDisposition === 'server') {
+        controller.reload();
       }
     }
   }

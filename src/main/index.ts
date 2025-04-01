@@ -28,7 +28,15 @@ export { Route, type InferLocationParams } from './Route';
 export { Router } from './Router';
 
 // --------------------
-export { RoutePresenter, type RoutePresenterState } from './RoutePresenter';
+export {
+  RouteController,
+  type LoadingState,
+  type OkState,
+  type ErrorState,
+  type NotFoundState,
+  type RedirectState,
+  type RouteState,
+} from './RouteController';
 
 export { Outlet } from './Outlet';
 export { usePrefetch } from './usePrefetch';

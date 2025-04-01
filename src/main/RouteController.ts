@@ -1,5 +1,5 @@
-import { Router } from './Router';
 import { AbortablePromise } from 'parallel-universe';
+import { Router } from './Router';
 import { isPromiseLike, noop } from './utils';
 import { Dict, Location } from './types';
 import { NotFoundError } from './notFound';
@@ -7,42 +7,75 @@ import { Redirect } from './redirect';
 import { Route } from './Route';
 
 /**
- * State of a {@link RoutePresenter}.
+ * The state of a route that is being actively loaded.
+ */
+export interface LoadingState {
+  status: 'loading';
+}
+
+/**
+ * The state of a route for which the component and data were loaded.
+ */
+export interface OkState {
+  status: 'ok';
+
+  /**
+   * The data loaded for a route, or `undefined` if route has no {@link RouteOptions.dataLoader dataLoader}.
+   */
+  data: unknown;
+}
+
+export interface ErrorState {
+  status: 'error';
+  error: unknown;
+}
+
+export interface NotFoundState {
+  status: 'not_found';
+}
+
+export interface RedirectState {
+  status: 'redirect';
+  to: Location | string;
+}
+
+/**
+ * State used by a {@link RouteController}.
  *
  * @group Routing
  */
-export type RoutePresenterState = LoadingState | OkState | ErrorState | NotFoundState | RedirectState;
+export type RouteState = LoadingState | OkState | ErrorState | NotFoundState | RedirectState;
 
 /**
  * Manages route rendering in an {@link Outlet}.
  *
  * @group Routing
  */
-export class RoutePresenter {
+export class RouteController {
   /**
-   * A fallback presenter that is rendered in an {@link Outlet} while this presenter loads route component and data.
+   * A fallback controller that is rendered in an {@link Outlet} while this controller loads route component and data.
    */
-  fallbackPresenter: RoutePresenter | null = null;
+  fallbackController: RouteController | null = null;
 
   /**
-   * A presenter rendered in an enclosing {@link Outlet}.
+   * A controller rendered in an enclosing {@link Outlet}.
    */
-  parentPresenter: RoutePresenter | null = null;
+  parentController: RouteController | null = null;
 
   /**
-   * A presenter rendered in a nested {@link Outlet}.
+   * A controller rendered in a nested {@link Outlet}.
    */
-  childPresenter: RoutePresenter | null = null;
+  childController: RouteController | null = null;
 
   /**
-   * A state of the presenter.
+   * A state of the controller.
    */
-  state: RoutePresenterState = { status: 'loading' };
+  state: RouteState = { status: 'loading' };
 
   /**
    * A promise that settles when the route loading is completed, or `null` if route isn't being loaded.
    */
-  loadingPromise: AbortablePromise<void> | null = null;
+  promise: AbortablePromise<void> | null = null;
 
   /**
    * A context provided to a {@link route} {@link RouteOptions.dataLoader data loader}.
@@ -50,10 +83,10 @@ export class RoutePresenter {
   readonly routerContext;
 
   /**
-   * Create a new {@link RoutePresenter} instance.
+   * Create a new {@link RouteController} instance.
    *
-   * @param router The router that this presenter belongs to.
-   * @param route The route this presenter loads.
+   * @param router The router that this controller belongs to.
+   * @param route The route this controller loads.
    * @param params Route params.
    */
   constructor(
@@ -65,14 +98,14 @@ export class RoutePresenter {
   }
 
   /**
-   * Forces the presenter to render {@link RouteOptions.notFoundComponent}.
+   * Forces the controller to render {@link RouteOptions.notFoundComponent notFoundComponent}.
    */
   notFound(): void {
     this.setError(new NotFoundError());
   }
 
   /**
-   * Sets the presenter state to reflect an {@link error}.
+   * Sets the route state to reflect an {@link error}.
    *
    * @param error The error to show.
    */
@@ -81,42 +114,42 @@ export class RoutePresenter {
   }
 
   /**
-   * Sets the presenter state and notifies router subscribers.
+   * Sets the route state and notifies router subscribers.
    *
-   * @param state The new presenter state.
+   * @param state The new route state.
    */
-  setState(state: RoutePresenterState): void {
+  setState(state: RouteState): void {
     const routerPubSub = this.router['_pubSub'];
 
     this.state = state;
 
     if (state.status === 'loading') {
-      routerPubSub.publish({ type: 'loading', presenter: this });
+      routerPubSub.publish({ type: 'loading', controller: this });
       return;
     }
 
-    const { loadingPromise } = this;
+    const { promise } = this;
 
-    this.fallbackPresenter = null;
-    this.loadingPromise = null;
+    this.fallbackController = null;
+    this.promise = null;
 
-    loadingPromise?.abort();
+    promise?.abort();
 
     switch (state.status) {
       case 'ok':
-        routerPubSub.publish({ type: 'ready', presenter: this });
+        routerPubSub.publish({ type: 'ready', controller: this });
         break;
 
       case 'error':
-        routerPubSub.publish({ type: 'error', presenter: this, error: state.error });
+        routerPubSub.publish({ type: 'error', controller: this, error: state.error });
         break;
 
       case 'not_found':
-        routerPubSub.publish({ type: 'not_found', presenter: this });
+        routerPubSub.publish({ type: 'not_found', controller: this });
         break;
 
       case 'redirect':
-        routerPubSub.publish({ type: 'redirect', presenter: this, to: state.to });
+        routerPubSub.publish({ type: 'redirect', controller: this, to: state.to });
         break;
     }
   }
@@ -125,7 +158,7 @@ export class RoutePresenter {
    * Reloads route data and notifies subscribers.
    */
   reload(): void {
-    if (this.loadingPromise !== null) {
+    if (this.promise !== null) {
       return;
     }
 
@@ -141,7 +174,7 @@ export class RoutePresenter {
       signal.addEventListener('abort', () => {
         abortController.abort(signal.reason);
 
-        if (this.loadingPromise === promise && this.state.status === 'loading') {
+        if (this.promise === promise && this.state.status === 'loading') {
           this.setError(signal.reason);
         }
       });
@@ -150,7 +183,7 @@ export class RoutePresenter {
         if (signal.aborted) {
           return;
         }
-        this.loadingPromise = null;
+        this.promise = null;
         this.setState(state);
         resolve();
       });
@@ -162,7 +195,7 @@ export class RoutePresenter {
       this.setState({ status: 'loading' });
     }
 
-    this.loadingPromise = promise;
+    this.promise = promise;
   }
 
   /**
@@ -171,7 +204,7 @@ export class RoutePresenter {
    * @param reason The abort reason that is used for rejection of the loading promise.
    */
   abort(reason?: unknown): void {
-    this.loadingPromise?.abort(reason);
+    this.promise?.abort(reason);
   }
 }
 
@@ -186,7 +219,7 @@ export function loadRoute(
   context: unknown,
   signal: AbortSignal,
   isPrefetch: boolean
-): RoutePresenterState | Promise<RoutePresenterState> {
+): RouteState | Promise<RouteState> {
   let component;
   let data;
 
@@ -205,34 +238,11 @@ export function loadRoute(
   return createOkState(data);
 }
 
-interface LoadingState {
-  status: 'loading';
-}
-
-interface OkState {
-  status: 'ok';
-  data: unknown;
-}
-
-interface ErrorState {
-  status: 'error';
-  error: unknown;
-}
-
-interface NotFoundState {
-  status: 'not_found';
-}
-
-interface RedirectState {
-  status: 'redirect';
-  to: Location | string;
-}
-
-function createOkState(data: unknown): RoutePresenterState {
+function createOkState(data: unknown): RouteState {
   return { status: 'ok', data };
 }
 
-function createErrorState(error: unknown): RoutePresenterState {
+function createErrorState(error: unknown): RouteState {
   if (error instanceof NotFoundError) {
     return { status: 'not_found' };
   }

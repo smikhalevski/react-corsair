@@ -1,5 +1,5 @@
 import { createRoute, Outlet } from '../main';
-import { loadRoute } from '../main/RoutePresenter';
+import { loadRoute } from '../main/RouteController';
 
 const Component = () => undefined;
 const { signal } = new AbortController();

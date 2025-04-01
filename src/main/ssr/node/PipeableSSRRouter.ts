@@ -9,14 +9,14 @@ import { SSRRouter, SSRRouterOptions } from '../SSRRouter';
  */
 export class PipeableSSRRouter<Context> extends SSRRouter<Context> {
   /**
-   * The stream that includes both React rendering chunks and route presenter hydration chunks.
+   * The stream that includes both React rendering chunks and controller hydration chunks.
    */
   readonly stream: NodeJS.WritableStream;
 
   /**
    * Creates a new {@link PipeableSSRRouter} instance.
    *
-   * @param stream The output stream to which both React chunks and route presenter hydration chunks are written.
+   * @param stream The output stream to which both React chunks and controller hydration chunks are written.
    * @param options Router options.
    * @template Context A context provided to {@link react-corsair!RouteOptions.dataLoader route data loaders}.
    */

@@ -1,6 +1,6 @@
 import { To } from './types';
 import { Router } from './Router';
-import { RoutePresenter, RoutePresenterState } from './RoutePresenter';
+import { RouteController, RouteState } from './RouteController';
 import { noop, toLocation } from './utils';
 import { matchRoutes } from './matchRoutes';
 import { AbortablePromise } from 'parallel-universe';
@@ -10,17 +10,17 @@ import { AbortablePromise } from 'parallel-universe';
  */
 export interface HydrateRouterOptions {
   /**
-   * Parses the route presenter state that was captured during SSR.
+   * Parses the route state that was captured during SSR.
    *
    * @param stateStr The state to parse.
    */
-  stateParser?: (stateStr: string) => RoutePresenterState;
+  stateParser?: (stateStr: string) => RouteState;
 }
 
 /**
  * Hydrates the {@link router} with the state provided by SSR.
  *
- * To render SSR state, call {@link hydrateRouter} instead of the initial {@link Router.navigate} call.
+ * To render SSR state, call {@link hydrateRouter} instead of the initial {@link Router.navigate navigate} call.
  *
  * **Note:** SSR hydration can be enabled only for one router.
  *
@@ -42,7 +42,7 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
 
   window.__REACT_CORSAIR_SSR_STATE__ = {
     set(index, stateStr) {
-      presenters[index].setState(stateParser(stateStr));
+      controllers[index].setState(stateParser(stateStr));
     },
   };
 
@@ -50,25 +50,25 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
 
   const routeMatches = matchRoutes(location.pathname, location.searchParams, router.routes);
 
-  const presenters: RoutePresenter[] = [];
+  const controllers: RouteController[] = [];
 
   for (const routeMatch of routeMatches) {
-    const presenter = new RoutePresenter(router, routeMatch.route, routeMatch.params);
-    const i = presenters.push(presenter) - 1;
+    const controller = new RouteController(router, routeMatch.route, routeMatch.params);
+    const i = controllers.push(controller) - 1;
 
     if (i !== 0) {
-      presenter.parentPresenter = presenters[i - 1];
-      presenters[i - 1].childPresenter = presenter;
+      controller.parentController = controllers[i - 1];
+      controllers[i - 1].childController = controller;
     }
   }
 
-  const rootPresenter = presenters.length !== 0 ? presenters[0] : null;
+  const rootController = controllers.length !== 0 ? controllers[0] : null;
 
-  router.rootPresenter = rootPresenter;
+  router.rootController = rootController;
 
   // Cleanup hydration if navigation occurs
   const unsubscribe = router.subscribe(event => {
-    if (event.type === 'navigate' && router.rootPresenter !== rootPresenter) {
+    if (event.type === 'navigate' && router.rootController !== rootController) {
       unsubscribe();
       window.__REACT_CORSAIR_SSR_STATE__ = { set: noop };
     }
@@ -76,29 +76,29 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
 
   router['_pubSub'].publish({ type: 'navigate', router, location });
 
-  if (router.rootPresenter !== rootPresenter) {
+  if (router.rootController !== rootController) {
     // Hydrated navigation was superseded
     return router;
   }
 
-  for (let i = 0; i < presenters.length; ++i) {
-    const presenter = presenters[i];
+  for (let i = 0; i < controllers.length; ++i) {
+    const controller = controllers[i];
 
     // Load on the client side
-    if (presenter.route.renderingDisposition === 'client') {
-      presenter.reload();
+    if (controller.route.renderingDisposition === 'client') {
+      controller.reload();
       continue;
     }
 
     // Hydrate
     if (ssrState !== undefined && ssrState.has(i)) {
-      presenter.setState(stateParser(ssrState.get(i)));
+      controller.setState(stateParser(ssrState.get(i)));
     }
 
     // Deferred hydration
-    if (presenter.state.status === 'loading') {
-      presenter.loadingPromise = new AbortablePromise(noop);
-      presenter.loadingPromise.catch(noop);
+    if (controller.state.status === 'loading') {
+      controller.promise = new AbortablePromise(noop);
+      controller.promise.catch(noop);
     }
   }
 

@@ -1,6 +1,6 @@
 import { RouterOptions } from '../types';
 import { Router } from '../Router';
-import { RoutePresenter, RoutePresenterState } from '../RoutePresenter';
+import { RouteController, RouteState } from '../RouteController';
 
 /**
  * Options provided to the {@link SSRRouter} constructor.
@@ -10,12 +10,12 @@ import { RoutePresenter, RoutePresenterState } from '../RoutePresenter';
  */
 export interface SSRRouterOptions<Context> extends RouterOptions<Context> {
   /**
-   * Stringifies a route presenter state before it is sent to the client.
+   * Stringifies a route state before it is sent to the client.
    *
-   * @param state The route presenter state to stringify.
+   * @param state The route state to stringify.
    * @default JSON.stringify
    */
-  stateStringifier?: (state: RoutePresenterState) => string;
+  stateStringifier?: (state: RouteState) => string;
 
   /**
    * A nonce string to allow scripts for
@@ -34,12 +34,12 @@ export class SSRRouter<Context = any> extends Router<Context> {
   readonly isSSR: boolean = true;
 
   /**
-   * Map from a route presenter instance to its latest state that was sent to the client for hydration.
+   * Map from a controller instance to its latest state that was sent to the client for hydration.
    */
-  protected _hydratedStates = new WeakMap<RoutePresenter, RoutePresenterState>();
+  protected _hydratedStates = new WeakMap<RouteController, RouteState>();
 
   /**
-   * Stringifies the state of the route presenter before sending it to the client.
+   * Stringifies the state of the controller before sending it to the client.
    */
   protected _stateStringifier;
 
@@ -66,19 +66,19 @@ export class SSRRouter<Context = any> extends Router<Context> {
   }
 
   /**
-   * Resolves with `true` if there were pending route presenters and their state has changed after they became
+   * Resolves with `true` if there were pending controllers and their state has changed after they became
    * non-pending. Otherwise, resolves with `false`.
    */
   hasChanges(): Promise<boolean> {
     const promises = [];
 
-    for (let presenter = this.rootPresenter; presenter !== null; presenter = presenter.childPresenter) {
-      promises.push(presenter.loadingPromise);
+    for (let controller = this.rootController; controller !== null; controller = controller.childController) {
+      promises.push(controller.promise);
     }
 
     return Promise.all(promises).then(() => {
-      for (let presenter = this.rootPresenter; presenter !== null; presenter = presenter.childPresenter) {
-        if (this._hydratedStates.get(presenter) !== presenter.state) {
+      for (let controller = this.rootController; controller !== null; controller = controller.childController) {
+        if (this._hydratedStates.get(controller) !== controller.state) {
           return true;
         }
       }
@@ -108,15 +108,15 @@ export class SSRRouter<Context = any> extends Router<Context> {
     let script = '';
 
     for (
-      let presenter = this.rootPresenter, index = 0;
-      presenter !== null;
-      presenter = presenter.childPresenter, index++
+      let controller = this.rootController, index = 0;
+      controller !== null;
+      controller = controller.childController, index++
     ) {
-      if (this._hydratedStates.get(presenter) === presenter.state) {
+      if (this._hydratedStates.get(controller) === controller.state) {
         continue;
       }
 
-      this._hydratedStates.set(presenter, presenter.state);
+      this._hydratedStates.set(controller, controller.state);
 
       if (script === '') {
         script = 'var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();';
@@ -126,7 +126,7 @@ export class SSRRouter<Context = any> extends Router<Context> {
         's.set(' +
         index +
         ',' +
-        JSON.stringify(this._stateStringifier(presenter.state)).replace(/</g, '\\u003C') +
+        JSON.stringify(this._stateStringifier(controller.state)).replace(/</g, '\\u003C') +
         ');';
     }
 

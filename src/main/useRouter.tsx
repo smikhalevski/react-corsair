@@ -1,7 +1,7 @@
 import React, { createContext, ReactElement, ReactNode, useContext, useEffect, useState } from 'react';
-import { Outlet, OutletContentProvider } from './Outlet';
+import { Outlet, OutletProvider } from './Outlet';
 import { Router } from './Router';
-import { RoutePresenterProvider } from './useRoutePresenter';
+import { RouteControllerProvider } from './useRouteController';
 
 const RouterContext = createContext<Router | null>(null);
 
@@ -46,15 +46,15 @@ export interface RouterProviderProps {
  */
 export function RouterProvider(props: RouterProviderProps): ReactElement {
   const { router, children = <Outlet /> } = props;
-  const [rootPresenter, setRootPresenter] = useState(router.rootPresenter);
+  const [rootController, setRootController] = useState(router.rootController);
 
-  useEffect(() => router.subscribe(() => setRootPresenter(router.rootPresenter)), [router]);
+  useEffect(() => router.subscribe(() => setRootController(router.rootController)), [router]);
 
   return (
     <RouterContext.Provider value={router}>
-      <RoutePresenterProvider value={null}>
-        <OutletContentProvider value={rootPresenter || router}>{children}</OutletContentProvider>
-      </RoutePresenterProvider>
+      <RouteControllerProvider value={null}>
+        <OutletProvider value={rootController || router}>{children}</OutletProvider>
+      </RouteControllerProvider>
     </RouterContext.Provider>
   );
 }

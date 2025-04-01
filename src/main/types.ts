@@ -1,7 +1,7 @@
 import { ComponentType } from 'react';
 import { Route } from './Route';
 import { Router } from './Router';
-import { RoutePresenter } from './RoutePresenter';
+import { RouteController } from './RouteController';
 
 export interface Dict {
   [key: string]: any;
@@ -94,15 +94,16 @@ export interface ParamsAdapter<Params> {
 }
 
 /**
- * What to render when {@link RouteOptions.lazyComponent} or {@link RouteOptions.dataLoader} are being loaded.
+ * What to render when {@link RouteOptions.lazyComponent lazyComponent} or {@link RouteOptions.dataLoader dataLoader}
+ * are being loaded.
  *
  * <dl>
  * <dt>"loading"</dt>
- * <dd>Always render {@link RouteOptions.loadingComponent} if a route requires loading.</dd>
+ * <dd>Always render {@link RouteOptions.loadingComponent loadingComponent} if a route requires loading.</dd>
  * <dt>"route_loading"</dt>
- * <dd>render {@link RouteOptions.loadingComponent} only if a route is changed during navigation.</dd>
+ * <dd>Render {@link RouteOptions.loadingComponent loadingComponent} only if a route is changed during navigation.</dd>
  * <dt>"avoid"</dt>
- * <dd>If there's a route that is already rendered then keep it on the screen until the new route data is loaded.</dd>
+ * <dd>If there's a route that is already rendered then keep it on the screen until the new route is loaded.</dd>
  * </dl>
  *
  * @group Routing
@@ -171,7 +172,7 @@ export interface Fallbacks {
   errorComponent?: ComponentType;
 
   /**
-   * A component that is rendered when a {@link RouteOptions.lazyComponent} or a {@link RouteOptions.dataLoader}
+   * A component that is rendered when a {@link RouteOptions.lazyComponent lazyComponent} or a {@link RouteOptions.dataLoader dataLoader}
    * are being loaded. Render a skeleton or a spinner in this component to notify user that a new route is being loaded.
    *
    * A {@link react-corsair!Router}-level {@link loadingComponent} is used only for root routes. Child routes must
@@ -339,9 +340,9 @@ export interface LoadingEvent {
   type: 'loading';
 
   /**
-   * A presenter from which an event originates.
+   * A controller from which an event originates.
    */
-  presenter: RoutePresenter;
+  controller: RouteController;
 }
 
 /**
@@ -353,9 +354,9 @@ export interface ReadyEvent {
   type: 'ready';
 
   /**
-   * A presenter from which an event originates.
+   * A controller from which an event originates.
    */
-  presenter: RoutePresenter;
+  controller: RouteController;
 }
 
 /**
@@ -370,9 +371,9 @@ export interface ErrorEvent {
   type: 'error';
 
   /**
-   * A presenter from which an event originates.
+   * A controller from which an event originates.
    */
-  presenter: RoutePresenter;
+  controller: RouteController;
 
   /**
    * An error that was thrown.
@@ -392,9 +393,9 @@ export interface NotFoundEvent {
   type: 'not_found';
 
   /**
-   * A presenter from which an event originates.
+   * A controller from which an event originates.
    */
-  presenter: RoutePresenter;
+  controller: RouteController;
 }
 
 /**
@@ -409,9 +410,9 @@ export interface RedirectEvent {
   type: 'redirect';
 
   /**
-   * A presenter from which an event originates.
+   * A controller from which an event originates.
    */
-  presenter: RoutePresenter;
+  controller: RouteController;
 
   /**
    * A location or a URL to which a redirect should be made.

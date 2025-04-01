@@ -22,16 +22,7 @@
   },
   "customCss": "./node_modules/typedoc-custom-css/custom.css",
   "entryPoints": ["./src/main/index.ts", "./src/main/ssr/index.ts", "./src/main/ssr/node/index.ts"],
-  "intentionallyNotExported": [
-    "Dict",
-    "PartialAsVoid",
-    "LoadingState",
-    "OkState",
-    "ErrorState",
-    "NotFoundState",
-    "RedirectState",
-    "LOCATION_PARAMS"
-  ],
+  "intentionallyNotExported": ["Dict", "PartialAsVoid", "LOCATION_PARAMS"],
   "externalSymbolLinkMappings": {
     "react": {
       "ComponentType": "https://react.dev/reference/react/createElement",
