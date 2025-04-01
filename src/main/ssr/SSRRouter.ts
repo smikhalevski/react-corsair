@@ -1,6 +1,9 @@
-import { RouterOptions } from '../types';
+import { RouterOptions, To } from '../types';
 import { Router } from '../Router';
 import { RouteController, RouteState } from '../RouteController';
+import { toLocation } from '../utils';
+import { matchRoutes } from '../matchRoutes';
+import { reconcileControllers } from '../reconcileControllers';
 
 /**
  * Options provided to the {@link SSRRouter} constructor.
@@ -31,8 +34,6 @@ export interface SSRRouterOptions<Context> extends RouterOptions<Context> {
  * @group SSR
  */
 export class SSRRouter<Context = any> extends Router<Context> {
-  readonly isSSR: boolean = true;
-
   /**
    * Map from a controller instance to its latest state that was sent to the client for hydration.
    */

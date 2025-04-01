@@ -13,7 +13,7 @@ import { Router } from './Router';
 import { redirect } from './redirect';
 import { notFound } from './notFound';
 import { Fallbacks } from './types';
-import { RouteControllerProvider } from './useRouteController';
+import { RouteControllerProvider } from './useRoute';
 import { useRerender } from './useRerender';
 
 const OutletContext = createContext<RouteController | Router | null>(null);

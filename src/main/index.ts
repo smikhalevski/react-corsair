@@ -41,9 +41,7 @@ export {
 export { Outlet } from './Outlet';
 export { usePrefetch } from './usePrefetch';
 export { useRouter, RouterProvider, type RouterProviderProps } from './useRouter';
-export { useRouteData } from './useRouteData';
-export { useRouteError } from './useRouteError';
-export { useRouteParams } from './useRouteParams';
+export { useRoute, useRouteParams, useRouteData } from './useRoute';
 
 export {
   type To,

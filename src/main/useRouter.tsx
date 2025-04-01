@@ -1,7 +1,7 @@
-import React, { createContext, ReactElement, ReactNode, useContext, useEffect, useState } from 'react';
+import React, { createContext, ReactElement, ReactNode, useCallback, useContext, useSyncExternalStore } from 'react';
 import { Outlet, OutletProvider } from './Outlet';
 import { Router } from './Router';
-import { RouteControllerProvider } from './useRouteController';
+import { RouteControllerProvider } from './useRoute';
 
 const RouterContext = createContext<Router | null>(null);
 
@@ -46,9 +46,12 @@ export interface RouterProviderProps {
  */
 export function RouterProvider(props: RouterProviderProps): ReactElement {
   const { router, children = <Outlet /> } = props;
-  const [rootController, setRootController] = useState(router.rootController);
 
-  useEffect(() => router.subscribe(() => setRootController(router.rootController)), [router]);
+  const subscribe = useCallback(router.subscribe.bind(router), [router]);
+
+  const getSnapshot = () => router.rootController;
+
+  const rootController = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
   return (
     <RouterContext.Provider value={router}>

@@ -7,70 +7,30 @@ import { Redirect } from './redirect';
 import { Route } from './Route';
 
 /**
- * The state of a route that is being actively loaded.
- */
-export interface LoadingState {
-  status: 'loading';
-}
-
-/**
- * The state of a route for which the component and data were loaded.
- */
-export interface OkState {
-  status: 'ok';
-
-  /**
-   * The data loaded for a route, or `undefined` if route has no {@link RouteOptions.dataLoader dataLoader}.
-   */
-  data: unknown;
-}
-
-export interface ErrorState {
-  status: 'error';
-  error: unknown;
-}
-
-export interface NotFoundState {
-  status: 'not_found';
-}
-
-export interface RedirectState {
-  status: 'redirect';
-  to: Location | string;
-}
-
-/**
- * State used by a {@link RouteController}.
- *
- * @group Routing
- */
-export type RouteState = LoadingState | OkState | ErrorState | NotFoundState | RedirectState;
-
-/**
  * Manages route rendering in an {@link Outlet}.
  *
  * @group Routing
  */
-export class RouteController {
+export class RouteController<Params extends Dict = any, Data = any, Context = any> {
   /**
    * A fallback controller that is rendered in an {@link Outlet} while this controller loads route component and data.
    */
-  fallbackController: RouteController | null = null;
+  fallbackController: RouteController<any, any, Context> | null = null;
 
   /**
    * A controller rendered in an enclosing {@link Outlet}.
    */
-  parentController: RouteController | null = null;
+  parentController: RouteController<any, any, Context> | null = null;
 
   /**
    * A controller rendered in a nested {@link Outlet}.
    */
-  childController: RouteController | null = null;
+  childController: RouteController<any, any, Context> | null = null;
 
   /**
-   * A state of the controller.
+   * A state route managed by the controller.
    */
-  state: RouteState = { status: 'loading' };
+  state: RouteState<Data> = { status: 'loading' };
 
   /**
    * A promise that settles when the route loading is completed, or `null` if route isn't being loaded.
@@ -78,9 +38,9 @@ export class RouteController {
   promise: AbortablePromise<void> | null = null;
 
   /**
-   * A context provided to a {@link route} {@link RouteOptions.dataLoader data loader}.
+   * A router context that was provided to a {@link route} {@link RouteOptions.dataLoader data loader}.
    */
-  readonly routerContext;
+  readonly context: Context;
 
   /**
    * Create a new {@link RouteController} instance.
@@ -90,11 +50,11 @@ export class RouteController {
    * @param params Route params.
    */
   constructor(
-    readonly router: Router,
-    readonly route: Route,
-    public params: Dict
+    readonly router: Router<Context>,
+    readonly route: Route<any, Params, Data, Context>,
+    public params: Params
   ) {
-    this.routerContext = router.context;
+    this.context = router.context;
   }
 
   /**
@@ -118,7 +78,7 @@ export class RouteController {
    *
    * @param state The new route state.
    */
-  setState(state: RouteState): void {
+  setState(state: RouteState<Data>): void {
     const routerPubSub = this.router['_pubSub'];
 
     this.state = state;
@@ -163,7 +123,7 @@ export class RouteController {
     }
 
     const abortController = new AbortController();
-    const state = loadRoute(this.route, this.params, this.routerContext, abortController.signal, false);
+    const state = getOrLoadState(this.route, this.params, this.context, abortController.signal, false);
 
     if (!isPromiseLike(state)) {
       this.setState(state);
@@ -209,13 +169,53 @@ export class RouteController {
 }
 
 /**
+ * The state of a route that is being actively loaded.
+ */
+export interface LoadingState {
+  status: 'loading';
+}
+
+/**
+ * The state of a route for which the component and data were loaded.
+ */
+export interface OkState<Data> {
+  status: 'ok';
+
+  /**
+   * The data loaded for a route, or `undefined` if route has no {@link RouteOptions.dataLoader dataLoader}.
+   */
+  data: Data;
+}
+
+export interface ErrorState {
+  status: 'error';
+  error: unknown;
+}
+
+export interface NotFoundState {
+  status: 'not_found';
+}
+
+export interface RedirectState {
+  status: 'redirect';
+  to: Location | string;
+}
+
+/**
+ * State used by a {@link RouteController}.
+ *
+ * @group Routing
+ */
+export type RouteState<Data = any> = LoadingState | OkState<Data> | ErrorState | NotFoundState | RedirectState;
+
+/**
  * Loads a route component and data.
  *
  * A route component is loaded once and cached forever, while data is loaded anew on every call.
  */
-export function loadRoute(
+export function getOrLoadState(
   route: Route,
-  params: Dict,
+  params: unknown,
   context: unknown,
   signal: AbortSignal,
   isPrefetch: boolean

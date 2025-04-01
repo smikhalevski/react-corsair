@@ -4,7 +4,7 @@ import { matchRoutes } from './matchRoutes';
 import { Route } from './Route';
 import { Fallbacks, RouterEvent, RouterOptions, To, Location } from './types';
 import { noop, toLocation } from './utils';
-import { loadRoute, RouteController } from './RouteController';
+import { getOrLoadState, RouteController } from './RouteController';
 import { reconcileControllers } from './reconcileControllers';
 
 /**
@@ -14,11 +14,6 @@ import { reconcileControllers } from './reconcileControllers';
  * @group Routing
  */
 export class Router<Context = any> implements Fallbacks {
-  /**
-   * `true` for SSR router.
-   */
-  readonly isSSR: boolean = false;
-
   /**
    * Routes that a router can render.
    */
@@ -40,7 +35,7 @@ export class Router<Context = any> implements Fallbacks {
    *
    * @see {@link navigate}
    */
-  rootController: RouteController | null = null;
+  rootController: RouteController<any, any, Context> | null = null;
 
   errorComponent: ComponentType | undefined;
   loadingComponent: ComponentType | undefined;
@@ -84,9 +79,7 @@ export class Router<Context = any> implements Fallbacks {
     }
 
     for (let controller = rootController; controller !== null; controller = controller.childController) {
-      if (!this.isSSR || controller.route.renderingDisposition === 'server') {
-        controller.reload();
-      }
+      controller.reload();
     }
   }
 
@@ -104,7 +97,9 @@ export class Router<Context = any> implements Fallbacks {
 
       resolve(
         Promise.all(
-          routeMatches.map(routeMatch => loadRoute(routeMatch.route, routeMatch.params, this.context, signal, true))
+          routeMatches.map(routeMatch =>
+            getOrLoadState(routeMatch.route, routeMatch.params, this.context, signal, true)
+          )
         ).then(noop)
       );
     });

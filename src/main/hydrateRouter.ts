@@ -66,7 +66,7 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
 
   router.rootController = rootController;
 
-  // Cleanup hydration if navigation occurs
+  // Abort and cleanup hydration if navigation occurs
   const unsubscribe = router.subscribe(event => {
     if (event.type === 'navigate' && router.rootController !== rootController) {
       unsubscribe();
@@ -84,7 +84,7 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
   for (let i = 0; i < controllers.length; ++i) {
     const controller = controllers[i];
 
-    // Load on the client side
+    // Skip hydration
     if (controller.route.renderingDisposition === 'client') {
       controller.reload();
       continue;

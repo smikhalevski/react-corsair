@@ -1,5 +1,5 @@
 import { createRoute, Outlet } from '../main';
-import { loadRoute } from '../main/RouteController';
+import { getOrLoadState } from '../main/RouteController';
 
 const Component = () => undefined;
 const { signal } = new AbortController();
@@ -8,7 +8,7 @@ describe('loadRoute', () => {
   test('returns OK state for outlet route', () => {
     const route = createRoute();
 
-    expect(loadRoute(route, {}, undefined, signal, false)).toEqual({ status: 'ok', data: undefined });
+    expect(getOrLoadState(route, {}, undefined, signal, false)).toEqual({ status: 'ok', data: undefined });
     expect(route.component).toBe(Outlet);
   });
 
@@ -17,7 +17,7 @@ describe('loadRoute', () => {
       component: Component,
     });
 
-    expect(loadRoute(route, {}, undefined, signal, false)).toEqual({ status: 'ok', data: undefined });
+    expect(getOrLoadState(route, {}, undefined, signal, false)).toEqual({ status: 'ok', data: undefined });
   });
 
   test('returns OK state for route with a loader', () => {
@@ -25,7 +25,7 @@ describe('loadRoute', () => {
       dataLoader: () => 111,
     });
 
-    expect(loadRoute(route, {}, undefined, signal, false)).toEqual({ status: 'ok', data: 111 });
+    expect(getOrLoadState(route, {}, undefined, signal, false)).toEqual({ status: 'ok', data: 111 });
   });
 
   test('returns an async OK state for route with a loader', async () => {
@@ -33,7 +33,10 @@ describe('loadRoute', () => {
       dataLoader: () => Promise.resolve(111),
     });
 
-    await expect(loadRoute(route, {}, undefined, signal, false)).resolves.toEqual({ status: 'ok', data: 111 });
+    await expect(getOrLoadState(route, {}, undefined, signal, false)).resolves.toEqual({
+      status: 'ok',
+      data: 111,
+    });
   });
 
   test('returns an async OK for state for route with a lazy component', async () => {
@@ -42,7 +45,10 @@ describe('loadRoute', () => {
     });
 
     expect(route.component).toBe(undefined);
-    await expect(loadRoute(route, {}, undefined, signal, false)).resolves.toEqual({ status: 'ok', data: undefined });
+    await expect(getOrLoadState(route, {}, undefined, signal, false)).resolves.toEqual({
+      status: 'ok',
+      data: undefined,
+    });
     expect(route.component).toBe(Component);
   });
 
@@ -53,7 +59,10 @@ describe('loadRoute', () => {
     });
 
     expect(route.component).toBe(undefined);
-    await expect(loadRoute(route, {}, undefined, signal, false)).resolves.toEqual({ status: 'ok', data: 111 });
+    await expect(getOrLoadState(route, {}, undefined, signal, false)).resolves.toEqual({
+      status: 'ok',
+      data: 111,
+    });
     expect(route.component).toBe(Component);
   });
 
@@ -62,7 +71,10 @@ describe('loadRoute', () => {
       lazyComponent: () => Promise.reject(111),
     });
 
-    await expect(loadRoute(route, {}, undefined, signal, false)).resolves.toEqual({ status: 'error', error: 111 });
+    await expect(getOrLoadState(route, {}, undefined, signal, false)).resolves.toEqual({
+      status: 'error',
+      error: 111,
+    });
     expect(route.component).toBe(undefined);
   });
 
@@ -74,7 +86,7 @@ describe('loadRoute', () => {
     });
 
     expect(route.component).toBe(Outlet);
-    expect(loadRoute(route, {}, undefined, signal, false)).toEqual({ status: 'error', error: 111 });
+    expect(getOrLoadState(route, {}, undefined, signal, false)).toEqual({ status: 'error', error: 111 });
   });
 
   test('returns an error state if loader rejects', async () => {
@@ -82,7 +94,10 @@ describe('loadRoute', () => {
       dataLoader: () => Promise.reject(111),
     });
 
-    await expect(loadRoute(route, {}, undefined, signal, false)).resolves.toEqual({ status: 'error', error: 111 });
+    await expect(getOrLoadState(route, {}, undefined, signal, false)).resolves.toEqual({
+      status: 'error',
+      error: 111,
+    });
   });
 
   test('returns an error state if both lazy component and loader throw', async () => {
@@ -91,7 +106,10 @@ describe('loadRoute', () => {
       dataLoader: () => Promise.reject(222),
     });
 
-    await expect(loadRoute(route, {}, undefined, signal, false)).resolves.toEqual({ status: 'error', error: 222 });
+    await expect(getOrLoadState(route, {}, undefined, signal, false)).resolves.toEqual({
+      status: 'error',
+      error: 222,
+    });
   });
 
   test('data is ignored if lazy component loader throws', async () => {
@@ -100,7 +118,10 @@ describe('loadRoute', () => {
       dataLoader: () => 'aaa',
     });
 
-    await expect(loadRoute(route, {}, undefined, signal, false)).resolves.toEqual({ status: 'error', error: 111 });
+    await expect(getOrLoadState(route, {}, undefined, signal, false)).resolves.toEqual({
+      status: 'error',
+      error: 111,
+    });
   });
 
   test('calls loader with params and context', () => {
@@ -110,7 +131,7 @@ describe('loadRoute', () => {
       dataLoader: loaderMock,
     });
 
-    loadRoute(route, { aaa: 111 }, { bbb: 222 }, signal, false);
+    getOrLoadState(route, { aaa: 111 }, { bbb: 222 }, signal, false);
 
     expect(loaderMock).toHaveBeenCalledTimes(1);
     expect(loaderMock).toHaveBeenNthCalledWith(1, {

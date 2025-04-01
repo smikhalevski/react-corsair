@@ -162,8 +162,6 @@ export interface Fallbacks {
   /**
    * A component that is rendered when an error was thrown during route rendering.
    *
-   * Use {@link react-corsair!useRouteError} to access the thrown error.
-   *
    * A {@link react-corsair!Router}-level {@link errorComponent} is used only for root routes. Nested routes must
    * specify their own {@link react-corsair!RouteOptions.errorComponent error components}.
    *
