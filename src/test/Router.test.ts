@@ -42,6 +42,7 @@ describe('navigate', () => {
     expect(listenerMock).toHaveBeenCalledTimes(2);
     expect(listenerMock).toHaveBeenNthCalledWith(1, {
       type: 'navigate',
+      controller: router.rootController,
       router,
       location: { pathname: '/aaa', searchParams: {}, hash: '', state: undefined },
     });
@@ -62,6 +63,7 @@ describe('navigate', () => {
     expect(listenerMock).toHaveBeenCalledTimes(4);
     expect(listenerMock).toHaveBeenNthCalledWith(3, {
       type: 'navigate',
+      controller: router.rootController,
       router,
       location: { pathname: '/bbb', searchParams: { xxx: 111 }, hash: '', state: undefined },
     });
@@ -105,7 +107,7 @@ describe('navigate', () => {
     const router = new Router({ routes: [routeAaa, routeBbb], context: undefined });
 
     router.subscribe(event => {
-      if (event.type === 'navigate' && event.router.rootController!.route === routeAaa) {
+      if (event.type === 'navigate' && event.controller!.route === routeAaa) {
         event.router.navigate(routeBbb);
       }
     });

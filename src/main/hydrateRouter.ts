@@ -67,14 +67,14 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
   router.rootController = rootController;
 
   // Abort and cleanup hydration if navigation occurs
-  const unsubscribe = router.subscribe(event => {
-    if (event.type === 'navigate' && router.rootController !== rootController) {
+  const unsubscribe = router.subscribe(() => {
+    if (router.rootController !== rootController) {
       unsubscribe();
       window.__REACT_CORSAIR_SSR_STATE__ = { set: noop };
     }
   });
 
-  router['_pubSub'].publish({ type: 'navigate', router, location });
+  router['_pubSub'].publish({ type: 'navigate', controller: rootController, router, location });
 
   if (router.rootController !== rootController) {
     // Hydrated navigation was superseded

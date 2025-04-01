@@ -319,6 +319,11 @@ export interface NavigateEvent {
   type: 'navigate';
 
   /**
+   * The root controller to which router was navigated, or `null` if no matching route was found.
+   */
+  controller: RouteController | null;
+
+  /**
    * A router from which an event originates.
    */
   router: Router;

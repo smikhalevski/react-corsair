@@ -71,7 +71,7 @@ export class Router<Context = any> implements Fallbacks {
     this.rootController = rootController;
     this.location = location;
 
-    this._pubSub.publish({ type: 'navigate', router: this, location });
+    this._pubSub.publish({ type: 'navigate', controller: rootController, router: this, location });
 
     if (this.rootController !== rootController) {
       // Navigation was superseded
