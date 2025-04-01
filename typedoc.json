@@ -21,16 +21,28 @@
     "skipLibCheck": true
   },
   "customCss": "./node_modules/typedoc-custom-css/custom.css",
-  "entryPoints": ["./src/main/index.ts"],
-  "plugin": ["typedoc-plugin-mdn-links"],
-  "intentionallyNotExported": ["Dict", "PartialToVoid"],
+  "entryPoints": ["./src/main/index.ts", "./src/main/ssr/index.ts", "./src/main/ssr/node/index.ts"],
+  "intentionallyNotExported": [
+    "Dict",
+    "PartialAsVoid",
+    "LoadingState",
+    "OkState",
+    "ErrorState",
+    "NotFoundState",
+    "RedirectState",
+    "LOCATION_PARAMS"
+  ],
   "externalSymbolLinkMappings": {
     "react": {
       "ComponentType": "https://react.dev/reference/react/createElement",
       "Suspense": "https://react.dev/reference/react/Suspense"
     },
+    "parallel-universe": {
+      "AbortablePromise": "https://smikhalevski.github.io/parallel-universe/classes/AbortablePromise.html"
+    },
     "typescript": {
       "PromiseLike": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise"
     }
-  }
+  },
+  "plugin": ["typedoc-plugin-mdn-links"]
 }

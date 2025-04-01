@@ -50,7 +50,7 @@ export interface LocationOptions {
   /**
    * A URL fragment identifier.
    *
-   * If hash begins with a `#` then it is used as is. Otherwise, it is encoded using {@link !encodeURIComponent}.
+   * If hash begins with a `#` then it is used as is. Otherwise, it is encoded using {@link encodeURIComponent}.
    */
   hash?: string;
 
@@ -161,33 +161,43 @@ export interface Fallbacks {
   /**
    * A component that is rendered when an error was thrown during route rendering.
    *
-   * Use {@link useRouteError} to access the thrown error.
+   * Use {@link react-corsair!useRouteError} to access the thrown error.
    *
-   * A {@link Router}-level {@link errorComponent} is used only for root routes. Nested routes must specify their own
-   * {@link RouteOptions.errorComponent error components}.
+   * A {@link react-corsair!Router}-level {@link errorComponent} is used only for root routes. Nested routes must
+   * specify their own {@link react-corsair!RouteOptions.errorComponent error components}.
    *
    * Routes without an {@link errorComponent} don't have an error boundary.
    */
   errorComponent?: ComponentType;
 
   /**
-   * A component that is rendered when a {@link RouteOptions.lazyComponent} or a {@link RouteOptions.dataLoader} are being
-   * loaded. Render a skeleton or a spinner in this component to notify user that a new route is being loaded.
+   * A component that is rendered when a {@link RouteOptions.lazyComponent} or a {@link RouteOptions.dataLoader}
+   * are being loaded. Render a skeleton or a spinner in this component to notify user that a new route is being loaded.
    *
-   * A {@link Router}-level {@link loadingComponent} is used only for root routes. Child routes must specify their own
-   * {@link RouteOptions.loadingComponent loading components}.
+   * A {@link react-corsair!Router}-level {@link loadingComponent} is used only for root routes. Child routes must
+   * specify their own {@link react-corsair!RouteOptions.loadingComponent loading components}.
    *
    * Routes without a {@link loadingComponent} suspend a parent route.
    */
   loadingComponent?: ComponentType;
 
   /**
-   * A component that is rendered if {@link notFound} was called during route rendering or if there's no route that
-   * matches the location a router was navigated to.
+   * A component that is rendered if {@link react-corsair!notFound} was called during route rendering or if there's
+   * no route that matches the location a router was navigated to.
    *
-   * Routes without {@link notFoundComponent} propagate {@link notFound} to a parent route.
+   * Routes without {@link notFoundComponent} propagate {@link react-corsair!notFound} to a parent route.
    */
   notFoundComponent?: ComponentType;
+}
+
+/**
+ * A lazily imported module that exports a React component.
+ */
+export interface ComponentModule {
+  /**
+   * The exported component.
+   */
+  default: ComponentType;
 }
 
 /**
@@ -205,7 +215,7 @@ export interface RouteOptions<Params extends Dict, Data, Context> extends Fallba
    * Pattern can include params that conform `:[A-Za-z$_][A-Za-z0-9$_]+`. For example `"/:userId"`.
    *
    * Params match a whole segment and cannot be partial. For example, `"/teams--:teamId"` is invalid and would throw
-   * a {@link !SyntaxError}, while `"/teams/:teamId"` is valid.
+   * a {@link SyntaxError}, while `"/teams/:teamId"` is valid.
    *
    * By default, a param matches a non-empty pathname segment. To make a param optional (so it can match an absent
    * segment) follow it by a `?` flag. For example: `"/user/:userId?"` matches both `"/user"` and `"/user/37"`.
@@ -218,7 +228,7 @@ export interface RouteOptions<Params extends Dict, Data, Context> extends Fallba
    *
    * To make param both wildcard and optional, combine `*` and `?` flags: `"/:slug*?"`.
    *
-   * To use `:` as a character in a pathname pattern, replace it with an {@link !encodeURIComponent encoded}
+   * To use `:` as a character in a pathname pattern, replace it with an {@link encodeURIComponent encoded}
    * representation: `%3A`.
    *
    * @default "/"
@@ -240,13 +250,13 @@ export interface RouteOptions<Params extends Dict, Data, Context> extends Fallba
   component?: ComponentType;
 
   /**
-   * A lazy-loaded component that is rendered by a route. A component cached forever if a returned {@link !Promise}
+   * A lazy-loaded component that is rendered by a route. A component cached forever if a returned {@link Promise}
    * is fulfilled.
    *
    * @example
    * () => import('./UserPage')
    */
-  lazyComponent?: () => PromiseLike<{ default: ComponentType }>;
+  lazyComponent?: () => PromiseLike<ComponentModule>;
 
   /**
    * An adapter that can validate and transform params extracted from the {@link Location.pathname} and

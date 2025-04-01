@@ -8,7 +8,7 @@ import React, {
   useContext,
   useEffect,
 } from 'react';
-import { createErrorState, RoutePresenter } from './RoutePresenter';
+import { RoutePresenter } from './RoutePresenter';
 import { Router } from './Router';
 import { redirect } from './redirect';
 import { notFound } from './notFound';
@@ -86,7 +86,7 @@ class OutletErrorBoundary extends Component<OutletErrorBoundaryProps, OutletErro
       return null;
     }
 
-    nextProps.presenter.setState(createErrorState(prevState.error));
+    nextProps.presenter.setError(prevState.error);
 
     return { hasError: false, error: null };
   }

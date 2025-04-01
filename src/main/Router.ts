@@ -20,7 +20,7 @@ export class Router<Context = any> implements Fallbacks {
   routes: readonly Route<any, any, any, Context>[];
 
   /**
-   * A context provided to {@link RouteOptions.dataLoader route data loaders}.
+   * A context provided to {@link react-corsair!RouteOptions.dataLoader route data loaders}.
    */
   context: Context;
 
@@ -30,7 +30,7 @@ export class Router<Context = any> implements Fallbacks {
   location: Location | null = null;
 
   /**
-   * A root presenter rendered in a router {@link Outlet}, or `null` if there's no matching route or if
+   * A root presenter rendered in a router {@link react-corsair!Outlet}, or `null` if there's no matching route or if
    * {@link navigate navigation} didn't occur yet.
    *
    * @see {@link navigate}
@@ -44,10 +44,10 @@ export class Router<Context = any> implements Fallbacks {
   protected _pubSub = new PubSub<RouterEvent>();
 
   /**
-   * Creates a new instance of a {@link Router}.
+   * Creates a new instance of a {@link react-corsair!Router}.
    *
    * @param options Router options.
-   * @template Context A context provided to {@link RouteOptions.dataLoader route data loaders}.
+   * @template Context A context provided to {@link react-corsair!RouteOptions.dataLoader route data loaders}.
    */
   constructor(options: RouterOptions<Context>) {
     this.routes = options.routes;

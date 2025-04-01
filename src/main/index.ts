@@ -1,3 +1,13 @@
+/**
+ * The React Corsair core and React integration hooks.
+ *
+ * ```ts
+ * import { createRoute } from 'react-corsair';
+ * ```
+ *
+ * @module react-corsair
+ */
+
 export { createBrowserHistory } from './history/createBrowserHistory';
 export { createHashHistory } from './history/createHashHistory';
 export { createMemoryHistory } from './history/createMemoryHistory';
@@ -36,9 +46,12 @@ export {
   type RenderingDisposition,
   type DataLoaderOptions,
   type Fallbacks,
+  type ComponentModule,
   type RouteOptions,
   type RouterOptions,
   type NavigateEvent,
+  type LoadingEvent,
+  type ReadyEvent,
   type ErrorEvent,
   type NotFoundEvent,
   type RedirectEvent,

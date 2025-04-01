@@ -5,7 +5,7 @@ import { RoutePresenter, RoutePresenterState } from '../RoutePresenter';
 /**
  * Options provided to the {@link SSRRouter} constructor.
  *
- * @template Context A context provided to {@link RouteOptions.dataLoader route data loaders}.
+ * @template Context A context provided to {@link react-corsair!RouteOptions.dataLoader route data loaders}.
  * @group SSR
  */
 export interface SSRRouterOptions<Context> extends RouterOptions<Context> {
@@ -15,7 +15,7 @@ export interface SSRRouterOptions<Context> extends RouterOptions<Context> {
    * @param state The route presenter state to stringify.
    * @default JSON.stringify
    */
-  stateStringifier?: (payload: RoutePresenterState) => string;
+  stateStringifier?: (state: RoutePresenterState) => string;
 
   /**
    * A nonce string to allow scripts for
@@ -27,7 +27,7 @@ export interface SSRRouterOptions<Context> extends RouterOptions<Context> {
 /**
  * The base implementation of a router that supports client hydration after SSR.
  *
- * @template Context A context provided to {@link RouteOptions.dataLoader route data loaders}.
+ * @template Context A context provided to {@link react-corsair!RouteOptions.dataLoader route data loaders}.
  * @group SSR
  */
 export class SSRRouter<Context = any> extends Router<Context> {
@@ -51,7 +51,7 @@ export class SSRRouter<Context = any> extends Router<Context> {
    * Creates a new instance of an {@link SSRRouter}.
    *
    * @param options Router options.
-   * @template Context A context provided to {@link RouteOptions.dataLoader route data loaders}.
+   * @template Context A context provided to {@link react-corsair!RouteOptions.dataLoader route data loaders}.
    */
   constructor(options: SSRRouterOptions<Context>) {
     const { stateStringifier = JSON.stringify } = options;

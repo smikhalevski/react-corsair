@@ -6,29 +6,6 @@ import { NotFoundError } from './notFound';
 import { Redirect } from './redirect';
 import { Route } from './Route';
 
-interface LoadingState {
-  status: 'loading';
-}
-
-interface OkState {
-  status: 'ok';
-  data: unknown;
-}
-
-interface ErrorState {
-  status: 'error';
-  error: unknown;
-}
-
-interface NotFoundState {
-  status: 'not_found';
-}
-
-interface RedirectState {
-  status: 'redirect';
-  to: Location | string;
-}
-
 /**
  * State of a {@link RoutePresenter}.
  *
@@ -70,7 +47,7 @@ export class RoutePresenter {
   /**
    * A context provided to a {@link route} {@link RouteOptions.dataLoader data loader}.
    */
-  routerContext;
+  readonly routerContext;
 
   /**
    * Create a new {@link RoutePresenter} instance.
@@ -85,6 +62,22 @@ export class RoutePresenter {
     public params: Dict
   ) {
     this.routerContext = router.context;
+  }
+
+  /**
+   * Forces the presenter to render {@link RouteOptions.notFoundComponent}.
+   */
+  notFound(): void {
+    this.setError(new NotFoundError());
+  }
+
+  /**
+   * Sets the presenter state to reflect an {@link error}.
+   *
+   * @param error The error to show.
+   */
+  setError(error: unknown): void {
+    this.setState(createErrorState(error));
   }
 
   /**
@@ -146,15 +139,10 @@ export class RoutePresenter {
 
     const promise = new AbortablePromise<void>((resolve, _reject, signal) => {
       signal.addEventListener('abort', () => {
-        if (this.loadingPromise !== promise) {
-          return;
-        }
-
-        this.loadingPromise = null;
         abortController.abort(signal.reason);
 
-        if (this.state.status === 'loading') {
-          this.setState({ status: 'error', error: signal.reason });
+        if (this.loadingPromise === promise && this.state.status === 'loading') {
+          this.setError(signal.reason);
         }
       });
 
@@ -180,7 +168,7 @@ export class RoutePresenter {
   /**
    * Instantly aborts pending route loading.
    *
-   * @param reason The abort reason that is used for rejection of the pending promise.
+   * @param reason The abort reason that is used for rejection of the loading promise.
    */
   abort(reason?: unknown): void {
     this.loadingPromise?.abort(reason);
@@ -217,11 +205,34 @@ export function loadRoute(
   return createOkState(data);
 }
 
-export function createOkState(data: unknown): RoutePresenterState {
+interface LoadingState {
+  status: 'loading';
+}
+
+interface OkState {
+  status: 'ok';
+  data: unknown;
+}
+
+interface ErrorState {
+  status: 'error';
+  error: unknown;
+}
+
+interface NotFoundState {
+  status: 'not_found';
+}
+
+interface RedirectState {
+  status: 'redirect';
+  to: Location | string;
+}
+
+function createOkState(data: unknown): RoutePresenterState {
   return { status: 'ok', data };
 }
 
-export function createErrorState(error: unknown): RoutePresenterState {
+function createErrorState(error: unknown): RoutePresenterState {
   if (error instanceof NotFoundError) {
     return { status: 'not_found' };
   }

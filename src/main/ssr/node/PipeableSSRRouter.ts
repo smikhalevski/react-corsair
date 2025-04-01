@@ -2,23 +2,23 @@ import { Writable } from 'stream';
 import { SSRRouter, SSRRouterOptions } from '../SSRRouter';
 
 /**
- * Streaming executor manager for NodeJS environment.
+ * Streaming router for NodeJS environment.
  *
- * @template Context A context provided to {@link RouteOptions.dataLoader route data loaders}.
+ * @template Context A context provided to {@link react-corsair!RouteOptions.dataLoader route data loaders}.
  * @group SSR
  */
 export class PipeableSSRRouter<Context> extends SSRRouter<Context> {
   /**
-   * The stream that includes both React rendering chunks and executor hydration chunks.
+   * The stream that includes both React rendering chunks and route presenter hydration chunks.
    */
   readonly stream: NodeJS.WritableStream;
 
   /**
    * Creates a new {@link PipeableSSRRouter} instance.
    *
-   * @param stream The output stream to which both React chunks and executor hydration chunks are written.
+   * @param stream The output stream to which both React chunks and route presenter hydration chunks are written.
    * @param options Router options.
-   * @template Context A context provided to {@link RouteOptions.dataLoader route data loaders}.
+   * @template Context A context provided to {@link react-corsair!RouteOptions.dataLoader route data loaders}.
    */
   constructor(stream: NodeJS.WritableStream, options: SSRRouterOptions<Context>) {
     super(options);
