@@ -15,12 +15,13 @@ export { PathnameTemplate, type PathnameMatch } from './PathnameTemplate';
 export { Prefetch, type PrefetchProps } from './Prefetch';
 export { redirect, Redirect } from './redirect';
 export { Route, type InferLocationParams } from './Route';
+export { Router } from './Router';
 
 // --------------------
+export { RoutePresenter, type RoutePresenterState } from './RoutePresenter';
 
 export { Outlet } from './Outlet';
 export { usePrefetch } from './usePrefetch';
-export { Router } from './Router';
 export { useRouter, RouterProvider, type RouterProviderProps } from './useRouter';
 export { useRouteData } from './useRouteData';
 export { useRouteError } from './useRouteError';
@@ -43,12 +44,3 @@ export {
   type RedirectEvent,
   type RouterEvent,
 } from './types';
-
-export {
-  type LoadingState,
-  type OkState,
-  type ErrorState,
-  type NotFoundState,
-  type RedirectState,
-  type RoutePresenterState,
-} from './RoutePresenter';

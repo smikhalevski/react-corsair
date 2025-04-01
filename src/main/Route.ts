@@ -209,15 +209,11 @@ export class Route<
 
       pathname = pathnameChunk + (pathnameChunk.endsWith('/') ? pathname.substring(1) : pathname);
 
-      if (paramsAdapter === undefined) {
-        // No adapter = no search params
-        continue;
-      }
-      if (paramsAdapter.toSearchParams === undefined) {
+      if (paramsAdapter === undefined || paramsAdapter.toSearchParams === undefined) {
         hasLooseParams = true;
-        continue;
+      } else {
+        searchParams = { ...paramsAdapter.toSearchParams(params), ...searchParams };
       }
-      searchParams = { ...paramsAdapter.toSearchParams(params), ...searchParams };
     }
 
     if (hasLooseParams && params !== undefined) {

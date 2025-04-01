@@ -164,7 +164,7 @@ function OutletContent(props: OutletContentProps): ReactNode {
       component = route.loadingComponent || fallbacks.loadingComponent;
 
       if (component === undefined || canSuspend) {
-        throw presenter.promise || new Error('Loading route presenter has no promise');
+        throw presenter.loadingPromise || new Error('Loading route presenter has no promise');
       }
       break;
 

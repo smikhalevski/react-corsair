@@ -62,9 +62,24 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
     }
   }
 
-  router.rootPresenter = presenters.length !== 0 ? presenters[0] : null;
+  const rootPresenter = presenters.length !== 0 ? presenters[0] : null;
+
+  router.rootPresenter = rootPresenter;
+
+  // Cleanup hydration if navigation occurs
+  const unsubscribe = router.subscribe(event => {
+    if (event.type === 'navigate' && router.rootPresenter !== rootPresenter) {
+      unsubscribe();
+      window.__REACT_CORSAIR_SSR_STATE__ = { set: noop };
+    }
+  });
 
   router['_pubSub'].publish({ type: 'navigate', router, location });
+
+  if (router.rootPresenter !== rootPresenter) {
+    // Hydrated navigation was superseded
+    return router;
+  }
 
   for (let i = 0; i < presenters.length; ++i) {
     const presenter = presenters[i];
@@ -82,8 +97,8 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
 
     // Deferred hydration
     if (presenter.state.status === 'loading') {
-      presenter.promise = new AbortablePromise(noop);
-      presenter.promise.catch(noop);
+      presenter.loadingPromise = new AbortablePromise(noop);
+      presenter.loadingPromise.catch(noop);
     }
   }
 

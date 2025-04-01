@@ -45,7 +45,7 @@ export function reconcilePresenters(router: Router, routeMatches: RouteMatch[]):
 
       presenter.state = replacedPresenter.state;
       presenter.params = replacedPresenter.params;
-      presenter.promise = replacedPresenter.promise;
+      presenter.loadingPromise = replacedPresenter.loadingPromise;
 
       replacedPresenter = replacedPresenter.childPresenter;
     }

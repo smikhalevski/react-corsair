@@ -2,7 +2,7 @@ import { AbortablePromise, PubSub } from 'parallel-universe';
 import { ComponentType } from 'react';
 import { matchRoutes } from './matchRoutes';
 import { Route } from './Route';
-import { Fallbacks, RouterEvent, RouterOptions, To } from './types';
+import { Fallbacks, RouterEvent, RouterOptions, To, Location } from './types';
 import { noop, toLocation } from './utils';
 import { loadRoute, RoutePresenter } from './RoutePresenter';
 import { reconcilePresenters } from './reconcilePresenters';
@@ -25,7 +25,13 @@ export class Router<Context = any> implements Fallbacks {
   context: Context;
 
   /**
-   * A root presenter rendered in a router {@link Outlet}, or `null` if no route is rendered.
+   * The last location this router was navigated to, or `null` if {@link navigate navigation} didn't occur yet.
+   */
+  location: Location | null = null;
+
+  /**
+   * A root presenter rendered in a router {@link Outlet}, or `null` if there's no matching route or if
+   * {@link navigate navigation} didn't occur yet.
    *
    * @see {@link navigate}
    */
@@ -63,6 +69,7 @@ export class Router<Context = any> implements Fallbacks {
     const rootPresenter = reconcilePresenters(this, routeMatches);
 
     this.rootPresenter = rootPresenter;
+    this.location = location;
 
     this._pubSub.publish({ type: 'navigate', router: this, location });
 
