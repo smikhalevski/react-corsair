@@ -15,6 +15,11 @@ import { reconcileControllers } from './reconcileControllers';
  */
 export class Router<Context = any> implements Fallbacks {
   /**
+   * `true` if router is used in SSR environment.
+   */
+  readonly isSSR: boolean = false;
+
+  /**
    * Routes that a router can render.
    */
   routes: readonly Route<any, any, any, Context>[];
@@ -79,6 +84,11 @@ export class Router<Context = any> implements Fallbacks {
     }
 
     for (let controller = rootController; controller !== null; controller = controller.childController) {
+      if (this.isSSR && controller.route.renderingDisposition !== 'server') {
+        // Cannot load the route and its nested routes on the server
+        break;
+      }
+
       controller.reload();
     }
   }

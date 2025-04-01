@@ -72,7 +72,7 @@ export function useRouteData<Data>(route: Route<any, any, Data>): Data {
   const { state } = useRoute(route);
 
   if (state.status !== 'ok') {
-    throw new Error('Cannot be used outside of a loaded route');
+    throw new Error('Cannot be used outside of a successfully loaded route');
   }
 
   return state.data;

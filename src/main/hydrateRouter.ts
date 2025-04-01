@@ -84,10 +84,12 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
   for (let i = 0; i < controllers.length; ++i) {
     const controller = controllers[i];
 
-    // Skip hydration
-    if (controller.route.renderingDisposition === 'client') {
-      controller.reload();
-      continue;
+    // Skip further hydration
+    if (controller.route.renderingDisposition !== 'server') {
+      for (; i < controllers.length; ++i) {
+        controllers[i].reload();
+      }
+      break;
     }
 
     // Hydrate

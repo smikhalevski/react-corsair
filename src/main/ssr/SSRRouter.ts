@@ -1,9 +1,6 @@
-import { RouterOptions, To } from '../types';
+import { RouterOptions } from '../types';
 import { Router } from '../Router';
 import { RouteController, RouteState } from '../RouteController';
-import { toLocation } from '../utils';
-import { matchRoutes } from '../matchRoutes';
-import { reconcileControllers } from '../reconcileControllers';
 
 /**
  * Options provided to the {@link SSRRouter} constructor.
@@ -43,6 +40,8 @@ export class SSRRouter<Context = any> extends Router<Context> {
    * Stringifies the state of the controller before sending it to the client.
    */
   protected _stateStringifier;
+
+  readonly isSSR: boolean = true;
 
   /**
    * A nonce string to allow scripts for
