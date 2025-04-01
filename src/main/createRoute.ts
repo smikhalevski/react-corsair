@@ -14,7 +14,7 @@ import { Dict, RouteOptions } from './types';
  * @template Context A router context.
  * @group Routing
  */
-export function createRoute<Params extends Dict = Dict, Data = void, Context = any>(
+export function createRoute<Params extends Dict = {}, Data = void, Context = any>(
   options?: RouteOptions<Params, Data, Context>
 ): Route<null, Params, Data, Context>;
 
@@ -33,7 +33,7 @@ export function createRoute<Params extends Dict = Dict, Data = void, Context = a
  * @template Context A router context.
  * @group Routing
  */
-export function createRoute<ParentRoute extends Route, Params extends Dict = Dict, Data = void>(
+export function createRoute<ParentRoute extends Route, Params extends Dict = {}, Data = void>(
   parentRoute: ParentRoute,
   options?: RouteOptions<Params, Data, InferLocationParams<ParentRoute>>
 ): Route<ParentRoute, Params, Data, InferLocationParams<ParentRoute>>;
@@ -53,7 +53,7 @@ export function createRoute<ParentRoute extends Route, Params extends Dict = Dic
  * @template Params Route params.
  * @group Routing
  */
-export function createRoute<Params extends Dict = Dict>(
+export function createRoute<Params extends Dict = {}>(
   pathname: string,
   component?: ComponentType
 ): Route<null, Params, void>;
@@ -76,7 +76,7 @@ export function createRoute<Params extends Dict = Dict>(
  * @template Params Route params.
  * @group Routing
  */
-export function createRoute<ParentRoute extends Route, Params extends Dict = Dict>(
+export function createRoute<ParentRoute extends Route, Params extends Dict = {}>(
   parentRoute: ParentRoute,
   pathname: string,
   component?: ComponentType

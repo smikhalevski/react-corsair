@@ -28,7 +28,7 @@
     "build": "rollup --config && cp package.json README.md LICENSE.txt lib/ && cd lib && npm pkg delete scripts devDependencies",
     "clean": "rimraf lib docs coverage",
     "test": "jest",
-    "test:definitions": "tsd --typings lib/index.d.ts --files 'src/test/**/*.test-d.ts'",
+    "test:definitions": "tsd --typings lib/index.d.ts --files src/main/ssr/global.d.ts --files 'src/test/**/*.test-d.ts'",
     "docs": "typedoc"
   },
   "repository": {
