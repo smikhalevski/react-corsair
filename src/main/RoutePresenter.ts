@@ -63,7 +63,7 @@ export class RoutePresenter {
   state: RoutePresenterState = { status: 'loading' };
 
   /**
-   * A promise that settles when the route loading is completed.
+   * A promise that settles when the route loading is completed, or `null` if route isn't being loaded.
    */
   loadingPromise: AbortablePromise<void> | null = null;
 
@@ -94,40 +94,35 @@ export class RoutePresenter {
    */
   setState(state: RoutePresenterState): void {
     const routerPubSub = this.router['_pubSub'];
-    const { loadingPromise } = this;
 
     this.state = state;
 
-    switch (state.status) {
-      case 'loading':
-        routerPubSub.publish({ type: 'loading', presenter: this });
-        break;
+    if (state.status === 'loading') {
+      routerPubSub.publish({ type: 'loading', presenter: this });
+      return;
+    }
 
+    const { loadingPromise } = this;
+
+    this.fallbackPresenter = null;
+    this.loadingPromise = null;
+
+    loadingPromise?.abort();
+
+    switch (state.status) {
       case 'ok':
-        this.fallbackPresenter = null;
-        this.loadingPromise = null;
-        loadingPromise?.abort();
         routerPubSub.publish({ type: 'ready', presenter: this });
         break;
 
       case 'error':
-        this.fallbackPresenter = null;
-        this.loadingPromise = null;
-        loadingPromise?.abort();
         routerPubSub.publish({ type: 'error', presenter: this, error: state.error });
         break;
 
       case 'not_found':
-        this.fallbackPresenter = null;
-        this.loadingPromise = null;
-        loadingPromise?.abort();
         routerPubSub.publish({ type: 'not_found', presenter: this });
         break;
 
       case 'redirect':
-        this.fallbackPresenter = null;
-        this.loadingPromise = null;
-        loadingPromise?.abort();
         routerPubSub.publish({ type: 'redirect', presenter: this, to: state.to });
         break;
     }

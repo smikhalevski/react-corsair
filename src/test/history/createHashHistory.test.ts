@@ -1,14 +1,5 @@
-import { JSDOM } from 'jsdom';
 import { delay } from 'parallel-universe';
-import { createHashHistory } from '../../main';
-
-import { jsonSearchParamsAdapter } from '../../main/history/jsonSearchParamsAdapter';
-
-beforeEach(() => {
-  const { window } = new JSDOM('', { url: 'http://localhost' });
-
-  Object.assign(global, { window });
-});
+import { createHashHistory, jsonSearchParamsAdapter } from '../../main';
 
 test('pushes location', async () => {
   const aaaLocation = { pathname: '/aaa', searchParams: {}, hash: '' };
