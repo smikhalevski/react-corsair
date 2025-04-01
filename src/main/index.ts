@@ -9,18 +9,22 @@ export { parseLocation, stringifyLocation } from './history/utils';
 export { type HistoryOptions, type History, type SearchParamsAdapter } from './history/types';
 
 export { createRoute } from './createRoute';
+export { hydrateRouter, type HydrateRouterOptions } from './hydrateRouter';
 export { notFound, NotFoundError } from './notFound';
-export { Outlet } from './Outlet';
 export { PathnameTemplate, type PathnameMatch } from './PathnameTemplate';
+export { Prefetch, type PrefetchProps } from './Prefetch';
 export { redirect, Redirect } from './redirect';
-export { Route, type InferData, type InferContext, type InferLocationParams } from './Route';
+export { Route, type InferLocationParams } from './Route';
+
+// --------------------
+
+export { Outlet } from './Outlet';
 export { usePrefetch } from './usePrefetch';
 export { Router } from './Router';
 export { useRouter, RouterProvider, type RouterProviderProps } from './useRouter';
 export { useRouteData } from './useRouteData';
 export { useRouteError } from './useRouteError';
 export { useRouteParams } from './useRouteParams';
-export { hydrateRouter } from './hydrateRouter';
 
 export {
   type To,
@@ -39,8 +43,6 @@ export {
   type RedirectEvent,
   type RouterEvent,
 } from './types';
-
-export { Prefetch, type PrefetchProps } from './Prefetch';
 
 export {
   type LoadingState,

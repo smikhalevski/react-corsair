@@ -15,7 +15,7 @@ import { Outlet } from './Outlet';
 
 type Prettify<T> = { [K in keyof T]: T[K] } & {};
 
-type PartialToVoid<T> = Partial<T> extends T ? T | void : T;
+type PartialAsVoid<T> = Partial<T> extends T ? T | void : T;
 
 export declare const LOCATION_PARAMS: unique symbol;
 export declare const CONTEXT: unique symbol;
@@ -28,28 +28,15 @@ export type DATA = typeof DATA;
 /**
  * Infers route location params.
  *
+ * @template R The route to infer location params from.
  * @group Routing
  */
 export type InferLocationParams<R extends Route> = R[LOCATION_PARAMS];
 
 /**
- * Infers route context.
- *
- * @group Routing
- */
-export type InferContext<R extends Route> = R[CONTEXT];
-
-/**
- * Infers route data.
- *
- * @group Routing
- */
-export type InferData<R extends Route> = R[DATA];
-
-/**
  * A route that can be rendered by a router.
  *
- * Use {@link createRoute} to create a {@link Route} instance.
+ * {@link createRoute} provides the streamlined API for creating {@link Route} instances.
  *
  * @template ParentRoute A parent route or `null` if there is no parent.
  * @template Params Route params.
@@ -69,7 +56,7 @@ export class Route<
    *
    * @internal
    */
-  declare readonly [LOCATION_PARAMS]: PartialToVoid<
+  declare readonly [LOCATION_PARAMS]: PartialAsVoid<
     ParentRoute extends Route ? Prettify<Exclude<ParentRoute[LOCATION_PARAMS], void> & Params> : Params
   >;
 

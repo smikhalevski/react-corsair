@@ -53,24 +53,26 @@ export interface History {
   /**
    * Adds an entry to the history stack.
    *
-   * @param to A location to navigate to or {@link toURL a history-local URL}.
    * @example
    * const userRoute = createRoute('/users/:userId');
    * history.push(userRoute.getLocation({ userId: 42 }));
    * // or
    * history.push('/users/42');
+   *
+   * @param to A location to navigate to or {@link toURL a history-local URL}.
    */
   push(to: To | string): void;
 
   /**
    * Modifies the current history entry, replacing it with the state object and URL passed in the method parameters.
    *
-   * @param to A location to navigate to or {@link toURL a history-local URL}.
    * @example
    * const userRoute = createRoute('/users/:userId');
    * history.replace(userRoute.getLocation({ userId: 42 }));
    * // or
    * history.replace('/users/42');
+   *
+   * @param to A location to navigate to or {@link toURL a history-local URL}.
    */
   replace(to: To | string): void;
 

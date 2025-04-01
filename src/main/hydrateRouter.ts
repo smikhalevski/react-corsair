@@ -1,7 +1,7 @@
 import { To } from './types';
 import { Router } from './Router';
 import { RoutePresenter, RoutePresenterState } from './RoutePresenter';
-import { toLocation } from './utils';
+import { noop, toLocation } from './utils';
 import { matchRoutes } from './matchRoutes';
 import { AbortablePromise } from 'parallel-universe';
 
@@ -18,12 +18,14 @@ export interface HydrateRouterOptions {
 }
 
 /**
- * Enables the SSR hydration for the given router that was navigated to a {@link to location} during SSR.
+ * Hydrates the {@link router} with the state provided by SSR.
+ *
+ * To render SSR state, call {@link hydrateRouter} instead of the initial {@link Router.navigate} call.
  *
  * **Note:** SSR hydration can be enabled only for one router.
  *
- * @param router The router for which SSR hydration must be enabled.
- * @param to The location to which router was navigated during SSR.
+ * @param router The hydrated router.
+ * @param to The location to which the router was navigated during SSR.
  * @param options Hydration options.
  * @returns The provided router.
  * @template T The hydrated router.
@@ -35,36 +37,28 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
     typeof window.__REACT_CORSAIR_SSR_STATE__ !== 'undefined' ? window.__REACT_CORSAIR_SSR_STATE__ : undefined;
 
   if (ssrState !== undefined && !(ssrState instanceof Map)) {
-    throw new Error('Router hydration already enabled');
+    throw new Error('Router hydration has already begun');
   }
+
+  window.__REACT_CORSAIR_SSR_STATE__ = {
+    set(index, stateStr) {
+      presenters[index].setState(stateParser(stateStr));
+    },
+  };
 
   const location = toLocation(to);
 
   const routeMatches = matchRoutes(location.pathname, location.searchParams, router.routes);
 
-  // Presenters that capture the SSR state
   const presenters: RoutePresenter[] = [];
 
   for (const routeMatch of routeMatches) {
     const presenter = new RoutePresenter(router, routeMatch.route, routeMatch.params);
-    const presenterIndex = presenters.push(presenter) - 1;
+    const i = presenters.push(presenter) - 1;
 
-    if (presenterIndex > 0) {
-      presenter.parentPresenter = presenters[presenterIndex - 1];
-      presenters[presenterIndex - 1].childPresenter = presenter;
-    }
-  }
-
-  if (ssrState instanceof Map) {
-    for (const presenterIndex of ssrState.keys()) {
-      presenters[presenterIndex].setState(stateParser(ssrState.get(presenterIndex)));
-    }
-  }
-
-  for (const presenter of presenters) {
-    // TODO Check renderingDisposition
-    if (presenter.state.status === 'loading') {
-      presenter.pendingPromise = new AbortablePromise(() => {});
+    if (i !== 0) {
+      presenter.parentPresenter = presenters[i - 1];
+      presenters[i - 1].childPresenter = presenter;
     }
   }
 
@@ -72,11 +66,26 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
 
   router['_pubSub'].publish({ type: 'navigate', router, location });
 
-  window.__REACT_CORSAIR_SSR_STATE__ = {
-    set(presenterIndex, stateStr) {
-      presenters[presenterIndex].setState(stateParser(stateStr));
-    },
-  };
+  for (let i = 0; i < presenters.length; ++i) {
+    const presenter = presenters[i];
+
+    // Load on the client side
+    if (presenter.route.renderingDisposition === 'client') {
+      presenter.reload();
+      continue;
+    }
+
+    // Hydrate
+    if (ssrState !== undefined && ssrState.has(i)) {
+      presenter.setState(stateParser(ssrState.get(i)));
+    }
+
+    // Deferred hydration
+    if (presenter.state.status === 'loading') {
+      presenter.promise = new AbortablePromise(noop);
+      presenter.promise.catch(noop);
+    }
+  }
 
   return router;
 }

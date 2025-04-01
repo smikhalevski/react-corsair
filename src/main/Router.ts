@@ -17,7 +17,7 @@ export class Router<Context = any> implements Fallbacks {
   /**
    * Routes that a router can render.
    */
-  routes: Route<any, any, any, Context>[];
+  routes: readonly Route<any, any, any, Context>[];
 
   /**
    * A context provided to {@link RouteOptions.dataLoader route data loaders}.

@@ -71,7 +71,7 @@ export class SSRRouter<Context = any> extends Router<Context> {
     const promises = [];
 
     for (let presenter = this.rootPresenter; presenter !== null; presenter = presenter.childPresenter) {
-      promises.push(presenter.pendingPromise);
+      promises.push(presenter.promise);
     }
 
     return Promise.all(promises).then(() => {
@@ -106,9 +106,9 @@ export class SSRRouter<Context = any> extends Router<Context> {
     let script = '';
 
     for (
-      let presenter = this.rootPresenter, presenterIndex = 0;
+      let presenter = this.rootPresenter, index = 0;
       presenter !== null;
-      presenter = presenter.childPresenter, presenterIndex++
+      presenter = presenter.childPresenter, index++
     ) {
       if (this._hydratedStates.get(presenter) === presenter.state) {
         continue;
@@ -122,7 +122,7 @@ export class SSRRouter<Context = any> extends Router<Context> {
 
       script +=
         's.set(' +
-        presenterIndex +
+        index +
         ',' +
         JSON.stringify(this._stateStringifier(presenter.state)).replace(/</g, '\\u003C') +
         ');';
