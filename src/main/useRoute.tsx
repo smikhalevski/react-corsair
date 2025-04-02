@@ -14,7 +14,7 @@ export const RouteControllerProvider = RouteControllerContext.Provider;
  *
  * @group Hooks
  */
-export function useRoute(): RouteController<object, unknown, unknown>;
+export function useRoute(): RouteController;
 
 /**
  * Returns the controller of the {@link route}.
@@ -29,7 +29,7 @@ export function useRoute<Params extends Dict, Data, Context>(
   route: Route<any, Params, Data, Context>
 ): RouteController<Params, Data, Context>;
 
-export function useRoute(route?: Route): RouteController | null {
+export function useRoute(route?: Route) {
   let controller = useContext(RouteControllerContext);
 
   if (route !== undefined) {
@@ -48,32 +48,4 @@ export function useRoute(route?: Route): RouteController | null {
   useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
   return controller;
-}
-
-/**
- * Returns the {@link route} location params.
- *
- * @param route The route to look up.
- * @template Params Route params.
- * @group Hooks
- */
-export function useRouteParams<Params extends Dict>(route: Route<any, Params>): Params {
-  return useRoute(route).params;
-}
-
-/**
- * Returns the data loaded for the {@link route}.
- *
- * @param route The route to look up.
- * @template Data Data loaded by a route.
- * @group Hooks
- */
-export function useRouteData<Data>(route: Route<any, any, Data>): Data {
-  const { state } = useRoute(route);
-
-  if (state.status !== 'ok') {
-    throw new Error('Cannot be used outside of a successfully loaded route');
-  }
-
-  return state.data;
 }

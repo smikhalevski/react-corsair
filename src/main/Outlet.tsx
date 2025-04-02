@@ -1,5 +1,5 @@
 import React, { Component, ComponentType, createContext, ReactNode, Suspense, useContext } from 'react';
-import { RouteController } from './RouteController';
+import { createErrorState, RouteController } from './RouteController';
 import { Router } from './Router';
 import { redirect } from './redirect';
 import { notFound } from './notFound';
@@ -74,7 +74,7 @@ class OutletErrorBoundary extends Component<OutletErrorBoundaryProps, OutletErro
       return null;
     }
 
-    nextProps.controller.setError(prevState.error);
+    nextProps.controller['_setState'](createErrorState(prevState.error));
 
     return { hasError: false, error: null };
   }
@@ -171,7 +171,7 @@ function OutletContent(props: OutletContentProps): ReactNode {
       component = route.loadingComponent || fallbacks.loadingComponent;
 
       if (component === undefined || canSuspend) {
-        throw controller.promise || new Error('Cannot suspend route controller');
+        throw controller.loadingPromise || new Error('Cannot suspend route controller');
       }
       break;
 

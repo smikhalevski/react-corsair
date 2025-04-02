@@ -73,7 +73,7 @@ export class SSRRouter<Context = any> extends Router<Context> {
     const promises = [];
 
     for (let controller = this.rootController; controller !== null; controller = controller.childController) {
-      promises.push(controller.promise);
+      promises.push(controller.loadingPromise);
     }
 
     return Promise.all(promises).then(() => {

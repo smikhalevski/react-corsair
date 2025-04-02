@@ -87,6 +87,8 @@ describe('navigate', () => {
 
     expect(dataLoaderMock).toHaveBeenCalledTimes(1);
     expect(dataLoaderMock).toHaveBeenNthCalledWith(1, {
+      route,
+      router,
       context: 'xxx',
       isPrefetch: false,
       params: {},
@@ -148,6 +150,8 @@ describe('prefetch', () => {
     expect(lazyComponentMock).toHaveBeenCalledTimes(1);
     expect(dataLoaderMock).toHaveBeenCalledTimes(1);
     expect(dataLoaderMock).toHaveBeenNthCalledWith(1, {
+      route,
+      router,
       context: undefined,
       isPrefetch: true,
       params: { xxx: 111 },

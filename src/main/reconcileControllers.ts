@@ -37,15 +37,12 @@ export function reconcileControllers(router: Router, routeMatches: RouteMatch[])
         controller.fallbackController = replacedController;
       }
 
-      controller.params = routeMatch.params;
-
       replacedController = replacedController.childController;
     } else {
       // Nothing has changed
 
       controller.state = replacedController.state;
-      controller.params = replacedController.params;
-      controller.promise = replacedController.promise;
+      controller.loadingPromise = replacedController.loadingPromise;
 
       replacedController = replacedController.childController;
     }

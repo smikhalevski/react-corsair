@@ -1,14 +1,20 @@
-import { createRoute, Outlet } from '../main';
-import { getOrLoadState } from '../main/RouteController';
+import { createRoute, Outlet, Router } from '../main';
+import { getOrLoadRouteState } from '../main/RouteController';
 
 const Component = () => undefined;
 const { signal } = new AbortController();
 
-describe('loadRoute', () => {
+describe('getOrLoadRouteState', () => {
+  const router = new Router({ routes: [], context: undefined });
+
   test('returns OK state for outlet route', () => {
     const route = createRoute();
 
-    expect(getOrLoadState(route, {}, undefined, signal, false)).toEqual({ status: 'ok', data: undefined });
+    expect(getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })).toEqual({
+      status: 'ok',
+      data: undefined,
+    });
+
     expect(route.component).toBe(Outlet);
   });
 
@@ -17,7 +23,10 @@ describe('loadRoute', () => {
       component: Component,
     });
 
-    expect(getOrLoadState(route, {}, undefined, signal, false)).toEqual({ status: 'ok', data: undefined });
+    expect(getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })).toEqual({
+      status: 'ok',
+      data: undefined,
+    });
   });
 
   test('returns OK state for route with a loader', () => {
@@ -25,7 +34,10 @@ describe('loadRoute', () => {
       dataLoader: () => 111,
     });
 
-    expect(getOrLoadState(route, {}, undefined, signal, false)).toEqual({ status: 'ok', data: 111 });
+    expect(getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })).toEqual({
+      status: 'ok',
+      data: 111,
+    });
   });
 
   test('returns an async OK state for route with a loader', async () => {
@@ -33,7 +45,9 @@ describe('loadRoute', () => {
       dataLoader: () => Promise.resolve(111),
     });
 
-    await expect(getOrLoadState(route, {}, undefined, signal, false)).resolves.toEqual({
+    await expect(
+      getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })
+    ).resolves.toEqual({
       status: 'ok',
       data: 111,
     });
@@ -45,7 +59,9 @@ describe('loadRoute', () => {
     });
 
     expect(route.component).toBe(undefined);
-    await expect(getOrLoadState(route, {}, undefined, signal, false)).resolves.toEqual({
+    await expect(
+      getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })
+    ).resolves.toEqual({
       status: 'ok',
       data: undefined,
     });
@@ -59,7 +75,9 @@ describe('loadRoute', () => {
     });
 
     expect(route.component).toBe(undefined);
-    await expect(getOrLoadState(route, {}, undefined, signal, false)).resolves.toEqual({
+    await expect(
+      getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })
+    ).resolves.toEqual({
       status: 'ok',
       data: 111,
     });
@@ -71,7 +89,9 @@ describe('loadRoute', () => {
       lazyComponent: () => Promise.reject(111),
     });
 
-    await expect(getOrLoadState(route, {}, undefined, signal, false)).resolves.toEqual({
+    await expect(
+      getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })
+    ).resolves.toEqual({
       status: 'error',
       error: 111,
     });
@@ -86,7 +106,10 @@ describe('loadRoute', () => {
     });
 
     expect(route.component).toBe(Outlet);
-    expect(getOrLoadState(route, {}, undefined, signal, false)).toEqual({ status: 'error', error: 111 });
+    expect(getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })).toEqual({
+      status: 'error',
+      error: 111,
+    });
   });
 
   test('returns an error state if loader rejects', async () => {
@@ -94,7 +117,9 @@ describe('loadRoute', () => {
       dataLoader: () => Promise.reject(111),
     });
 
-    await expect(getOrLoadState(route, {}, undefined, signal, false)).resolves.toEqual({
+    await expect(
+      getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })
+    ).resolves.toEqual({
       status: 'error',
       error: 111,
     });
@@ -106,7 +131,9 @@ describe('loadRoute', () => {
       dataLoader: () => Promise.reject(222),
     });
 
-    await expect(getOrLoadState(route, {}, undefined, signal, false)).resolves.toEqual({
+    await expect(
+      getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })
+    ).resolves.toEqual({
       status: 'error',
       error: 222,
     });
@@ -118,7 +145,9 @@ describe('loadRoute', () => {
       dataLoader: () => 'aaa',
     });
 
-    await expect(getOrLoadState(route, {}, undefined, signal, false)).resolves.toEqual({
+    await expect(
+      getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })
+    ).resolves.toEqual({
       status: 'error',
       error: 111,
     });
@@ -131,10 +160,12 @@ describe('loadRoute', () => {
       dataLoader: loaderMock,
     });
 
-    getOrLoadState(route, { aaa: 111 }, { bbb: 222 }, signal, false);
+    getOrLoadRouteState({ route, router, params: { aaa: 111 }, context: { bbb: 222 }, signal, isPrefetch: false });
 
     expect(loaderMock).toHaveBeenCalledTimes(1);
     expect(loaderMock).toHaveBeenNthCalledWith(1, {
+      route,
+      router,
       params: { aaa: 111 },
       context: { bbb: 222 },
       signal,

@@ -42,7 +42,7 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
 
   window.__REACT_CORSAIR_SSR_STATE__ = {
     set(index, stateStr) {
-      controllers[index].setState(stateParser(stateStr));
+      controllers[index]['_setState'](stateParser(stateStr));
     },
   };
 
@@ -87,20 +87,20 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
     // Skip further hydration
     if (controller.route.renderingDisposition !== 'server') {
       for (; i < controllers.length; ++i) {
-        controllers[i].reload();
+        controllers[i].load();
       }
       break;
     }
 
     // Hydrate
     if (ssrState !== undefined && ssrState.has(i)) {
-      controller.setState(stateParser(ssrState.get(i)));
+      controller['_setState'](stateParser(ssrState.get(i)));
     }
 
     // Deferred hydration
     if (controller.state.status === 'loading') {
-      controller.promise = new AbortablePromise(noop);
-      controller.promise.catch(noop);
+      controller.loadingPromise = new AbortablePromise(noop);
+      controller.loadingPromise.catch(noop);
     }
   }
 

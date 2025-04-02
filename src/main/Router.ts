@@ -2,9 +2,9 @@ import { AbortablePromise, PubSub } from 'parallel-universe';
 import { ComponentType } from 'react';
 import { matchRoutes } from './matchRoutes';
 import { Route } from './Route';
-import { Fallbacks, RouterEvent, RouterOptions, To, Location } from './types';
+import { Fallbacks, Location, RouterEvent, RouterOptions, To } from './types';
 import { noop, toLocation } from './utils';
-import { getOrLoadState, RouteController } from './RouteController';
+import { getOrLoadRouteState, RouteController } from './RouteController';
 import { reconcileControllers } from './reconcileControllers';
 
 /**
@@ -15,7 +15,7 @@ import { reconcileControllers } from './reconcileControllers';
  */
 export class Router<Context = any> implements Fallbacks {
   /**
-   * `true` if router is used in SSR environment.
+   * `true` if router is used in the server environment.
    */
   readonly isSSR: boolean = false;
 
@@ -69,28 +69,36 @@ export class Router<Context = any> implements Fallbacks {
    */
   navigate(to: To): void {
     const location = toLocation(to);
-
     const routeMatches = matchRoutes(location.pathname, location.searchParams, this.routes);
-    const rootController = reconcileControllers(this, routeMatches);
+    const prevRootController = this.rootController;
+    const nextRootController = reconcileControllers(this, routeMatches);
 
-    this.rootController = rootController;
+    this.rootController = nextRootController;
     this.location = location;
 
-    this._pubSub.publish({ type: 'navigate', controller: rootController, router: this, location });
+    this._pubSub.publish({ type: 'navigate', controller: nextRootController, router: this, location });
 
-    if (this.rootController !== rootController) {
+    if (this.rootController !== nextRootController) {
       // Navigation was superseded
       return;
     }
 
-    for (let controller = rootController; controller !== null; controller = controller.childController) {
+    // Lookup a controller that requires loading
+    for (let controller = nextRootController; controller !== null; controller = controller.childController) {
       if (this.isSSR && controller.route.renderingDisposition !== 'server') {
         // Cannot load the route and its nested routes on the server
         break;
       }
 
-      controller.reload();
+      if (controller.state.status === 'loading') {
+        // Load controller and its descendants
+        controller.load();
+        break;
+      }
     }
+
+    // Abort loading of the previous navigation
+    prevRootController?.abort();
   }
 
   /**
@@ -102,13 +110,19 @@ export class Router<Context = any> implements Fallbacks {
   prefetch(to: To): AbortablePromise<void> {
     return new AbortablePromise((resolve, _reject, signal) => {
       const location = toLocation(to);
-
       const routeMatches = matchRoutes(location.pathname, location.searchParams, this.routes);
 
       resolve(
         Promise.all(
           routeMatches.map(routeMatch =>
-            getOrLoadState(routeMatch.route, routeMatch.params, this.context, signal, true)
+            getOrLoadRouteState({
+              route: routeMatch.route,
+              router: this,
+              params: routeMatch.params,
+              context: this.context,
+              signal,
+              isPrefetch: true,
+            })
           )
         ).then(noop)
       );

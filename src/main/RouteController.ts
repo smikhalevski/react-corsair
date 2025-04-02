@@ -1,13 +1,13 @@
 import { AbortablePromise } from 'parallel-universe';
 import { Router } from './Router';
-import { isPromiseLike, noop } from './utils';
-import { Dict, Location } from './types';
+import { isPromiseLike, toLocation } from './utils';
+import { DataLoaderOptions, Dict, Location, RouterEvent, To } from './types';
 import { NotFoundError } from './notFound';
 import { Redirect } from './redirect';
 import { Route } from './Route';
 
 /**
- * Manages route rendering in an {@link Outlet}.
+ * Manages state of a route.
  *
  * @group Routing
  */
@@ -28,14 +28,14 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
   childController: RouteController<any, any, Context> | null = null;
 
   /**
-   * A state route managed by the controller.
+   * A promise that settles when the route loading is completed, or `null` if there's no loading in progress.
    */
-  state: RouteState<Data> = { status: 'loading' };
+  loadingPromise: AbortablePromise<void> | null = null;
 
   /**
-   * A promise that settles when the route loading is completed, or `null` if route isn't being loaded.
+   * The current state of the managed route. The state is reflected by an {@link Outlet}.
    */
-  promise: AbortablePromise<void> | null = null;
+  state: RouteState = { status: 'loading' };
 
   /**
    * A router context that was provided to a {@link route} {@link RouteOptions.dataLoader data loader}.
@@ -52,119 +52,193 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
   constructor(
     readonly router: Router<Context>,
     readonly route: Route<any, Params, Data, Context>,
-    public params: Params
+    readonly params: Params
   ) {
     this.context = router.context;
   }
 
   /**
-   * Forces the controller to render {@link RouteOptions.notFoundComponent notFoundComponent}.
+   * Sets {@link NotFoundState} and causes an enclosing {@link Outlet} to render a
+   * {@link RouteOptions.notFoundComponent notFoundComponent}.
    */
   notFound(): void {
-    this.setError(new NotFoundError());
+    this._setState({ status: 'not_found' });
   }
 
   /**
-   * Sets the route state to reflect an {@link error}.
+   * Sets {@link RedirectState} and redirects the router to a new location.
    *
-   * @param error The error to show.
+   * @param to A location or a URL to redirect to.
+   */
+  redirect(to: To | string): void {
+    this._setState({ status: 'redirect', to: typeof to === 'string' ? to : toLocation(to) });
+  }
+
+  /**
+   * Sets {@link ErrorState} with provided {@link error} and notifies {@link router} subscribers.
+   *
+   * @param error The error.
    */
   setError(error: unknown): void {
-    this.setState(createErrorState(error));
+    this._setState({ status: 'error', error });
   }
 
   /**
-   * Sets the route state and notifies router subscribers.
+   * Returns successfully loaded route data or throws an error.
+   */
+  getError(): any {
+    return this.state.status === 'error' ? this.state.error : undefined;
+  }
+
+  /**
+   * Sets {@link OkState} with provided {@link data} and notifies {@link router} subscribers.
    *
-   * @param state The new route state.
+   * @param data The route data.
    */
-  setState(state: RouteState<Data>): void {
-    const routerPubSub = this.router['_pubSub'];
-
-    this.state = state;
-
-    if (state.status === 'loading') {
-      routerPubSub.publish({ type: 'loading', controller: this });
-      return;
-    }
-
-    const { promise } = this;
-
-    this.fallbackController = null;
-    this.promise = null;
-
-    promise?.abort();
-
-    switch (state.status) {
-      case 'ok':
-        routerPubSub.publish({ type: 'ready', controller: this });
-        break;
-
-      case 'error':
-        routerPubSub.publish({ type: 'error', controller: this, error: state.error });
-        break;
-
-      case 'not_found':
-        routerPubSub.publish({ type: 'not_found', controller: this });
-        break;
-
-      case 'redirect':
-        routerPubSub.publish({ type: 'redirect', controller: this, to: state.to });
-        break;
-    }
+  setData(data: Data): void {
+    this._setState({ status: 'ok', data });
   }
 
   /**
-   * Reloads route data and notifies subscribers.
+   * Returns successfully loaded route data or throws an error if data isn't loaded.
    */
-  reload(): void {
-    if (this.promise !== null) {
-      return;
+  getData(): Data {
+    if (this.state.status === 'ok') {
+      return this.state.data;
     }
+    throw new Error('Route does not have loaded data');
+  }
 
-    const abortController = new AbortController();
-    const state = getOrLoadState(this.route, this.params, this.context, abortController.signal, false);
+  /**
+   * Loads route data for this controller and its descendant controllers. Aborts {@link loadingPromise} is any.
+   */
+  load(): void {
+    const prevState = this.state;
 
-    if (!isPromiseLike(state)) {
-      this.setState(state);
-      return;
-    }
+    this.childController?.load();
 
     const promise = new AbortablePromise<void>((resolve, _reject, signal) => {
-      signal.addEventListener('abort', () => {
-        abortController.abort(signal.reason);
-
-        if (this.promise === promise && this.state.status === 'loading') {
-          this.setError(signal.reason);
-        }
+      const state = getOrLoadRouteState({
+        route: this.route,
+        router: this.router,
+        params: this.params,
+        context: this.context,
+        signal,
+        isPrefetch: false,
       });
+
+      if (!isPromiseLike(state)) {
+        this._setState(state);
+        resolve();
+        return;
+      }
 
       state.then(state => {
         if (signal.aborted) {
           return;
         }
-        this.promise = null;
-        this.setState(state);
+        this._setState(state);
         resolve();
       });
     });
 
-    promise.catch(noop);
+    promise.catch(error => {
+      if (this.loadingPromise !== promise) {
+        return;
+      }
 
-    if (this.state.status === 'loading' || this.route.loadingAppearance === 'loading') {
-      this.setState({ status: 'loading' });
+      this.loadingPromise = null;
+
+      if (this.state.status === 'loading') {
+        this.setError(error);
+      }
+    });
+
+    if (this.state !== prevState) {
+      // Loading has completed or was superseded
+      return;
     }
 
-    this.promise = promise;
+    const { loadingPromise } = this;
+
+    this.loadingPromise = promise;
+
+    loadingPromise?.abort();
+
+    if (prevState.status === 'loading') {
+      return;
+    }
+
+    if (this.route.loadingAppearance === 'loading') {
+      this._setState({ status: 'loading' });
+    } else {
+      this.router['_pubSub'].publish({ type: 'loading', controller: this });
+    }
   }
 
   /**
-   * Instantly aborts pending route loading.
+   * Instantly aborts the pending route loading for this controller and its {@link childController}.
    *
    * @param reason The abort reason that is used for rejection of the loading promise.
    */
   abort(reason?: unknown): void {
-    this.promise?.abort(reason);
+    this.childController?.abort(reason);
+
+    this.loadingPromise?.abort(reason);
+  }
+
+  /**
+   * Sets the route state and notifies the router.
+   *
+   * **Notes:**
+   * - {@link fallbackController Fallback} is removed, so if {@link LoadingState} is set, then it would be
+   * revealed to the user.
+   * - Aborts {@link loadingPromise pending route loading}, unless {@link LoadingState} is set.
+   *
+   * @param state The new route state.
+   */
+  protected _setState(state: RouteState): void {
+    const { status } = state;
+
+    let event: RouterEvent;
+
+    switch (status) {
+      case 'ok':
+        event = { type: 'ready', controller: this };
+        break;
+
+      case 'error':
+        event = { type: 'error', controller: this, error: state.error };
+        break;
+
+      case 'not_found':
+        event = { type: 'not_found', controller: this };
+        break;
+
+      case 'redirect':
+        event = { type: 'redirect', controller: this, to: state.to };
+        break;
+
+      case 'loading':
+        event = { type: 'loading', controller: this };
+        break;
+
+      default:
+        throw new Error('Unexpected route status: ' + status);
+    }
+
+    this.fallbackController = null;
+    this.state = state;
+
+    if (state.status !== 'loading') {
+      const { loadingPromise } = this;
+
+      this.loadingPromise = null;
+
+      loadingPromise?.abort();
+    }
+
+    this.router['_pubSub'].publish(event);
   }
 }
 
@@ -172,33 +246,33 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
  * The state of a route that is being actively loaded.
  */
 export interface LoadingState {
-  status: 'loading';
+  readonly status: 'loading';
 }
 
 /**
  * The state of a route for which the component and data were loaded.
  */
 export interface OkState<Data> {
-  status: 'ok';
+  readonly status: 'ok';
 
   /**
    * The data loaded for a route, or `undefined` if route has no {@link RouteOptions.dataLoader dataLoader}.
    */
-  data: Data;
+  readonly data: Data;
 }
 
 export interface ErrorState {
-  status: 'error';
-  error: unknown;
+  readonly status: 'error';
+  readonly error: unknown;
 }
 
 export interface NotFoundState {
-  status: 'not_found';
+  readonly status: 'not_found';
 }
 
 export interface RedirectState {
-  status: 'redirect';
-  to: Location | string;
+  readonly status: 'redirect';
+  readonly to: Location | string;
 }
 
 /**
@@ -213,20 +287,16 @@ export type RouteState<Data = any> = LoadingState | OkState<Data> | ErrorState |
  *
  * A route component is loaded once and cached forever, while data is loaded anew on every call.
  */
-export function getOrLoadState(
-  route: Route,
-  params: unknown,
-  context: unknown,
-  signal: AbortSignal,
-  isPrefetch: boolean
-): RouteState | Promise<RouteState> {
+export function getOrLoadRouteState(options: DataLoaderOptions<any, any>): RouteState | Promise<RouteState> {
+  const { route } = options;
+
   let component;
   let data;
 
   try {
     component = route.getOrLoadComponent();
 
-    data = route.dataLoader === undefined ? undefined : route.dataLoader({ params, context, signal, isPrefetch });
+    data = route.dataLoader === undefined ? undefined : route.dataLoader(options);
   } catch (error) {
     return createErrorState(error);
   }
@@ -242,7 +312,7 @@ function createOkState(data: unknown): RouteState {
   return { status: 'ok', data };
 }
 
-function createErrorState(error: unknown): RouteState {
+export function createErrorState(error: unknown): RouteState {
   if (error instanceof NotFoundError) {
     return { status: 'not_found' };
   }

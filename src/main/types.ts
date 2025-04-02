@@ -131,7 +131,17 @@ export type RenderingDisposition = 'server' | 'client';
  * @template Context A router context.
  * @group Routing
  */
-export interface DataLoaderOptions<Params, Context> {
+export interface DataLoaderOptions<Params extends Dict, Context> {
+  /**
+   * A route for which data is loaded.
+   */
+  route: Route<any, Params, any, Context>;
+
+  /**
+   * A router that triggered data loading.
+   */
+  router: Router<Context>;
+
   /**
    * Route params extracted from a location.
    */
@@ -261,14 +271,14 @@ export interface RouteOptions<Params extends Dict, Data, Context> extends Fallba
    * An adapter that can validate and transform params extracted from the {@link Location.pathname} and
    * {@link Location.searchParams}.
    *
-   * Params are available in route all components via {@link useRouteParams}.
+   * Params are available in route all components via {@link useRoute useRoute().params}.
    */
   paramsAdapter?: ParamsAdapter<Params> | ParamsAdapter<Params>['parse'];
 
   /**
    * A callback that loads data required to render a route.
    *
-   * Loaded data is available in route {@link component} via {@link useRouteData}.
+   * Loaded data is available in route {@link component} via {@link useRoute useRoute().getData()}.
    *
    * @param options Loader options.
    */
