@@ -18,7 +18,7 @@ test('creates a new router instance', () => {
 
   expect(router.routes).toBe(routes);
   expect(router.context).toBe(context);
-  expect(router.rootController).toBe(null);
+  expect(router.rootController).toBeNull();
   expect(router.errorComponent).toBe(errorComponent);
   expect(router.loadingComponent).toBe(loadingComponent);
   expect(router.notFoundComponent).toBe(notFoundComponent);

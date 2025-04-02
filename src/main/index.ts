@@ -45,6 +45,7 @@ export {
   type RouterOptions,
   type NavigateEvent,
   type LoadingEvent,
+  type AbortedEvent,
   type ReadyEvent,
   type ErrorEvent,
   type NotFoundEvent,

@@ -360,6 +360,20 @@ export interface LoadingEvent {
 }
 
 /**
+ * An event published by a {@link Router} when a route loading was aborted.
+ *
+ * @group Routing
+ */
+export interface AbortedEvent {
+  type: 'aborted';
+
+  /**
+   * A controller from which an event originates.
+   */
+  controller: RouteController;
+}
+
+/**
  * An event published by a {@link Router} when a route component and its data are successfully loaded.
  *
  * @group Routing
@@ -439,4 +453,11 @@ export interface RedirectEvent {
  *
  * @group Routing
  */
-export type RouterEvent = NavigateEvent | LoadingEvent | ReadyEvent | ErrorEvent | NotFoundEvent | RedirectEvent;
+export type RouterEvent =
+  | NavigateEvent
+  | LoadingEvent
+  | AbortedEvent
+  | ReadyEvent
+  | ErrorEvent
+  | NotFoundEvent
+  | RedirectEvent;

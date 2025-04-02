@@ -9,7 +9,7 @@ test('returns not found route', () => {
 
   const controller = reconcileControllers(router, []);
 
-  expect(controller).toBe(null);
+  expect(controller).toBeNull();
 });
 
 // test('show previous active controller during loading if loadingAppearance is auto', () => {
@@ -28,7 +28,7 @@ test('returns not found route', () => {
 //   const controller = reconcileControllers(router, [routeMatch]);
 //
 //   expect(controller.fallbackController).toBe(router.controller);
-//   expect(controller.state).toBe(undefined);
+//   expect(controller.state).toBeUndefined();
 // });
 //
 // test('show self during loading if loadingAppearance is loading', () => {
@@ -45,7 +45,7 @@ test('returns not found route', () => {
 //   const controller = reconcileControllers(router, [routeMatch]);
 //
 //   expect(controller.fallbackController).toBe(controller);
-//   expect(controller.state).toBe(undefined);
+//   expect(controller.state).toBeUndefined();
 // });
 
 // test('returns not found route', () => {
@@ -61,9 +61,9 @@ test('returns not found route', () => {
 //   const controller = reconcileControllers(router, [{ route, params: undefined }]);
 //
 //   expect(controller.surrogateController).toBe(controller);
-//   expect(controller.parentController).toBe(null);
-//   expect(controller.childController).toBe(null);
-//   expect(controller.state).toBe(undefined);
+//   expect(controller.parentController).toBeNull();
+//   expect(controller.childController).toBeNull();
+//   expect(controller.state).toBeUndefined();
 //   expect(controller.context).toBe(111);
 //   expect(controller.router).toBe(router);
 //   expect(controller.routeMatch).toEqual({ route, params: undefined });

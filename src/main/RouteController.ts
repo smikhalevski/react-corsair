@@ -1,6 +1,6 @@
 import { AbortablePromise } from 'parallel-universe';
 import { Router } from './Router';
-import { isPromiseLike, toLocation } from './utils';
+import { isPromiseLike, noop, toLocation } from './utils';
 import { DataLoaderOptions, Dict, Location, RouterEvent, To } from './types';
 import { NotFoundError } from './notFound';
 import { Redirect } from './redirect';
@@ -124,6 +124,18 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
     this.childController?.load();
 
     const promise = new AbortablePromise<void>((resolve, _reject, signal) => {
+      signal.addEventListener('abort', () => {
+        if (this.loadingPromise === promise) {
+          this.loadingPromise = null;
+
+          if (this.state.status === 'loading') {
+            this.setError(signal.reason);
+          }
+        }
+
+        this.router['_pubSub'].publish({ type: 'aborted', controller: this });
+      });
+
       const state = getOrLoadRouteState({
         route: this.route,
         router: this.router,
@@ -143,22 +155,13 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
         if (signal.aborted) {
           return;
         }
+        this.loadingPromise = null;
         this._setState(state);
         resolve();
       });
     });
 
-    promise.catch(error => {
-      if (this.loadingPromise !== promise) {
-        return;
-      }
-
-      this.loadingPromise = null;
-
-      if (this.state.status === 'loading') {
-        this.setError(error);
-      }
-    });
+    promise.catch(noop);
 
     if (this.state !== prevState) {
       // Loading has completed or was superseded
@@ -171,15 +174,12 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
 
     loadingPromise?.abort();
 
-    if (prevState.status === 'loading') {
+    if (prevState.status !== 'ok' || this.route.loadingAppearance === 'loading') {
+      this._setState({ status: 'loading' });
       return;
     }
 
-    if (this.route.loadingAppearance === 'loading') {
-      this._setState({ status: 'loading' });
-    } else {
-      this.router['_pubSub'].publish({ type: 'loading', controller: this });
-    }
+    this.router['_pubSub'].publish({ type: 'loading', controller: this });
   }
 
   /**
