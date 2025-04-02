@@ -104,6 +104,21 @@ class OutletErrorBoundary extends Component<OutletErrorBoundaryProps, OutletErro
   render(): ReactNode {
     const { controller } = this.props;
 
+    const canSuspend =
+      controller.fallbackController !== null ||
+      (controller.parentController === null
+        ? controller.route.loadingComponent || controller.router.loadingComponent
+        : controller.route.loadingComponent) !== undefined;
+
+    if (!canSuspend) {
+      return (
+        <OutletContent
+          controller={controller}
+          isSuspended={false}
+        />
+      );
+    }
+
     return (
       <Suspense
         fallback={
@@ -112,14 +127,14 @@ class OutletErrorBoundary extends Component<OutletErrorBoundaryProps, OutletErro
           ) : (
             <OutletContent
               controller={controller}
-              canSuspend={false}
+              isSuspended={true}
             />
           )
         }
       >
         <OutletContent
           controller={controller}
-          canSuspend={true}
+          isSuspended={false}
         />
       </Suspense>
     );
@@ -128,14 +143,14 @@ class OutletErrorBoundary extends Component<OutletErrorBoundaryProps, OutletErro
 
 interface OutletContentProps {
   controller: RouteController;
-  canSuspend: boolean;
+  isSuspended: boolean;
 }
 
 /**
  * Renders controller according to its status.
  */
 function OutletContent(props: OutletContentProps): ReactNode {
-  const { controller, canSuspend } = props;
+  const { controller, isSuspended } = props;
   const { route } = controller;
   const { status } = controller.state;
 
@@ -146,6 +161,11 @@ function OutletContent(props: OutletContentProps): ReactNode {
 
   switch (status) {
     case 'ok':
+      if (isSuspended) {
+        component = route.loadingComponent || fallbacks.loadingComponent!;
+        break;
+      }
+
       component = route.component;
       childController = controller.childController;
 
@@ -173,7 +193,7 @@ function OutletContent(props: OutletContentProps): ReactNode {
     case 'loading':
       component = route.loadingComponent || fallbacks.loadingComponent;
 
-      if (component === undefined || canSuspend) {
+      if (component === undefined || !isSuspended) {
         throw controller.loadingPromise || new Error('Cannot suspend route controller');
       }
       break;

@@ -41,7 +41,7 @@ describe('RouteController', () => {
     });
 
     test('aborts loading promise', async () => {
-      const promise = new AbortablePromise<void>(() => {});
+      const promise = new AbortablePromise<void>(noop);
 
       controller.loadingPromise = promise;
       controller.notFound();
@@ -72,7 +72,7 @@ describe('RouteController', () => {
     });
 
     test('aborts loading promise', async () => {
-      const promise = new AbortablePromise<void>(() => {});
+      const promise = new AbortablePromise<void>(noop);
 
       controller.loadingPromise = promise;
       controller.redirect(route.getLocation(undefined));
@@ -96,7 +96,7 @@ describe('RouteController', () => {
     });
 
     test('aborts loading promise', async () => {
-      const promise = new AbortablePromise<void>(() => {});
+      const promise = new AbortablePromise<void>(noop);
 
       controller.loadingPromise = promise;
       controller.setError(error);
@@ -132,7 +132,7 @@ describe('RouteController', () => {
     });
 
     test('aborts loading promise', async () => {
-      const promise = new AbortablePromise<void>(() => {});
+      const promise = new AbortablePromise<void>(noop);
 
       controller.loadingPromise = promise;
       controller.setData(data);
