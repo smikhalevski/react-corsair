@@ -16,7 +16,7 @@ export const OutletContentProvider = OutletContentContext.Provider;
 /**
  * Renders a controller {@link RouterProvider provided by an enclosing router}.
  *
- * @group Components
+ * @group Routing
  */
 export function Outlet(): ReactNode {
   const content = useContext(OutletContentContext);
@@ -38,6 +38,9 @@ export function Outlet(): ReactNode {
   );
 }
 
+/**
+ * @internal
+ */
 Outlet.displayName = 'Outlet';
 
 interface OutletErrorBoundaryProps {

@@ -1,4 +1,4 @@
-import { parseLocation, stringifyLocation } from '../../main';
+import { parseLocation, stringifyLocation } from '../../main/history';
 import { concatPathname, debasePathname } from '../../main/history/utils';
 
 describe('stringifyLocation', () => {

@@ -12,7 +12,7 @@ export const RouteControllerProvider = RouteControllerContext.Provider;
 /**
  * Returns the route controller provided by the enclosing {@link Outlet}.
  *
- * @group Hooks
+ * @group Routing
  */
 export function useRoute(): RouteController;
 
@@ -23,7 +23,7 @@ export function useRoute(): RouteController;
  * @template Params Route params.
  * @template Data Data loaded by a route.
  * @template Context A router context.
- * @group Hooks
+ * @group Routing
  */
 export function useRoute<Params extends Dict, Data, Context>(
   route: Route<any, Params, Data, Context>

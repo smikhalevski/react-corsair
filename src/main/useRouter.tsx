@@ -10,7 +10,7 @@ RouterContext.displayName = 'RouterContext';
 /**
  * Returns a router provided by an enclosing {@link RouterProvider}.
  *
- * @group Hooks
+ * @group Routing
  */
 export function useRouter(): Router {
   const router = useContext(RouterContext);
@@ -25,7 +25,7 @@ export function useRouter(): Router {
 /**
  * Props of the {@link RouterProvider} component.
  *
- * @group Components
+ * @group Routing
  */
 export interface RouterProviderProps {
   /**
@@ -42,7 +42,7 @@ export interface RouterProviderProps {
 /**
  * Provides {@link Router} to underlying components.
  *
- * @group Components
+ * @group Routing
  */
 export function RouterProvider(props: RouterProviderProps): ReactElement {
   const { router, children = <Outlet /> } = props;

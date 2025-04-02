@@ -5,7 +5,7 @@ import { SSRRouter, SSRRouterOptions } from '../SSRRouter';
  * Streaming router for NodeJS environment.
  *
  * @template Context A context provided to {@link react-corsair!RouteOptions.dataLoader route data loaders}.
- * @group SSR
+ * @group Server-Side Rendering
  */
 export class PipeableSSRRouter<Context> extends SSRRouter<Context> {
   /**

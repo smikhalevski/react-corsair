@@ -21,8 +21,14 @@
     "skipLibCheck": true
   },
   "customCss": "./node_modules/typedoc-custom-css/custom.css",
-  "entryPoints": ["./src/main/index.ts", "./src/main/ssr/index.ts", "./src/main/ssr/node/index.ts"],
+  "entryPoints": [
+    "./src/main/index.ts",
+    "./src/main/history/index.ts",
+    "./src/main/ssr/index.ts",
+    "./src/main/ssr/node/index.ts"
+  ],
   "intentionallyNotExported": ["Dict", "PartialAsVoid", "LOCATION_PARAMS"],
+  "kindSortOrder": ["Function", "Class", "Variable", "TypeAlias"],
   "externalSymbolLinkMappings": {
     "react": {
       "ComponentType": "https://react.dev/reference/react/createElement",

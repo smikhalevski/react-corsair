@@ -9,7 +9,7 @@ import { History } from './types';
  * const { location } = useHistorySubscription(useHistory());
  *
  * @param history The history to subscribe to.
- * @group Hooks
+ * @group History
  */
 export function useHistorySubscription(history: History): History {
   const getLocation = () => history.location;

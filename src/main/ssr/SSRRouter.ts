@@ -6,7 +6,7 @@ import { RouteController, RouteState } from '../RouteController';
  * Options provided to the {@link SSRRouter} constructor.
  *
  * @template Context A context provided to {@link react-corsair!RouteOptions.dataLoader route data loaders}.
- * @group SSR
+ * @group Server-Side Rendering
  */
 export interface SSRRouterOptions<Context> extends RouterOptions<Context> {
   /**
@@ -28,7 +28,7 @@ export interface SSRRouterOptions<Context> extends RouterOptions<Context> {
  * The base implementation of a router that supports client hydration after SSR.
  *
  * @template Context A context provided to {@link react-corsair!RouteOptions.dataLoader route data loaders}.
- * @group SSR
+ * @group Server-Side Rendering
  */
 export class SSRRouter<Context = any> extends Router<Context> {
   /**

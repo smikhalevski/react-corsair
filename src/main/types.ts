@@ -64,7 +64,6 @@ export interface LocationOptions {
  * An adapter that can validate and transform route params.
  *
  * @template Params Route params.
- * @see {@link jsonSearchParamsAdapter}
  * @group Routing
  */
 export interface ParamsAdapter<Params> {
@@ -125,7 +124,7 @@ export type LoadingAppearance = 'loading' | 'route_loading' | 'avoid';
 export type RenderingDisposition = 'server' | 'client';
 
 /**
- * Options of a {@link RouteOptions.dataLoader data loader}.
+ * Options of a route {@link RouteOptions.dataLoader data loader}.
  *
  * @template Params Route params.
  * @template Context A router context.
@@ -172,7 +171,7 @@ export interface Fallbacks {
   /**
    * A component that is rendered when an error was thrown during route rendering.
    *
-   * A {@link react-corsair!Router}-level {@link errorComponent} is used only for root routes. Nested routes must
+   * A {@link react-corsair!Router Router}-level {@link errorComponent} is used only for root routes. Nested routes must
    * specify their own {@link react-corsair!RouteOptions.errorComponent error components}.
    *
    * Routes without an {@link errorComponent} don't have an error boundary.
@@ -183,24 +182,26 @@ export interface Fallbacks {
    * A component that is rendered when a {@link RouteOptions.lazyComponent lazyComponent} or a {@link RouteOptions.dataLoader dataLoader}
    * are being loaded. Render a skeleton or a spinner in this component to notify user that a new route is being loaded.
    *
-   * A {@link react-corsair!Router}-level {@link loadingComponent} is used only for root routes. Child routes must
-   * specify their own {@link react-corsair!RouteOptions.loadingComponent loading components}.
+   * A {@link react-corsair!Router Router}-level {@link loadingComponent} is used only for root routes. Child routes
+   * must specify their own {@link react-corsair!RouteOptions.loadingComponent loading components}.
    *
    * Routes without a {@link loadingComponent} suspend a parent route.
    */
   loadingComponent?: ComponentType;
 
   /**
-   * A component that is rendered if {@link react-corsair!notFound} was called during route rendering or if there's
-   * no route that matches the location a router was navigated to.
+   * A component that is rendered if {@link react-corsair!notFound notFound} was called during route rendering
+   * or if there's no route that matches the location a router was navigated to.
    *
-   * Routes without {@link notFoundComponent} propagate {@link react-corsair!notFound} to a parent route.
+   * Routes without {@link notFoundComponent} propagate {@link react-corsair!notFound notFound} to a parent route.
    */
   notFoundComponent?: ComponentType;
 }
 
 /**
  * A lazily imported module that exports a React component.
+ *
+ * @group Routing
  */
 export interface ComponentModule {
   /**

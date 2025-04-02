@@ -35,8 +35,8 @@ export class Router<Context = any> implements Fallbacks {
   location: Location | null = null;
 
   /**
-   * A root controller rendered in a router {@link react-corsair!Outlet}, or `null` if there's no matching route or if
-   * {@link navigate navigation} didn't occur yet.
+   * A root controller rendered in a router {@link react-corsair!Outlet Outlet}, or `null` if there's no matching route
+   * or if {@link navigate navigation} didn't occur yet.
    *
    * @see {@link navigate}
    */
@@ -49,7 +49,7 @@ export class Router<Context = any> implements Fallbacks {
   protected _pubSub = new PubSub<RouterEvent>();
 
   /**
-   * Creates a new instance of a {@link react-corsair!Router}.
+   * Creates a new instance of a {@link react-corsair!Router Router}.
    *
    * @param options Router options.
    * @template Context A context provided to {@link react-corsair!RouteOptions.dataLoader route data loaders}.

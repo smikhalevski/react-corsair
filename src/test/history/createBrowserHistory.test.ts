@@ -1,5 +1,5 @@
 import { delay } from 'parallel-universe';
-import { createBrowserHistory, jsonSearchParamsAdapter } from '../../main';
+import { createBrowserHistory, jsonSearchParamsAdapter } from '../../main/history';
 
 test('removes base from location', async () => {
   window.history.pushState(null, '', '/aaa/bbb');

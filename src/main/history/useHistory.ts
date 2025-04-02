@@ -8,7 +8,7 @@ HistoryContext.displayName = 'HistoryContext';
 /**
  * Provides {@link History} instance to nested elements.
  *
- * @group Hooks
+ * @group History
  */
 export const HistoryProvider = HistoryContext.Provider;
 
@@ -18,7 +18,7 @@ export const HistoryProvider = HistoryContext.Provider;
  * **Note:** {@link useHistory} doesn't re-render a component when a history gets updated.
  * Use {@link useHistorySubscription} to re-render a component when a location is changed.
  *
- * @group Hooks
+ * @group History
  */
 export function useHistory(): History {
   const history = useContext(HistoryContext);

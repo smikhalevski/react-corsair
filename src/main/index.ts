@@ -3,31 +3,22 @@
  *
  * ```ts
  * import { createRoute } from 'react-corsair';
+ *
+ * const fooRoute = createRoute('/foo', () => import('./Foo.js'));
  * ```
  *
  * @module react-corsair
  */
 
-export { createBrowserHistory } from './history/createBrowserHistory';
-export { createHashHistory } from './history/createHashHistory';
-export { createMemoryHistory } from './history/createMemoryHistory';
-export { jsonSearchParamsAdapter } from './history/jsonSearchParamsAdapter';
-export { Link, type LinkProps } from './history/Link';
-export { useHistory, HistoryProvider } from './history/useHistory';
-export { useHistorySubscription } from './history/useHistorySubscription';
-export { parseLocation, stringifyLocation } from './history/utils';
-export { type HistoryOptions, type History, type SearchParamsAdapter } from './history/types';
-
 export { createRoute } from './createRoute';
 export { hydrateRouter, type HydrateRouterOptions } from './hydrateRouter';
-export { notFound, NotFoundError } from './notFound';
+export { notFound } from './notFound';
+export { Outlet } from './Outlet';
 export { PathnameTemplate, type PathnameMatch } from './PathnameTemplate';
 export { Prefetch, type PrefetchProps } from './Prefetch';
 export { redirect, Redirect } from './redirect';
 export { Route, type InferLocationParams } from './Route';
 export { Router } from './Router';
-
-// --------------------
 export {
   RouteController,
   type LoadingState,
@@ -37,12 +28,9 @@ export {
   type RedirectState,
   type RouteState,
 } from './RouteController';
-
-export { Outlet } from './Outlet';
 export { usePrefetch } from './usePrefetch';
-export { useRouter, RouterProvider, type RouterProviderProps } from './useRouter';
 export { useRoute } from './useRoute';
-
+export { useRouter, RouterProvider, type RouterProviderProps } from './useRouter';
 export {
   type To,
   type Location,

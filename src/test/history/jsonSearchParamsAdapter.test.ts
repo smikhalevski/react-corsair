@@ -1,4 +1,4 @@
-import { jsonSearchParamsAdapter as adapter } from '../../main';
+import { jsonSearchParamsAdapter as adapter } from '../../main/history';
 
 test('stringifies search params', () => {
   expect(adapter.stringify({})).toBe('');

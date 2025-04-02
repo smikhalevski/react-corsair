@@ -7,6 +7,8 @@ import { AbortablePromise } from 'parallel-universe';
 
 /**
  * Options provided to {@link hydrateRouter}.
+ *
+ * @group Server-Side Rendering
  */
 export interface HydrateRouterOptions {
   /**
@@ -29,6 +31,7 @@ export interface HydrateRouterOptions {
  * @param options Hydration options.
  * @returns The provided router.
  * @template T The hydrated router.
+ * @group Server-Side Rendering
  */
 export function hydrateRouter<T extends Router>(router: T, to: To, options: HydrateRouterOptions = {}): T {
   const { stateParser = JSON.parse } = options;

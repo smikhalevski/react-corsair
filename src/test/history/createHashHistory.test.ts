@@ -1,5 +1,5 @@
 import { delay } from 'parallel-universe';
-import { createHashHistory, jsonSearchParamsAdapter } from '../../main';
+import { createHashHistory, jsonSearchParamsAdapter } from '../../main/history';
 
 test('pushes location', async () => {
   const aaaLocation = { pathname: '/aaa', searchParams: {}, hash: '' };

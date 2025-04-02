@@ -7,8 +7,11 @@ import { Redirect } from './redirect';
 import { Route } from './Route';
 
 /**
- * Manages state of a route.
+ * Manages state of a route rendered in an {@link Outlet}.
  *
+ * @template Params Route params.
+ * @template Data Data loaded by a route.
+ * @template Context A router context.
  * @group Routing
  */
 export class RouteController<Params extends Dict = any, Data = any, Context = any> {
@@ -43,11 +46,14 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
   readonly context: Context;
 
   /**
-   * Create a new {@link RouteController} instance.
+   * Creates a new {@link RouteController} instance.
    *
    * @param router The router that this controller belongs to.
    * @param route The route this controller loads.
    * @param params Route params.
+   * @template Params Route params.
+   * @template Data Data loaded by a route.
+   * @template Context A router context.
    */
   constructor(
     readonly router: Router<Context>,
@@ -244,6 +250,8 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
 
 /**
  * The state of a route that is being actively loaded.
+ *
+ * @group Routing
  */
 export interface LoadingState {
   readonly status: 'loading';
@@ -251,6 +259,9 @@ export interface LoadingState {
 
 /**
  * The state of a route for which the component and data were loaded.
+ *
+ * @template Data Data loaded by a route.
+ * @group Routing
  */
 export interface OkState<Data> {
   readonly status: 'ok';
@@ -261,15 +272,24 @@ export interface OkState<Data> {
   readonly data: Data;
 }
 
+/**
+ * @group Routing
+ */
 export interface ErrorState {
   readonly status: 'error';
   readonly error: unknown;
 }
 
+/**
+ * @group Routing
+ */
 export interface NotFoundState {
   readonly status: 'not_found';
 }
 
+/**
+ * @group Routing
+ */
 export interface RedirectState {
   readonly status: 'redirect';
   readonly to: Location | string;
@@ -278,6 +298,7 @@ export interface RedirectState {
 /**
  * State used by a {@link RouteController}.
  *
+ * @template Data Data loaded by a route.
  * @group Routing
  */
 export type RouteState<Data = any> = LoadingState | OkState<Data> | ErrorState | NotFoundState | RedirectState;

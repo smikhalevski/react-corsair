@@ -11,6 +11,11 @@
       "import": "./index.mjs",
       "require": "./index.js"
     },
+    "./history": {
+      "types": "./history/index.d.ts",
+      "import": "./history/index.mjs",
+      "require": "./history/index.js"
+    },
     "./ssr": {
       "types": "./ssr/index.d.ts",
       "import": "./ssr/index.mjs",

@@ -14,7 +14,7 @@ import { useRouter } from './useRouter';
  *
  * @param to A location or a route to prefetch.
  * @see {@link Prefetch}
- * @group Hooks
+ * @group Prefetching
  */
 export function usePrefetch(to: To): void {
   const toRef = useRef<To>();

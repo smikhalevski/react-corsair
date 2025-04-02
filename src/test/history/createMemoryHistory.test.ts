@@ -1,4 +1,5 @@
-import { createMemoryHistory, createRoute } from '../../main';
+import { createMemoryHistory } from '../../main/history';
+import { createRoute } from '../../main';
 
 test('throws if there is no initial entry', () => {
   expect(() => createMemoryHistory([])).toThrow(new Error('Expected at least one initial entry'));

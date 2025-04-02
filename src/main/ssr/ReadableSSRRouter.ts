@@ -6,7 +6,7 @@ import { SSRRouter, SSRRouterOptions } from './SSRRouter';
  * into the after each chunk from the read side.
  *
  * @template Context A context provided to {@link react-corsair!RouteOptions.dataLoader route data loaders}.
- * @group SSR
+ * @group Server-Side Rendering
  */
 export class ReadableSSRRouter<Context = any> extends SSRRouter<Context> implements ReadableWritablePair {
   readonly readable: ReadableStream;
