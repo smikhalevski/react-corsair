@@ -183,7 +183,7 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
   }
 
   /**
-   * Instantly aborts the pending route loading for this controller and its {@link childController}.
+   * Instantly aborts the pending route loading for this controller and its descendants.
    *
    * @param reason The abort reason that is used for rejection of the loading promise.
    */

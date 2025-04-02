@@ -136,4 +136,14 @@ export class SSRRouter<Context = any> extends Router<Context> {
 
     return script;
   }
+
+  /**
+   * Instantly aborts the pending route loading for the {@link react-corsair!rootController rootController} and its
+   * descendants.
+   *
+   * @param reason The abort reason that is used for rejection of the loading promise.
+   */
+  abort(reason?: unknown): void {
+    this.rootController?.abort(reason);
+  }
 }
