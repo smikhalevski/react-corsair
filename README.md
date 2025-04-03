@@ -10,9 +10,12 @@
 npm install --save-prod react-corsair
 ```
 
-&ensp; 🔥 [**Live example**](https://codesandbox.io/p/sandbox/react-corsair-example-mzjzcm)
+🔥&ensp;[**Live example**](https://codesandbox.io/p/sandbox/react-corsair-example-mzjzcm)
 
-- [Overview](#overview)
+👋&ensp;[Overview](#overview)
+
+🔰&ensp;**Features**
+
 - [Routing](#routing)
 - [Parameterized routes](#parameterized-routes)
 - [Pathname templates](#pathname-templates)
@@ -25,6 +28,13 @@ npm install --save-prod react-corsair
 - [Redirects](#redirects)
 - [Prefetching](#prefetching)
 - [History integration](#history-integration)
+
+🚀&ensp;[**Server-side rendering**](#server-side-rendering)
+
+- [Render to string](#render-to-string)
+- [Streaming SSR](#streaming-ssr)
+- [State serialization](#state-serialization)
+- [Content-Security-Policy support](#content-security-policy-support)
 
 # Overview
 
@@ -332,9 +342,9 @@ createRoute('/foo%3Abar');
 # Outlets
 
 Route components are rendered inside
-an [`Outlet`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.Outlet.html). If you don't render
-an `Outlet` explicitly then
-[`RouteProvider`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.RouterProvider.html) would
+an [`<Outlet>`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.Outlet.html). If you don't render
+an outlet explicitly then
+[`<RouterProvider>`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.RouterProvider.html) would
 implicitly do it for you:
 
 ```tsx
@@ -358,7 +368,7 @@ function App() {
 }
 ```
 
-You can provide children to `RouterProvider`:
+You can provide children to `<RouterProvider>`:
 
 ```tsx
 function App() {
@@ -392,7 +402,7 @@ childRoute.getLocation();
 ```
 
 Routes are [rendered inside outlets](#outlets), so `ParentPage` should
-render an [`Outlet`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.Outlet.html) to give place for
+render an [`<Outlet>`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.Outlet.html) to give place for
 a `ChildPage`:
 
 ```tsx
@@ -426,7 +436,7 @@ The rendered output would be:
 <section><em>Hello</em></section>
 ```
 
-If you create a route without specifying a component, it would render an `Outlet` by default:
+If you create a route without specifying a component, it would render an `<Outlet>` by default:
 
 ```diff
 - const parentRoute = createRoute('/parent', ParentPage);
@@ -453,14 +463,14 @@ const userRoute = createRoute({
 });
 ```
 
-When router is navigated to the `userRoute`, a chunk that contains `UserPage` is loaded and rendered. The loaded
-component is cached, so next time the `userRoute` is matched, `UserPage` would be rendered instantly.
+When router is navigated to the `userRoute`, a chunk that contains `<UserPage>` is loaded and rendered. The loaded
+component is cached, so next time the `userRoute` is matched, `<UserPage>` would be rendered instantly.
 
 By default, while a lazy component is being loaded, router would still render the previously matched route.
 
 But what is rendered if the first ever route matched by the router has a lazy component and there's no content yet
 on the screen? By default, an promise would be thrown so you can wrap
-[`RouteProvider`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.RouterProvider.html) in a custom
+[`<RouterProvider>`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.RouterProvider.html) in a custom
 `Suspense` boundary.
 
 You may want to provide a
@@ -552,7 +562,7 @@ const userRoute = createRoute<{ userId: string }, User>({
 [`dataLoader`](https://smikhalevski.github.io/react-corsair/classes/react_corsair.Route.html#dataLoader) is called every
 time router is navigated to `userRoute`. While data is being loaded
 [`loadingComponent`](https://smikhalevski.github.io/react-corsair/classes/react_corsair.Route.html#loadingComponent) is
-rendered instead of the `UserPage`.
+rendered instead of the `<UserPage>`.
 
 You can access the loaded data in your route component using
 the [`useRoute`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.useRoute.html) hook:
@@ -774,10 +784,6 @@ React Corsair provides a seamless history integration:
 import { Router, RouterProvider, userRoute } from 'react-corsair';
 import { createBrowserHistory, HistoryProvider } from 'react-corsair/history';
 
-const usersRoute = createRoute<{ userId: string }>('/users/:userId', UserPage);
-
-const productRoute = createRoute<{ sku: string }>('/products/:sku', ProductPage);
-
 // 1️⃣ Create a history adapter
 const history = createBrowserHistory();
 
@@ -801,6 +807,7 @@ router.subscribe(event => {
 
 function App() {
   return (
+    // 5️⃣ Provide history to components
     <HistoryProvider history={history}>
       <RouterProvider router={router}/>
     </HistoryProvider>
@@ -808,7 +815,9 @@ function App() {
 }
 ```
 
-To trigger navigation, push or replace the history location:
+[Push](https://smikhalevski.github.io/react-corsair/interfaces/history.History.html#push) or
+[replace](https://smikhalevski.github.io/react-corsair/interfaces/history.History.html#replace) the history location
+from route components:
 
 ```tsx
 import { useHistory } from 'react-corsair/history';
@@ -854,6 +863,277 @@ Links can automatically [prefetch](#prefetching) a route component and [related 
 >
   {'Go to product'}
 </Link>
+```
+
+# Server-side rendering
+
+Routes can be hydrated on the client after being navigated to on the server.
+
+To enable hydration on the client, create
+a [`Router`](https://smikhalevski.github.io/react-corsair/classes/react_corsair.Router.html) and call
+[`hydrateRouter`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.hydrateRouter.html) with the
+same location you used on the server:
+
+```tsx
+import React from 'react';
+import { hydrateRoot } from 'react-dom/client';
+import { createBrowserHistory } from 'react-router/history';
+import { hydrateRouter, Router, RouterProvider } from 'react-router';
+
+const history = createBrowserHistory();
+
+const router = new Router({
+  // 1️⃣ Must be the same routes as on the server
+  routes: [],
+  context: undefined
+});
+
+// 2️⃣ Hydrates routes on the client with the server data
+hydrateRouter(router, history.location);
+
+// 3️⃣ Render your app
+hydrateRoot(document, <RouterProvider value={router}/>);
+```
+
+[`hydrateRouter`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.hydrateRouter.html)
+must be called only once, and only one router on the client-side can receive the dehydrated state from the server.
+
+On the server, you can either render your app contents [as a string](#render-to-string) and send it to the client in one
+go, or [stream the contents](#streaming-ssr).
+
+## Render to string
+
+To render your app as an HTML string
+use [`SSRRouter`](https://smikhalevski.github.io/react-corsair/classes/ssr.SSRRouter.html):
+
+```tsx
+import { createServer } from 'http';
+import { renderToString } from 'react-dom/server';
+import { RouterProvider } from 'react-corsair';
+import { createMemoryHistory, parseLocation } from 'react-corsair/history';
+import { SSRRouter } from 'react-corsair/ssr';
+
+const server = createServer(async (request, response) => {
+  
+  // 1️⃣ Create a new history for each request
+  const history = createMemoryHistory([parseLocation(request.url)]);
+
+  // 2️⃣ Create a new router for each request
+  const router = new SSRRouter({
+    routes: [],
+    context: undefined
+  });
+  
+  // 3️⃣ Navigate to a requested route
+  router.navigate(history.location);
+
+  let html;
+
+  // 4️⃣ Render until there are no more changes
+  while (await router.hasChanges()) {
+    html = renderToString(
+      <HistoryProvider history={history}>
+        <RouterProvider router={router}/>
+      </HistoryProvider>
+    );
+  }
+
+  // 5️⃣ Attach dehydrated route states
+  html += router.nextHydrationChunk();
+
+  // 6️⃣ Send the rendered HTML to the client
+  response.end(html);
+});
+
+server.listen(8080);
+```
+
+Don't forget to inject chunk with your application code:
+
+```ts
+html += '<script src="/client.js" async></script>';
+```
+
+A new router and a new history must be created for each request, so the results that are stored in router are served in
+response to a particular request.
+
+[`hasChanges`](https://smikhalevski.github.io/react-corsair/classes/ssr.SSRRouter.html#hasChanges) would
+resolve with `true` if state of some routes have changed during rendering.
+
+The hydration chunk returned
+by [`nextHydrationChunk`](https://smikhalevski.github.io/react-corsair/classes/ssr.SSRRouter.html#nextHydrationChunk)
+contains the `<script>` tag that hydrates the router for which
+[`hydrateRouter`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.hydrateRouter.html)
+was invoked.
+
+## Streaming SSR
+
+Thanks to `Suspense`, React can stream parts of your app while it is being rendered. React Corsair provides
+API to inject its hydration chunks into a streaming process. The API is different for NodeJS streams and
+[Readable Web Streams](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream).
+
+In NodeJS environment
+use [`PipeableSSRRouter`](https://smikhalevski.github.io/react-corsair/classes/ssr_node.PipeableSSRRouter.html)
+
+```tsx
+import { createServer } from 'http';
+import { renderToPipeableStream } from 'react-dom/server';
+import { RouterProvider } from 'react-corsair';
+import { createMemoryHistory, parseLocation } from 'react-corsair/history';
+import { PipeableSSRRouter } from 'react-corsair/ssr/node';
+
+const server = createServer((request, response) => {
+
+  // 1️⃣ Create a new history for each request
+  const history = createMemoryHistory([parseLocation(request.url)]);
+
+  // 2️⃣ Create a new router for each request
+  const router = new PipeableSSRRouter(response, {
+    routes: [],
+    context: undefined
+  });
+
+  // 3️⃣ Navigate to a requested route
+  router.navigate(history.location);
+
+  const stream = renderToPipeableStream(
+    <HistoryProvider history={history}>
+      <RouterProvider router={router}/>
+    </HistoryProvider>,
+    {
+      bootstrapScripts: ['/client.js'],
+
+      onShellReady() {
+        // 4️⃣ Pipe the rendering output to the router's stream
+        stream.pipe(router.stream);
+      },
+    }
+  );
+});
+
+server.listen(8080);
+```
+
+Router hydration chunks are streamed to the client along with chunks rendered by React.
+
+### Readable web streams support
+
+To enable streaming in a modern environment,
+use [`ReadableSSRRouter`](https://smikhalevski.github.io/react-corsair/classes/ssr.ReadableSSRRouter.html)
+
+```tsx
+import { createServer } from 'http';
+import { renderToPipeableStream } from 'react-dom/server';
+import { RouterProvider } from 'react-corsair';
+import { createMemoryHistory, parseLocation } from 'react-corsair/history';
+import { ReadableSSRRouter } from 'react-corsair/ssr';
+
+async function handler(request) {
+
+  // 1️⃣ Create a new history for each request
+  const history = createMemoryHistory([parseLocation(request.url)]);
+
+  // 2️⃣ Create a new router for each request
+  const router = new ReadableSSRRouter({
+    routes: [],
+    context: undefined
+  });
+
+  // 3️⃣ Navigate to a requested route
+  router.navigate(history.location);
+  
+  const stream = await renderToReadableStream(
+    <HistoryProvider history={history}>
+      <RouterProvider router={router}/>
+    </HistoryProvider>,
+    {
+      bootstrapScripts: ['/client.js'],
+    }
+  );
+
+  // 2️⃣ Pipe the response through the router
+  return new Response(stream.pipeThrough(router), {
+    headers: { 'content-type': 'text/html' },
+  });
+}
+```
+
+Router hydration chunks are streamed to the client along with chunks rendered by React.
+
+## State serialization
+
+By default, state of a hydrated route is serialized using
+[`JSON.stringify`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify) that
+has quite a few limitations. If your route [stores data](#data-loading) that may contain circular references,
+or non-serializable data like `BigInt`, use a custom state serialization.
+
+On the client, pass
+a [`stateParser`](https://smikhalevski.github.io/react-corsair/interfaces/react_corsair.HydrateRouterOptions.html#stateParser)
+option to `hydrateRouter`:
+
+```tsx
+import React from 'react';
+import { hydrateRoot } from 'react-dom/client';
+import { createBrowserHistory } from 'react-router/history';
+import { hydrateRouter, Router, RouterProvider } from 'react-router';
+import JSONMarshal from 'json-marshal';
+
+const history = createBrowserHistory();
+
+const router = new Router({
+  routes: [],
+  context: undefined
+});
+
+// 🟡 Pass a custom state parser
+hydrateRouter(router, history.location, { stateParser: JSONMarshal.parse });
+
+hydrateRoot(document, <RouterProvider value={router}/>);
+```
+
+On the server, pass
+a [`stateStringifier`](https://smikhalevski.github.io/react-corsair/interfaces/ssr.SSRRouterOptions.html#stateStringifier)
+option to [`SSRRouter`](#render-to-string),
+[`PipeableSSRRouter`](#streaming-ssr),
+or [`ReadableSSRRouter`](#readable-web-streams-support), depending on your setup:
+
+```ts
+import { ReadableSSRRouter } from 'react-corsair/ssr';
+import JSONMarshal from 'json-marshal';
+
+const router = new ReadableSSRRouter({
+  routes: [],
+  context: undefined,
+  stateStringifier: JSONMarshal.stringify
+});
+```
+
+> [!TIP]\
+> With additional configuration, [json-marshal](https://github.com/smikhalevski/json-marshal#readme) can stringify and
+> parse any data structure.
+
+## Content-Security-Policy support
+
+By default,
+[`nextHydrationChunk`](https://smikhalevski.github.io/react-corsair/classes/ssr.SSRRouter.html#nextHydrationChunk)
+renders an inline `<script>` tag without any attributes. To enable the support of
+the [`script-src`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src)
+directive of the `Content-Security-Policy` header, provide
+the [`nonce`](https://smikhalevski.github.io/react-corsair/interfaces/ssr.SSRRouterOptions.html#nonce) option
+to `SSRRouter` or any of its subclasses:
+
+```ts
+const router = new SSRRouter({
+  routes: [],
+  context: undefined,
+  nonce: '2726c7f26c'
+});
+```
+
+Send the header with this nonce in the server response:
+
+```
+Content-Security-Policy: script-src 'nonce-2726c7f26c'
 ```
 
 
