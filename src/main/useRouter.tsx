@@ -49,7 +49,9 @@ export function RouterProvider(props: RouterProviderProps): ReactElement {
 
   const subscribe = useCallback(router.subscribe.bind(router), [router]);
 
-  const getSnapshot = () => router.rootController;
+  const getSnapshot = () => {
+    return router.rootController;
+  };
 
   const rootController = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 

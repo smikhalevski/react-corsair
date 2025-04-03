@@ -1,6 +1,6 @@
 import { createRoute, notFound, Outlet, redirect, Router, RouterEvent, RouterProvider, RouteState } from '../main';
 import { render } from '@testing-library/react';
-import React from 'react';
+import React, { StrictMode } from 'react';
 import { noop } from '../main/utils';
 
 console.error = noop;
@@ -8,13 +8,15 @@ console.error = noop;
 test('renders null if no route matched and router does not have notFoundComponent', () => {
   const router = new Router({ routes: [], context: undefined });
 
-  const renderResult = render(
-    <RouterProvider router={router}>
-      <Outlet />
-    </RouterProvider>
+  const result = render(
+    <StrictMode>
+      <RouterProvider router={router}>
+        <Outlet />
+      </RouterProvider>
+    </StrictMode>
   );
 
-  expect(renderResult.container.innerHTML).toBe('');
+  expect(result.container.innerHTML).toBe('');
 });
 
 test('renders router notFoundComponent if no route matched', () => {
@@ -25,9 +27,11 @@ test('renders router notFoundComponent if no route matched', () => {
   });
 
   const renderResult = render(
-    <RouterProvider router={router}>
-      <Outlet />
-    </RouterProvider>
+    <StrictMode>
+      <RouterProvider router={router}>
+        <Outlet />
+      </RouterProvider>
+    </StrictMode>
   );
 
   expect(renderResult.container.innerHTML).toBe('XXX');
@@ -40,9 +44,11 @@ test('renders route component in an outlet', () => {
   router.navigate(route);
 
   const renderResult = render(
-    <RouterProvider router={router}>
-      <Outlet />
-    </RouterProvider>
+    <StrictMode>
+      <RouterProvider router={router}>
+        <Outlet />
+      </RouterProvider>
+    </StrictMode>
   );
 
   expect(renderResult.container.innerHTML).toBe('AAA');
@@ -55,11 +61,13 @@ test('renders route component in an outlet with a wrapper', () => {
   router.navigate(route);
 
   const renderResult = render(
-    <RouterProvider router={router}>
-      <blockquote>
-        <Outlet />
-      </blockquote>
-    </RouterProvider>
+    <StrictMode>
+      <RouterProvider router={router}>
+        <blockquote>
+          <Outlet />
+        </blockquote>
+      </RouterProvider>
+    </StrictMode>
   );
 
   expect(renderResult.container.innerHTML).toBe('<blockquote>AAA</blockquote>');
@@ -79,9 +87,11 @@ test('renders nested route component in a nested outlet', () => {
   router.navigate(routeBbb);
 
   const renderResult = render(
-    <RouterProvider router={router}>
-      <Outlet />
-    </RouterProvider>
+    <StrictMode>
+      <RouterProvider router={router}>
+        <Outlet />
+      </RouterProvider>
+    </StrictMode>
   );
 
   expect(renderResult.container.innerHTML).toBe('<div id="aaa">BBB</div>');
@@ -105,9 +115,11 @@ test('renders route errorComponent if an error is thrown during rendering', () =
   router.navigate(route);
 
   const renderResult = render(
-    <RouterProvider router={router}>
-      <Outlet />
-    </RouterProvider>
+    <StrictMode>
+      <RouterProvider router={router}>
+        <Outlet />
+      </RouterProvider>
+    </StrictMode>
   );
 
   expect(router.rootController!.state).toEqual({ status: 'error', error } satisfies RouteState);
@@ -135,9 +147,11 @@ test('renders router errorComponent if an error is thrown during rendering', () 
   router.navigate(route);
 
   const renderResult = render(
-    <RouterProvider router={router}>
-      <Outlet />
-    </RouterProvider>
+    <StrictMode>
+      <RouterProvider router={router}>
+        <Outlet />
+      </RouterProvider>
+    </StrictMode>
   );
 
   expect(router.rootController!.state).toEqual({ status: 'error', error } satisfies RouteState);
@@ -166,9 +180,11 @@ test('error bubbles to the closest route with an errorComponent', () => {
   router.navigate(routeBbb);
 
   const renderResult = render(
-    <RouterProvider router={router}>
-      <Outlet />
-    </RouterProvider>
+    <StrictMode>
+      <RouterProvider router={router}>
+        <Outlet />
+      </RouterProvider>
+    </StrictMode>
   );
 
   expect(router.rootController!.state).toEqual({ status: 'error', error } satisfies RouteState);
@@ -192,9 +208,11 @@ test('rendering throws an error if no errorComponent exists', () => {
 
   expect(() =>
     render(
-      <RouterProvider router={router}>
-        <Outlet />
-      </RouterProvider>
+      <StrictMode>
+        <RouterProvider router={router}>
+          <Outlet />
+        </RouterProvider>
+      </StrictMode>
     )
   ).toThrow(error);
 
@@ -213,9 +231,11 @@ test('renders loadingComponent of a route', () => {
   router.navigate(route);
 
   const renderResult = render(
-    <RouterProvider router={router}>
-      <Outlet />
-    </RouterProvider>
+    <StrictMode>
+      <RouterProvider router={router}>
+        <Outlet />
+      </RouterProvider>
+    </StrictMode>
   );
 
   expect(router.rootController!.state).toEqual({ status: 'loading' } satisfies RouteState);
@@ -237,9 +257,11 @@ test('renders loadingComponent of a router', () => {
   router.navigate(route);
 
   const renderResult = render(
-    <RouterProvider router={router}>
-      <Outlet />
-    </RouterProvider>
+    <StrictMode>
+      <RouterProvider router={router}>
+        <Outlet />
+      </RouterProvider>
+    </StrictMode>
   );
 
   expect(router.rootController!.state).toEqual({ status: 'loading' } satisfies RouteState);
@@ -262,9 +284,11 @@ test('loading bubbles to the closest route with a loadingComponent', () => {
   router.navigate(routeBbb);
 
   const renderResult = render(
-    <RouterProvider router={router}>
-      <Outlet />
-    </RouterProvider>
+    <StrictMode>
+      <RouterProvider router={router}>
+        <Outlet />
+      </RouterProvider>
+    </StrictMode>
   );
 
   expect(router.rootController!.state).toEqual({ status: 'ok', data: undefined } satisfies RouteState);
@@ -284,9 +308,11 @@ test('renders notFoundComponent if notFound is called during rendering', () => {
   router.navigate(route);
 
   const renderResult = render(
-    <RouterProvider router={router}>
-      <Outlet />
-    </RouterProvider>
+    <StrictMode>
+      <RouterProvider router={router}>
+        <Outlet />
+      </RouterProvider>
+    </StrictMode>
   );
 
   expect(router.rootController!.state).toEqual({ status: 'not_found' } satisfies RouteState);
@@ -305,9 +331,11 @@ test('renders notFoundComponent if notFound is called from data loader', () => {
   router.navigate(route);
 
   const renderResult = render(
-    <RouterProvider router={router}>
-      <Outlet />
-    </RouterProvider>
+    <StrictMode>
+      <RouterProvider router={router}>
+        <Outlet />
+      </RouterProvider>
+    </StrictMode>
   );
 
   expect(router.rootController!.state).toEqual({ status: 'not_found' } satisfies RouteState);
@@ -333,15 +361,17 @@ test('not found bubbles to the closest route with a notFoundComponent', () => {
   router.navigate(routeBbb);
 
   const renderResult = render(
-    <RouterProvider router={router}>
-      <Outlet />
-    </RouterProvider>
+    <StrictMode>
+      <RouterProvider router={router}>
+        <Outlet />
+      </RouterProvider>
+    </StrictMode>
   );
 
   expect(router.rootController!.state).toEqual({ status: 'not_found' } satisfies RouteState);
   expect(renderResult.container.innerHTML).toBe('AAA');
 
-  expect(listenerMock).toHaveBeenCalledTimes(5);
+  expect(listenerMock).toHaveBeenCalledTimes(7);
 
   expect(listenerMock).toHaveBeenNthCalledWith(1, {
     type: 'navigate',
@@ -365,7 +395,19 @@ test('not found bubbles to the closest route with a notFoundComponent', () => {
     controller: router.rootController!.childController!,
   } satisfies RouterEvent);
 
+  // Caused by StrictMode
   expect(listenerMock).toHaveBeenNthCalledWith(5, {
+    type: 'not_found',
+    controller: router.rootController!.childController!,
+  } satisfies RouterEvent);
+
+  expect(listenerMock).toHaveBeenNthCalledWith(6, {
+    type: 'not_found',
+    controller: router.rootController!,
+  } satisfies RouterEvent);
+
+  // Caused by StrictMode
+  expect(listenerMock).toHaveBeenNthCalledWith(7, {
     type: 'not_found',
     controller: router.rootController!,
   } satisfies RouterEvent);
@@ -383,9 +425,11 @@ test('renders loadingComponent if redirect is called during rendering', () => {
   router.navigate(route);
 
   const renderResult = render(
-    <RouterProvider router={router}>
-      <Outlet />
-    </RouterProvider>
+    <StrictMode>
+      <RouterProvider router={router}>
+        <Outlet />
+      </RouterProvider>
+    </StrictMode>
   );
 
   expect(router.rootController!.state).toEqual({ status: 'redirect', to: 'zzz' } satisfies RouteState);
@@ -404,9 +448,11 @@ test('renders loadingComponent if redirect is called from a data loader', () => 
   router.navigate(route);
 
   const renderResult = render(
-    <RouterProvider router={router}>
-      <Outlet />
-    </RouterProvider>
+    <StrictMode>
+      <RouterProvider router={router}>
+        <Outlet />
+      </RouterProvider>
+    </StrictMode>
   );
 
   expect(router.rootController!.state).toEqual({ status: 'redirect', to: 'zzz' } satisfies RouteState);
@@ -432,15 +478,17 @@ test('redirect bubbles to the closest route with a loadingComponent', () => {
   router.navigate(routeBbb);
 
   const renderResult = render(
-    <RouterProvider router={router}>
-      <Outlet />
-    </RouterProvider>
+    <StrictMode>
+      <RouterProvider router={router}>
+        <Outlet />
+      </RouterProvider>
+    </StrictMode>
   );
 
   expect(router.rootController!.state).toEqual({ status: 'redirect', to: 'zzz' } satisfies RouteState);
   expect(renderResult.container.innerHTML).toBe('AAA');
 
-  expect(listenerMock).toHaveBeenCalledTimes(5);
+  expect(listenerMock).toHaveBeenCalledTimes(7);
 
   expect(listenerMock).toHaveBeenNthCalledWith(1, {
     type: 'navigate',
@@ -465,7 +513,21 @@ test('redirect bubbles to the closest route with a loadingComponent', () => {
     to: 'zzz',
   } satisfies RouterEvent);
 
+  // Caused by StrictMode
   expect(listenerMock).toHaveBeenNthCalledWith(5, {
+    type: 'redirect',
+    controller: router.rootController!.childController!,
+    to: 'zzz',
+  } satisfies RouterEvent);
+
+  expect(listenerMock).toHaveBeenNthCalledWith(6, {
+    type: 'redirect',
+    controller: router.rootController!,
+    to: 'zzz',
+  } satisfies RouterEvent);
+
+  // Caused by StrictMode
+  expect(listenerMock).toHaveBeenNthCalledWith(7, {
     type: 'redirect',
     controller: router.rootController!,
     to: 'zzz',
