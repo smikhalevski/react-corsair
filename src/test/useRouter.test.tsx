@@ -1,16 +1,20 @@
 import { render, renderHook } from '@testing-library/react';
-import { createRoute, Router, RouterProvider, useRoute, useRouter } from '../main';
+import { createRoute, Router, RouterProvider, useRouter } from '../main';
 import { noop } from '../main/utils';
-import React, { act, ReactNode, StrictMode } from 'react';
+import React, { act, StrictMode } from 'react';
 
 console.error = noop;
 
 describe('RouterProvider', () => {
-  test('re-renders on navigation', async () => {
+  test('re-renders on navigation', () => {
     const route = createRoute('/aaa', () => 'AAA');
     const router = new Router({ routes: [route], context: undefined });
 
-    const result = render(<RouterProvider router={router} />);
+    const result = render(
+      <StrictMode>
+        <RouterProvider router={router} />
+      </StrictMode>
+    );
 
     expect(result.container.innerHTML).toBe('');
 
