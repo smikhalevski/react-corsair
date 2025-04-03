@@ -13,370 +13,255 @@ npm install --save-prod react-corsair
 &ensp; 🔥 [**Live example**](https://codesandbox.io/p/sandbox/react-corsair-example-mzjzcm)
 
 - [Overview](#overview)
-- [Router and routes](#router-and-routes)
-- [Conditional routing](#conditional-routing)
-- [Nested routes](#nested-routes)
+- [Routing](#routing)
+- [Parameterized routes](#parameterized-routes)
 - [Pathname templates](#pathname-templates)
-- [Route params](#route-params)
-- [Route locations](#route-locations)
-- [Navigation](#navigation)
+- [Outlets](#outlets)
+- [Nested routes](#nested-routes)
 - [Code splitting](#code-splitting)
-- [Error boundaries](#error-boundaries)
-- [Triggering not found](#triggering-not-found)
-- [History integration](#history-integration)
 - [Data loading](#data-loading)
+- [Error boundaries](#error-boundaries)
+- [Not found](#not-found)
+- [Redirects](#redirects)
 - [Prefetching](#prefetching)
+- [History integration](#history-integration)
 
 # Overview
 
-URLs don't matter since they are almost never part of the application domain logic. React Corsair is a router that
-abstracts URLs away from your application.
-Use [`Route`](https://smikhalevski.github.io/react-corsair/functions/createRoute.html) objects instead of URLs
-to match locations, validate params, navigate between pages, prefetch data, infer types, etc.
+URLs don't matter because they are almost never part of the application domain logic. React Corsair is a router that
+abstracts URLs away from your application domain.
+
+Use [`Route`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.createRoute.html) objects instead of
+URLs to match locations, validate params, navigate between pages, prefetch data, infer types, etc.
 
 React Corsair can be used in any environment and doesn't require any browser-specific API to be available. Browser
-history integration is optional.
+history integration is optional but available out-of-the-box if you need it.
 
-To showcase how the router works in the browser environment, lets start by creating a page component:
+To showcase how the router works, lets start by creating a page component:
 
 ```ts
-function UserPage() {
+function HelloPage() {
   return 'Hello';
 }
 ```
 
-Then create a [`Route`](https://smikhalevski.github.io/react-corsair/functions/createRoute.html) that maps a URL
-pathname to a page component:
+Then create a [`Route`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.createRoute.html) that maps
+a URL pathname to a page component:
 
 ```ts
 import { createRoute } from 'react-corsair';
 
-const userRoute = createRoute('/user', UserPage);
+const helloRoute = createRoute('/hello', HelloPage);
 ```
 
-Render the [`<Router>`](https://smikhalevski.github.io/react-corsair/classes/Router.html) component to set up a router:
-
-```tsx
-import { useState } from 'react';
-import { Router, createBrowserHistory, useHistorySubscription } from 'react-corsair';
-
-const history = createBrowserHistory();
-
-function App() {
-  useHistorySubscription(history);
-
-  return (
-    <Router
-      location={history.location}
-      routes={[userRoute]}
-      onPush={history.push}
-      onBack={history.back}
-    />
-  );
-}
-```
-
-Inside route components use the [`<Link>`](https://smikhalevski.github.io/react-corsair/functions/Link.html) component
-for navigation:
-
-```tsx
-import { Link } from 'react-corsair';
-
-function TeamPage() {
-  return (
-    <Link to={userRoute}>
-      {'Go to user'}
-    </Link>
-  );
-}
-```
-
-Or use the [`useNavigation`](https://smikhalevski.github.io/react-corsair/functions/useNavigation.html) hook to trigger
-navigation imperatively:
-
-```tsx
-import { useNavigation } from 'react-corsair';
-
-function TeamPage() {
-  const navigation = useNavigation();
-
-  return (
-    <button onClick={() => navigation.push(userRoute)}>
-      {'Go to user'}
-    </button>
-  );
-}
-```
-
-# Router and routes
-
-To create a route that maps a pathname to a component use the
-[`createRoute`](https://smikhalevski.github.io/react-corsair/functions/createRoute.html) function:
+Now we need a [`Router`](https://smikhalevski.github.io/react-corsair/classes/react_corsair.Router.html) that would
+handle the navigation:
 
 ```ts
-const userRoute = createRoute('/user', UserPage);
-```
+import { Router } from 'react-corsair';
 
-You can provide [options](https://smikhalevski.github.io/react-corsair/interfaces/RouteOptions.html) to `createRoute`:
-
-```ts
-const userRoute = createRoute({
-  pathname: '/user',
-  component: UserPage
+const router = new Router({
+  routes: [helloRoute],
+  context: undefined,
 });
 ```
 
-[`<Router>`](https://smikhalevski.github.io/react-corsair/classes/Router.html) component is the heart of React Corsair.
-It takes a pathname from the provided
-[`location`](https://smikhalevski.github.io/react-corsair/interfaces/RouterProps.html#location) and matches it against
-the given set of [`routes`](https://smikhalevski.github.io/react-corsair/interfaces/RouterProps.html#routes) in
-the same order they were listed. Then router renders a component from a route which pathname matched the
-`location.pathname` in full.
+To let router know what route we want to render we should navigate it to it:
+
+```ts
+router.navigate(helloRoute);
+```
+
+Now everything is ready to be rendered:
 
 ```tsx
-import { Router } from 'react-corsair';
+import { RouterProvider } from 'react-corsair';
 
-function App() {
-  return (
-    <Router
-      location={{ pathname: '/user' }}
-      routes={[userRoute]}
-    />
-  );
+function MyApp() {
+  return <RouterProvider router={router}/>;
 }
 ```
 
-Where does a location come from? From a component state, from a React context,
-from the [browser history](#history-integration), from anywhere really:
+And that's how you start routing! Read further to know how to navigate from you components, integrate history,
+prefetch, enable SSR and more.
 
-```tsx
-function App() {
-  const [location, setLocation] = useState({ pathname: '/user' });
+# Routing
 
-  return (
-    <Router
-      location={location}
-      routes={[userRoute]}
-      onPush={setLocation}
-      onReplace={setLocation}
-    />
-  );
-}
-```
+Routes are navigation entry points. Most routes associate a pathname segment with a rendered component:
 
-## Outlets
+```ts
+import { createRoute } from 'react-corsair';
 
-`Router` uses [`<Outlet>`](https://smikhalevski.github.io/react-corsair/classes/Outlet.html) to render routes.
-If you don't provide any children to the `Router` then it renders an `Outlet` by default. You can provide custom
-children to `Router`, for example, to wrap route components in an additional markup:
-
-```tsx
-import { Router, Outlet } from 'react-corsair';
-
-const userRoute = createRoute('/user', UserPage);
-
-function UserPage() {
+function HelloPage() {
   return 'Hello';
 }
 
-function App() {
-  return (
-    <Router
-      location={{ pathname: '/user' }}
-      routes={[userRoute]}
-    >
-      <main>
-        {/* 🟡 Outlet renders the matched route */}
-        <Outlet/>
-      </main>
-    </Router>
-  );
-}
+const helloRoute = createRoute('/hello', HelloPage);
 ```
 
-The rendered output would be:
+Routes are location providers:
 
-```html
-
-<main>Hello</main>
+```ts
+helloRoute.getLocation();
+// ⮕ { pathname: '/hello', searchParams: {}, hash: '', state: undefined }
 ```
 
-## Not found
+Routes are matched during router navigation:
 
-If there's no route that matched the provided location, then
-a [`notFoundComponent`](https://smikhalevski.github.io/react-corsair/interfaces/RouterProps.html#notFoundComponent) is
-rendered:
+```ts
+import { Router } from 'react-corsair';
+
+const router = new Router({
+  routes: [helloRoute],
+  context: undefined,
+});
+
+router.navigate(helloRoute);
+```
+
+While router reads a location from a route, but you can use a location directly to navigate a router:
+
+```ts
+router.navigate({ pathname: '/hello' });
+```
+
+To trigger navigation from inside a component, use the
+[`useRouter`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.useRouter.html) hook:
 
 ```tsx
-function NotFound() {
-  return 'Not found';
-}
-
-function App() {
-  return (
-    <Router
-      location={{ pathname: '/ooops' }}
-      routes={[userRoute]}
-      notFoundComponent={NotFound}
-    />
-  )
+function AnotherPage() {
+  const router = useRouter();
+  
+  const handleClick = () => {
+    router.navigate(helloRoute);
+  };
+  
+  return <button onClick={handleClick}>{'Go to hello'}</button>;
 }
 ```
 
-By default, `notFoundComponent` is `undefined`, so nothing is rendered if no route matched.
+# Parameterized routes
 
-# Conditional routing
+Routes can be parameterized with pathname and search params. Let's create a route that has a pathname param:
 
-You can compose the [`routes`](https://smikhalevski.github.io/react-corsair/interfaces/RouterProps.html#routes) array
-on-the-fly to change what routes a user can reach depending on external factors.
+```ts
+const productRoute = createRoute<{ sku: number }>('/products/:sku', ProductPage);
+```
 
-Consider an app with two rotes `"/posts"` and `"/settings"`. `"/posts"` should be available to all users,
-while `"/settings"` should be available only to logged-in users. If user isn't logged and navigates to `"/settings"`,
-then a [`notFoundComponent`](#not-found) must be rendered.
+Router cannot create a location for a parameterized route by itself, because it doesn't know the required param values.
+So here's where
+[`getLocation`](https://smikhalevski.github.io/react-corsair/classes/react_corsair.Route.html#getLocation)
+comes handy:
+
+```ts
+const productLocation = productRoute.getLocation({ sku: 42 });
+// ⮕ { pathname: '/products/42', searchParams: {}, hash: '', state: undefined }
+
+router.navigate(productLocation);
+```
+
+Read more about pathname params syntax in [Pathname templates](#pathname-templates) section.
+
+By default, params that aren't a part of pathname become search params:
+
+```diff
+- const productRoute = createRoute<{ sku: number }>('/products/:sku', ProductPage);
++ const productRoute = createRoute<{ sku: number }>('/products', ProductPage);
+```
+
+`sku` is now a search param:
+
+```ts
+productRoute.getLocation({ sku: 42 });
+// ⮕ { pathname: '/products', searchParams: { sku: 42 }, hash: '', state: undefined }
+```
+
+You can have both pathname and search params on the same route:
+
+```ts
+interface ProductParams {
+  sku: number;
+  color: 'red' | 'green';
+}
+
+const productRoute = createRoute<ProductParams>('/products/:sku', ProductPage);
+
+productRoute.getLocation({ sku: 42, color: 'red' });
+// ⮕ { pathname: '/products/42', searchParams: { color: 'red' }, hash: '', state: undefined }
+```
+
+To access params from a component use the
+[`useRoute`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.useRoute.html) hook:
 
 ```tsx
-const postsRoute = createRoute('/posts', PostsPage);
+function ProductPage() {
+  const { params } = useRoute(productRoute);
+  // ⮕ { sku: 42, color: 'red' }
+}
+```
 
-const settingsRoute = createRoute('/settings', SettingsPage);
+Provide params adapter to parse route params:
 
-function App() {
-  const [location] = useState({ pathname: '/settings' });
+```ts
+const userRoute = createRoute({
+  pathname: '/users/:userId',
 
-  const routes = [postsRoute];
-
-  // 🟡 Add a route on-the-fly
-  if (isLoggedIn) {
-    routes.push(settingsRoute);
+  paramsAdapter: params => {
+    return { userId: params.userId };
   }
-
-  return (
-    <Router
-      location={location}
-      routes={routes}
-    />
-  );
-}
+});
 ```
 
-Be sure that `App` is re-rendered every time `isLoggedIn` is changed, so `<Router>` would catch up the latest set of
-routes.
+Note that we didn't specify parameter types explicitly this time: TypeScript can infer them from the
+[`paramsAdapter`](https://smikhalevski.github.io/react-corsair/interfaces/react_corsair.RouteOptions.html#paramsAdapter).
 
-# Nested routes
-
-`<Router>` uses an [outlet](#outlets) to render a matched route. Route components can render outlets as well:
-
-```tsx
-import { Outlet } from 'react-corsair';
-
-function SettingsPage() {
-  return <Outlet/>;
-}
-```
-
-Now we can leverage that nested outlet and create a nested route:
+Route params can be validated at runtime with any validation library:
 
 ```ts
-const settingsRoute = createRoute('/settings', SettingsPage);
+import * as d from 'doubter';
 
-const billingRoute = createRoute(settingsRoute, '/billing', BillingPage);
+const productRoute = createRoute({
+  pathname: '/products/:sku',
+
+  paramsAdapter: d.object({
+    sku: d.number().int().nonNegative().coerce(),
+    color: d.enum(['red', 'green']).optional()
+  })
+});
+
+productRoute.getLocation({ sku: 42 });
 ```
 
-`BillingPage` would be rendered in an `Outlet` inside `SettingsPage`. 
-
-Provide `billingRoute` to the `<Router>`:
-
-```tsx
-function App() {
-  return (
-    <Router
-      loaction={{ pathname: '/settings/billing' }}
-      routes={[billingRoute]}
-    />
-  );
-}
-```
-
-While `SettingsPage` can render any markup around an `<Outlet>` to decorate the page, in the current example there's
-no additional markup. If you omit the component when creating a route, a route would render an `<Outlet>` by default:
-
-```diff
-- const settingsRoute = createRoute('/settings', SettingsPage);
-+ const settingsRoute = createRoute('/settings');
-```
-
-## Rendering nested routes
-
-Since `settingsRoute` wasn't provided to the `<Router>`, it will never be matched. So if user navigates
-to `"/settings"`,
-a [`notFoundComponent`](https://smikhalevski.github.io/react-corsair/interfaces/RouterProps.html#notFoundComponent)
-is rendered.
-
-There are several approaches on how to avoid [Not Found](#not-found) in such case:
-
-1. Add an index route to [`routes`](https://smikhalevski.github.io/react-corsair/interfaces/RouterProps.html#routes).
-
-```tsx
-const settingsIndexRoute = createRoute(settingsRoute, '/', BillingPage);
-
-function App() {
-  return (
-    <Router
-      loaction={{ pathname: '/settings' }}
-      routes={[
-        settingsIndexRoute,
-        billingRoute
-      ]}
-    />
-  );
-}
-```
-
-2. Make an [optional segment](#pathname-templates) in one of existing routes:
-
-```diff
-- const billingRoute = createRoute(settingsRoute, '/billing', BillingPage);
-+ const billingRoute = createRoute(settingsRoute, '/billing?', BillingPage);
-```
-
-With this setup, user can navigate to `"/settings"` and `"/settings/billing"` and would see the same content on
-different URLs which usually isn't a great idea.
-
-3. Render a redirect:
-
-```ts
-import { redirect } from 'react-corsair';
-
-const settingsRoute = createRoute('/settings', () => redirect(billingRoute));
-```
-
-Here, `settingsRoute` renders a redirect to `billingRoute` every time it is matched by the `<Router>`.
+> [!TIP]\
+> Read more about [Doubter](https://github.com/smikhalevski/doubter#readme), the runtime validation and transformation
+> library. 
 
 # Pathname templates
 
 A pathname provided for a route is parsed as a pattern. Pathname patterns may contain named params and other metadata.
 Pathname patterns are compiled into
-a [`PathnameTemplate`](https://smikhalevski.github.io/react-corsair/classes/PathnameTemplate.html) when route is
-created. A template allows to both match a pathname, and build a pathname using a provided set of params.
+a [`PathnameTemplate`](https://smikhalevski.github.io/react-corsair/classes/react_corsair.PathnameTemplate.html) when
+route is created. A template allows to both match a pathname, and build a pathname using a provided set of params.
 
 After a route is created, you can access a pathname pattern like this:
 
 ```ts
-const adminRoute = createRoute('/admin');
+const productsRoute = createRoute('/products');
 
-adminRoute.pathnameTemplate.pattern;
-// ⮕ '/admin'
+productsRoute.pathnameTemplate.pattern;
+// ⮕ '/products'
 ```
 
-By default, a pathname pattern is case-insensitive. So the route in example above would match both `"/admin"` and
-`"/ADMIN"`.
+By default, a pathname pattern is case-insensitive. So the route in example above would match both `"/products"` and
+`"/PRODUCTS"`.
 
 If you need a case-sensitive pattern, provide
-[`isCaseSensitive`](https://smikhalevski.github.io/react-corsair/interfaces/RouteOptions.html#isCaseSensitive) route
-option:
+[`isCaseSensitive`](https://smikhalevski.github.io/react-corsair/interfaces/react_corsair.RouteOptions.html#isCaseSensitive)
+route option:
 
 ```ts
 createRoute({
-  pathname: '/admin',
+  pathname: '/products',
   isCaseSensitive: true
 });
 ```
@@ -384,7 +269,7 @@ createRoute({
 Pathname patterns can include params that conform `:[A-Za-z$_][A-Za-z0-9$_]+`:
 
 ```ts
-const userRoute = createRoute('/user/:userId');
+const userRoute = createRoute('/users/:userId');
 ```
 
 You can retrieve param names at runtime:
@@ -397,10 +282,10 @@ userRoute.pathnameTemplate.paramNames;
 Params match a whole segment and cannot be partial.
 
 ```ts
-createRoute('/teams--:teamId');
+createRoute('/users__:userId');
 // ❌ SyntaxError
 
-createRoute('/teams/:teamId');
+createRoute('/users/:userId');
 // ✅ Success
 ```
 
@@ -408,16 +293,18 @@ By default, a param matches a non-empty pathname segment. To make a param option
 segment) follow it by a `?` flag.
 
 ```ts
-createRoute('/user/:userId?');
+createRoute('/product/:sku?');
 ```
 
-This route matches both `"/user"` and `"/user/37"`.
+This route matches both `"/product"` and `"/product/37"`.
 
 Static pathname segments can be optional as well:
 
 ```ts
 createRoute('/project/task?/:taskId');
 ```
+
+This route matches both `"/product/task/37"` and `"/product/37"`.
 
 By default, a param matches a single pathname segment. Follow a param with a `*` flag to make it match multiple
 segments.
@@ -442,168 +329,122 @@ representation `%3A`:
 createRoute('/foo%3Abar');
 ```
 
-# Route params
+# Outlets
 
-You can access matched [pathname params](#pathname-templates) and search params in route components:
-
-```ts
-import { createRoute, useRouteParams } from 'react-corsair';
-
-interface TeamParams {
-  teamId: string;
-  sortBy: 'username' | 'createdAt';
-}
-
-const teamRoute = createRoute<TeamParams>('/teams/:teamId', TeamPage);
-
-function TeamPage() {
-  const params = useRouteParams(teamRoute);
-
-  // 🟡 The params type was inferred from the teamRoute.
-  return `Team ${params.teamId} is sorted by ${params.sortBy}.`;
-}
-```
-
-Here we created the `teamRoute` route that has a `teamId` pathname param and a required `sortBy` search param. We added
-an explicit type to `createRoute` to enhance type inference during development. While this provides great DX, there's
-no guarantee that params would match the required schema at runtime. For example, user may provide an arbitrary string
-as `sortBy` search param value, or even omit this param.
-
-A route can parse and validate params at runtime with
-a [`paramsAdapter`](https://smikhalevski.github.io/react-corsair/interfaces/RouteOptions.html#paramsAdapter):
-
-```ts
-const teamRoute = createRoute({
-  pathname: '/team/:teamId',
-
-  paramsAdapter: params => {
-    // Parse or validate params here 
-    return {
-      teamId: params.teamId,
-      sortBy: params.sortBy === 'username' || params.sortBy === 'createdAt' ? params.sortBy : 'username'
-    };
-  }
-});
-```
-
-Now `sortBy` is guaranteed to be eiter `"username"` or `"createdAt"` inside your route components.
-
-To enhance validation even further, you can use a validation library like
-[Doubter](https://github.com/smikhalevski/doubter?tab=readme-ov-file) or
-[Zod](https://github.com/colinhacks/zod?tab=readme-ov-file):
-
-```ts
-import * as d from 'doubter';
-
-const teamRoute = createRoute({
-  pathname: '/team/:teamId',
-
-  paramsAdapter: d.object({
-    teamId: d.string(),
-    sortBy: d.enum(['username', 'createdAt']).catch('username')
-  })
-});
-```
-
-# Route locations
-
-Every route has a [pathname template](#pathname-templates) that can be used to create a route location.
-
-```ts
-const adminRoute = createRoute('/admin');
-
-adminRoute.getLocation();
-// ⮕ { pathname: '/admin', searchParams: {}, hash: '' }
-```
-
-If route is parameterized, then params must be provided to
-the [`getLocation`](https://smikhalevski.github.io/react-corsair/classes/Route.html#getLocation) method:
-
-```ts
-const userRoute = createRoute('/user/:userId');
-
-userRoute.getLocation({ userId: 37 });
-// ⮕ { pathname: '/user/37', searchParams: {}, hash: '' }
-
-userRoute.getLocation();
-// ❌ Error: Param must be a string: userId 
-```
-
-By default, route treats all params that aren't used by pathname template as search params:
-
-```ts
-const teamRoute = createRoute('/team/:teamId');
-
-teamRoute.getLocation({
-  teamId: 42,
-  sortBy: 'username'
-});
-// ⮕ { pathname: '/team/42', searchParams: { sortBy: 'username' }, hash: '' }
-```
-
-Let's add some types, to constrain route param type inference and enhance DX:
-
-```ts
-interface UserParams {
-  userId: string;
-}
-
-const userRoute = createRoute<UserParams>('/user/:userId');
-
-userRoute.getLocation({});
-// ❌ TS2345: Argument of type {} is not assignable to parameter of type { userId: string; }
-```
-
-TypeScript raises an error if `userRoute` receives insufficient number of params.
-
-> [!TIP]\
-> It is recommended to use
-> [`paramsAdapter`](https://smikhalevski.github.io/react-corsair/interfaces/RouteOptions.html#paramsAdapter)
-> to constrain route params at runtime. Read more about param adapters in the [Route params](#route-params) section.
-
-# Navigation
-
-`<Router>` does route matching only if
-a [`location`](https://smikhalevski.github.io/react-corsair/interfaces/RouterProps.html#location) or
-[`routes`](https://smikhalevski.github.io/react-corsair/interfaces/RouterProps.html#routes) have changed.
-
-Provide [`onPush`](https://smikhalevski.github.io/react-corsair/interfaces/RouterProps.html#onPush),
-[`onReplace`](https://smikhalevski.github.io/react-corsair/interfaces/RouterProps.html#onReplace), and
-[`onBack`](https://smikhalevski.github.io/react-corsair/interfaces/RouterProps.html#onBack) callbacks to `<Router>`
-to be notified when a location change is requested.
-
-To request a navigation from route components use
-the [`useNavigation`](https://smikhalevski.github.io/react-corsair/functions/useNavigation.html) hook:
+Route components are rendered inside
+an [`Outlet`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.Outlet.html). If you don't render
+an `Outlet` explicitly then
+[`RouteProvider`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.RouterProvider.html) would
+implicitly do it for you:
 
 ```tsx
-import { useNavigation } from 'react-corsair';
+import { Router, RouterProvider } from 'react-crsair';
 
-function TeamPage() {
-  const navigation = useNavigation();
+function HelloPage() {
+  return 'Hello';
+}
 
+const helloRoute = createRoute('/hello', HelloPage);
+
+const router = new Router({
+  routes: [helloRoute],
+  context: undefined
+});
+
+router.navigate(helloRoute);
+
+function App() {
+  return <RouterProvider router={router}/>;
+}
+```
+
+You can provide children to `RouterProvider`:
+
+```tsx
+function App() {
   return (
-    <button onClick={() => navigation.push(userRoute)}>
-      {'Go to user'}
-    </button>
+    <RouterProvider router={router}>
+      <main>
+        <Outlet/>
+      </main>
+    </RouterProvider>
   );
 }
 ```
 
-Here, [`navigation.push`](https://smikhalevski.github.io/react-corsair/interfaces/Navigation.html#push) triggers
-[`onPush`](https://smikhalevski.github.io/react-corsair/interfaces/RouterProps.html#onPush) with
-the location of `userRoute`.
+The rendered output would be:
 
-If user `userRoute` has [params](#route-params), then provide an explicit [route location](#route-locations):
+```html
+<main>Hello</main>
+```
+
+# Nested routes
+
+Routes can be nested:
 
 ```ts
-navigation.push(userRoute.getLocation({ userId: 42 }));
+const parentRoute = createRoute('/parent', ParentPage);
+
+const childRoute = createRoute(parentRoute, '/child', ChildPage);
+
+childRoute.getLocation();
+// ⮕ { pathname: '/parent/child', searchParams: {}, hash: '', state: undefined }
+```
+
+Routes are [rendered inside outlets](#outlets), so `ParentPage` should
+render an [`Outlet`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.Outlet.html) to give place for
+a `ChildPage`:
+
+```tsx
+function ParentPage() {
+  return (
+    <section>
+      <Outlet/>
+    </section>
+  );
+}
+
+function ChildPage() {
+  return <em>{'Hello'}</em>;
+}
+```
+
+To allow router navigation to `childRoute` it should be listed among routes:
+
+```ts
+const router = new Router({
+  routes: [childRoute],
+  context: undefined
+});
+
+router.navigate(childRoute);
+```
+
+The rendered output would be:
+
+```html
+<section><em>Hello</em></section>
+```
+
+If you create a route without specifying a component, it would render an `Outlet` by default:
+
+```diff
+- const parentRoute = createRoute('/parent', ParentPage);
++ const parentRoute = createRoute('/parent');
+```
+
+Now the rendering output would be:
+
+```html
+<em>Hello</em>
 ```
 
 # Code splitting
 
-To enable code splitting in your app, use
-the [`lazyComponent`](https://smikhalevski.github.io/react-corsair/interfaces/RouteOptions.html#lazyComponent) option,
-instead of the [`component`](https://smikhalevski.github.io/react-corsair/interfaces/RouteOptions.html#component):
+To enable code splitting in your app, use the
+[`lazyComponent`](https://smikhalevski.github.io/react-corsair/interfaces/react_corsair.RouteOptions.html#lazyComponent)
+option, instead of the
+[`component`](https://smikhalevski.github.io/react-corsair/interfaces/react_corsair.RouteOptions.html#component):
 
 ```ts
 const userRoute = createRoute({
@@ -612,15 +453,18 @@ const userRoute = createRoute({
 });
 ```
 
-When `userRoute` is matched by router, a chunk that contains `UserPage` is loaded and rendered. The loaded component is
-cached, so next time the `userRoute` is matched, `UserPage` would be rendered instantly.
+When router is navigated to the `userRoute`, a chunk that contains `UserPage` is loaded and rendered. The loaded
+component is cached, so next time the `userRoute` is matched, `UserPage` would be rendered instantly.
 
-By default, while a lazy component is being loaded, `<Router>` would still render the previously matched route.
+By default, while a lazy component is being loaded, router would still render the previously matched route.
 
-But what is rendered if the first ever route matched by the `<Router>` has a lazy component and there's no content yet
-on the screen? By default, in this case nothing is rendered until a lazy component is loaded. This is no a good UX,
-so you may want to provide
-a [`loadingComponent`](https://smikhalevski.github.io/react-corsair/interfaces/RouteOptions.html#loadingComponent)
+But what is rendered if the first ever route matched by the router has a lazy component and there's no content yet
+on the screen? By default, an promise would be thrown so you can wrap
+[`RouteProvider`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.RouterProvider.html) in a custom
+`Suspense` boundary.
+
+You may want to provide a
+[`loadingComponent`](https://smikhalevski.github.io/react-corsair/interfaces/react_corsair.RouteOptions.html#loadingComponent)
 option to your route:
 
 ```ts
@@ -635,13 +479,13 @@ const userRoute = createRoute({
 });
 ```
 
-Now, `loadingComponent` would be rendered by the `<Router>` if there's nothing rendered yet.
+Now, `loadingComponent` would be rendered if there's nothing rendered yet.
 
 Each route may have a custom loading component: here you can render a page skeleton or a spinner.
 
 Router would still render the previously matched route when a new route is being loaded, even if a new route has
-a `loadingComponent`. You can change this by adding
-a [`loadingAppearance`](https://smikhalevski.github.io/react-corsair/interfaces/RouteOptions.html#loadingAppearance)
+a `loadingComponent`. You can change this by adding a
+[`loadingAppearance`](https://smikhalevski.github.io/react-corsair/interfaces/react_corsair.RouteOptions.html#loadingAppearance)
 option:
 
 ```ts
@@ -653,78 +497,152 @@ const userRoute = createRoute({
 });
 ```
 
-This tells `<Router>` to always render `userRoute.loadingComponent` when `userRoute` is matched and lazy component isn't
+This tells router to always render `userRoute.loadingComponent` when `userRoute` is matched and lazy component isn't
 loaded yet. `loadingAppearance` can be set to:
 
 <dl>
 <dt>"loading"</dt>
 <dd>
 
-A `loadingComponent` is always rendered if a route is matched and a component or a data loader are being loaded.
+Always render `loadingComponent` if a route requires loading.
 
 </dd>
-<dt>"auto"</dt>
+<dt>"route_loading"</dt>
 <dd>
 
-If another route is currently rendered then it would be preserved until a component and data loader of a newly
-matched route are being loaded. Otherwise, a `loadingComponent` is rendered. This is the default value.
+Render `loadingComponent` only if a route is changed during navigation.
+
+</dd>
+<dt>"avoid"</dt>
+<dd>
+
+If there's a route that is already rendered then keep it on the screen until the new route is loaded.
 
 </dd>
 </dl>
 
-If an error is thrown during `lazyComponent` loading, an [error boundary](#error-boundaries) is rendered and `Router`
+If an error is thrown during `lazyComponent` loading, an [error boundary](#error-boundaries) is rendered and router
 would retry loading the component again later.
+
+# Data loading
+
+Routes may require some data to render. While you can load that data from inside a route component, this may lead to
+a [waterfall](https://blog.sentry.io/fetch-waterfall-in-react/). React Corsair provides an easy way to load your data
+ahead of rendering:
+
+```ts
+function LoadingIndicator() {
+  return 'Loading';
+}
+
+const userRoute = createRoute<{ userId: string }, User>({
+  pathname: '/users/:userId',
+  component: UserPage,
+  loadingComponent: LoadingIndicator,
+
+  dataLoader: async options => {
+    const response = await fetch('/api/users/' + options.params.userId);
+    
+    return response.json();
+    // ⮕ Promise<User>
+  }
+});
+```
+
+[`dataLoader`](https://smikhalevski.github.io/react-corsair/classes/react_corsair.Route.html#dataLoader) is called every
+time router is navigated to `userRoute`. While data is being loaded
+[`loadingComponent`](https://smikhalevski.github.io/react-corsair/classes/react_corsair.Route.html#loadingComponent) is
+rendered instead of the `UserPage`.
+
+You can access the loaded data in your route component using
+the [`useRoute`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.useRoute.html) hook:
+
+```ts
+function UserPage() {
+  const user = useRoute(userRoute).getData();
+  // ⮕ User
+}
+```
+
+Data loader may require additional context:
+
+```ts
+const userRoute = createRoute<{ userId: string }, User, { apiBase: string }>({
+  pathname: '/users/:userId',
+  component: UserPage,
+  loadingComponent: LoadingIndicator,
+
+  dataLoader: async options => {
+    const response = await fetch(options.context.apiBase + '/users/' + options.params.userId);
+
+    return response.json();
+  }
+});
+```
+
+A context value should be provided through a router:
+
+```ts
+const router = new Router({
+  routes: [userRoute],
+  context: {
+    apiBase: 'https://superpuper.com'
+  }
+});
+```
 
 # Error boundaries
 
 Each route is rendered in its own
-[error boundary](https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary). When an
-error occurs during route component rendering,
-an [`errorComponent`](https://smikhalevski.github.io/react-corsair/interfaces/RouteOptions.html#errorComponent) is
-rendered as a fallback:
+[error boundary](https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary). If an
+error occurs during route component rendering or [data loading](#data-loading),
+then an [`errorComponent`](https://smikhalevski.github.io/react-corsair/interfaces/react_corsair.RouteOptions.html#errorComponent)
+is rendered as a fallback:
 
 ```ts
 function UserPage() {
   throw new Error('Ooops!');
 }
 
-function ErrorFallback() {
-  return 'Error occurred';
+function ErrorDetails() {
+  return 'An error occurred';
 }
 
 const userRoute = createRoute({
   pathname: '/user',
   component: UserPage,
-  errorComponent: ErrorFallback
+  errorComponent: ErrorDetails
 });
 ```
 
 You can access the error that triggered the error boundary within an error component:
 
 ```ts
-import { userRouteState } from 'react-corsair';
+import { useRoute } from 'react-corsair';
 
-function ErrorFallback() {
-  const { error } = userRouteState(userRoute);
-
-  return 'Error occurred: ' + error;
+function ErrorDetails() {
+  const error = useRoute(userRoute).getError();
+  
+  return 'An error occurred: ' + error.message;
 }
 ```
 
-# Triggering not found
+# Not found
 
 During route component rendering, you may detect that there's not enough data to render a route. Call
-the [`notFound`](https://smikhalevski.github.io/react-corsair/functions/notFound.html) function in such case:
+the [`notFound`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.notFound.html) in such case:
 
 ```ts
-import { notFound, useRouteParams } from 'react-corsair';
+import { notFound, useRoute } from 'react-corsair';
 
-function UserPage() {
-  const params = useRouteParams(userRoute);
+function ProductPage() {
+  const { params } = useRoute(userRoute);
 
-  const user = useUser(params.userId);
-
-  if (!user) {
+  const user = getProductById(params.sku);
+  // ⮕ User | null
+  
+  if (user === null) {
+    // 🟡 Aborts further rendering
     notFound();
   }
 
@@ -732,148 +650,91 @@ function UserPage() {
 }
 ```
 
-`notFound` throws a [`NotFoundError`](https://smikhalevski.github.io/react-corsair/classes/NotFoundError.html) that
-triggers an [error boundary](#error-boundaries) and causes `Router` to render
-a [`notFoundComponent`](https://smikhalevski.github.io/react-corsair/interfaces/RouteOptions.html#notFoundComponent)
+`notFound` throws aborts further rendering and causes router to render
+a [`notFoundComponent`](https://smikhalevski.github.io/react-corsair/interfaces/react_corsair.RouteOptions.html#notFoundComponent)
 as a fallback:
 
 ```ts
-function UserNotFound() {
-  return 'User not found';
+function ProductNotFound() {
+  return 'Product not found';
 }
 
-const userRoute = createRoute({
-  pathname: '/user/:userId',
-  component: UserPage,
-  notFoundComponent: UserNotFound
+const productRoute = createRoute<{ sku: string }>({
+  pathname: '/products/:sku',
+  component: ProductPage,
+  notFoundComponent: ProductNotFound
 });
 ```
 
-# History integration
-
-React Corsair provides history integration:
-
-```tsx
-import { Router, createBrowserHistory, useHistorySubscription } from 'react-corsair';
-import { userRoute } from './routes';
-
-const history = createBrowserHistory();
-
-function App() {
-  useHistorySubscription(history);
-
-  return (
-    <Router
-      location={history.location}
-      routes={[userRoute]}
-      onPush={history.push}
-      onBack={history.back}
-    />
-  );
-}
-```
-
-There are three types of history adapters that you can leverage:
-
-- [`createBrowserHistory`](https://smikhalevski.github.io/react-corsair/functions/createBrowserHistory.html)
-- [`createHashHistory`](https://smikhalevski.github.io/react-corsair/functions/createHashHistory.html)
-- [`createMemoryHistory`](https://smikhalevski.github.io/react-corsair/functions/createMemoryHistory.html)
-
-Inside route components use the [`<Link>`](https://smikhalevski.github.io/react-corsair/functions/Link.html) component
-for navigation:
-
-```tsx
-import { Link } from 'react-corsair';
-
-function TeamPage() {
-  return (
-    <Link to={userRoute}>
-      {'Go to user'}
-    </Link>
-  );
-}
-```
-
-If a route that link should navigate to is parameterized, provide a [route location](#route-locations):
-
-```tsx
-<Link to={userRoute.getLocation({ userId: 42 })}>
-  {'Go to user'}
-</Link>
-```
-
-Links can automatically [prefetch](#prefetching) a route component and [related data](#data-loading):
-
-```tsx
-<Link
-  to={userRoute}
-  prefetch={true}
->
-  {'Go to user'}
-</Link>
-```
-
-# Data loading
-
-Routes may require some data to render. While you can load that data from inside a route component, this may lead to
-a [waterfall](https://blog.sentry.io/fetch-waterfall-in-react/). React Corsair provides an easy way to load your data
-along with the route:
+You can call `notFound` from a [data loader](#data-loading) as well:
 
 ```ts
-const userRoute = createRoute({
-  pathname: '/users/:userId',
-  lazyComponent: () => import('./UserPage'),
-
-  loader: async params => {
-    const res = await fetch('/api/users/' + params.userId);
-    return res.json();
+const productRoute = createRoute<{ sku: string }>({
+  pathname: '/products/:sku',
+  component: ProductPage,
+  notFoundComponent: ProductNotFound,
+  
+  dataLoader: async () => {
+    // Try to load product here or call notFound
+    notFound();
   }
 });
 ```
 
-[`loader`](https://smikhalevski.github.io/react-corsair/interfaces/RouteOptions.html#loader) is called every time the
-`<Router>` matches the route. Router waits for both component and data to be loaded and then renders the component.
+Force router to render `notFoundComponent` from an event handler:
 
-You can access the loaded data in your route component using
-the [useRouteData](https://smikhalevski.github.io/react-corsair/functions/useRouteData.html) hook:
+```tsx
+function ProductPage() {
+  const routeController = useRoute(productRoute);
 
-```ts
-function UserPage() {
-  const userData = useRouteData(userRoute);
-
-  // Render the data here
+  const handleClick = () => {
+    routeController.notFound();
+  };
+  
+  return <button onClick={handleClick}>{'Render not found'}</button> 
 }
 ```
 
-Your data loader can access a context of the `<Router>`:
+# Redirects
 
-```tsx
-interface MyRouterContext {
-  apiBase: string;
+During route component rendering, you can trigger a redirect by calling
+[`redirect`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.redirect.html):
+
+```ts
+import { createRoute, redirect } from 'react-corsair';
+
+function AdminPage() {
+  redirect(loginRoute);
 }
 
-const userRoute = createRoute({
-  pathname: '/users/:userId',
-  lazyComponent: () => import('./UserPage'),
+const adminRoute = createRoute('/admin', AdminPage);
+```
 
-  loader: async (params, context: MyRouterContext) => {
-    const res = await fetch(context.apiBase + '/users/' + params.userId);
-    return res.json();
-  }
+When `redirect` is called during rendering, router would render a
+[`loadingComponent`](https://smikhalevski.github.io/react-corsair/interfaces/react_corsair.RouteOptions.html#loadingComponent).
+
+`redirect` accepts routes, [locations](https://smikhalevski.github.io/react-corsair/interfaces/react_corsair.Location.html),
+and URL strings as an argument. Rect Corsair doesn't have a default behaviour for redirects. Use a router event listener
+to handle redirects:
+
+```ts
+const router = new Router({
+  routes: [adminRoute],
+  context: undefined
 });
 
-function App() {
-  return (
-    <Router
-      location={{ pathname: '/user/42' }}
-      routes={[userRoute]}
-      context={{
-        // 🟡 Context type is inferred from the userRoute
-        apiBase: 'https://superpuper.com'
-      }}
-    />
-  )
-}
+router.subscribe(event => {
+  if (event.type !== 'redirect') {
+    return;
+  }
+
+  if (typeof event.to === 'string') {
+    window.location.href = event.to;
+    return;
+  }
+
+  router.navigate(event.to);
+});
 ```
 
 # Prefetching
@@ -881,22 +742,120 @@ function App() {
 Sometimes you know ahead of time that user would visit a particular route, and you may want to prefetch the component
 and [related data](#data-loading) so the navigation is instant.
 
-To do this, you can eiter call [`prefetch`](https://smikhalevski.github.io/react-corsair/classes/Route.html#prefetch)
-method on a route itself:
+To do this, call
+the [`Router.prefetch`](https://smikhalevski.github.io/react-corsair/classes/react_corsair.Router.html#prefetch)
+method and provide a route or a location to prefetch. Router would load required [components](#code-splitting)
+and trigger [data loaders](#data-loading):
 
 ```ts
-userRoute.prefetch({ userId: 42 });
+router.prefetch(productRoute);
 ```
 
-Or user [`Navigation`](https://smikhalevski.github.io/react-corsair/interfaces/Navigation.html) to prefetch a location:
+If a route requires params, use
+[`getLocation`](https://smikhalevski.github.io/react-corsair/classes/react_corsair.Route.html#getLocation) to create
+a prefetched location:
 
 ```ts
-const navigation = useNavigation();
-
-navigation.prefetch(userRoute.getLocation({ userId: 42 }));
+router.prefetch(user.getLocation({ userId: 42 }));
 ```
 
-`Navigation` would prefetch routes only if they were provided to `<Router>`. 
+Use [`Prefetch`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.Prefetch.html) component for a
+more declarative route prefetching:
+
+```tsx
+<Prefetch to={productRoute}/>
+```
+
+# History integration
+
+React Corsair provides a seamless history integration:
+
+```tsx
+import { Router, RouterProvider, userRoute } from 'react-corsair';
+import { createBrowserHistory, HistoryProvider } from 'react-corsair/history';
+
+const usersRoute = createRoute<{ userId: string }>('/users/:userId', UserPage);
+
+const productRoute = createRoute<{ sku: string }>('/products/:sku', ProductPage);
+
+// 1️⃣ Create a history adapter
+const history = createBrowserHistory();
+
+// 2️⃣ Create a router
+const router = new Router({
+  routes: [usersRoute, productRoute],
+  context: undefined,
+});
+
+// 3️⃣ Trigger router navigation if history location changes
+history.subscribe(() => {
+  router.navigate(history.location);
+});
+
+// 4️⃣ Trigger history location change on router redirect
+router.subscribe(event => {
+  if (event.type === 'redirect') {
+    history.replace(event.to);
+  }
+});
+
+function App() {
+  return (
+    <HistoryProvider history={history}>
+      <RouterProvider router={router}/>
+    </HistoryProvider>
+  );
+}
+```
+
+To trigger navigation, push or replace the history location:
+
+```tsx
+import { useHistory } from 'react-corsair/history';
+
+function UserPage() {
+  const history = useHistory();
+
+  const handleGoToProduct = () => {
+    history.push(productRoute.getLocation({ sku: 42 }));
+  };
+
+  return <button onClick={handleGoToProduct}>{'Go to product'}</button>
+}
+```
+
+There are three types of history adapters that you can leverage:
+
+- [`createBrowserHistory`](https://smikhalevski.github.io/react-corsair/functions/history.createBrowserHistory.html)
+- [`createHashHistory`](https://smikhalevski.github.io/react-corsair/functions/history.createHashHistory.html)
+- [`createMemoryHistory`](https://smikhalevski.github.io/react-corsair/functions/history.createMemoryHistory.html)
+
+Inside route components use the [`<Link>`](https://smikhalevski.github.io/react-corsair/functions/history.Link.html)
+for navigation:
+
+```tsx
+import { Link } from 'react-corsair/history';
+
+function UserPage() {
+  return (
+    <Link to={productRoute.getLocation({ sku: 42 })}>
+      {'Go to product'}
+    </Link>
+  );
+}
+```
+
+Links can automatically [prefetch](#prefetching) a route component and [related data](#data-loading):
+
+```tsx
+<Link
+  to={productRoute.getLocation({ sku: 42 })}
+  prefetch={true}
+>
+  {'Go to product'}
+</Link>
+```
+
 
 <hr/>
 
