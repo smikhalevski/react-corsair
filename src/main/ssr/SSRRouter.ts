@@ -18,7 +18,7 @@ export interface SSRRouterOptions<Context> extends RouterOptions<Context> {
   stateStringifier?: (state: RouteState) => string;
 
   /**
-   * A nonce string to allow scripts for
+   * A nonce string to allow hydration scripts under a
    * [`script-src` Content-Security-Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src).
    */
   nonce?: string;
@@ -44,7 +44,7 @@ export class SSRRouter<Context = any> extends Router<Context> {
   readonly isSSR: boolean = true;
 
   /**
-   * A nonce string to allow scripts for
+   * A nonce string to allow hydration scripts under a
    * [`script-src` Content-Security-Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src).
    */
   nonce;

@@ -267,6 +267,9 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
  * @group Routing
  */
 export interface LoadingState {
+  /**
+   * The route status.
+   */
   readonly status: 'loading';
 }
 
@@ -277,6 +280,9 @@ export interface LoadingState {
  * @group Routing
  */
 export interface OkState<Data> {
+  /**
+   * The route status.
+   */
   readonly status: 'ok';
 
   /**
@@ -286,25 +292,48 @@ export interface OkState<Data> {
 }
 
 /**
+ * The state of a route which has thrown an error during rendering or from a data loader.
+ *
  * @group Routing
  */
 export interface ErrorState {
+  /**
+   * The route status.
+   */
   readonly status: 'error';
+
+  /**
+   * A thrown error.
+   */
   readonly error: unknown;
 }
 
 /**
+ * The state of a route that was marked as not found.
+ *
  * @group Routing
  */
 export interface NotFoundState {
+  /**
+   * The route status.
+   */
   readonly status: 'not_found';
 }
 
 /**
+ * The state of a route that has requested a redirect.
+ *
  * @group Routing
  */
 export interface RedirectState {
+  /**
+   * The route status.
+   */
   readonly status: 'redirect';
+
+  /**
+   * A location to redirect to.
+   */
   readonly to: Location | string;
 }
 

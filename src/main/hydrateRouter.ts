@@ -87,7 +87,7 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
   for (let i = 0; i < controllers.length; ++i) {
     const controller = controllers[i];
 
-    // Skip further hydration
+    // Client-only route, no hydration
     if (controller.route.renderingDisposition !== 'server') {
       for (; i < controllers.length; ++i) {
         controllers[i].load();
@@ -95,12 +95,12 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
       break;
     }
 
-    // Hydrate
+    // Hydrated state already available
     if (ssrState !== undefined && ssrState.has(i)) {
       controller['_setState'](stateParser(ssrState.get(i)));
     }
 
-    // Deferred hydration
+    // Server-rendering is in progress, defer hydration
     if (controller.state.status === 'loading') {
       controller.loadingPromise = new AbortablePromise(noop);
       controller.loadingPromise.catch(noop);
