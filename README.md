@@ -44,8 +44,8 @@ abstracts URLs away from your application domain.
 Use [`Route`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.createRoute.html) objects instead of
 URLs to match locations, validate params, navigate between pages, prefetch data, infer types, etc.
 
-React Corsair can be used in any environment and doesn't require any browser-specific API to be available. Browser
-history integration is optional but available out-of-the-box if you need it.
+React Corsair can be used in any environment and doesn't require any browser-specific API to be available. While
+[history integration](#history-integration) is optional it is available out-of-the-box if you need it.
 
 To showcase how the router works, lets start by creating a page component:
 
@@ -70,10 +70,7 @@ handle the navigation:
 ```ts
 import { Router } from 'react-corsair';
 
-const router = new Router({
-  routes: [helloRoute],
-  context: undefined,
-});
+const router = new Router({ routes: [helloRoute] });
 ```
 
 To let router know what route we want to render we should navigate it to it:
@@ -97,7 +94,7 @@ prefetch, enable SSR and more.
 
 # Routing
 
-Routes are navigation entry points. Most routes associate a pathname segment with a rendered component:
+Routes are navigation entry points. Most routes associate a pathname with a rendered component:
 
 ```ts
 import { createRoute } from 'react-corsair';
@@ -121,10 +118,7 @@ Routes are matched during router navigation:
 ```ts
 import { Router } from 'react-corsair';
 
-const router = new Router({
-  routes: [helloRoute],
-  context: undefined,
-});
+const router = new Router({ routes: [helloRoute] });
 
 router.navigate(helloRoute);
 ```
@@ -356,10 +350,7 @@ function HelloPage() {
 
 const helloRoute = createRoute('/hello', HelloPage);
 
-const router = new Router({
-  routes: [helloRoute],
-  context: undefined
-});
+const router = new Router({ routes: [helloRoute] });
 
 router.navigate(helloRoute);
 
@@ -422,10 +413,7 @@ function ChildPage() {
 To allow router navigation to `childRoute` it should be listed among routes:
 
 ```ts
-const router = new Router({
-  routes: [childRoute],
-  context: undefined
-});
+const router = new Router({ routes: [childRoute] });
 
 router.navigate(childRoute);
 ```
@@ -728,10 +716,7 @@ and URL strings as an argument. Rect Corsair doesn't have a default behaviour fo
 to handle redirects:
 
 ```ts
-const router = new Router({
-  routes: [adminRoute],
-  context: undefined
-});
+const router = new Router({ routes: [adminRoute] });
 
 router.subscribe(event => {
   if (event.type !== 'redirect') {
@@ -788,10 +773,7 @@ import { createBrowserHistory, HistoryProvider } from 'react-corsair/history';
 const history = createBrowserHistory();
 
 // 2️⃣ Create a router
-const router = new Router({
-  routes: [usersRoute, productRoute],
-  context: undefined,
-});
+const router = new Router({ routes: [usersRoute, productRoute] });
 
 // 3️⃣ Trigger router navigation if history location changes
 history.subscribe(() => {
@@ -882,11 +864,8 @@ import { hydrateRouter, Router, RouterProvider } from 'react-router';
 
 const history = createBrowserHistory();
 
-const router = new Router({
-  // 1️⃣ Must be the same routes as on the server
-  routes: [],
-  context: undefined
-});
+// 1️⃣ Must be the same routes as on the server
+const router = new Router({ routes: [] });
 
 // 2️⃣ Hydrates routes on the client with the server data
 hydrateRouter(router, history.location);
@@ -919,10 +898,7 @@ const server = createServer(async (request, response) => {
   const history = createMemoryHistory([parseLocation(request.url)]);
 
   // 2️⃣ Create a new router for each request
-  const router = new SSRRouter({
-    routes: [],
-    context: undefined
-  });
+  const router = new SSRRouter({ routes: [] });
   
   // 3️⃣ Navigate to a requested route
   router.navigate(history.location);
@@ -988,10 +964,7 @@ const server = createServer((request, response) => {
   const history = createMemoryHistory([parseLocation(request.url)]);
 
   // 2️⃣ Create a new router for each request
-  const router = new PipeableSSRRouter(response, {
-    routes: [],
-    context: undefined
-  });
+  const router = new PipeableSSRRouter(response, { routes: [] });
 
   // 3️⃣ Navigate to a requested route
   router.navigate(history.location);
@@ -1034,10 +1007,7 @@ async function handler(request) {
   const history = createMemoryHistory([parseLocation(request.url)]);
 
   // 2️⃣ Create a new router for each request
-  const router = new ReadableSSRRouter({
-    routes: [],
-    context: undefined
-  });
+  const router = new ReadableSSRRouter({ routes: [] });
 
   // 3️⃣ Navigate to a requested route
   router.navigate(history.location);
@@ -1080,10 +1050,7 @@ import JSONMarshal from 'json-marshal';
 
 const history = createBrowserHistory();
 
-const router = new Router({
-  routes: [],
-  context: undefined
-});
+const router = new Router({ routes: [] });
 
 // 🟡 Pass a custom state parser
 hydrateRouter(router, history.location, { stateParser: JSONMarshal.parse });
@@ -1103,7 +1070,6 @@ import JSONMarshal from 'json-marshal';
 
 const router = new ReadableSSRRouter({
   routes: [],
-  context: undefined,
   stateStringifier: JSONMarshal.stringify
 });
 ```
@@ -1125,7 +1091,6 @@ to `SSRRouter` or any of its subclasses:
 ```ts
 const router = new SSRRouter({
   routes: [],
-  context: undefined,
   nonce: '2726c7f26c'
 });
 ```

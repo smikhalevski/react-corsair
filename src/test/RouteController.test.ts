@@ -385,7 +385,7 @@ describe('getOrLoadRouteState', () => {
   const Component = () => undefined;
   const { signal } = new AbortController();
 
-  const router = new Router({ routes: [], context: undefined });
+  const router = new Router({ routes: [] });
 
   test('returns OK state for outlet route', () => {
     const route = createRoute();

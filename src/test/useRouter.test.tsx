@@ -8,7 +8,7 @@ console.error = noop;
 describe('RouterProvider', () => {
   test('re-renders on navigation', () => {
     const route = createRoute('/aaa', () => 'AAA');
-    const router = new Router({ routes: [route], context: undefined });
+    const router = new Router({ routes: [route] });
 
     const result = render(
       <StrictMode>
@@ -30,7 +30,7 @@ describe('useRouter', () => {
   });
 
   test('returns Router instance', () => {
-    const router = new Router({ routes: [], context: undefined });
+    const router = new Router({ routes: [] });
 
     const hook = renderHook(() => useRouter(), {
       wrapper: props => (

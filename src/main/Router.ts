@@ -56,7 +56,7 @@ export class Router<Context = any> implements Fallbacks {
    */
   constructor(options: RouterOptions<Context>) {
     this.routes = options.routes;
-    this.context = options.context;
+    this.context = options.context!;
     this.errorComponent = options.errorComponent;
     this.loadingComponent = options.loadingComponent;
     this.notFoundComponent = options.notFoundComponent;

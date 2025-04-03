@@ -10,7 +10,7 @@ describe('navigate', () => {
       dataLoader: dataLoaderMock,
     });
 
-    const router = new SSRRouter({ routes: [route], context: undefined });
+    const router = new SSRRouter({ routes: [route] });
 
     router.navigate(route);
 
@@ -26,7 +26,7 @@ describe('navigate', () => {
       renderingDisposition: 'client',
     });
 
-    const router = new SSRRouter({ routes: [route], context: undefined });
+    const router = new SSRRouter({ routes: [route] });
 
     router.navigate(route);
 
@@ -36,14 +36,14 @@ describe('navigate', () => {
 
 describe('nextHydrationScript', () => {
   test('returns an empty string if there no changes in state', () => {
-    const router = new SSRRouter({ routes: [], context: undefined });
+    const router = new SSRRouter({ routes: [] });
 
     expect(router.nextHydrationScript()).toBe('');
   });
 
   test('returns the hydration script for a single route', async () => {
     const route = createRoute('/aaa');
-    const router = new SSRRouter({ routes: [route], context: undefined });
+    const router = new SSRRouter({ routes: [route] });
 
     router.navigate(route);
 
@@ -55,7 +55,7 @@ describe('nextHydrationScript', () => {
   test('returns the hydration script for nested routes', async () => {
     const routeAaa = createRoute('/aaa');
     const routeBbb = createRoute(routeAaa, '/aaa');
-    const router = new SSRRouter({ routes: [routeBbb], context: undefined });
+    const router = new SSRRouter({ routes: [routeBbb] });
 
     router.navigate(routeBbb);
 
@@ -67,7 +67,7 @@ describe('nextHydrationScript', () => {
   test('returns only changed route states in consequent hydration scripts', async () => {
     const routeAaa = createRoute('/aaa');
     const routeBbb = createRoute(routeAaa, '/aaa');
-    const router = new SSRRouter({ routes: [routeBbb], context: undefined });
+    const router = new SSRRouter({ routes: [routeBbb] });
 
     router.navigate(routeBbb);
     router.nextHydrationScript();
@@ -83,7 +83,7 @@ describe('nextHydrationScript', () => {
     const stateStringifierMock = jest.fn(JSON.stringify);
 
     const route = createRoute('/aaa');
-    const router = new SSRRouter({ routes: [route], context: undefined, stateStringifier: stateStringifierMock });
+    const router = new SSRRouter({ routes: [route], stateStringifier: stateStringifierMock });
 
     router.navigate(route);
 
@@ -95,7 +95,7 @@ describe('nextHydrationScript', () => {
 
   test('escapes XSS-prone strings', () => {
     const route = createRoute('/aaa');
-    const router = new SSRRouter({ routes: [route], context: undefined });
+    const router = new SSRRouter({ routes: [route] });
 
     router.navigate(route);
     router.rootController!.setData('<script src="https://xxx.yyy"></script>');
@@ -108,14 +108,14 @@ describe('nextHydrationScript', () => {
 
 describe('nextHydrationChunk', () => {
   test('returns an empty string if there no changes in state', () => {
-    const router = new SSRRouter({ routes: [], context: undefined });
+    const router = new SSRRouter({ routes: [] });
 
     expect(router.nextHydrationChunk()).toBe('');
   });
 
   test('returns the hydration script for a single route', async () => {
     const route = createRoute('/aaa');
-    const router = new SSRRouter({ routes: [route], context: undefined });
+    const router = new SSRRouter({ routes: [route] });
 
     router.navigate(route);
 
@@ -126,7 +126,7 @@ describe('nextHydrationChunk', () => {
 
   test('respects nonce', () => {
     const route = createRoute('/aaa');
-    const router = new SSRRouter({ routes: [route], context: undefined, nonce: '111' });
+    const router = new SSRRouter({ routes: [route], nonce: '111' });
 
     router.navigate(route);
 
@@ -138,7 +138,7 @@ describe('nextHydrationChunk', () => {
 
 describe('hasChanges', () => {
   test('returns false if there are no pending routes', async () => {
-    const router = new SSRRouter({ routes: [], context: undefined });
+    const router = new SSRRouter({ routes: [] });
 
     await expect(router.hasChanges()).resolves.toBe(false);
   });
@@ -149,7 +149,7 @@ describe('hasChanges', () => {
       dataLoader: () => Promise.resolve('zzz'),
     });
 
-    const router = new SSRRouter({ routes: [route], context: undefined });
+    const router = new SSRRouter({ routes: [route] });
 
     router.navigate(route);
 
@@ -167,7 +167,7 @@ describe('hasChanges', () => {
         dataLoader: () => Promise.resolve('zzz'),
       });
 
-      const router = new SSRRouter({ routes: [route], context: undefined });
+      const router = new SSRRouter({ routes: [route] });
 
       router.navigate(route);
 

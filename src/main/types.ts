@@ -306,7 +306,7 @@ export interface RouteOptions<Params extends Dict, Data, Context> extends Fallba
  * @template Context A router context.
  * @group Routing
  */
-export interface RouterOptions<Context> extends Fallbacks {
+export interface RouterOptions<Context = void> extends Fallbacks {
   /**
    * Routes that a router can match.
    */
@@ -315,7 +315,7 @@ export interface RouterOptions<Context> extends Fallbacks {
   /**
    * An arbitrary context.
    */
-  context: Context;
+  context?: Context;
 }
 
 /**

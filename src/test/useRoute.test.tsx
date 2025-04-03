@@ -18,7 +18,7 @@ test('returns the current route controller', () => {
     return null;
   });
 
-  const router = new Router({ routes: [routeBbb], context: undefined });
+  const router = new Router({ routes: [routeBbb] });
 
   router.navigate(routeBbb);
 
@@ -42,7 +42,7 @@ test('returns the route controller of the provided route if it is the same as th
     return null;
   });
 
-  const router = new Router({ routes: [routeBbb], context: undefined });
+  const router = new Router({ routes: [routeBbb] });
 
   router.navigate(routeBbb);
 
@@ -66,7 +66,7 @@ test('returns the route controller of the provided route if it is the parent rou
     return null;
   });
 
-  const router = new Router({ routes: [routeBbb], context: undefined });
+  const router = new Router({ routes: [routeBbb] });
 
   router.navigate(routeBbb);
 
@@ -91,7 +91,7 @@ test('throws if the provided route is a child', () => {
 
   const routeBbb = createRoute(routeAaa, '/bbb');
 
-  const router = new Router({ routes: [routeBbb], context: undefined });
+  const router = new Router({ routes: [routeBbb] });
 
   router.navigate(routeBbb);
 
@@ -114,7 +114,7 @@ test('throws if the provided route is not rendered', () => {
 
   const routeBbb = createRoute('/bbb');
 
-  const router = new Router({ routes: [routeAaa, routeBbb], context: undefined });
+  const router = new Router({ routes: [routeAaa, routeBbb] });
 
   router.navigate(routeAaa);
 
@@ -135,7 +135,7 @@ test('re-renders if controller state is changed', () => {
     return null;
   });
 
-  const router = new Router({ routes: [route], context: undefined });
+  const router = new Router({ routes: [route] });
 
   router.navigate(route);
 

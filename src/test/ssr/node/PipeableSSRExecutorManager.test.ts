@@ -15,7 +15,7 @@ describe('PipeableSSRRouter', () => {
     });
 
     const route = createRoute('/aaa');
-    const router = new PipeableSSRRouter(outputStream, { routes: [route], context: undefined });
+    const router = new PipeableSSRRouter(outputStream, { routes: [route] });
 
     router.navigate(route);
     router.rootController!.setData('zzz');
@@ -43,7 +43,7 @@ describe('PipeableSSRRouter', () => {
     });
 
     const route = createRoute('/aaa');
-    const router = new PipeableSSRRouter(outputStream, { routes: [route], context: undefined });
+    const router = new PipeableSSRRouter(outputStream, { routes: [route] });
 
     router.navigate(route);
     router.rootController!.setData('zzz');

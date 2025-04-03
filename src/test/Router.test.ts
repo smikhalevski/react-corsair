@@ -31,7 +31,7 @@ describe('navigate', () => {
     const routeAaa = createRoute('/aaa');
     const routeBbb = createRoute('/bbb');
 
-    const router = new Router({ routes: [routeAaa, routeBbb], context: undefined });
+    const router = new Router({ routes: [routeAaa, routeBbb] });
 
     router.subscribe(listenerMock);
 
@@ -106,7 +106,7 @@ describe('navigate', () => {
 
     const routeBbb = createRoute('/bbb');
 
-    const router = new Router({ routes: [routeAaa, routeBbb], context: undefined });
+    const router = new Router({ routes: [routeAaa, routeBbb] });
 
     router.subscribe(event => {
       if (event.type === 'navigate' && event.controller!.route === routeAaa) {
@@ -136,7 +136,7 @@ describe('prefetch', () => {
 
     expect(route.component).toBeUndefined();
 
-    const router = new Router({ routes: [route], context: undefined });
+    const router = new Router({ routes: [route] });
 
     router.subscribe(listenerMock);
 
@@ -169,7 +169,7 @@ describe('prefetch', () => {
       dataLoader: dataLoaderMock,
     });
 
-    const router = new Router({ routes: [route], context: undefined });
+    const router = new Router({ routes: [route] });
 
     router.prefetch(route.getLocation({ xxx: 111 })).abort();
 

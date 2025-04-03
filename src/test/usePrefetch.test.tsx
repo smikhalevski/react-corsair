@@ -48,7 +48,7 @@ test('restart loading only if location is changed', () => {
     dataLoader: dataLoaderBbbMock,
   });
 
-  const router = new Router({ routes: [routeAaa, routeBbb], context: undefined });
+  const router = new Router({ routes: [routeAaa, routeBbb] });
 
   const wrapper: FC<PropsWithChildren> = props => (
     <StrictMode>

@@ -6,7 +6,7 @@ import { noop } from '../main/utils';
 console.error = noop;
 
 test('renders null if no route matched and router does not have notFoundComponent', () => {
-  const router = new Router({ routes: [], context: undefined });
+  const router = new Router({ routes: [] });
 
   const result = render(
     <StrictMode>
@@ -22,7 +22,6 @@ test('renders null if no route matched and router does not have notFoundComponen
 test('renders router notFoundComponent if no route matched', () => {
   const router = new Router({
     routes: [],
-    context: undefined,
     notFoundComponent: () => 'XXX',
   });
 
@@ -39,7 +38,7 @@ test('renders router notFoundComponent if no route matched', () => {
 
 test('renders route component in an outlet', () => {
   const route = createRoute('/aaa', () => 'AAA');
-  const router = new Router({ routes: [route], context: undefined });
+  const router = new Router({ routes: [route] });
 
   router.navigate(route);
 
@@ -56,7 +55,7 @@ test('renders route component in an outlet', () => {
 
 test('renders route component in an outlet with a wrapper', () => {
   const route = createRoute('/aaa', () => 'AAA');
-  const router = new Router({ routes: [route], context: undefined });
+  const router = new Router({ routes: [route] });
 
   router.navigate(route);
 
@@ -82,7 +81,7 @@ test('renders nested route component in a nested outlet', () => {
 
   const routeBbb = createRoute(routeAaa, '/bbb', () => 'BBB');
 
-  const router = new Router({ routes: [routeBbb], context: undefined });
+  const router = new Router({ routes: [routeBbb] });
 
   router.navigate(routeBbb);
 
@@ -110,7 +109,7 @@ test('renders route errorComponent if an error is thrown during rendering', () =
     },
   });
 
-  const router = new Router({ routes: [route], context: undefined });
+  const router = new Router({ routes: [route] });
 
   router.navigate(route);
 
@@ -138,7 +137,6 @@ test('renders router errorComponent if an error is thrown during rendering', () 
 
   const router = new Router({
     routes: [route],
-    context: undefined,
     errorComponent: () => {
       return 'XXX';
     },
@@ -175,7 +173,7 @@ test('error bubbles to the closest route with an errorComponent', () => {
     },
   });
 
-  const router = new Router({ routes: [routeBbb], context: undefined });
+  const router = new Router({ routes: [routeBbb] });
 
   router.navigate(routeBbb);
 
@@ -202,7 +200,7 @@ test('rendering throws an error if no errorComponent exists', () => {
     },
   });
 
-  const router = new Router({ routes: [route], context: undefined });
+  const router = new Router({ routes: [route] });
 
   router.navigate(route);
 
@@ -226,7 +224,7 @@ test('renders loadingComponent of a route', () => {
     loadingComponent: () => 'AAA',
   });
 
-  const router = new Router({ routes: [route], context: undefined });
+  const router = new Router({ routes: [route] });
 
   router.navigate(route);
 
@@ -250,7 +248,6 @@ test('renders loadingComponent of a router', () => {
 
   const router = new Router({
     routes: [route],
-    context: undefined,
     loadingComponent: () => 'AAA',
   });
 
@@ -279,7 +276,7 @@ test('loading bubbles to the closest route with a loadingComponent', () => {
     dataLoader: () => new Promise(noop),
   });
 
-  const router = new Router({ routes: [routeBbb], context: undefined });
+  const router = new Router({ routes: [routeBbb] });
 
   router.navigate(routeBbb);
 
@@ -303,7 +300,7 @@ test('renders notFoundComponent if notFound is called during rendering', () => {
     notFoundComponent: () => 'AAA',
   });
 
-  const router = new Router({ routes: [route], context: undefined });
+  const router = new Router({ routes: [route] });
 
   router.navigate(route);
 
@@ -326,7 +323,7 @@ test('renders notFoundComponent if notFound is called from data loader', () => {
     notFoundComponent: () => 'AAA',
   });
 
-  const router = new Router({ routes: [route], context: undefined });
+  const router = new Router({ routes: [route] });
 
   router.navigate(route);
 
@@ -355,7 +352,7 @@ test('not found bubbles to the closest route with a notFoundComponent', () => {
     component: () => notFound(),
   });
 
-  const router = new Router({ routes: [routeBbb], context: undefined });
+  const router = new Router({ routes: [routeBbb] });
 
   router.subscribe(listenerMock);
   router.navigate(routeBbb);
@@ -420,7 +417,7 @@ test('renders loadingComponent if redirect is called during rendering', () => {
     loadingComponent: () => 'AAA',
   });
 
-  const router = new Router({ routes: [route], context: undefined });
+  const router = new Router({ routes: [route] });
 
   router.navigate(route);
 
@@ -443,7 +440,7 @@ test('renders loadingComponent if redirect is called from a data loader', () => 
     loadingComponent: () => 'AAA',
   });
 
-  const router = new Router({ routes: [route], context: undefined });
+  const router = new Router({ routes: [route] });
 
   router.navigate(route);
 
@@ -472,7 +469,7 @@ test('redirect bubbles to the closest route with a loadingComponent', () => {
     component: () => redirect('zzz'),
   });
 
-  const router = new Router({ routes: [routeBbb], context: undefined });
+  const router = new Router({ routes: [routeBbb] });
 
   router.subscribe(listenerMock);
   router.navigate(routeBbb);
