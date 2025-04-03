@@ -1,6 +1,39 @@
 import { SSRRouter } from '../../main/ssr';
 import { createRoute, RouteState } from '../../main';
 
+describe('navigate', () => {
+  test('loads routes', async () => {
+    const dataLoaderMock = jest.fn();
+
+    const route = createRoute({
+      pathname: '/aaa',
+      dataLoader: dataLoaderMock,
+    });
+
+    const router = new SSRRouter({ routes: [route], context: undefined });
+
+    router.navigate(route);
+
+    expect(dataLoaderMock).toHaveBeenCalledTimes(1);
+  });
+
+  test('does not load routes with non-server renderingDisposition', async () => {
+    const dataLoaderMock = jest.fn();
+
+    const route = createRoute({
+      pathname: '/aaa',
+      dataLoader: dataLoaderMock,
+      renderingDisposition: 'client',
+    });
+
+    const router = new SSRRouter({ routes: [route], context: undefined });
+
+    router.navigate(route);
+
+    expect(dataLoaderMock).not.toHaveBeenCalled();
+  });
+});
+
 describe('nextHydrationScript', () => {
   test('returns an empty string if there no changes in state', () => {
     const router = new SSRRouter({ routes: [], context: undefined });
