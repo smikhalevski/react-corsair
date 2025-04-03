@@ -42,9 +42,9 @@ export class Router<Context = any> implements Fallbacks {
    */
   rootController: RouteController<any, any, Context> | null = null;
 
-  errorComponent: ComponentType | undefined;
-  loadingComponent: ComponentType | undefined;
-  notFoundComponent: ComponentType | undefined;
+  readonly errorComponent: ComponentType | undefined;
+  readonly loadingComponent: ComponentType | undefined;
+  readonly notFoundComponent: ComponentType | undefined;
 
   protected _pubSub = new PubSub<RouterEvent>();
 

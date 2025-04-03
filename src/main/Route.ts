@@ -126,9 +126,9 @@ export class Route<
    */
   getOrLoadComponent: () => ComponentType | Promise<ComponentType>;
 
-  errorComponent: ComponentType | undefined;
-  loadingComponent: ComponentType | undefined;
-  notFoundComponent: ComponentType | undefined;
+  readonly errorComponent: ComponentType | undefined;
+  readonly loadingComponent: ComponentType | undefined;
+  readonly notFoundComponent: ComponentType | undefined;
 
   /**
    * Creates a new instance of a {@link Route}.

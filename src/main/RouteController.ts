@@ -1,10 +1,11 @@
 import { AbortablePromise } from 'parallel-universe';
 import { Router } from './Router';
 import { isPromiseLike, noop, toLocation } from './utils';
-import { DataLoaderOptions, Dict, Location, RouterEvent, To } from './types';
+import { DataLoaderOptions, Dict, Fallbacks, Location, RouterEvent, To } from './types';
 import { NotFoundError } from './notFound';
 import { Redirect } from './redirect';
 import { Route } from './Route';
+import { ComponentType } from 'react';
 
 /**
  * Manages state of a route rendered in an {@link Outlet}.
@@ -14,7 +15,7 @@ import { Route } from './Route';
  * @template Context A router context.
  * @group Routing
  */
-export class RouteController<Params extends Dict = any, Data = any, Context = any> {
+export class RouteController<Params extends Dict = any, Data = any, Context = any> implements Fallbacks {
   /**
    * A fallback controller that is rendered in an {@link Outlet} while this controller loads route component and data.
    */
@@ -61,6 +62,18 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
     readonly params: Params
   ) {
     this.context = router.context;
+  }
+
+  get errorComponent(): ComponentType | undefined {
+    return this.route.errorComponent || (this.parentController === null ? this.router.errorComponent : undefined);
+  }
+
+  get loadingComponent(): ComponentType | undefined {
+    return this.route.loadingComponent || (this.parentController === null ? this.router.loadingComponent : undefined);
+  }
+
+  get notFoundComponent(): ComponentType | undefined {
+    return this.route.notFoundComponent || (this.parentController === null ? this.router.notFoundComponent : undefined);
   }
 
   /**

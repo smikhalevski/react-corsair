@@ -259,11 +259,13 @@ describe('RouteController', () => {
 
       expect(controller.state).toEqual({ status: 'loading' } satisfies RouteState);
       expect(routeListenerMock).toHaveBeenCalledTimes(2);
+
       expect(routeListenerMock).toHaveBeenNthCalledWith(1, {
         type: 'error',
         controller,
         error: 'zzz',
       } satisfies RouterEvent);
+
       expect(routeListenerMock).toHaveBeenNthCalledWith(2, { type: 'loading', controller } satisfies RouterEvent);
 
       await controller.loadingPromise!.catch(noop);

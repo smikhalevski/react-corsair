@@ -3,7 +3,7 @@ import { createErrorState, RouteController } from './RouteController';
 import { Router } from './Router';
 import { redirect } from './redirect';
 import { notFound } from './notFound';
-import { Fallbacks, RouterEvent } from './types';
+import { RouterEvent } from './types';
 import { RouteControllerProvider } from './useRoute';
 import { noop } from './utils';
 
@@ -104,38 +104,24 @@ class OutletErrorBoundary extends Component<OutletErrorBoundaryProps, OutletErro
   render(): ReactNode {
     const { controller } = this.props;
 
-    const canSuspend =
-      controller.fallbackController !== null ||
-      (controller.parentController === null
-        ? controller.route.loadingComponent || controller.router.loadingComponent
-        : controller.route.loadingComponent) !== undefined;
+    const fallback =
+      (controller.state.status === 'ok' || controller.state.status === 'loading') &&
+      ((controller.fallbackController !== null && <OutletErrorBoundary controller={controller.fallbackController} />) ||
+        (controller.loadingComponent !== undefined && (
+          <RouteControllerProvider value={controller}>
+            <OutletContentProvider value={null}>
+              <OutletRenderer component={controller.loadingComponent} />
+            </OutletContentProvider>
+          </RouteControllerProvider>
+        )));
 
-    if (!canSuspend) {
-      return (
-        <OutletContent
-          controller={controller}
-          isSuspended={false}
-        />
-      );
+    if (fallback === false) {
+      return <OutletContent controller={controller} />;
     }
 
     return (
-      <Suspense
-        fallback={
-          controller.fallbackController !== null ? (
-            <OutletErrorBoundary controller={controller.fallbackController} />
-          ) : (
-            <OutletContent
-              controller={controller}
-              isSuspended={true}
-            />
-          )
-        }
-      >
-        <OutletContent
-          controller={controller}
-          isSuspended={false}
-        />
+      <Suspense fallback={fallback}>
+        <OutletContent controller={controller} />
       </Suspense>
     );
   }
@@ -143,29 +129,21 @@ class OutletErrorBoundary extends Component<OutletErrorBoundaryProps, OutletErro
 
 interface OutletContentProps {
   controller: RouteController;
-  isSuspended: boolean;
 }
 
 /**
  * Renders controller according to its status.
  */
 function OutletContent(props: OutletContentProps): ReactNode {
-  const { controller, isSuspended } = props;
+  const { controller } = props;
   const { route } = controller;
   const { status } = controller.state;
-
-  const fallbacks: Fallbacks = controller.parentController === null ? controller.router : route;
 
   let component;
   let childController = null;
 
   switch (status) {
     case 'ok':
-      if (isSuspended) {
-        component = route.loadingComponent || fallbacks.loadingComponent!;
-        break;
-      }
-
       component = route.component;
       childController = controller.childController;
 
@@ -175,7 +153,7 @@ function OutletContent(props: OutletContentProps): ReactNode {
       break;
 
     case 'error':
-      component = route.errorComponent || fallbacks.errorComponent;
+      component = controller.errorComponent;
 
       if (component === undefined) {
         throw controller.state.error;
@@ -183,20 +161,15 @@ function OutletContent(props: OutletContentProps): ReactNode {
       break;
 
     case 'not_found':
-      component = route.notFoundComponent || fallbacks.notFoundComponent || notFound();
+      component = controller.notFoundComponent || notFound();
       break;
 
     case 'redirect':
-      component = route.loadingComponent || fallbacks.loadingComponent || redirect(controller.state.to);
+      component = controller.loadingComponent || redirect(controller.state.to);
       break;
 
     case 'loading':
-      component = route.loadingComponent || fallbacks.loadingComponent;
-
-      if (component === undefined || !isSuspended) {
-        throw controller.loadingPromise || new Error('Cannot suspend route controller');
-      }
-      break;
+      throw controller.loadingPromise || new Error('Cannot suspend route controller');
 
     default:
       throw new Error('Unexpected route status: ' + status);
