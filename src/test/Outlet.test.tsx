@@ -10,7 +10,7 @@ test('renders null if no route matched and router does not have notFoundComponen
 
   const result = render(
     <StrictMode>
-      <RouterProvider router={router}>
+      <RouterProvider value={router}>
         <Outlet />
       </RouterProvider>
     </StrictMode>
@@ -27,7 +27,7 @@ test('renders router notFoundComponent if no route matched', () => {
 
   const renderResult = render(
     <StrictMode>
-      <RouterProvider router={router}>
+      <RouterProvider value={router}>
         <Outlet />
       </RouterProvider>
     </StrictMode>
@@ -44,7 +44,7 @@ test('renders route component in an outlet', () => {
 
   const renderResult = render(
     <StrictMode>
-      <RouterProvider router={router}>
+      <RouterProvider value={router}>
         <Outlet />
       </RouterProvider>
     </StrictMode>
@@ -61,7 +61,7 @@ test('renders route component in an outlet with a wrapper', () => {
 
   const renderResult = render(
     <StrictMode>
-      <RouterProvider router={router}>
+      <RouterProvider value={router}>
         <blockquote>
           <Outlet />
         </blockquote>
@@ -87,7 +87,7 @@ test('renders nested route component in a nested outlet', () => {
 
   const renderResult = render(
     <StrictMode>
-      <RouterProvider router={router}>
+      <RouterProvider value={router}>
         <Outlet />
       </RouterProvider>
     </StrictMode>
@@ -115,7 +115,7 @@ test('renders route errorComponent if an error is thrown during rendering', () =
 
   const renderResult = render(
     <StrictMode>
-      <RouterProvider router={router}>
+      <RouterProvider value={router}>
         <Outlet />
       </RouterProvider>
     </StrictMode>
@@ -146,7 +146,7 @@ test('renders router errorComponent if an error is thrown during rendering', () 
 
   const renderResult = render(
     <StrictMode>
-      <RouterProvider router={router}>
+      <RouterProvider value={router}>
         <Outlet />
       </RouterProvider>
     </StrictMode>
@@ -179,7 +179,7 @@ test('error bubbles to the closest route with an errorComponent', () => {
 
   const renderResult = render(
     <StrictMode>
-      <RouterProvider router={router}>
+      <RouterProvider value={router}>
         <Outlet />
       </RouterProvider>
     </StrictMode>
@@ -207,7 +207,7 @@ test('rendering throws an error if no errorComponent exists', () => {
   expect(() =>
     render(
       <StrictMode>
-        <RouterProvider router={router}>
+        <RouterProvider value={router}>
           <Outlet />
         </RouterProvider>
       </StrictMode>
@@ -230,7 +230,7 @@ test('renders loadingComponent of a route', () => {
 
   const renderResult = render(
     <StrictMode>
-      <RouterProvider router={router}>
+      <RouterProvider value={router}>
         <Outlet />
       </RouterProvider>
     </StrictMode>
@@ -255,7 +255,7 @@ test('renders loadingComponent of a router', () => {
 
   const renderResult = render(
     <StrictMode>
-      <RouterProvider router={router}>
+      <RouterProvider value={router}>
         <Outlet />
       </RouterProvider>
     </StrictMode>
@@ -282,7 +282,7 @@ test('loading bubbles to the closest route with a loadingComponent', () => {
 
   const renderResult = render(
     <StrictMode>
-      <RouterProvider router={router}>
+      <RouterProvider value={router}>
         <Outlet />
       </RouterProvider>
     </StrictMode>
@@ -306,7 +306,7 @@ test('renders notFoundComponent if notFound is called during rendering', () => {
 
   const renderResult = render(
     <StrictMode>
-      <RouterProvider router={router}>
+      <RouterProvider value={router}>
         <Outlet />
       </RouterProvider>
     </StrictMode>
@@ -329,7 +329,7 @@ test('renders notFoundComponent if notFound is called from data loader', () => {
 
   const renderResult = render(
     <StrictMode>
-      <RouterProvider router={router}>
+      <RouterProvider value={router}>
         <Outlet />
       </RouterProvider>
     </StrictMode>
@@ -359,7 +359,7 @@ test('not found bubbles to the closest route with a notFoundComponent', () => {
 
   const renderResult = render(
     <StrictMode>
-      <RouterProvider router={router}>
+      <RouterProvider value={router}>
         <Outlet />
       </RouterProvider>
     </StrictMode>
@@ -423,7 +423,7 @@ test('renders loadingComponent if redirect is called during rendering', () => {
 
   const renderResult = render(
     <StrictMode>
-      <RouterProvider router={router}>
+      <RouterProvider value={router}>
         <Outlet />
       </RouterProvider>
     </StrictMode>
@@ -446,7 +446,7 @@ test('renders loadingComponent if redirect is called from a data loader', () => 
 
   const renderResult = render(
     <StrictMode>
-      <RouterProvider router={router}>
+      <RouterProvider value={router}>
         <Outlet />
       </RouterProvider>
     </StrictMode>
@@ -476,7 +476,7 @@ test('redirect bubbles to the closest route with a loadingComponent', () => {
 
   const renderResult = render(
     <StrictMode>
-      <RouterProvider router={router}>
+      <RouterProvider value={router}>
         <Outlet />
       </RouterProvider>
     </StrictMode>

@@ -117,3 +117,19 @@ test('calls listener on back', () => {
 
   expect(listenerMock).toHaveBeenCalledTimes(2);
 });
+
+test('creates an absolute URL', async () => {
+  expect(createMemoryHistory([{}]).toAbsoluteURL({ pathname: '/aaa', searchParams: { xxx: 111 }, hash: '' })).toBe(
+    '/aaa?xxx=111'
+  );
+});
+
+test('creates an absolute URL with a default base', async () => {
+  expect(
+    createMemoryHistory([{}], { basePathname: 'http://bbb.ccc' }).toAbsoluteURL({
+      pathname: '/aaa',
+      searchParams: { xxx: 111 },
+      hash: '',
+    })
+  ).toBe('http://bbb.ccc/aaa?xxx=111');
+});

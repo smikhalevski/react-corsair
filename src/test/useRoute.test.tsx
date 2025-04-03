@@ -24,7 +24,7 @@ test('returns the current route controller', () => {
 
   render(
     <StrictMode>
-      <RouterProvider router={router} />
+      <RouterProvider value={router} />
     </StrictMode>
   );
 
@@ -48,7 +48,7 @@ test('returns the route controller of the provided route if it is the same as th
 
   render(
     <StrictMode>
-      <RouterProvider router={router} />
+      <RouterProvider value={router} />
     </StrictMode>
   );
 
@@ -72,7 +72,7 @@ test('returns the route controller of the provided route if it is the parent rou
 
   render(
     <StrictMode>
-      <RouterProvider router={router} />
+      <RouterProvider value={router} />
     </StrictMode>
   );
 
@@ -98,7 +98,7 @@ test('throws if the provided route is a child', () => {
   expect(() =>
     render(
       <StrictMode>
-        <RouterProvider router={router} />
+        <RouterProvider value={router} />
       </StrictMode>
     )
   ).toThrow(new Error('Cannot be used outside of a route'));
@@ -121,7 +121,7 @@ test('throws if the provided route is not rendered', () => {
   expect(() =>
     render(
       <StrictMode>
-        <RouterProvider router={router} />
+        <RouterProvider value={router} />
       </StrictMode>
     )
   ).toThrow(new Error('Cannot be used outside of a route'));
@@ -141,7 +141,7 @@ test('re-renders if controller state is changed', () => {
 
   render(
     <StrictMode>
-      <RouterProvider router={router} />
+      <RouterProvider value={router} />
     </StrictMode>
   );
 

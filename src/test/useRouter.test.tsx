@@ -12,7 +12,7 @@ describe('RouterProvider', () => {
 
     const result = render(
       <StrictMode>
-        <RouterProvider router={router} />
+        <RouterProvider value={router} />
       </StrictMode>
     );
 
@@ -35,7 +35,7 @@ describe('useRouter', () => {
     const hook = renderHook(() => useRouter(), {
       wrapper: props => (
         <StrictMode>
-          <RouterProvider router={router}>{props.children}</RouterProvider>
+          <RouterProvider value={router}>{props.children}</RouterProvider>
         </StrictMode>
       ),
     });

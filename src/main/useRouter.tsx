@@ -31,7 +31,7 @@ export interface RouterProviderProps {
   /**
    * A router instance that populates the nested {@link Outlet}.
    */
-  router: Router;
+  value: Router;
 
   /**
    * Children rendered by the router. An {@link Outlet} is rendered by default.
@@ -45,18 +45,18 @@ export interface RouterProviderProps {
  * @group Routing
  */
 export function RouterProvider(props: RouterProviderProps): ReactElement {
-  const { router, children = <Outlet /> } = props;
+  const { value, children = <Outlet /> } = props;
 
-  const subscribe = useCallback(router.subscribe.bind(router), [router]);
+  const subscribe = useCallback(value.subscribe.bind(value), [value]);
 
-  const getSnapshot = () => router.rootController;
+  const getSnapshot = () => value.rootController;
 
   const rootController = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
   return (
-    <RouterContext.Provider value={router}>
+    <RouterContext.Provider value={value}>
       <RouteControllerProvider value={null}>
-        <OutletContentProvider value={rootController || router}>{children}</OutletContentProvider>
+        <OutletContentProvider value={rootController || value}>{children}</OutletContentProvider>
       </RouteControllerProvider>
     </RouterContext.Provider>
   );
