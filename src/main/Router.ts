@@ -2,10 +2,10 @@ import { AbortablePromise, PubSub } from 'parallel-universe';
 import { ComponentType } from 'react';
 import { matchRoutes } from './matchRoutes';
 import { Route } from './Route';
-import { Fallbacks, RouterEvent, RouterOptions, To } from './types';
+import { Fallbacks, Location, RouterEvent, RouterOptions, To } from './types';
 import { noop, toLocation } from './utils';
-import { loadRoute, RoutePresenter } from './RoutePresenter';
-import { reconcilePresenters } from './reconcilePresenters';
+import { getOrLoadRouteState, RouteController } from './RouteController';
+import { reconcileControllers } from './reconcileControllers';
 
 /**
  * A router that matches routes by a location.
@@ -15,33 +15,44 @@ import { reconcilePresenters } from './reconcilePresenters';
  */
 export class Router<Context = any> implements Fallbacks {
   /**
-   * Routes that a router can render.
+   * `true` if router is used in the server environment.
    */
-  routes: Route<any, any, any, Context>[];
+  readonly isSSR: boolean = false;
 
   /**
-   * A context provided to {@link RouteOptions.dataLoader route data loaders}.
+   * Routes that a router can render.
+   */
+  routes: readonly Route<any, any, any, Context>[];
+
+  /**
+   * A context provided to {@link react-corsair!RouteOptions.dataLoader route data loaders}.
    */
   context: Context;
 
   /**
-   * A root presenter rendered in a router {@link Outlet}, or `null` if no route is rendered.
+   * The last location this router was navigated to, or `null` if {@link navigate navigation} didn't occur yet.
+   */
+  location: Location | null = null;
+
+  /**
+   * A root controller rendered in a router {@link react-corsair!Outlet Outlet}, or `null` if there's no matching route
+   * or if {@link navigate navigation} didn't occur yet.
    *
    * @see {@link navigate}
    */
-  rootPresenter: RoutePresenter | null = null;
+  rootController: RouteController<any, any, Context> | null = null;
 
-  errorComponent: ComponentType | undefined;
-  loadingComponent: ComponentType | undefined;
-  notFoundComponent: ComponentType | undefined;
+  readonly errorComponent: ComponentType | undefined;
+  readonly loadingComponent: ComponentType | undefined;
+  readonly notFoundComponent: ComponentType | undefined;
 
   protected _pubSub = new PubSub<RouterEvent>();
 
   /**
-   * Creates a new instance of a {@link Router}.
+   * Creates a new instance of a {@link react-corsair!Router Router}.
    *
    * @param options Router options.
-   * @template Context A context provided to {@link RouteOptions.dataLoader route data loaders}.
+   * @template Context A context provided to {@link react-corsair!RouteOptions.dataLoader route data loaders}.
    */
   constructor(options: RouterOptions<Context>) {
     this.routes = options.routes;
@@ -58,22 +69,36 @@ export class Router<Context = any> implements Fallbacks {
    */
   navigate(to: To): void {
     const location = toLocation(to);
-
     const routeMatches = matchRoutes(location.pathname, location.searchParams, this.routes);
-    const rootPresenter = reconcilePresenters(this, routeMatches);
+    const prevRootController = this.rootController;
+    const nextRootController = reconcileControllers(this, routeMatches);
 
-    this.rootPresenter = rootPresenter;
+    this.rootController = nextRootController;
+    this.location = location;
 
-    this._pubSub.publish({ type: 'navigate', router: this, location });
+    this._pubSub.publish({ type: 'navigate', controller: nextRootController, router: this, location });
 
-    if (this.rootPresenter !== rootPresenter) {
+    if (this.rootController !== nextRootController) {
       // Navigation was superseded
       return;
     }
 
-    for (let presenter = rootPresenter; presenter !== null; presenter = presenter.childPresenter) {
-      presenter.reload();
+    // Lookup a controller that requires loading
+    for (let controller = nextRootController; controller !== null; controller = controller.childController) {
+      if (this.isSSR && controller.route.renderingDisposition !== 'server') {
+        // Cannot load the route and its nested routes on the server
+        break;
+      }
+
+      if (controller.state.status === 'loading') {
+        // Load controller and its descendants
+        controller.load();
+        break;
+      }
     }
+
+    // Abort loading of the previous navigation
+    prevRootController?.abort();
   }
 
   /**
@@ -85,12 +110,20 @@ export class Router<Context = any> implements Fallbacks {
   prefetch(to: To): AbortablePromise<void> {
     return new AbortablePromise((resolve, _reject, signal) => {
       const location = toLocation(to);
-
       const routeMatches = matchRoutes(location.pathname, location.searchParams, this.routes);
 
       resolve(
         Promise.all(
-          routeMatches.map(routeMatch => loadRoute(routeMatch.route, routeMatch.params, this.context, signal, true))
+          routeMatches.map(routeMatch =>
+            getOrLoadRouteState({
+              route: routeMatch.route,
+              router: this,
+              params: routeMatch.params,
+              context: this.context,
+              signal,
+              isPrefetch: true,
+            })
+          )
         ).then(noop)
       );
     });

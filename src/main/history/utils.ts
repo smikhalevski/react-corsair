@@ -1,12 +1,7 @@
 import { Location, To } from '../types';
 import { toLocation } from '../utils';
 import { SearchParamsAdapter } from './types';
-import { JSONSearchParamsAdapter } from './JSONSearchParamsAdapter';
-
-/**
- * The default search params adapter.
- */
-export const jsonSearchParamsAdapter: SearchParamsAdapter = new JSONSearchParamsAdapter();
+import { jsonSearchParamsAdapter } from './jsonSearchParamsAdapter';
 
 /**
  * Parses a pathname-search-hash string as a location.

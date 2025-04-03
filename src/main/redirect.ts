@@ -2,7 +2,7 @@ import { Location, To } from './types';
 import { toLocation } from './utils';
 
 /**
- * Throws a {@link Redirect} instance that redirects router to a location.
+ * Throws a {@link Redirect} instance that redirects router to a {@link to location}.
  *
  * @param to A location or a URL to redirect to.
  * @group Routing

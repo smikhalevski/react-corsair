@@ -4,7 +4,7 @@ import { usePrefetch } from './usePrefetch';
 /**
  * Props of the {@link Prefetch} component.
  *
- * @group Components
+ * @group Prefetching
  */
 export interface PrefetchProps {
   /**
@@ -17,7 +17,7 @@ export interface PrefetchProps {
  * Prefetches components and data of routes matched by a location after a component has mounted.
  *
  * @see {@link usePrefetch}
- * @group Components
+ * @group Prefetching
  */
 export function Prefetch(props: PrefetchProps): null {
   usePrefetch(props.to);

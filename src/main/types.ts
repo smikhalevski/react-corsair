@@ -1,7 +1,7 @@
 import { ComponentType } from 'react';
 import { Route } from './Route';
 import { Router } from './Router';
-import { RoutePresenter } from './RoutePresenter';
+import { RouteController } from './RouteController';
 
 export interface Dict {
   [key: string]: any;
@@ -50,7 +50,7 @@ export interface LocationOptions {
   /**
    * A URL fragment identifier.
    *
-   * If hash begins with a `#` then it is used as is. Otherwise, it is encoded using {@link !encodeURIComponent}.
+   * If hash begins with a `#` then it is used as is. Otherwise, it is encoded using {@link encodeURIComponent}.
    */
   hash?: string;
 
@@ -64,7 +64,6 @@ export interface LocationOptions {
  * An adapter that can validate and transform route params.
  *
  * @template Params Route params.
- * @see {@link jsonSearchParamsAdapter}
  * @group Routing
  */
 export interface ParamsAdapter<Params> {
@@ -94,15 +93,16 @@ export interface ParamsAdapter<Params> {
 }
 
 /**
- * What to render when {@link RouteOptions.lazyComponent} or {@link RouteOptions.dataLoader} are being loaded.
+ * What to render when {@link RouteOptions.lazyComponent lazyComponent} or {@link RouteOptions.dataLoader dataLoader}
+ * are being loaded.
  *
  * <dl>
  * <dt>"loading"</dt>
- * <dd>Always render {@link RouteOptions.loadingComponent} if a route requires loading.</dd>
+ * <dd>Always render {@link RouteOptions.loadingComponent loadingComponent} if a route requires loading.</dd>
  * <dt>"route_loading"</dt>
- * <dd>render {@link RouteOptions.loadingComponent} only if a route is changed during navigation.</dd>
+ * <dd>Render {@link RouteOptions.loadingComponent loadingComponent} only if a route is changed during navigation.</dd>
  * <dt>"avoid"</dt>
- * <dd>If there's a route that is already rendered then keep it on the screen until the new route data is loaded.</dd>
+ * <dd>If there's a route that is already rendered then keep it on the screen until the new route is loaded.</dd>
  * </dl>
  *
  * @group Routing
@@ -124,13 +124,23 @@ export type LoadingAppearance = 'loading' | 'route_loading' | 'avoid';
 export type RenderingDisposition = 'server' | 'client';
 
 /**
- * Options of a {@link RouteOptions.dataLoader data loader}.
+ * Options of a route {@link RouteOptions.dataLoader data loader}.
  *
  * @template Params Route params.
  * @template Context A router context.
  * @group Routing
  */
-export interface DataLoaderOptions<Params, Context> {
+export interface DataLoaderOptions<Params extends Dict, Context> {
+  /**
+   * A route for which data is loaded.
+   */
+  route: Route<any, Params, any, Context>;
+
+  /**
+   * A router that triggered data loading.
+   */
+  router: Router<Context>;
+
   /**
    * Route params extracted from a location.
    */
@@ -161,33 +171,43 @@ export interface Fallbacks {
   /**
    * A component that is rendered when an error was thrown during route rendering.
    *
-   * Use {@link useRouteError} to access the thrown error.
-   *
-   * A {@link Router}-level {@link errorComponent} is used only for root routes. Nested routes must specify their own
-   * {@link RouteOptions.errorComponent error components}.
+   * A {@link react-corsair!Router Router}-level {@link errorComponent} is used only for root routes. Nested routes must
+   * specify their own {@link react-corsair!RouteOptions.errorComponent error components}.
    *
    * Routes without an {@link errorComponent} don't have an error boundary.
    */
   errorComponent?: ComponentType;
 
   /**
-   * A component that is rendered when a {@link RouteOptions.lazyComponent} or a {@link RouteOptions.dataLoader} are being
-   * loaded. Render a skeleton or a spinner in this component to notify user that a new route is being loaded.
+   * A component that is rendered when a {@link RouteOptions.lazyComponent lazyComponent} or a {@link RouteOptions.dataLoader dataLoader}
+   * are being loaded. Render a skeleton or a spinner in this component to notify user that a new route is being loaded.
    *
-   * A {@link Router}-level {@link loadingComponent} is used only for root routes. Child routes must specify their own
-   * {@link RouteOptions.loadingComponent loading components}.
+   * A {@link react-corsair!Router Router}-level {@link loadingComponent} is used only for root routes. Child routes
+   * must specify their own {@link react-corsair!RouteOptions.loadingComponent loading components}.
    *
    * Routes without a {@link loadingComponent} suspend a parent route.
    */
   loadingComponent?: ComponentType;
 
   /**
-   * A component that is rendered if {@link notFound} was called during route rendering or if there's no route that
-   * matches the location a router was navigated to.
+   * A component that is rendered if {@link react-corsair!notFound notFound} was called during route rendering
+   * or if there's no route that matches the location a router was navigated to.
    *
-   * Routes without {@link notFoundComponent} propagate {@link notFound} to a parent route.
+   * Routes without {@link notFoundComponent} propagate {@link react-corsair!notFound notFound} to a parent route.
    */
   notFoundComponent?: ComponentType;
+}
+
+/**
+ * A lazily imported module that exports a React component.
+ *
+ * @group Routing
+ */
+export interface ComponentModule {
+  /**
+   * The exported component.
+   */
+  default: ComponentType;
 }
 
 /**
@@ -205,7 +225,7 @@ export interface RouteOptions<Params extends Dict, Data, Context> extends Fallba
    * Pattern can include params that conform `:[A-Za-z$_][A-Za-z0-9$_]+`. For example `"/:userId"`.
    *
    * Params match a whole segment and cannot be partial. For example, `"/teams--:teamId"` is invalid and would throw
-   * a {@link !SyntaxError}, while `"/teams/:teamId"` is valid.
+   * a {@link SyntaxError}, while `"/teams/:teamId"` is valid.
    *
    * By default, a param matches a non-empty pathname segment. To make a param optional (so it can match an absent
    * segment) follow it by a `?` flag. For example: `"/user/:userId?"` matches both `"/user"` and `"/user/37"`.
@@ -218,7 +238,7 @@ export interface RouteOptions<Params extends Dict, Data, Context> extends Fallba
    *
    * To make param both wildcard and optional, combine `*` and `?` flags: `"/:slug*?"`.
    *
-   * To use `:` as a character in a pathname pattern, replace it with an {@link !encodeURIComponent encoded}
+   * To use `:` as a character in a pathname pattern, replace it with an {@link encodeURIComponent encoded}
    * representation: `%3A`.
    *
    * @default "/"
@@ -240,26 +260,26 @@ export interface RouteOptions<Params extends Dict, Data, Context> extends Fallba
   component?: ComponentType;
 
   /**
-   * A lazy-loaded component that is rendered by a route. A component cached forever if a returned {@link !Promise}
+   * A lazy-loaded component that is rendered by a route. A component cached forever if a returned {@link Promise}
    * is fulfilled.
    *
    * @example
    * () => import('./UserPage')
    */
-  lazyComponent?: () => PromiseLike<{ default: ComponentType }>;
+  lazyComponent?: () => PromiseLike<ComponentModule>;
 
   /**
    * An adapter that can validate and transform params extracted from the {@link Location.pathname} and
    * {@link Location.searchParams}.
    *
-   * Params are available in route all components via {@link useRouteParams}.
+   * Params are available in route all components via {@link useRoute useRoute().params}.
    */
   paramsAdapter?: ParamsAdapter<Params> | ParamsAdapter<Params>['parse'];
 
   /**
    * A callback that loads data required to render a route.
    *
-   * Loaded data is available in route {@link component} via {@link useRouteData}.
+   * Loaded data is available in route {@link component} via {@link useRoute useRoute().getData()}.
    *
    * @param options Loader options.
    */
@@ -310,6 +330,11 @@ export interface NavigateEvent {
   type: 'navigate';
 
   /**
+   * The root controller to which router was navigated, or `null` if no matching route was found.
+   */
+  controller: RouteController | null;
+
+  /**
    * A router from which an event originates.
    */
   router: Router;
@@ -329,9 +354,23 @@ export interface LoadingEvent {
   type: 'loading';
 
   /**
-   * A presenter from which an event originates.
+   * A controller from which an event originates.
    */
-  presenter: RoutePresenter;
+  controller: RouteController;
+}
+
+/**
+ * An event published by a {@link Router} when a route loading was aborted.
+ *
+ * @group Routing
+ */
+export interface AbortedEvent {
+  type: 'aborted';
+
+  /**
+   * A controller from which an event originates.
+   */
+  controller: RouteController;
 }
 
 /**
@@ -343,9 +382,9 @@ export interface ReadyEvent {
   type: 'ready';
 
   /**
-   * A presenter from which an event originates.
+   * A controller from which an event originates.
    */
-  presenter: RoutePresenter;
+  controller: RouteController;
 }
 
 /**
@@ -360,9 +399,9 @@ export interface ErrorEvent {
   type: 'error';
 
   /**
-   * A presenter from which an event originates.
+   * A controller from which an event originates.
    */
-  presenter: RoutePresenter;
+  controller: RouteController;
 
   /**
    * An error that was thrown.
@@ -382,9 +421,9 @@ export interface NotFoundEvent {
   type: 'not_found';
 
   /**
-   * A presenter from which an event originates.
+   * A controller from which an event originates.
    */
-  presenter: RoutePresenter;
+  controller: RouteController;
 }
 
 /**
@@ -399,9 +438,9 @@ export interface RedirectEvent {
   type: 'redirect';
 
   /**
-   * A presenter from which an event originates.
+   * A controller from which an event originates.
    */
-  presenter: RoutePresenter;
+  controller: RouteController;
 
   /**
    * A location or a URL to which a redirect should be made.
@@ -414,4 +453,11 @@ export interface RedirectEvent {
  *
  * @group Routing
  */
-export type RouterEvent = NavigateEvent | LoadingEvent | ReadyEvent | ErrorEvent | NotFoundEvent | RedirectEvent;
+export type RouterEvent =
+  | NavigateEvent
+  | LoadingEvent
+  | AbortedEvent
+  | ReadyEvent
+  | ErrorEvent
+  | NotFoundEvent
+  | RedirectEvent;

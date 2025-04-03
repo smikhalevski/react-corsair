@@ -1,14 +1,8 @@
 import { PubSub } from 'parallel-universe';
 import { Location } from '../types';
 import { History, HistoryOptions } from './types';
-import {
-  concatPathname,
-  debasePathname,
-  jsonSearchParamsAdapter,
-  parseLocation,
-  parseOrCastLocation,
-  stringifyLocation,
-} from './utils';
+import { concatPathname, debasePathname, parseLocation, parseOrCastLocation, stringifyLocation } from './utils';
+import { jsonSearchParamsAdapter } from './jsonSearchParamsAdapter';
 
 /**
  * Create the history adapter that reads and writes location to a browser's session history.

@@ -15,41 +15,33 @@ import { Outlet } from './Outlet';
 
 type Prettify<T> = { [K in keyof T]: T[K] } & {};
 
-type PartialToVoid<T> = Partial<T> extends T ? T | void : T;
+type PartialAsVoid<T> = Partial<T> extends T ? T | void : T;
 
+/**
+ * For testing purposes only!
+ *
+ * @internal
+ */
 export declare const LOCATION_PARAMS: unique symbol;
-export declare const CONTEXT: unique symbol;
-export declare const DATA: unique symbol;
 
 export type LOCATION_PARAMS = typeof LOCATION_PARAMS;
-export type CONTEXT = typeof CONTEXT;
-export type DATA = typeof DATA;
+
+declare const CONTEXT: unique symbol;
+
+declare const DATA: unique symbol;
 
 /**
  * Infers route location params.
  *
+ * @template R The route to infer location params from.
  * @group Routing
  */
 export type InferLocationParams<R extends Route> = R[LOCATION_PARAMS];
 
 /**
- * Infers route context.
- *
- * @group Routing
- */
-export type InferContext<R extends Route> = R[CONTEXT];
-
-/**
- * Infers route data.
- *
- * @group Routing
- */
-export type InferData<R extends Route> = R[DATA];
-
-/**
  * A route that can be rendered by a router.
  *
- * Use {@link createRoute} to create a {@link Route} instance.
+ * **Note:** Prefer {@link createRoute} over a direct {@link Route} instantiation.
  *
  * @template ParentRoute A parent route or `null` if there is no parent.
  * @template Params Route params.
@@ -69,7 +61,7 @@ export class Route<
    *
    * @internal
    */
-  declare readonly [LOCATION_PARAMS]: PartialToVoid<
+  declare readonly [LOCATION_PARAMS]: PartialAsVoid<
     ParentRoute extends Route ? Prettify<Exclude<ParentRoute[LOCATION_PARAMS], void> & Params> : Params
   >;
 
@@ -123,7 +115,7 @@ export class Route<
   renderingDisposition: RenderingDisposition;
 
   /**
-   * A component rendered by the route, or `undefined` if a {@link RouteOptions.lazyComponent} isn't yet
+   * A component rendered by the route, or `undefined` if a {@link RouteOptions.lazyComponent lazyComponent} isn't yet
    * {@link getOrLoadComponent loaded}.
    */
   component: ComponentType | undefined;
@@ -134,9 +126,9 @@ export class Route<
    */
   getOrLoadComponent: () => ComponentType | Promise<ComponentType>;
 
-  errorComponent: ComponentType | undefined;
-  loadingComponent: ComponentType | undefined;
-  notFoundComponent: ComponentType | undefined;
+  readonly errorComponent: ComponentType | undefined;
+  readonly loadingComponent: ComponentType | undefined;
+  readonly notFoundComponent: ComponentType | undefined;
 
   /**
    * Creates a new instance of a {@link Route}.
@@ -222,15 +214,11 @@ export class Route<
 
       pathname = pathnameChunk + (pathnameChunk.endsWith('/') ? pathname.substring(1) : pathname);
 
-      if (paramsAdapter === undefined) {
-        // No adapter = no search params
-        continue;
-      }
-      if (paramsAdapter.toSearchParams === undefined) {
+      if (paramsAdapter === undefined || paramsAdapter.toSearchParams === undefined) {
         hasLooseParams = true;
-        continue;
+      } else {
+        searchParams = { ...paramsAdapter.toSearchParams(params), ...searchParams };
       }
-      searchParams = { ...paramsAdapter.toSearchParams(params), ...searchParams };
     }
 
     if (hasLooseParams && params !== undefined) {

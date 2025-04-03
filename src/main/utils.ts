@@ -1,6 +1,4 @@
 import { Location, To } from './types';
-import { Route } from './Route';
-import { RoutePresenter } from './RoutePresenter';
 
 export function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
   return value !== null && typeof value === 'object' && 'then' in value;

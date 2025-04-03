@@ -2,7 +2,7 @@
   <a href="#readme"><picture>
     <source media="(prefers-color-scheme: dark)" srcset="./assets/logo-dark.png" />
     <source media="(prefers-color-scheme: light)" srcset="./assets/logo-light.png" />
-    <img alt="React Corsair" src="./assets/logo-light.png" width="700" />
+    <img alt="React Corsair" src="./assets/logo-light.png" width="450" />
   </picture></a>
 </p>
 

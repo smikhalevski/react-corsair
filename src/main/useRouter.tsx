@@ -1,7 +1,7 @@
-import React, { createContext, ReactElement, ReactNode, useContext, useEffect, useState } from 'react';
+import React, { createContext, ReactElement, ReactNode, useCallback, useContext, useSyncExternalStore } from 'react';
 import { Outlet, OutletContentProvider } from './Outlet';
 import { Router } from './Router';
-import { RoutePresenterProvider } from './useRoutePresenter';
+import { RouteControllerProvider } from './useRoute';
 
 const RouterContext = createContext<Router | null>(null);
 
@@ -10,7 +10,7 @@ RouterContext.displayName = 'RouterContext';
 /**
  * Returns a router provided by an enclosing {@link RouterProvider}.
  *
- * @group Hooks
+ * @group Routing
  */
 export function useRouter(): Router {
   const router = useContext(RouterContext);
@@ -25,7 +25,7 @@ export function useRouter(): Router {
 /**
  * Props of the {@link RouterProvider} component.
  *
- * @group Components
+ * @group Routing
  */
 export interface RouterProviderProps {
   /**
@@ -42,19 +42,22 @@ export interface RouterProviderProps {
 /**
  * Provides {@link Router} to underlying components.
  *
- * @group Components
+ * @group Routing
  */
 export function RouterProvider(props: RouterProviderProps): ReactElement {
   const { router, children = <Outlet /> } = props;
-  const [rootPresenter, setRootPresenter] = useState(router.rootPresenter);
 
-  useEffect(() => router.subscribe(() => setRootPresenter(router.rootPresenter)), [router]);
+  const subscribe = useCallback(router.subscribe.bind(router), [router]);
+
+  const getSnapshot = () => router.rootController;
+
+  const rootController = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
   return (
     <RouterContext.Provider value={router}>
-      <RoutePresenterProvider value={null}>
-        <OutletContentProvider value={rootPresenter || router}>{children}</OutletContentProvider>
-      </RoutePresenterProvider>
+      <RouteControllerProvider value={null}>
+        <OutletContentProvider value={rootController || router}>{children}</OutletContentProvider>
+      </RouteControllerProvider>
     </RouterContext.Provider>
   );
 }

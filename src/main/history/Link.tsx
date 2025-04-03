@@ -7,7 +7,7 @@ import { useHistory } from './useHistory';
 /**
  * Props of the {@link Link} component.
  *
- * @group Components
+ * @group History
  */
 export interface LinkProps extends Omit<HTMLAttributes<HTMLAnchorElement>, 'href'> {
   /**
@@ -34,7 +34,7 @@ export interface LinkProps extends Omit<HTMLAttributes<HTMLAnchorElement>, 'href
  * Renders an `a` tag that triggers an enclosing history navigation when clicked. Prefetches routes that match
  * the provided location when mounted.
  *
- * @group Components
+ * @group History
  */
 export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
   const { to, prefetch, replace, onClick, children, ...anchorProps } = props;

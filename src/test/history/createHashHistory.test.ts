@@ -1,160 +1,150 @@
-import { JSDOM } from 'jsdom';
 import { delay } from 'parallel-universe';
-import { createHashHistory, SearchParamsAdapter } from '../../main';
-import { jsonSearchParamsAdapter } from '../../main/history/utils';
+import { createHashHistory, jsonSearchParamsAdapter } from '../../main/history';
 
-describe('createHashHistory', () => {
-  beforeEach(() => {
-    const { window } = new JSDOM('', { url: 'http://localhost' });
+test('pushes location', async () => {
+  const aaaLocation = { pathname: '/aaa', searchParams: {}, hash: '' };
 
-    Object.assign(global, { window });
-  });
+  const history = createHashHistory();
 
-  test('pushes location', async () => {
-    const aaaLocation = { pathname: '/aaa', searchParams: {}, hash: '' };
+  expect(history.location).toEqual({ pathname: '/', searchParams: {}, hash: '', state: undefined });
 
-    const history = createHashHistory();
+  history.push(aaaLocation);
 
-    expect(history.location).toEqual({ pathname: '/', searchParams: {}, hash: '', state: undefined });
+  expect(history.location).toEqual(aaaLocation);
 
-    history.push(aaaLocation);
+  history.back();
 
-    expect(history.location).toEqual(aaaLocation);
+  await delay(50);
 
-    history.back();
+  expect(history.location).toEqual({ pathname: '/', searchParams: {}, hash: '', state: undefined });
+});
 
-    await delay(50);
+test('replaces location', async () => {
+  const aaaLocation = { pathname: '/aaa', searchParams: {}, hash: '' };
+  const bbbLocation = { pathname: '/bbb', searchParams: {}, hash: '' };
+  const cccLocation = { pathname: '/ccc', searchParams: {}, hash: '' };
 
-    expect(history.location).toEqual({ pathname: '/', searchParams: {}, hash: '', state: undefined });
-  });
+  const history = createHashHistory();
 
-  test('replaces location', async () => {
-    const aaaLocation = { pathname: '/aaa', searchParams: {}, hash: '' };
-    const bbbLocation = { pathname: '/bbb', searchParams: {}, hash: '' };
-    const cccLocation = { pathname: '/ccc', searchParams: {}, hash: '' };
+  history.replace(bbbLocation);
 
-    const history = createHashHistory();
+  expect(history.location).toEqual(bbbLocation);
 
-    history.replace(bbbLocation);
+  history.back();
 
-    expect(history.location).toEqual(bbbLocation);
+  await delay(50);
 
-    history.back();
+  expect(history.location).toEqual(bbbLocation);
 
-    await delay(50);
+  history.push(aaaLocation);
 
-    expect(history.location).toEqual(bbbLocation);
+  expect(history.location).toEqual(aaaLocation);
 
-    history.push(aaaLocation);
+  history.replace(cccLocation);
 
-    expect(history.location).toEqual(aaaLocation);
+  expect(history.location).toEqual(cccLocation);
 
-    history.replace(cccLocation);
+  history.back();
 
-    expect(history.location).toEqual(cccLocation);
+  await delay(50);
 
-    history.back();
+  expect(history.location).toEqual(bbbLocation);
+});
 
-    await delay(50);
+test('calls listener on push', () => {
+  const aaaLocation = { pathname: '/aaa', searchParams: {}, hash: '' };
+  const listenerMock = jest.fn();
 
-    expect(history.location).toEqual(bbbLocation);
-  });
+  const history = createHashHistory();
 
-  test('calls listener on push', () => {
-    const aaaLocation = { pathname: '/aaa', searchParams: {}, hash: '' };
-    const listenerMock = jest.fn();
+  history.subscribe(listenerMock);
+  history.push(aaaLocation);
 
-    const history = createHashHistory();
+  expect(listenerMock).toHaveBeenCalledTimes(1);
+});
 
-    history.subscribe(listenerMock);
-    history.push(aaaLocation);
+test('calls listener on replace', () => {
+  const aaaLocation = { pathname: '/aaa', searchParams: {}, hash: '' };
+  const listenerMock = jest.fn();
 
-    expect(listenerMock).toHaveBeenCalledTimes(1);
-  });
+  const history = createHashHistory();
 
-  test('calls listener on replace', () => {
-    const aaaLocation = { pathname: '/aaa', searchParams: {}, hash: '' };
-    const listenerMock = jest.fn();
+  history.subscribe(listenerMock);
+  history.replace(aaaLocation);
 
-    const history = createHashHistory();
+  expect(listenerMock).toHaveBeenCalledTimes(1);
+});
 
-    history.subscribe(listenerMock);
-    history.replace(aaaLocation);
+test('calls listener on back', () => {
+  const aaaLocation = { pathname: '/aaa', searchParams: {}, hash: '' };
+  const bbbLocation = { pathname: '/bbb', searchParams: {}, hash: '' };
+  const listenerMock = jest.fn();
 
-    expect(listenerMock).toHaveBeenCalledTimes(1);
-  });
+  const history = createHashHistory();
 
-  test('calls listener on back', () => {
-    const aaaLocation = { pathname: '/aaa', searchParams: {}, hash: '' };
-    const bbbLocation = { pathname: '/bbb', searchParams: {}, hash: '' };
-    const listenerMock = jest.fn();
+  history.subscribe(listenerMock);
+  history.push(aaaLocation);
+  history.push(bbbLocation);
+  history.back();
+  history.back();
+  history.back();
+  history.back();
 
-    const history = createHashHistory();
+  expect(listenerMock).toHaveBeenCalledTimes(2);
+});
 
-    history.subscribe(listenerMock);
-    history.push(aaaLocation);
-    history.push(bbbLocation);
-    history.back();
-    history.back();
-    history.back();
-    history.back();
+test('parses query params', async () => {
+  const aaaLocation = { pathname: '/aaa', searchParams: { xxx: 111 }, hash: '' };
+  const bbbLocation = { pathname: '/bbb', searchParams: { yyy: [111, 222] }, hash: '' };
 
-    expect(listenerMock).toHaveBeenCalledTimes(2);
-  });
+  const history = createHashHistory();
 
-  test('parses query params', async () => {
-    const aaaLocation = { pathname: '/aaa', searchParams: { xxx: 111 }, hash: '' };
-    const bbbLocation = { pathname: '/bbb', searchParams: { yyy: [111, 222] }, hash: '' };
+  history.push(aaaLocation);
 
-    const history = createHashHistory();
+  expect(history.location).toEqual({ pathname: '/aaa', searchParams: { xxx: 111 }, hash: '' });
 
-    history.push(aaaLocation);
+  expect(window.location.href).toBe('http://localhost/#/aaa?xxx=111');
 
-    expect(history.location).toEqual({ pathname: '/aaa', searchParams: { xxx: 111 }, hash: '' });
+  history.push(bbbLocation);
 
-    expect(window.location.href).toBe('http://localhost/#/aaa?xxx=111');
+  expect(history.location).toEqual({ pathname: '/bbb', searchParams: { yyy: [111, 222] }, hash: '' });
 
-    history.push(bbbLocation);
+  expect(window.location.href).toBe('http://localhost/#/bbb?yyy=%255B111%252C222%255D');
+});
 
-    expect(history.location).toEqual({ pathname: '/bbb', searchParams: { yyy: [111, 222] }, hash: '' });
+test('parses query params with a custom adapter', async () => {
+  jest.spyOn(jsonSearchParamsAdapter, 'parse');
+  jest.spyOn(jsonSearchParamsAdapter, 'stringify');
 
-    expect(window.location.href).toBe('http://localhost/#/bbb?yyy=%255B111%252C222%255D');
-  });
+  const aaaLocation = { pathname: '/aaa', searchParams: { xxx: 111 }, hash: '' };
 
-  test('parses query params with a custom adapter', async () => {
-    jest.spyOn(jsonSearchParamsAdapter, 'parse');
-    jest.spyOn(jsonSearchParamsAdapter, 'stringify');
+  const history = createHashHistory();
 
-    const aaaLocation = { pathname: '/aaa', searchParams: { xxx: 111 }, hash: '' };
+  history.push(aaaLocation);
 
-    const history = createHashHistory();
+  expect(jsonSearchParamsAdapter.parse).toHaveBeenCalledTimes(0);
+  expect(jsonSearchParamsAdapter.stringify).toHaveBeenCalledTimes(1);
+  expect(jsonSearchParamsAdapter.stringify).toHaveBeenNthCalledWith(1, { xxx: 111 });
 
-    history.push(aaaLocation);
+  history.location;
 
-    expect(jsonSearchParamsAdapter.parse).toHaveBeenCalledTimes(0);
-    expect(jsonSearchParamsAdapter.stringify).toHaveBeenCalledTimes(1);
-    expect(jsonSearchParamsAdapter.stringify).toHaveBeenNthCalledWith(1, { xxx: 111 });
+  expect(jsonSearchParamsAdapter.stringify).toHaveBeenCalledTimes(1);
+  expect(jsonSearchParamsAdapter.parse).toHaveBeenCalledTimes(1);
+  expect(jsonSearchParamsAdapter.parse).toHaveBeenNthCalledWith(1, 'xxx=111');
+});
 
-    history.location;
+test('creates an absolute URL', async () => {
+  expect(createHashHistory().toAbsoluteURL({ pathname: '/aaa/bbb', searchParams: { xxx: 111 }, hash: '' })).toBe(
+    '#/aaa/bbb?xxx=111'
+  );
+});
 
-    expect(jsonSearchParamsAdapter.stringify).toHaveBeenCalledTimes(1);
-    expect(jsonSearchParamsAdapter.parse).toHaveBeenCalledTimes(1);
-    expect(jsonSearchParamsAdapter.parse).toHaveBeenNthCalledWith(1, 'xxx=111');
-  });
-
-  test('creates an absolute URL', async () => {
-    expect(createHashHistory().toAbsoluteURL({ pathname: '/aaa', searchParams: { xxx: 111 }, hash: '' })).toBe(
-      '#/aaa?xxx=111'
-    );
-  });
-
-  test('creates an absolute URL with a default base', async () => {
-    expect(
-      createHashHistory({ basePathname: 'http://bbb.ccc' }).toAbsoluteURL({
-        pathname: '/aaa',
-        searchParams: { xxx: 111 },
-        hash: '',
-      })
-    ).toBe('http://bbb.ccc/#/aaa?xxx=111');
-  });
+test('creates an absolute URL with a default base', async () => {
+  expect(
+    createHashHistory({ basePathname: 'http://bbb.ccc' }).toAbsoluteURL({
+      pathname: '/aaa',
+      searchParams: { xxx: 111 },
+      hash: '',
+    })
+  ).toBe('http://bbb.ccc/#/aaa?xxx=111');
 });

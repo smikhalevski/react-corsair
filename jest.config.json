@@ -4,6 +4,7 @@
   },
   "testMatch": ["<rootDir>/src/test/**/*.test.{ts,tsx}"],
   "modulePathIgnorePatterns": ["<rootDir>/lib"],
+  "testEnvironment": "jsdom",
   "detectOpenHandles": true,
   "forceExit": true
 }
