@@ -34,7 +34,7 @@ test('hydrates a post-populated root controller', async () => {
   expect(router.rootController!.state).toEqual({ status: 'ok', data: 'xxx' });
   expect(router.rootController!.loadingPromise).toBeNull();
 
-  await expect(promise0).rejects.toEqual(new DOMException('The operation was aborted.', 'AbortError'));
+  await expect(promise0).rejects.toEqual(new DOMException('Route state was superseded', 'AbortError'));
 });
 
 test('hydrates a post-populated nested controller', async () => {
@@ -69,7 +69,7 @@ test('hydrates a post-populated nested controller', async () => {
   expect(router.rootController!.childController!.state).toEqual({ status: 'ok', data: 'xxx' });
   expect(router.rootController!.childController!.loadingPromise).toBeNull();
 
-  await expect(promise1).rejects.toEqual(new DOMException('The operation was aborted.', 'AbortError'));
+  await expect(promise1).rejects.toEqual(new DOMException('Route state was superseded', 'AbortError'));
 });
 
 test('hydrates a pre-populated root controller with OK state', () => {

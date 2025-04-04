@@ -1,7 +1,7 @@
-import { render, renderHook } from '@testing-library/react';
-import { createRoute, Router, RouterProvider, usePrefetch, useRoute } from '../main';
+import { renderHook } from '@testing-library/react';
+import { createRoute, Router, RouterProvider, usePrefetch } from '../main';
 import { noop } from '../main/utils';
-import React, { act, FC, PropsWithChildren, StrictMode } from 'react';
+import React, { FC, PropsWithChildren, StrictMode } from 'react';
 
 console.error = noop;
 

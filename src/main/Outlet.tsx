@@ -1,4 +1,4 @@
-import React, { Component, ComponentType, createContext, ReactNode, Suspense, useContext } from 'react';
+import React, { Component, ComponentType, createContext, ReactElement, ReactNode, Suspense, useContext } from 'react';
 import { createErrorState, RouteController } from './RouteController';
 import { Router } from './Router';
 import { redirect } from './redirect';
@@ -18,7 +18,7 @@ export const OutletContentProvider = OutletContentContext.Provider;
  *
  * @group Routing
  */
-export function Outlet(): ReactNode {
+export function Outlet(): ReactElement | null {
   const content = useContext(OutletContentContext);
 
   if (content instanceof RouteController) {
@@ -77,7 +77,7 @@ class OutletErrorBoundary extends Component<OutletErrorBoundaryProps, OutletErro
       return null;
     }
 
-    nextProps.controller['_setState'](createErrorState(prevState.error));
+    (nextProps.controller.fallbackController || nextProps.controller)['_setState'](createErrorState(prevState.error));
 
     return { hasError: false, error: null };
   }
@@ -106,7 +106,7 @@ class OutletErrorBoundary extends Component<OutletErrorBoundaryProps, OutletErro
 
     const fallback =
       (controller.state.status === 'ok' || controller.state.status === 'loading') &&
-      ((controller.fallbackController !== null && <OutletErrorBoundary controller={controller.fallbackController} />) ||
+      ((controller.fallbackController !== null && <OutletContent controller={controller.fallbackController} />) ||
         (controller.loadingComponent !== undefined && (
           <RouteControllerProvider value={controller}>
             <OutletContentProvider value={null}>

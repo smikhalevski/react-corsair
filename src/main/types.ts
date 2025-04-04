@@ -288,7 +288,7 @@ export interface RouteOptions<Params extends Dict, Data, Context> extends Fallba
   /**
    * What to render when {@link lazyComponent} or {@link dataLoader} are being loaded.
    *
-   * @default "auto"
+   * @default "avoid"
    */
   loadingAppearance?: LoadingAppearance;
 

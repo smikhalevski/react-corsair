@@ -1,6 +1,6 @@
 import { AbortablePromise } from 'parallel-universe';
 import { Router } from './Router';
-import { isPromiseLike, noop, toLocation } from './utils';
+import { AbortError, isPromiseLike, noop, toLocation } from './utils';
 import { DataLoaderOptions, Dict, Fallbacks, Location, RouterEvent, To } from './types';
 import { NotFoundError } from './notFound';
 import { Redirect } from './redirect';
@@ -185,9 +185,9 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
 
     this.loadingPromise = promise;
 
-    loadingPromise?.abort();
+    loadingPromise?.abort(AbortError('Route controller was reloaded'));
 
-    if (prevState.status !== 'ok' || this.route.loadingAppearance === 'loading') {
+    if (this.route.loadingAppearance === 'loading') {
       this._setState({ status: 'loading' });
       return;
     }
@@ -254,7 +254,7 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
 
       this.loadingPromise = null;
 
-      loadingPromise?.abort();
+      loadingPromise?.abort(AbortError('Route state was superseded'));
     }
 
     this.router['_pubSub'].publish(event);

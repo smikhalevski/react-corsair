@@ -3,7 +3,7 @@ import { ComponentType } from 'react';
 import { matchRoutes } from './matchRoutes';
 import { Route } from './Route';
 import { Fallbacks, Location, RouterEvent, RouterOptions, To } from './types';
-import { noop, toLocation } from './utils';
+import { AbortError, noop, toLocation } from './utils';
 import { getOrLoadRouteState, RouteController } from './RouteController';
 import { reconcileControllers } from './reconcileControllers';
 
@@ -98,7 +98,7 @@ export class Router<Context = any> implements Fallbacks {
     }
 
     // Abort loading of the previous navigation
-    prevRootController?.abort();
+    prevRootController?.abort(AbortError('Router was navigated'));
   }
 
   /**
