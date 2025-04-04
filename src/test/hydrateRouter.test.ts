@@ -6,7 +6,7 @@ beforeEach(() => {
 });
 
 test('returns the provided router', () => {
-  const router = new Router({ routes: [], context: undefined });
+  const router = new Router({ routes: [] });
 
   expect(hydrateRouter(router, {})).toBe(router);
 });
@@ -14,7 +14,7 @@ test('returns the provided router', () => {
 test('hydrates a post-populated root controller', async () => {
   const route0 = createRoute('/aaa');
 
-  const router = new Router({ routes: [route0], context: undefined });
+  const router = new Router({ routes: [route0] });
 
   hydrateRouter(router, { pathname: '/aaa' });
 
@@ -41,7 +41,7 @@ test('hydrates a post-populated nested controller', async () => {
   const route0 = createRoute('/aaa');
   const route1 = createRoute(route0, '/bbb');
 
-  const router = new Router({ routes: [route1], context: undefined });
+  const router = new Router({ routes: [route1] });
 
   hydrateRouter(router, { pathname: '/aaa/bbb' });
 
@@ -79,7 +79,7 @@ test('hydrates a pre-populated root controller with OK state', () => {
 
   const route0 = createRoute('/aaa');
 
-  const router = new Router({ routes: [route0], context: undefined });
+  const router = new Router({ routes: [route0] });
 
   hydrateRouter(router, { pathname: '/aaa' });
 
@@ -96,7 +96,7 @@ test('hydrates a pre-populated root controller with loading state', () => {
 
   const route0 = createRoute('/aaa');
 
-  const router = new Router({ routes: [route0], context: undefined });
+  const router = new Router({ routes: [route0] });
 
   hydrateRouter(router, { pathname: '/aaa' });
 
@@ -116,7 +116,7 @@ test('hydrates a pre-populated nested controller', () => {
   const route0 = createRoute('/aaa');
   const route1 = createRoute(route0, '/bbb');
 
-  const router = new Router({ routes: [route1], context: undefined });
+  const router = new Router({ routes: [route1] });
 
   hydrateRouter(router, { pathname: '/aaa/bbb' });
 
@@ -138,7 +138,7 @@ test('hydration is superseded by navigation', () => {
   const route0 = createRoute('/aaa');
   const route1 = createRoute('/bbb');
 
-  const router = new Router({ routes: [route0, route1], context: undefined });
+  const router = new Router({ routes: [route0, route1] });
 
   router.subscribe(event => {
     if (event.type !== 'navigate') {
@@ -160,16 +160,14 @@ test('hydration is superseded by navigation', () => {
 });
 
 test('throws if hydration is started twice for the same router', () => {
-  const router = new Router({ routes: [], context: undefined });
+  const router = new Router({ routes: [] });
   hydrateRouter(router, {});
 
   expect(() => hydrateRouter(router, {})).toThrow(new Error('Router hydration has already begun'));
 });
 
 test('throws if hydration is started twice for different routers', () => {
-  hydrateRouter(new Router({ routes: [], context: undefined }), {});
+  hydrateRouter(new Router({ routes: [] }), {});
 
-  expect(() => hydrateRouter(new Router({ routes: [], context: undefined }), {})).toThrow(
-    new Error('Router hydration has already begun')
-  );
+  expect(() => hydrateRouter(new Router({ routes: [] }), {})).toThrow(new Error('Router hydration has already begun'));
 });

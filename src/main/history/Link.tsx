@@ -20,7 +20,7 @@ export interface LinkProps extends Omit<HTMLAttributes<HTMLAnchorElement>, 'href
    *
    * @default false
    */
-  prefetch?: boolean;
+  isPrefetched?: boolean;
 
   /**
    * If `true` then link replaces the current history entry, otherwise link pushes an entry.
@@ -37,7 +37,7 @@ export interface LinkProps extends Omit<HTMLAttributes<HTMLAnchorElement>, 'href
  * @group History
  */
 export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
-  const { to, prefetch, replace, onClick, children, ...anchorProps } = props;
+  const { to, isPrefetched, replace, onClick, children, ...anchorProps } = props;
 
   const history = useHistory();
 
@@ -73,7 +73,7 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
       href={history.toAbsoluteURL(toLocation(to))}
       onClick={handleClick}
     >
-      {prefetch && <Prefetch to={to} />}
+      {isPrefetched && <Prefetch to={to} />}
       {children}
     </a>
   );

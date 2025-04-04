@@ -18,7 +18,7 @@ export interface SSRRouterOptions<Context> extends RouterOptions<Context> {
   stateStringifier?: (state: RouteState) => string;
 
   /**
-   * A nonce string to allow scripts for
+   * A nonce string to allow hydration scripts under a
    * [`script-src` Content-Security-Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src).
    */
   nonce?: string;
@@ -44,7 +44,7 @@ export class SSRRouter<Context = any> extends Router<Context> {
   readonly isSSR: boolean = true;
 
   /**
-   * A nonce string to allow scripts for
+   * A nonce string to allow hydration scripts under a
    * [`script-src` Content-Security-Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src).
    */
   nonce;
@@ -138,7 +138,7 @@ export class SSRRouter<Context = any> extends Router<Context> {
   }
 
   /**
-   * Instantly aborts the pending route loading for the {@link react-corsair!rootController rootController} and its
+   * Instantly aborts the pending route loading for the {@link react-corsair!Router.rootController rootController} and its
    * descendants.
    *
    * @param reason The abort reason that is used for rejection of the loading promise.

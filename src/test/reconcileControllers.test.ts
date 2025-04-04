@@ -3,7 +3,7 @@ import { reconcileControllers } from '../main/reconcileControllers';
 import { matchRoutes } from '../main/matchRoutes';
 
 test('returns null for empty matches', () => {
-  const router = new Router({ routes: [], context: undefined });
+  const router = new Router({ routes: [] });
 
   const controller = reconcileControllers(router, []);
 
@@ -13,7 +13,7 @@ test('returns null for empty matches', () => {
 test('reuses OK state if nothing is changed', () => {
   const route = createRoute('/aaa');
 
-  const router = new Router({ routes: [], context: undefined });
+  const router = new Router({ routes: [] });
 
   router.rootController = new RouteController(router, route, {});
 
@@ -29,7 +29,7 @@ test('reuses OK state if nothing is changed', () => {
 test('reuses error state if nothing is changed', () => {
   const route = createRoute('/aaa');
 
-  const router = new Router({ routes: [], context: undefined });
+  const router = new Router({ routes: [] });
 
   router.rootController = new RouteController(router, route, {});
 
@@ -45,7 +45,7 @@ test('reuses error state if nothing is changed', () => {
 test('does not reuse loading state if nothing is changed', () => {
   const route = createRoute('/aaa');
 
-  const router = new Router({ routes: [], context: undefined });
+  const router = new Router({ routes: [] });
 
   router.rootController = new RouteController(router, route, {});
 
@@ -60,7 +60,7 @@ test('does not reuse loading state if nothing is changed', () => {
 test('uses replaced controller as a fallback if params have changed', () => {
   const route = createRoute('/aaa');
 
-  const router = new Router({ routes: [], context: undefined });
+  const router = new Router({ routes: [] });
 
   router.rootController = new RouteController(router, route, { zzz: 111 });
 
@@ -96,7 +96,7 @@ test('uses replaced controller as a fallback if context has changed', () => {
 test('does not use replaced controller as a fallback if its state is not OK and params have changed', () => {
   const route = createRoute('/aaa');
 
-  const router = new Router({ routes: [], context: undefined });
+  const router = new Router({ routes: [] });
 
   router.rootController = new RouteController(router, route, { zzz: 111 });
 
@@ -116,7 +116,7 @@ test('does not use replaced controller as a fallback if loadingAppearance is loa
     loadingAppearance: 'loading',
   });
 
-  const router = new Router({ routes: [], context: undefined });
+  const router = new Router({ routes: [] });
 
   router.rootController = new RouteController(router, route, { zzz: 111 });
 
@@ -134,7 +134,7 @@ test('uses replaced controller as a fallback if route has changed and its state 
   const routeAaa = createRoute('/aaa');
   const routeBbb = createRoute('/bbb');
 
-  const router = new Router({ routes: [], context: undefined });
+  const router = new Router({ routes: [] });
 
   router.rootController = new RouteController(router, routeAaa, {});
 
@@ -155,7 +155,7 @@ test('uses replaced controller as a fallback if route has changed and loadingApp
     loadingAppearance: 'route_loading',
   });
 
-  const router = new Router({ routes: [], context: undefined });
+  const router = new Router({ routes: [] });
 
   router.rootController = new RouteController(router, routeAaa, {});
 
@@ -173,7 +173,7 @@ test('does not use replaced controller as a fallback if route has changed and it
   const routeAaa = createRoute('/aaa');
   const routeBbb = createRoute('/bbb');
 
-  const router = new Router({ routes: [], context: undefined });
+  const router = new Router({ routes: [] });
 
   router.rootController = new RouteController(router, routeAaa, {});
 
@@ -192,7 +192,7 @@ test('uses previous controller as a fallback for a nested route', () => {
   const routeBbb = createRoute(routeAaa, '/bbb');
   const routeCcc = createRoute(routeAaa, '/ccc');
 
-  const router = new Router({ routes: [routeBbb], context: undefined });
+  const router = new Router({ routes: [routeBbb] });
 
   router.navigate(routeBbb);
 

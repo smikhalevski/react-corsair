@@ -124,7 +124,7 @@ export class Route<
    * Loads {@link RouteOptions.lazyComponent a lazy route component} once and caches it forever, unless an error
    * occurred during loading.
    */
-  getOrLoadComponent: () => ComponentType | Promise<ComponentType>;
+  readonly getOrLoadComponent: () => ComponentType | Promise<ComponentType>;
 
   readonly errorComponent: ComponentType | undefined;
   readonly loadingComponent: ComponentType | undefined;

@@ -18,7 +18,7 @@ test('starts route loading when mounted', () => {
   renderHook(() => usePrefetch(route.getLocation({ xxx: 111 })), {
     wrapper: props => (
       <StrictMode>
-        <RouterProvider router={router}>{props.children}</RouterProvider>
+        <RouterProvider value={router}>{props.children}</RouterProvider>
       </StrictMode>
     ),
   });
@@ -48,11 +48,11 @@ test('restart loading only if location is changed', () => {
     dataLoader: dataLoaderBbbMock,
   });
 
-  const router = new Router({ routes: [routeAaa, routeBbb], context: undefined });
+  const router = new Router({ routes: [routeAaa, routeBbb] });
 
   const wrapper: FC<PropsWithChildren> = props => (
     <StrictMode>
-      <RouterProvider router={router}>{props.children}</RouterProvider>
+      <RouterProvider value={router}>{props.children}</RouterProvider>
     </StrictMode>
   );
 
