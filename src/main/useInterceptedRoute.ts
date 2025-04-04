@@ -9,10 +9,16 @@ import { getTailController } from './utils';
  * Returns the controller of the {@link route} that was intercepted during navigation, or `null` if such route wasn't
  * intercepted.
  *
+ * @example
+ * const routeController = useInterceptedRoute(route);
+ *
+ * <RouteOutlet controller={routeController} />
+ *
  * @param route The route to intercept.
  * @template Params Route params.
  * @template Data Data loaded by a route.
  * @template Context A router context.
+ * @see {@link RouteOutlet}
  * @group Routing
  */
 export function useInterceptedRoute<Params extends Dict, Data, Context>(

@@ -25,6 +25,7 @@ npm install --save-prod react-corsair
 - [Not found](#not-found)
 - [Redirects](#redirects)
 - [Prefetching](#prefetching)
+- [Route interception](#route-interception)
 
 🔗&ensp;[**History**](#history)
 
@@ -34,6 +35,7 @@ npm install --save-prod react-corsair
 
 🚀&ensp;[**Server-side rendering**](#server-side-rendering)
 
+- [Rendering disposition](#rendering-disposition)
 - [Render to string](#render-to-string)
 - [Streaming SSR](#streaming-ssr)
 - [State serialization](#state-serialization)
@@ -112,6 +114,18 @@ function HelloPage() {
 }
 
 const helloRoute = createRoute('/hello', HelloPage);
+```
+
+In this example we used a shorthand signature of
+the [`createRoute`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.createRoute.html) function.
+You can also use
+a [route options object](https://smikhalevski.github.io/react-corsair/interfaces/react_corsair.RouteOptions.html):
+
+```ts
+const helloRoute = createRoute({
+  pathname: '/hello',
+  component: HelloPage
+});
 ```
 
 Routes are location providers:
@@ -264,8 +278,8 @@ productsRoute.pathnameTemplate.pattern;
 // ⮕ '/products'
 ```
 
-By default, a pathname pattern is case-insensitive. So the route in example above would match both `"/products"` and
-`"/PRODUCTS"`.
+By default, a pathname pattern is case-insensitive. So the route in example above would match both `/products` and
+`/PRODUCTS`.
 
 If you need a case-sensitive pattern, provide
 [`isCaseSensitive`](https://smikhalevski.github.io/react-corsair/interfaces/react_corsair.RouteOptions.html#isCaseSensitive)
@@ -308,7 +322,7 @@ segment) follow it by a `?` flag.
 createRoute('/product/:sku?');
 ```
 
-This route matches both `"/product"` and `"/product/37"`.
+This route matches both `/product` and `/product/37`.
 
 Static pathname segments can be optional as well:
 
@@ -316,7 +330,7 @@ Static pathname segments can be optional as well:
 createRoute('/shop?/product/:sku');
 ```
 
-This route matches both `"/shop/product/37"` and `"/product/37"`.
+This route matches both `/shop/product/37` and `/product/37`.
 
 By default, a param matches a single pathname segment. Follow a param with a `*` flag to make it match multiple
 segments.
@@ -325,7 +339,7 @@ segments.
 createRoute('/:slug*');
 ```
 
-This route matches both `"/watch"` and `"/watch/a/movie"`.
+This route matches both `/watch` and `/watch/a/movie`.
 
 To make param both wildcard and optional, combine `*` and `?` flags:
 
@@ -813,6 +827,106 @@ more declarative route prefetching:
 React Corsair triggers required [data loaders](#data-loading) on every navigation, so you may need to implement caching
 for data loaders.
 
+## Route interception
+
+Intercepting routes allows you to load a route from another part of your application within the current layout.
+This routing paradigm can be useful when you want to display the content of a route without the user switching to
+a different context.
+
+Let' create a shop feed and each product from the feed can be opened in a separate page. Here's the product route
+and its component:
+
+```ts
+import { createRoute, useRoute } from 'react-corsair';
+
+const productRoute = createRoute<{ sku: number }>('/product/:sku', ProductPage);
+
+function ProductPage() {
+  const { params } = useRoute(productRoute);
+
+  // Render a product here
+}
+```
+
+Shop feed is a list of product links:
+
+```tsx
+import { createRoute } from 'react-corsair';
+import { Link } from 'react-corsair/history';
+
+const shopRoute = createRoute('/shop', ShopPage);
+
+function ShopPage() {
+  return <Link to={productRoute.getLocation(42)}>{'Go to product'}</Link>;
+}
+```
+
+Setup the history and the router:
+
+```ts
+import { Router } from 'react-corsair';
+import { createBrowserHistory } from 'react-corsair/history';
+
+const history = createBrowserHistory();
+
+const router = new Router({ routes: [shopRoute, productRoute] });
+
+// 🟡 Trigger router navigation if history location changes
+history.subscribe(() => {
+  router.navigate(history.location);
+});
+```
+
+Render the router:
+
+```tsx
+import { RouterProvider } from 'react-corsair';
+import { HistoryProvider } from 'react-corsair/history';
+
+<HistoryProvider value={history}>
+  <RouterProvider value={router}/>
+</HistoryProvider>
+```
+
+Now when user opens `/shop` and clicks on _Go to product_, the browser location changes to `/product/42` and
+the `productRoute` is rendered.
+
+With route interception we can render `productRoute` route inside the `<ShopPage>`, so the browser location would be
+`/product/42` and the user would see the shop feed with a product inlay.
+
+To achieve this, `<ShopPage>` use
+the [`useInterceptedRoute`](https://smikhalevski.github.io/react-corsair/interfaces/react_corsair.useInterceptedRoute.html)
+hook:
+
+```tsx
+import { useInterceptedRoute } from 'react-corsair';
+
+function ShopPage() {
+  const productRouteController = useInterceptedRoute(productRoute);
+  // ⮕ RouteController | null
+  
+  return (
+    <>
+      <Link to={productRoute.getLocation(42)}>{'Go to product'}</Link>
+
+      {productRouteController !== null && <RouteOutlet controller={productRouteController}/>}
+    </>
+  );
+}
+```
+
+Now when user clicks on _Go to product_, the browser location changes to `/product/42` and `<ShopPage>` is re-rendered.
+`productRouteController` would contain
+a [route controller](https://smikhalevski.github.io/react-corsair/classes/react_corsair.RouteController.html) for
+`productRoute`. This controller can be then rendered using
+the [`<RouteOutlet>`](https://smikhalevski.github.io/react-corsair/classes/react_corsair.RouteController.html).
+
+If a user clicks the _Reload_ button in the browser, a `<ProductPage>` would be rendered because it matches
+`/product/42`.
+
+You can render `<RouteOutlet>` in a popup to show the product preview, allowing user not to loose the context of
+the shop feed.
+
 # History
 
 React Corsair provides a seamless history integration:
@@ -903,7 +1017,7 @@ createBrowserHistory().toAbsoluteURL(helloRoute);
 createHashHistory().toAbsoluteURL(helloRoute);
 // ⮕ '#/hello'
 
-createMemoryHistory([{}]).toAbsoluteURL(helloRoute);
+createMemoryHistory(['/']).toAbsoluteURL(helloRoute);
 // ⮕ '/hello'
 ```
 
@@ -1040,6 +1154,32 @@ must be called only once, and only one router on the client side can receive the
 On the server, you can either render your app contents [as a string](#render-to-string) and send it to the client in one
 go, or [stream the contents](#streaming-ssr).
 
+## Rendering disposition
+
+By default, during when SSR is used all routes are rendered both on the server side and on the client side. You can
+prevent server-side rendering for a route by specifying
+the [`renderingDisposition`](https://smikhalevski.github.io/react-corsair/interfaces/react_corsair.RouteOptions.html#renderingDisposition)
+option:
+
+```ts
+const helloRoute = createRoute({
+  pathname: '/hello',
+  component: HelloPage,
+  renderingDisposition: 'client'
+});
+```
+
+Now `helloRoute` is rendered on the client-side only.
+
+Rendering disposition can be set to:
+
+<dl>
+<dt>"server"</dt>
+<dd>Route is rendered on the server during SSR and hydrated on the client.</dd>
+<dt>"client"</dt>
+<dd>Route is rendered on the client. Loading state is rendered on the server during SSR.</dd>
+</dl>
+
 ## Render to string
 
 Use [`SSRRouter`](https://smikhalevski.github.io/react-corsair/classes/ssr.SSRRouter.html) to render your app as an HTML
@@ -1049,13 +1189,13 @@ string:
 import { createServer } from 'http';
 import { renderToString } from 'react-dom/server';
 import { RouterProvider } from 'react-corsair';
-import { createMemoryHistory, parseLocation, HistoryProvider } from 'react-corsair/history';
+import { createMemoryHistory, HistoryProvider } from 'react-corsair/history';
 import { SSRRouter } from 'react-corsair/ssr';
 
 const server = createServer(async (request, response) => {
   
   // 1️⃣ Create a new history and a new router for each request
-  const history = createMemoryHistory([parseLocation(request.url)]);
+  const history = createMemoryHistory([request.url]);
 
   const router = new SSRRouter({ routes: [helloRoute] });
   
@@ -1114,13 +1254,13 @@ use [`PipeableSSRRouter`](https://smikhalevski.github.io/react-corsair/classes/s
 import { createServer } from 'http';
 import { renderToPipeableStream } from 'react-dom/server';
 import { RouterProvider } from 'react-corsair';
-import { createMemoryHistory, parseLocation, HistoryProvider } from 'react-corsair/history';
+import { createMemoryHistory, HistoryProvider } from 'react-corsair/history';
 import { PipeableSSRRouter } from 'react-corsair/ssr/node';
 
 const server = createServer((request, response) => {
 
   // 1️⃣ Create a new history and a new router for each request
-  const history = createMemoryHistory([parseLocation(request.url)]);
+  const history = createMemoryHistory([request.url]);
 
   const router = new PipeableSSRRouter(response, { routes: [helloRoute] });
 
@@ -1156,13 +1296,13 @@ use [`ReadableSSRRouter`](https://smikhalevski.github.io/react-corsair/classes/s
 import { createServer } from 'http';
 import { renderToPipeableStream } from 'react-dom/server';
 import { RouterProvider } from 'react-corsair';
-import { createMemoryHistory, parseLocation, HistoryProvider } from 'react-corsair/history';
+import { createMemoryHistory, HistoryProvider } from 'react-corsair/history';
 import { ReadableSSRRouter } from 'react-corsair/ssr';
 
 async function handler(request) {
 
   // 1️⃣ Create a new history and a new router for each request
-  const history = createMemoryHistory([parseLocation(request.url)]);
+  const history = createMemoryHistory([request.url]);
 
   const router = new ReadableSSRRouter({ routes: [helloRoute] });
 
@@ -1279,7 +1419,7 @@ history.subscribe(() => {
 });
 ```
 
-User navigates to a `"/foo"` location:
+User navigates to a `/foo` location:
 
 ```ts
 history.push('/foo');
@@ -1296,7 +1436,7 @@ router.subscribe(event => {
 });
 ```
 
-Now regardless of what route was matched by `"/foo"`, router would render `barRoute`.
+Now regardless of what route was matched by `/foo`, router would render `barRoute`.
 
 
 <hr/>

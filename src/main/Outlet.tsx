@@ -58,6 +58,12 @@ export interface RouteOutletProps {
 /**
  * Renders the given {@link RouteOutletProps.controller controller}.
  *
+ * @example
+ * const routeController = useInterceptedRoute(route);
+ *
+ * <RouteOutlet controller={routeController} />
+ *
+ * @see {@link useInterceptedRoute}
  * @group Routing
  */
 export function RouteOutlet(props: RouteOutletProps): ReactElement | null {
