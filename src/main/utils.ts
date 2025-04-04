@@ -1,4 +1,5 @@
 import { Location, To } from './types';
+import { RouteController } from './RouteController';
 
 export function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
   return value !== null && typeof value === 'object' && 'then' in value;
@@ -14,4 +15,11 @@ export function noop() {}
 
 export function AbortError(message: string): Error {
   return typeof DOMException !== 'undefined' ? new DOMException(message, 'AbortError') : Error(message);
+}
+
+export function getTailController(controller: RouteController | null): RouteController | null {
+  while (controller !== null && controller.childController !== null) {
+    controller = controller.childController;
+  }
+  return controller;
 }

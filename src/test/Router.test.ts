@@ -1,4 +1,4 @@
-import { createRoute, Route, Router } from '../main';
+import { createRoute, Route, Router, RouterEvent } from '../main';
 import { AbortablePromise } from 'parallel-universe';
 
 test('creates a new router instance', () => {
@@ -38,39 +38,35 @@ describe('navigate', () => {
     router.navigate(routeAaa);
 
     expect(router.rootController!.route).toBe(routeAaa);
-    expect(router.location).toStrictEqual({ pathname: '/aaa', searchParams: {}, hash: '', state: undefined });
     expect(listenerMock).toHaveBeenCalledTimes(2);
     expect(listenerMock).toHaveBeenNthCalledWith(1, {
       type: 'navigate',
       controller: router.rootController,
       router,
       location: { pathname: '/aaa', searchParams: {}, hash: '', state: undefined },
-    });
+      isIntercepted: false,
+    } satisfies RouterEvent);
     expect(listenerMock).toHaveBeenNthCalledWith(2, {
       type: 'ready',
-      controller: router.rootController,
-    });
+      controller: router.rootController!,
+    } satisfies RouterEvent);
 
     router.navigate(routeBbb.getLocation({ xxx: 111 }));
 
     expect(router.rootController!.route).toBe(routeBbb);
-    expect(router.location).toStrictEqual({
-      pathname: '/bbb',
-      searchParams: { xxx: 111 },
-      hash: '',
-      state: undefined,
-    });
+
     expect(listenerMock).toHaveBeenCalledTimes(4);
     expect(listenerMock).toHaveBeenNthCalledWith(3, {
       type: 'navigate',
       controller: router.rootController,
       router,
       location: { pathname: '/bbb', searchParams: { xxx: 111 }, hash: '', state: undefined },
-    });
+      isIntercepted: false,
+    } satisfies RouterEvent);
     expect(listenerMock).toHaveBeenNthCalledWith(4, {
       type: 'ready',
-      controller: router.rootController,
-    });
+      controller: router.rootController!,
+    } satisfies RouterEvent);
   });
 
   test('starts data loading', () => {

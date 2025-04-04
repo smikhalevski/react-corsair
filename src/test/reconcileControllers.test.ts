@@ -5,7 +5,7 @@ import { matchRoutes } from '../main/matchRoutes';
 test('returns null for empty matches', () => {
   const router = new Router({ routes: [] });
 
-  const controller = reconcileControllers(router, []);
+  const controller = reconcileControllers(router, router.rootController, []);
 
   expect(controller).toBeNull();
 });
@@ -19,7 +19,7 @@ test('reuses OK state if nothing is changed', () => {
 
   router.rootController.setData('aaa');
 
-  const controller = reconcileControllers(router, [{ route, params: {} }])!;
+  const controller = reconcileControllers(router, router.rootController, [{ route, params: {} }])!;
 
   expect(controller.state).toBe(router.rootController.state);
   expect(controller.route).toBe(route);
@@ -35,7 +35,7 @@ test('reuses error state if nothing is changed', () => {
 
   router.rootController.setError('aaa');
 
-  const controller = reconcileControllers(router, [{ route, params: {} }])!;
+  const controller = reconcileControllers(router, router.rootController, [{ route, params: {} }])!;
 
   expect(controller.state).toBe(router.rootController.state);
   expect(controller.route).toBe(route);
@@ -49,7 +49,7 @@ test('does not reuse loading state if nothing is changed', () => {
 
   router.rootController = new RouteController(router, route, {});
 
-  const controller = reconcileControllers(router, [{ route, params: {} }])!;
+  const controller = reconcileControllers(router, router.rootController, [{ route, params: {} }])!;
 
   expect(controller.state).not.toBe(router.rootController.state);
   expect(controller.state).toEqual({ status: 'loading' } satisfies RouteState);
@@ -66,7 +66,7 @@ test('uses replaced controller as a fallback if params have changed', () => {
 
   router.rootController.setData('aaa');
 
-  const controller = reconcileControllers(router, [{ route, params: { zzz: 222 } }])!;
+  const controller = reconcileControllers(router, router.rootController, [{ route, params: { zzz: 222 } }])!;
 
   expect(controller.state).not.toBe(router.rootController.state);
   expect(controller.state).toEqual({ status: 'loading' } satisfies RouteState);
@@ -85,7 +85,7 @@ test('uses replaced controller as a fallback if context has changed', () => {
 
   router.context = 222;
 
-  const controller = reconcileControllers(router, [{ route, params: {} }])!;
+  const controller = reconcileControllers(router, router.rootController, [{ route, params: {} }])!;
 
   expect(controller.state).not.toBe(router.rootController.state);
   expect(controller.state).toEqual({ status: 'loading' } satisfies RouteState);
@@ -102,7 +102,7 @@ test('does not use replaced controller as a fallback if its state is not OK and 
 
   router.rootController.setError('aaa');
 
-  const controller = reconcileControllers(router, [{ route, params: { zzz: 222 } }])!;
+  const controller = reconcileControllers(router, router.rootController, [{ route, params: { zzz: 222 } }])!;
 
   expect(controller.state).not.toBe(router.rootController.state);
   expect(controller.state).toEqual({ status: 'loading' } satisfies RouteState);
@@ -122,7 +122,7 @@ test('does not use replaced controller as a fallback if loadingAppearance is loa
 
   router.rootController.setData('aaa');
 
-  const controller = reconcileControllers(router, [{ route, params: { zzz: 222 } }])!;
+  const controller = reconcileControllers(router, router.rootController, [{ route, params: { zzz: 222 } }])!;
 
   expect(controller.state).not.toBe(router.rootController.state);
   expect(controller.state).toEqual({ status: 'loading' } satisfies RouteState);
@@ -132,7 +132,10 @@ test('does not use replaced controller as a fallback if loadingAppearance is loa
 
 test('uses replaced controller as a fallback if route has changed and its state is OK', () => {
   const routeAaa = createRoute('/aaa');
-  const routeBbb = createRoute('/bbb');
+  const routeBbb = createRoute({
+    pathname: '/bbb',
+    loadingAppearance: 'avoid',
+  });
 
   const router = new Router({ routes: [] });
 
@@ -140,7 +143,7 @@ test('uses replaced controller as a fallback if route has changed and its state 
 
   router.rootController.setData('aaa');
 
-  const controller = reconcileControllers(router, [{ route: routeBbb, params: {} }])!;
+  const controller = reconcileControllers(router, router.rootController, [{ route: routeBbb, params: {} }])!;
 
   expect(controller.state).not.toBe(router.rootController.state);
   expect(controller.state).toEqual({ status: 'loading' } satisfies RouteState);
@@ -161,7 +164,7 @@ test('uses replaced controller as a fallback if route has changed and loadingApp
 
   router.rootController.setData('aaa');
 
-  const controller = reconcileControllers(router, [{ route: routeBbb, params: {} }])!;
+  const controller = reconcileControllers(router, router.rootController, [{ route: routeBbb, params: {} }])!;
 
   expect(controller.state).not.toBe(router.rootController.state);
   expect(controller.state).toEqual({ status: 'loading' } satisfies RouteState);
@@ -179,7 +182,7 @@ test('does not use replaced controller as a fallback if route has changed and it
 
   router.rootController.setError('aaa');
 
-  const controller = reconcileControllers(router, [{ route: routeBbb, params: {} }])!;
+  const controller = reconcileControllers(router, router.rootController, [{ route: routeBbb, params: {} }])!;
 
   expect(controller.state).not.toBe(router.rootController.state);
   expect(controller.state).toEqual({ status: 'loading' } satisfies RouteState);
@@ -190,7 +193,10 @@ test('does not use replaced controller as a fallback if route has changed and it
 test('uses previous controller as a fallback for a nested route', () => {
   const routeAaa = createRoute('/aaa');
   const routeBbb = createRoute(routeAaa, '/bbb');
-  const routeCcc = createRoute(routeAaa, '/ccc');
+  const routeCcc = createRoute(routeAaa, {
+    pathname: '/ccc',
+    loadingAppearance: 'avoid',
+  });
 
   const router = new Router({ routes: [routeBbb] });
 
@@ -200,7 +206,7 @@ test('uses previous controller as a fallback for a nested route', () => {
 
   const routeMatches = matchRoutes('/aaa/ccc', {}, [routeCcc]);
 
-  const controller = reconcileControllers(router, routeMatches)!;
+  const controller = reconcileControllers(router, router.rootController, routeMatches)!;
 
   expect(controller.state.status).toBe('ok');
   expect(controller.route).toBe(routeAaa);

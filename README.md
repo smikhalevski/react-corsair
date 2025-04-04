@@ -12,9 +12,8 @@ npm install --save-prod react-corsair
 
 🔥&ensp;[**Live example**](https://codesandbox.io/p/sandbox/react-corsair-example-mzjzcm)
 
-🧭&ensp;**Routing**
+🧭&ensp;[**Routing**](#routing)
 
-- [Overview](#overview)
 - [Router and routes](#router-and-routes)
 - [Route params](#route-params)
 - [Pathname templates](#pathname-templates)
@@ -40,7 +39,11 @@ npm install --save-prod react-corsair
 - [State serialization](#state-serialization)
 - [Content-Security-Policy support](#content-security-policy-support)
 
-# Overview
+🍪&ensp;**Cookbook**
+
+- [Route masking](#route-masking)
+
+# Routing
 
 URLs don't matter because they are almost never part of the application domain logic. React Corsair is a router that
 abstracts URLs away from your application domain.
@@ -97,7 +100,7 @@ function MyApp() {
 
 And that's how you render your first route with React Corsair!
 
-# Router and routes
+## Router and routes
 
 Routes are navigation entry points. Most routes associate a pathname with a rendered component:
 
@@ -149,7 +152,7 @@ function AnotherPage() {
 }
 ```
 
-# Route params
+## Route params
 
 Routes can be parameterized with pathname params and search params. Let's create a route that has a pathname param:
 
@@ -245,7 +248,7 @@ productRoute.getLocation({ sku: 42, color: 'red' });
 > Read more about [Doubter](https://github.com/smikhalevski/doubter#readme), the runtime validation and transformation
 > library. 
 
-# Pathname templates
+## Pathname templates
 
 A pathname provided for a route is parsed as a pattern. Pathname patterns may contain named params and matching flags.
 Pathname patterns are compiled into
@@ -338,7 +341,7 @@ representation `%3A`:
 createRoute('/foo%3Abar');
 ```
 
-# Outlets
+## Outlets
 
 Route components are rendered inside
 an [`<Outlet>`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.Outlet.html). If you don't provide
@@ -384,7 +387,7 @@ The rendered output would be:
 <main>Hello</main>
 ```
 
-# Nested routes
+## Nested routes
 
 Routes can be nested:
 
@@ -443,7 +446,7 @@ Now the rendering output would be:
 <em>Hello</em>
 ```
 
-# Code splitting
+## Code splitting
 
 To enable code splitting in your app, use the
 [`lazyComponent`](https://smikhalevski.github.io/react-corsair/interfaces/react_corsair.RouteOptions.html#lazyComponent)
@@ -468,12 +471,9 @@ export default function UserPage() {
 When router is navigated to the `userRoute`, a module that contains `<UserPage>` is loaded and rendered. The loaded
 component is cached, so next time the `userRoute` is matched, `<UserPage>` would be rendered instantly.
 
-By default, while a lazy component is being loaded, router would still render the previously matched route.
-
-But what is rendered the first time a route with a lazy component is matched by the router and there's no content
-on the screen yet? By default, a promise would be thrown so you can wrap
+A promise is thrown if the `lazyComponent` isn't loaded yet. You can wrap
 [`<RouterProvider>`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.RouterProvider.html) in
-a custom `<Suspense>` boundary.
+a custom `<Suspense>` boundary to catch it and render a fallback:
 
 ```tsx
 function LoadingIndicator() {
@@ -485,7 +485,7 @@ function LoadingIndicator() {
 </Suspense>
 ```
 
-You can to provide a
+Or you can to provide a
 [`loadingComponent`](https://smikhalevski.github.io/react-corsair/interfaces/react_corsair.RouteOptions.html#loadingComponent)
 option to your route, so an `<Outlet>` renders a `<Suspense>` for you, using `loadingComponent` as a fallback:
 
@@ -497,12 +497,12 @@ const userRoute = createRoute({
 });
 ```
 
-Now, `loadingComponent` would be rendered if there's nothing rendered yet.
+Now, `loadingComponent` would be rendered if there's loading in progress.
 
 Each route may have a custom loading component: here you can render a page skeleton or a spinner.
 
-Router would still render the previously matched route when a new route is being loaded, even if a new route has
-a `loadingComponent`. You can change this by adding a
+Router can render the previously matched route when a new route is being loaded, even if a new route has
+a `loadingComponent`. Customize this behavior by adding a
 [`loadingAppearance`](https://smikhalevski.github.io/react-corsair/interfaces/react_corsair.RouteOptions.html#loadingAppearance)
 option:
 
@@ -528,7 +528,7 @@ Always render `loadingComponent` if a route requires loading.
 <dt>"route_loading"</dt>
 <dd>
 
-Render `loadingComponent` only if a route is changed during navigation.
+Render `loadingComponent` only if a route is changed during navigation. This is the default behavior.
 
 </dd>
 <dt>"avoid"</dt>
@@ -542,7 +542,7 @@ If there's a route that is already rendered then keep it on the screen until the
 If an error is thrown during `lazyComponent` loading, an [error boundary](#error-boundaries) is rendered and router
 would retry loading the component again later.
 
-# Data loading
+## Data loading
 
 Routes may require some data to render. Triggering data loading during rendering may lead to
 a [waterfall](https://blog.sentry.io/fetch-waterfall-in-react/). React Corsair provides an easy way to load route data
@@ -608,7 +608,7 @@ const router = new Router({
 });
 ```
 
-# Error boundaries
+## Error boundaries
 
 Each route is rendered in its own
 [error boundary](https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary). If an
@@ -674,7 +674,7 @@ function UserPage() {
 }
 ```
 
-# Not found
+## Not found
 
 During route component rendering, you may detect that there's not enough data to render a route. Call
 the [`notFound`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.notFound.html) in such case:
@@ -742,7 +742,7 @@ function ProductPage() {
 }
 ```
 
-# Redirects
+## Redirects
 
 During route component rendering, you can trigger a redirect by calling
 [`redirect`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.redirect.html):
@@ -781,7 +781,7 @@ router.subscribe(event => {
 });
 ```
 
-# Prefetching
+## Prefetching
 
 Sometimes you know ahead of time that a user would visit a particular route, and you may want to prefetch
 the component and [related data](#data-loading) so the navigation is instant.
@@ -1265,7 +1265,41 @@ Send the header with this nonce in the server response:
 Content-Security-Policy: script-src 'nonce-2726c7f26c'
 ```
 
+# Cookbook
+
+## Route masking
+
+Route masking allows you to render a different route than one that was matched by the history.
+
+Router is navigated by history changes:
+
+```ts
+history.subscribe(() => {
+  router.navigate(history.location);
+});
+```
+
+User navigates to a `"/foo"` location:
+
+```ts
+history.push('/foo');
+```
+
+You can intercept the router navigation before it is rendered (and before data loaders are triggered) and supersede
+the navigation:
+
+```ts
+router.subscribe(event => {
+  if (event.type === 'navigate' && event.location.pathname === '/foo') {
+    router.navigate(barRoute);
+  }
+});
+```
+
+Now regardless of what route was matched by `"/foo"`, router would render `barRoute`.
+
 
 <hr/>
 
 <p align="center">:octocat: :heart:</p>
+

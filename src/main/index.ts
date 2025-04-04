@@ -13,7 +13,7 @@
 export { createRoute } from './createRoute';
 export { hydrateRouter, type HydrateRouterOptions } from './hydrateRouter';
 export { notFound } from './notFound';
-export { Outlet } from './Outlet';
+export { Outlet, RouteOutlet, type RouteOutletProps } from './Outlet';
 export { PathnameTemplate, type PathnameMatch } from './PathnameTemplate';
 export { Prefetch, type PrefetchProps } from './Prefetch';
 export { redirect, Redirect } from './redirect';
@@ -28,6 +28,7 @@ export {
   type RedirectState,
   type RouteState,
 } from './RouteController';
+export { useInterceptedRoute } from './useInterceptedRoute';
 export { usePrefetch } from './usePrefetch';
 export { useRoute } from './useRoute';
 export { useRouter, RouterProvider, type RouterProviderProps } from './useRouter';
@@ -43,6 +44,7 @@ export {
   type ComponentModule,
   type RouteOptions,
   type RouterOptions,
+  type NavigateOptions,
   type NavigateEvent,
   type LoadingEvent,
   type AbortedEvent,

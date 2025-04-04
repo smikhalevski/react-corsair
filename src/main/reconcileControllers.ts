@@ -6,11 +6,13 @@ import { Router } from './Router';
 /**
  * Returns a root controller for a given array of route matches.
  */
-export function reconcileControllers(router: Router, routeMatches: RouteMatch[]): RouteController | null {
+export function reconcileControllers(
+  router: Router,
+  replacedController: RouteController | null,
+  routeMatches: RouteMatch[]
+): RouteController | null {
   let rootController = null;
   let parentController = null;
-  let replacedController =
-    router.rootController !== null ? router.rootController.fallbackController || router.rootController : null;
 
   for (let i = 0; i < routeMatches.length; ++i) {
     const routeMatch = routeMatches[i];

@@ -2,10 +2,17 @@ import React, { createContext, ReactElement, ReactNode, useCallback, useContext,
 import { Outlet, OutletContentProvider } from './Outlet';
 import { Router } from './Router';
 import { RouteControllerProvider } from './useRoute';
+import { RouteController } from './RouteController';
 
 const RouterContext = createContext<Router | null>(null);
 
 RouterContext.displayName = 'RouterContext';
+
+export const InterceptedRouteControllerContext = createContext<RouteController | null>(null);
+
+InterceptedRouteControllerContext.displayName = 'InterceptedRouteControllerContext';
+
+export const InterceptedRouteControllerProvider = InterceptedRouteControllerContext.Provider;
 
 /**
  * Returns a router provided by an enclosing {@link RouterProvider}.
@@ -49,14 +56,20 @@ export function RouterProvider(props: RouterProviderProps): ReactElement {
 
   const subscribe = useCallback(value.subscribe.bind(value), [value]);
 
-  const getSnapshot = () => value.rootController;
+  const getRootController = () => value.rootController;
 
-  const rootController = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  const rootController = useSyncExternalStore(subscribe, getRootController, getRootController);
+
+  const getInterceptedController = () => value.interceptedController;
+
+  const interceptedController = useSyncExternalStore(subscribe, getInterceptedController, getInterceptedController);
 
   return (
     <RouterContext.Provider value={value}>
       <RouteControllerProvider value={null}>
-        <OutletContentProvider value={rootController || value}>{children}</OutletContentProvider>
+        <InterceptedRouteControllerProvider value={interceptedController}>
+          <OutletContentProvider value={rootController || value}>{children}</OutletContentProvider>
+        </InterceptedRouteControllerProvider>
       </RouteControllerProvider>
     </RouterContext.Provider>
   );

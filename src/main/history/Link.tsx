@@ -27,7 +27,7 @@ export interface LinkProps extends Omit<HTMLAttributes<HTMLAnchorElement>, 'href
    *
    * @default false
    */
-  replace?: boolean;
+  isReplace?: boolean;
 }
 
 /**
@@ -37,7 +37,7 @@ export interface LinkProps extends Omit<HTMLAttributes<HTMLAnchorElement>, 'href
  * @group History
  */
 export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
-  const { to, isPrefetched, replace, onClick, children, ...anchorProps } = props;
+  const { to, isPrefetched, isReplace, onClick, children, ...anchorProps } = props;
 
   const history = useHistory();
 
@@ -59,7 +59,7 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
 
     event.preventDefault();
 
-    if (replace) {
+    if (isReplace) {
       history.replace(to);
     } else {
       history.push(to);

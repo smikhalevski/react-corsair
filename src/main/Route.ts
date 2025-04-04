@@ -150,7 +150,7 @@ export class Route<
     this.errorComponent = options.errorComponent;
     this.loadingComponent = options.loadingComponent;
     this.notFoundComponent = options.notFoundComponent;
-    this.loadingAppearance = options.loadingAppearance || 'avoid';
+    this.loadingAppearance = options.loadingAppearance || 'route_loading';
     this.renderingDisposition = options.renderingDisposition || 'server';
 
     let component: Promise<ComponentType> | ComponentType | undefined = options.component;
