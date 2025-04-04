@@ -132,7 +132,10 @@ test('does not use replaced controller as a fallback if loadingAppearance is loa
 
 test('uses replaced controller as a fallback if route has changed and its state is OK', () => {
   const routeAaa = createRoute('/aaa');
-  const routeBbb = createRoute('/bbb');
+  const routeBbb = createRoute({
+    pathname: '/bbb',
+    loadingAppearance: 'avoid',
+  });
 
   const router = new Router({ routes: [] });
 
@@ -190,7 +193,10 @@ test('does not use replaced controller as a fallback if route has changed and it
 test('uses previous controller as a fallback for a nested route', () => {
   const routeAaa = createRoute('/aaa');
   const routeBbb = createRoute(routeAaa, '/bbb');
-  const routeCcc = createRoute(routeAaa, '/ccc');
+  const routeCcc = createRoute(routeAaa, {
+    pathname: '/ccc',
+    loadingAppearance: 'avoid',
+  });
 
   const router = new Router({ routes: [routeBbb] });
 

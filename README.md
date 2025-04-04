@@ -468,12 +468,9 @@ export default function UserPage() {
 When router is navigated to the `userRoute`, a module that contains `<UserPage>` is loaded and rendered. The loaded
 component is cached, so next time the `userRoute` is matched, `<UserPage>` would be rendered instantly.
 
-By default, while a lazy component is being loaded, router would still render the previously matched route.
-
-But what is rendered the first time a route with a lazy component is matched by the router and there's no content
-on the screen yet? By default, a promise would be thrown so you can wrap
+A promise is thrown if the `lazyComponent` isn't loaded yet. You can wrap
 [`<RouterProvider>`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.RouterProvider.html) in
-a custom `<Suspense>` boundary.
+a custom `<Suspense>` boundary to catch it and render a fallback:
 
 ```tsx
 function LoadingIndicator() {
@@ -485,7 +482,7 @@ function LoadingIndicator() {
 </Suspense>
 ```
 
-You can to provide a
+Or you can to provide a
 [`loadingComponent`](https://smikhalevski.github.io/react-corsair/interfaces/react_corsair.RouteOptions.html#loadingComponent)
 option to your route, so an `<Outlet>` renders a `<Suspense>` for you, using `loadingComponent` as a fallback:
 
@@ -497,12 +494,12 @@ const userRoute = createRoute({
 });
 ```
 
-Now, `loadingComponent` would be rendered if there's nothing rendered yet.
+Now, `loadingComponent` would be rendered if there's loading in progress.
 
 Each route may have a custom loading component: here you can render a page skeleton or a spinner.
 
-Router would still render the previously matched route when a new route is being loaded, even if a new route has
-a `loadingComponent`. You can change this by adding a
+Router can render the previously matched route when a new route is being loaded, even if a new route has
+a `loadingComponent`. Customize this behavior by adding a
 [`loadingAppearance`](https://smikhalevski.github.io/react-corsair/interfaces/react_corsair.RouteOptions.html#loadingAppearance)
 option:
 
@@ -528,7 +525,7 @@ Always render `loadingComponent` if a route requires loading.
 <dt>"route_loading"</dt>
 <dd>
 
-Render `loadingComponent` only if a route is changed during navigation.
+Render `loadingComponent` only if a route is changed during navigation. This is the default behavior.
 
 </dd>
 <dt>"avoid"</dt>
