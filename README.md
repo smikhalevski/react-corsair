@@ -833,7 +833,7 @@ Intercepting routes allows you to load a route from another part of your applica
 This routing paradigm can be useful when you want to display the content of a route without the user switching to
 a different context.
 
-Let' create a shop feed and each product from the feed can be opened in a separate page. Here's the product route
+Let's create a shop feed and each product from the feed can be opened in a separate page. Here's the product route
 and its component:
 
 ```ts
@@ -894,9 +894,9 @@ the `productRoute` is rendered.
 With route interception we can render `productRoute` route inside the `<ShopPage>`, so the browser location would be
 `/product/42` and the user would see the shop feed with a product inlay.
 
-To achieve this, `<ShopPage>` use
+To achieve this, add
 the [`useInterceptedRoute`](https://smikhalevski.github.io/react-corsair/interfaces/react_corsair.useInterceptedRoute.html)
-hook:
+hook to `<ShopPage>`:
 
 ```tsx
 import { useInterceptedRoute } from 'react-corsair';
@@ -919,7 +919,7 @@ Now when user clicks on _Go to product_, the browser location changes to `/produ
 `productRouteController` would contain
 a [route controller](https://smikhalevski.github.io/react-corsair/classes/react_corsair.RouteController.html) for
 `productRoute`. This controller can be then rendered using
-the [`<RouteOutlet>`](https://smikhalevski.github.io/react-corsair/classes/react_corsair.RouteController.html).
+the [`<RouteOutlet>`](https://smikhalevski.github.io/react-corsair/classes/react_corsair.RouteOutlet.html).
 
 If a user clicks the _Reload_ button in the browser, a `<ProductPage>` would be rendered because it matches
 `/product/42`.
@@ -927,9 +927,9 @@ If a user clicks the _Reload_ button in the browser, a `<ProductPage>` would be 
 You can render `<RouteOutlet>` in a popup to show the product preview, allowing user not to loose the context of
 the shop feed.
 
-If the route was intercepted, use
+Use
 [`cancelInterception`](https://smikhalevski.github.io/react-corsair/classes/react_corsair.Router.html#cancelInterception)
-method to force render the intercepted route in a router outlet:
+method to render the intercepted route in a router `<Outlet>`:
 
 ```ts
 router.cancelInterception();
@@ -1446,8 +1446,31 @@ router.subscribe(event => {
 
 Now regardless of what route was matched by `/foo`, router would render `barRoute`.
 
+This technique can be used to render a login page whenever the non-authenticated user tries to reach a page that
+requires login. Here's how to achieve this:
+
+```ts
+const adminRoute = createRoute('/admin', AdminPage);
+
+const loginPage = createRoute('/login', LoginPage);
+
+// A set of routes that require user to be logged in
+const privateRoutes = new Set([adminRoute]);
+
+// User status provided by your application
+const isLoggedIn = false;
+
+router.subscribe(event => {
+  if (
+    !isLoggedIn &&
+    event.type === 'navigate' &&
+    event.controller !== null &&
+    privateRoutes.has(event.controller.route)) {
+    router.navigate(loginPage);
+  }
+});
+```
 
 <hr/>
 
 <p align="center">:octocat: :heart:</p>
-
