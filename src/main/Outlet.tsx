@@ -43,6 +43,42 @@ export function Outlet(): ReactElement | null {
  */
 Outlet.displayName = 'Outlet';
 
+/**
+ * Props of the {@link RouteOutlet} component.
+ *
+ * @group Routing
+ */
+export interface RouteOutletProps {
+  /**
+   * The controller rendered by an outlet.
+   */
+  controller: RouteController;
+}
+
+/**
+ * Renders the given {@link RouteOutletProps.controller controller}.
+ *
+ * @example
+ * const routeController = useInterceptedRoute(route);
+ *
+ * <RouteOutlet controller={routeController} />
+ *
+ * @see {@link useInterceptedRoute}
+ * @group Routing
+ */
+export function RouteOutlet(props: RouteOutletProps): ReactElement | null {
+  if (!(props.controller instanceof RouteController)) {
+    throw new Error('Expected a route controller');
+  }
+
+  return <OutletErrorBoundary controller={props.controller} />;
+}
+
+/**
+ * @internal
+ */
+RouteOutlet.displayName = 'RouteOutlet';
+
 interface OutletErrorBoundaryProps {
   controller: RouteController;
 }

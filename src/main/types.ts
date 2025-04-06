@@ -319,6 +319,20 @@ export interface RouterOptions<Context = void> extends Fallbacks {
 }
 
 /**
+ * Options provided to {@link Router.navigate}.
+ *
+ * @group Routing
+ */
+export interface NavigateOptions {
+  /**
+   * If `true` then route interception is bypassed during navigation.
+   *
+   * @default false
+   */
+  isInterceptionBypassed?: boolean;
+}
+
+/**
  * An event published by a {@link Router} after a {@link Router.navigate navigation} occurs.
  *
  * @group Routing
@@ -343,6 +357,13 @@ export interface NavigateEvent {
    * A location to which a router was navigated.
    */
   location: Location;
+
+  /**
+   * `true` if the {@link controller} rendering was intercepted.
+   *
+   * @see {@link Router.cancelInterception}
+   */
+  isIntercepted: boolean;
 }
 
 /**

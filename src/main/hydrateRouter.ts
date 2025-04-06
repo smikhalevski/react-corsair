@@ -77,7 +77,13 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
     }
   });
 
-  router['_pubSub'].publish({ type: 'navigate', controller: rootController, router, location });
+  router['_pubSub'].publish({
+    type: 'navigate',
+    controller: rootController,
+    router,
+    location,
+    isIntercepted: false,
+  });
 
   if (router.rootController !== rootController) {
     // Hydrated navigation was superseded

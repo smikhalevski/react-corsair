@@ -1,5 +1,5 @@
-import { createRoute, Route, Router } from '../main';
-import { AbortablePromise } from 'parallel-universe';
+import { createRoute, Route, Router, RouterEvent } from '../main';
+import { AbortablePromise, delay } from 'parallel-universe';
 
 test('creates a new router instance', () => {
   const routes: Route[] = [];
@@ -38,39 +38,35 @@ describe('navigate', () => {
     router.navigate(routeAaa);
 
     expect(router.rootController!.route).toBe(routeAaa);
-    expect(router.location).toStrictEqual({ pathname: '/aaa', searchParams: {}, hash: '', state: undefined });
     expect(listenerMock).toHaveBeenCalledTimes(2);
     expect(listenerMock).toHaveBeenNthCalledWith(1, {
       type: 'navigate',
       controller: router.rootController,
       router,
       location: { pathname: '/aaa', searchParams: {}, hash: '', state: undefined },
-    });
+      isIntercepted: false,
+    } satisfies RouterEvent);
     expect(listenerMock).toHaveBeenNthCalledWith(2, {
       type: 'ready',
-      controller: router.rootController,
-    });
+      controller: router.rootController!,
+    } satisfies RouterEvent);
 
     router.navigate(routeBbb.getLocation({ xxx: 111 }));
 
     expect(router.rootController!.route).toBe(routeBbb);
-    expect(router.location).toStrictEqual({
-      pathname: '/bbb',
-      searchParams: { xxx: 111 },
-      hash: '',
-      state: undefined,
-    });
+
     expect(listenerMock).toHaveBeenCalledTimes(4);
     expect(listenerMock).toHaveBeenNthCalledWith(3, {
       type: 'navigate',
       controller: router.rootController,
       router,
       location: { pathname: '/bbb', searchParams: { xxx: 111 }, hash: '', state: undefined },
-    });
+      isIntercepted: false,
+    } satisfies RouterEvent);
     expect(listenerMock).toHaveBeenNthCalledWith(4, {
       type: 'ready',
-      controller: router.rootController,
-    });
+      controller: router.rootController!,
+    } satisfies RouterEvent);
   });
 
   test('starts data loading', () => {
@@ -118,6 +114,93 @@ describe('navigate', () => {
 
     expect(dataLoaderMock).not.toHaveBeenCalled();
     expect(router.rootController!.route).toBe(routeBbb);
+  });
+
+  test('intercepts a route', () => {
+    const listenerMock = jest.fn();
+
+    const routeAaa = createRoute('/aaa');
+    const routeBbb = createRoute('/bbb');
+
+    const router = new Router({ routes: [routeAaa, routeBbb] });
+
+    router.subscribe(listenerMock);
+
+    router['_registerInterceptedRoute'](routeBbb);
+
+    router.navigate(routeAaa);
+
+    expect(router.rootController!.route).toBe(routeAaa);
+    expect(router.interceptedController).toBeNull();
+
+    expect(listenerMock).toHaveBeenCalledTimes(2);
+
+    expect(listenerMock).toHaveBeenNthCalledWith(1, {
+      type: 'navigate',
+      controller: router.rootController,
+      router,
+      location: { pathname: '/aaa', searchParams: {}, hash: '', state: undefined },
+      isIntercepted: false,
+    } satisfies RouterEvent);
+
+    expect(listenerMock).toHaveBeenNthCalledWith(2, {
+      type: 'ready',
+      controller: router.rootController!,
+    } satisfies RouterEvent);
+
+    router.navigate(routeBbb);
+
+    expect(router.rootController!.route).toBe(routeAaa);
+    expect(router.interceptedController!.route).toBe(routeBbb);
+
+    expect(listenerMock).toHaveBeenCalledTimes(4);
+
+    expect(listenerMock).toHaveBeenNthCalledWith(3, {
+      type: 'navigate',
+      controller: router.interceptedController,
+      router,
+      location: { pathname: '/bbb', searchParams: {}, hash: '', state: undefined },
+      isIntercepted: true,
+    } satisfies RouterEvent);
+
+    expect(listenerMock).toHaveBeenNthCalledWith(4, {
+      type: 'ready',
+      controller: router.interceptedController!,
+    } satisfies RouterEvent);
+  });
+
+  test('bypasses route interception', () => {
+    const listenerMock = jest.fn();
+
+    const routeAaa = createRoute('/aaa');
+    const routeBbb = createRoute('/bbb');
+
+    const router = new Router({ routes: [routeAaa, routeBbb] });
+
+    router.subscribe(listenerMock);
+
+    router['_registerInterceptedRoute'](routeBbb);
+
+    router.navigate(routeAaa);
+    router.navigate(routeBbb, { isInterceptionBypassed: true });
+
+    expect(router.rootController!.route).toBe(routeBbb);
+    expect(router.interceptedController).toBeNull();
+
+    expect(listenerMock).toHaveBeenCalledTimes(4);
+
+    expect(listenerMock).toHaveBeenNthCalledWith(3, {
+      type: 'navigate',
+      controller: router.rootController,
+      router,
+      location: { pathname: '/bbb', searchParams: {}, hash: '', state: undefined },
+      isIntercepted: false,
+    } satisfies RouterEvent);
+
+    expect(listenerMock).toHaveBeenNthCalledWith(4, {
+      type: 'ready',
+      controller: router.rootController!,
+    } satisfies RouterEvent);
   });
 });
 
@@ -172,6 +255,103 @@ describe('prefetch', () => {
     const router = new Router({ routes: [route] });
 
     router.prefetch(route.getLocation({ xxx: 111 })).abort();
+
+    expect(dataLoaderMock).toHaveBeenCalledTimes(1);
+    expect(dataLoaderMock.mock.calls[0][0].signal.aborted).toBe(true);
+  });
+});
+
+describe('_registerInterceptedRoute', () => {
+  test('unregisters only once', () => {
+    const route = createRoute('/aaa');
+
+    const router = new Router({ routes: [route] });
+
+    const unregister0 = router['_registerInterceptedRoute'](route);
+    const unregister1 = router['_registerInterceptedRoute'](route);
+
+    expect(router['_interceptorRegistry'].get(route)).toBe(2);
+
+    unregister0();
+    expect(router['_interceptorRegistry'].get(route)).toBe(1);
+
+    unregister0();
+    expect(router['_interceptorRegistry'].get(route)).toBe(1);
+
+    unregister1();
+    expect(router['_interceptorRegistry'].get(route)).toBeUndefined();
+  });
+
+  test('cancels interception if all interceptors were unregistered', () => {
+    const routeAaa = createRoute('/aaa');
+    const routeBbb = createRoute('/bbb');
+
+    const router = new Router({ routes: [routeAaa, routeBbb] });
+
+    const unregister = router['_registerInterceptedRoute'](routeBbb);
+
+    router.navigate(routeAaa);
+    router.navigate(routeBbb);
+
+    expect(router.rootController!.route).toBe(routeAaa);
+    expect(router.interceptedController!.route).toBe(routeBbb);
+
+    unregister();
+
+    expect(router.rootController!.route).toBe(routeBbb);
+    expect(router.interceptedController).toBeNull();
+  });
+});
+
+describe('cancelInterception', () => {
+  test('cancels interception', () => {
+    const routeAaa = createRoute('/aaa');
+    const routeBbb = createRoute('/bbb');
+
+    const router = new Router({ routes: [routeAaa, routeBbb] });
+
+    router['_registerInterceptedRoute'](routeBbb);
+
+    router.navigate(routeAaa);
+    router.navigate(routeBbb);
+
+    router.cancelInterception();
+
+    expect(router.rootController!.route).toBe(routeBbb);
+    expect(router.interceptedController).toBeNull();
+  });
+
+  test('no-op if there is no interceptedController', () => {
+    const route = createRoute('/aaa');
+
+    const router = new Router({ routes: [route] });
+
+    router.navigate(route);
+
+    router.cancelInterception();
+
+    expect(router.rootController!.route).toBe(route);
+    expect(router.interceptedController).toBeNull();
+  });
+
+  test('aborts rootController', () => {
+    const dataLoaderMock = jest.fn(options => delay(50));
+
+    const routeAaa = createRoute({
+      pathname: '/aaa',
+      dataLoader: dataLoaderMock,
+    });
+
+    const routeBbb = createRoute('/bbb');
+
+    const router = new Router({ routes: [routeAaa, routeBbb] });
+
+    router['_registerInterceptedRoute'](routeBbb);
+
+    router.navigate(routeAaa);
+    router.navigate(routeBbb);
+
+    router.cancelInterception();
 
     expect(dataLoaderMock).toHaveBeenCalledTimes(1);
     expect(dataLoaderMock.mock.calls[0][0].signal.aborted).toBe(true);
