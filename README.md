@@ -895,7 +895,7 @@ With route interception we can render `productRoute` route inside the `<ShopPage
 `/product/42` and the user would see the shop feed with a product inlay.
 
 To achieve this, add
-the [`useInterceptedRoute`](https://smikhalevski.github.io/react-corsair/interfaces/react_corsair.useInterceptedRoute.html)
+the [`useInterceptedRoute`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.useInterceptedRoute.html)
 hook to `<ShopPage>`:
 
 ```tsx
@@ -919,7 +919,7 @@ Now when user clicks on _Go to product_, the browser location changes to `/produ
 `productRouteController` would contain
 a [route controller](https://smikhalevski.github.io/react-corsair/classes/react_corsair.RouteController.html) for
 `productRoute`. This controller can be then rendered using
-the [`<RouteOutlet>`](https://smikhalevski.github.io/react-corsair/classes/react_corsair.RouteOutlet.html).
+the [`<RouteOutlet>`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.RouteOutlet.html).
 
 If a user clicks the _Reload_ button in the browser, a `<ProductPage>` would be rendered because it matches
 `/product/42`.
