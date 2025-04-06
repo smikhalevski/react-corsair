@@ -2,7 +2,7 @@ import { AbortablePromise, PubSub } from 'parallel-universe';
 import { ComponentType } from 'react';
 import { matchRoutes } from './matchRoutes';
 import { Route } from './Route';
-import { Fallbacks, Location, NavigateOptions, RouterEvent, RouterOptions, To } from './types';
+import { Fallbacks, NavigateOptions, RouterEvent, RouterOptions, To } from './types';
 import { AbortError, getTailController, noop, toLocation } from './utils';
 import { getOrLoadRouteState, RouteController } from './RouteController';
 import { reconcileControllers } from './reconcileControllers';
@@ -48,9 +48,11 @@ export class Router<Context = any> implements Fallbacks {
   readonly loadingComponent: ComponentType | undefined;
   readonly notFoundComponent: ComponentType | undefined;
 
+  /**
+   * A map from an intercepted route to a number of registered interceptors.
+   */
+  protected _interceptorRegistry = new Map<Route, number>();
   protected _pubSub = new PubSub<RouterEvent>();
-  protected _interceptedLocation: Location | null = null;
-  protected _interceptionRegistry = new Map<Route, number>();
 
   /**
    * Creates a new instance of a {@link react-corsair!Router Router}.
@@ -76,32 +78,27 @@ export class Router<Context = any> implements Fallbacks {
     const location = toLocation(to);
     const routeMatches = matchRoutes(location.pathname, location.searchParams, this.routes);
 
-    let isIntercepted = false;
     let prevController;
     let nextController;
 
     // Check that the matched route is intercepted
-    if (this.rootController !== null && routeMatches.length !== 0 && !options.isInterceptionBypassed) {
-      const matchedRoute = routeMatches[routeMatches.length - 1].route;
-
-      for (const route of this._interceptionRegistry.keys()) {
-        if (matchedRoute === route) {
-          isIntercepted = true;
-          break;
-        }
-      }
-    }
+    const isIntercepted =
+      !options.isInterceptionBypassed &&
+      this.rootController !== null &&
+      routeMatches.length !== 0 &&
+      this._interceptorRegistry.has(routeMatches[routeMatches.length - 1].route);
 
     if (isIntercepted) {
       prevController = this.interceptedController?.fallbackController || this.interceptedController;
+      nextController = reconcileControllers(this, prevController, routeMatches);
 
-      this.interceptedController = nextController = reconcileControllers(this, prevController, routeMatches);
-      this._interceptedLocation = location;
+      this.interceptedController = nextController;
     } else {
       prevController = this.rootController?.fallbackController || this.rootController;
+      nextController = reconcileControllers(this, prevController, routeMatches);
 
-      this.rootController = nextController = reconcileControllers(this, prevController, routeMatches);
-      this._interceptedLocation = this.interceptedController = null;
+      this.rootController = nextController;
+      this.interceptedController = null;
     }
 
     this._pubSub.publish({
@@ -112,7 +109,7 @@ export class Router<Context = any> implements Fallbacks {
       isIntercepted,
     });
 
-    if (isIntercepted ? this.interceptedController !== nextController : this.rootController !== nextController) {
+    if (this.rootController !== nextController && this.interceptedController !== nextController) {
       // Navigation was superseded
       return;
     }
@@ -171,17 +168,12 @@ export class Router<Context = any> implements Fallbacks {
       return;
     }
 
-    const location = this._interceptedLocation!;
-    this.rootController = this.interceptedController;
-    this._interceptedLocation = this.interceptedController = null;
+    const prevRootController = this.rootController;
 
-    this._pubSub.publish({
-      type: 'navigate',
-      controller: this.rootController,
-      router: this,
-      location,
-      isIntercepted: false,
-    });
+    this.rootController = this.interceptedController;
+    this.interceptedController = null;
+
+    prevRootController!.abort(AbortError('Route interception was cancelled'));
   }
 
   /**
@@ -195,14 +187,14 @@ export class Router<Context = any> implements Fallbacks {
   }
 
   /**
-   * Registers a {@link route} as interceptable, so if it is {@link navigate navigated to} it populates
+   * Registers a {@link route} interceptor, so the {@link route} is {@link navigate navigated to} it populates
    * the {@link interceptedController} instead of the {@link rootController}.
    *
    * @param route The route to intercept.
    * @returns A callback that discards route interception.
    */
   protected _registerInterceptedRoute(route: Route<any, any, any, Context>): () => void {
-    const registry = this._interceptionRegistry;
+    const registry = this._interceptorRegistry;
 
     registry.set(route, (registry.get(route) || 0) + 1);
 
@@ -216,18 +208,16 @@ export class Router<Context = any> implements Fallbacks {
 
       isDiscarded = true;
 
-      const registrationCount = registry.get(route);
+      const interceptorCount = registry.get(route);
 
-      if (registrationCount !== 1) {
-        registry.set(route, registrationCount! - 1);
+      if (interceptorCount !== 1) {
+        registry.set(route, interceptorCount! - 1);
         return;
       }
 
       registry.delete(route);
 
-      const controller = getTailController(this.interceptedController);
-
-      if (controller !== null && !registry.has(controller.route)) {
+      if (getTailController(this.interceptedController)?.route === route) {
         this.cancelInterception();
       }
     };

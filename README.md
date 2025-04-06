@@ -927,6 +927,14 @@ If a user clicks the _Reload_ button in the browser, a `<ProductPage>` would be 
 You can render `<RouteOutlet>` in a popup to show the product preview, allowing user not to loose the context of
 the shop feed.
 
+If the route was intercepted, use
+[`cancelInterception`](https://smikhalevski.github.io/react-corsair/classes/react_corsair.Router.html#cancelInterception)
+method to force render the intercepted route in a router outlet:
+
+```ts
+router.cancelInterception();
+```
+
 # History
 
 React Corsair provides a seamless history integration:
