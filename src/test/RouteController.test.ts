@@ -21,21 +21,21 @@ describe('RouteController', () => {
   });
 
   test('creates a new instance', () => {
-    expect(controller.state).toEqual({ status: 'loading' } satisfies RouteState);
+    expect(controller.state).toStrictEqual({ status: 'loading' } satisfies RouteState);
     expect(controller.loadingPromise).toBeNull();
     expect(() => controller.getData()).toThrow();
     expect(controller.getError()).toBeUndefined();
-    expect(controller.params).toEqual({ aaa: 111 });
+    expect(controller.params).toStrictEqual({ aaa: 111 });
     expect(controller.router).toBe(router);
     expect(controller.route).toBe(route);
-    expect(controller.context).toEqual({ ccc: 333 });
+    expect(controller.context).toStrictEqual({ ccc: 333 });
   });
 
   describe('notFound', () => {
     test('sets state and notifies router', () => {
       controller.notFound();
 
-      expect(controller.state).toEqual({ status: 'not_found' } satisfies RouteState);
+      expect(controller.state).toStrictEqual({ status: 'not_found' } satisfies RouteState);
       expect(routeListenerMock).toHaveBeenCalledTimes(1);
       expect(routeListenerMock).toHaveBeenNthCalledWith(1, { type: 'not_found', controller } satisfies RouterEvent);
     });
@@ -49,7 +49,7 @@ describe('RouteController', () => {
       expect(controller.loadingPromise).toBeNull();
       expect(routeListenerMock).toHaveBeenCalledTimes(1);
 
-      await expect(promise).rejects.toEqual(expect.any(DOMException));
+      await expect(promise).rejects.toStrictEqual(expect.any(DOMException));
     });
   });
 
@@ -57,7 +57,7 @@ describe('RouteController', () => {
     test('sets state and notifies router', () => {
       controller.redirect(route.getLocation(undefined));
 
-      expect(controller.state).toEqual({
+      expect(controller.state).toStrictEqual({
         status: 'redirect',
         to: { pathname: '/foo', searchParams: {}, hash: '', state: undefined },
       } satisfies RouteState);
@@ -80,7 +80,7 @@ describe('RouteController', () => {
       expect(controller.loadingPromise).toBeNull();
       expect(routeListenerMock).toHaveBeenCalledTimes(1);
 
-      await expect(promise).rejects.toEqual(expect.any(DOMException));
+      await expect(promise).rejects.toStrictEqual(expect.any(DOMException));
     });
   });
 
@@ -90,7 +90,7 @@ describe('RouteController', () => {
     test('sets state and notifies router', () => {
       controller.setError(error);
 
-      expect(controller.state).toEqual({ status: 'error', error } satisfies RouteState);
+      expect(controller.state).toStrictEqual({ status: 'error', error } satisfies RouteState);
       expect(routeListenerMock).toHaveBeenCalledTimes(1);
       expect(routeListenerMock).toHaveBeenNthCalledWith(1, { type: 'error', controller, error } satisfies RouterEvent);
     });
@@ -104,7 +104,7 @@ describe('RouteController', () => {
       expect(controller.loadingPromise).toBeNull();
       expect(routeListenerMock).toHaveBeenCalledTimes(1);
 
-      await expect(promise).rejects.toEqual(expect.any(DOMException));
+      await expect(promise).rejects.toStrictEqual(expect.any(DOMException));
     });
   });
 
@@ -126,7 +126,7 @@ describe('RouteController', () => {
     test('sets state and notifies router', () => {
       controller.setData(data);
 
-      expect(controller.state).toEqual({ status: 'ok', data } satisfies RouteState);
+      expect(controller.state).toStrictEqual({ status: 'ok', data } satisfies RouteState);
       expect(routeListenerMock).toHaveBeenCalledTimes(1);
       expect(routeListenerMock).toHaveBeenNthCalledWith(1, { type: 'ready', controller } satisfies RouterEvent);
     });
@@ -140,7 +140,7 @@ describe('RouteController', () => {
       expect(controller.loadingPromise).toBeNull();
       expect(routeListenerMock).toHaveBeenCalledTimes(1);
 
-      await expect(promise).rejects.toEqual(expect.any(DOMException));
+      await expect(promise).rejects.toStrictEqual(expect.any(DOMException));
     });
   });
 
@@ -165,7 +165,7 @@ describe('RouteController', () => {
       controller.load();
 
       expect(controller.loadingPromise).toBeNull();
-      expect(controller.state).toEqual({ status: 'ok', data: undefined } satisfies RouteState);
+      expect(controller.state).toStrictEqual({ status: 'ok', data: undefined } satisfies RouteState);
       expect(routeListenerMock).toHaveBeenCalledTimes(1);
       expect(routeListenerMock).toHaveBeenNthCalledWith(1, { type: 'ready', controller } satisfies RouterEvent);
     });
@@ -181,14 +181,14 @@ describe('RouteController', () => {
 
       controller.load();
 
-      expect(controller.state).toEqual({ status: 'loading' } satisfies RouteState);
+      expect(controller.state).toStrictEqual({ status: 'loading' } satisfies RouteState);
       expect(routeListenerMock).toHaveBeenCalledTimes(1);
       expect(routeListenerMock).toHaveBeenNthCalledWith(1, { type: 'loading', controller } satisfies RouterEvent);
 
       await controller.loadingPromise!.catch(noop);
 
       expect(controller.loadingPromise).toBeNull();
-      expect(controller.state).toEqual({ status: 'ok', data: { zzz: 777 } } satisfies RouteState);
+      expect(controller.state).toStrictEqual({ status: 'ok', data: { zzz: 777 } } satisfies RouteState);
       expect(controller.route.component).toBe(Component);
       expect(routeListenerMock).toHaveBeenCalledTimes(2);
       expect(routeListenerMock).toHaveBeenNthCalledWith(2, { type: 'ready', controller } satisfies RouterEvent);
@@ -205,7 +205,7 @@ describe('RouteController', () => {
       controller.setData('zzz');
       controller.load();
 
-      expect(controller.state).toEqual({ status: 'ok', data: 'zzz' } satisfies RouteState);
+      expect(controller.state).toStrictEqual({ status: 'ok', data: 'zzz' } satisfies RouteState);
       expect(routeListenerMock).toHaveBeenCalledTimes(2);
       expect(routeListenerMock).toHaveBeenNthCalledWith(1, { type: 'ready', controller } satisfies RouterEvent);
       expect(routeListenerMock).toHaveBeenNthCalledWith(2, { type: 'loading', controller } satisfies RouterEvent);
@@ -213,7 +213,7 @@ describe('RouteController', () => {
       await controller.loadingPromise!.catch(noop);
 
       expect(controller.loadingPromise).toBeNull();
-      expect(controller.state).toEqual({ status: 'ok', data: undefined } satisfies RouteState);
+      expect(controller.state).toStrictEqual({ status: 'ok', data: undefined } satisfies RouteState);
       expect(controller.route.component).toBe(Component);
       expect(routeListenerMock).toHaveBeenCalledTimes(3);
       expect(routeListenerMock).toHaveBeenNthCalledWith(3, { type: 'ready', controller } satisfies RouterEvent);
@@ -231,7 +231,7 @@ describe('RouteController', () => {
       controller.setData('zzz');
       controller.load();
 
-      expect(controller.state).toEqual({ status: 'loading' } satisfies RouteState);
+      expect(controller.state).toStrictEqual({ status: 'loading' } satisfies RouteState);
       expect(routeListenerMock).toHaveBeenCalledTimes(2);
       expect(routeListenerMock).toHaveBeenNthCalledWith(1, { type: 'ready', controller } satisfies RouterEvent);
       expect(routeListenerMock).toHaveBeenNthCalledWith(2, { type: 'loading', controller } satisfies RouterEvent);
@@ -239,7 +239,7 @@ describe('RouteController', () => {
       await controller.loadingPromise!.catch(noop);
 
       expect(controller.loadingPromise).toBeNull();
-      expect(controller.state).toEqual({ status: 'ok', data: undefined } satisfies RouteState);
+      expect(controller.state).toStrictEqual({ status: 'ok', data: undefined } satisfies RouteState);
       expect(controller.route.component).toBe(Component);
       expect(routeListenerMock).toHaveBeenCalledTimes(3);
       expect(routeListenerMock).toHaveBeenNthCalledWith(3, { type: 'ready', controller } satisfies RouterEvent);
@@ -257,7 +257,7 @@ describe('RouteController', () => {
       controller.setError('zzz');
       controller.load();
 
-      expect(controller.state).toEqual({ status: 'loading' } satisfies RouteState);
+      expect(controller.state).toStrictEqual({ status: 'loading' } satisfies RouteState);
       expect(routeListenerMock).toHaveBeenCalledTimes(2);
 
       expect(routeListenerMock).toHaveBeenNthCalledWith(1, {
@@ -271,7 +271,7 @@ describe('RouteController', () => {
       await controller.loadingPromise!.catch(noop);
 
       expect(controller.loadingPromise).toBeNull();
-      expect(controller.state).toEqual({ status: 'ok', data: undefined } satisfies RouteState);
+      expect(controller.state).toStrictEqual({ status: 'ok', data: undefined } satisfies RouteState);
       expect(controller.route.component).toBe(Component);
       expect(routeListenerMock).toHaveBeenCalledTimes(3);
       expect(routeListenerMock).toHaveBeenNthCalledWith(3, { type: 'ready', controller } satisfies RouterEvent);
@@ -293,7 +293,7 @@ describe('RouteController', () => {
 
       expect(promise).not.toBeNull();
       expect(controller.loadingPromise).not.toBe(promise);
-      await expect(promise).rejects.toEqual(expect.any(DOMException));
+      await expect(promise).rejects.toStrictEqual(expect.any(DOMException));
       await expect(controller.loadingPromise).resolves.toBeUndefined();
 
       expect(routeListenerMock).toHaveBeenCalledTimes(4);
@@ -319,7 +319,7 @@ describe('RouteController', () => {
       controller.setData('zzz');
       controller.abort();
 
-      expect(controller.state).toEqual({ status: 'ok', data: 'zzz' } satisfies RouteState);
+      expect(controller.state).toStrictEqual({ status: 'ok', data: 'zzz' } satisfies RouteState);
     });
 
     test('aborts pending route loading and sets error state', async () => {
@@ -337,9 +337,9 @@ describe('RouteController', () => {
       controller.abort('xxx');
 
       expect(promise).not.toBeNull();
-      expect(controller.state).toEqual({ status: 'error', error: 'xxx' } satisfies RouteState);
+      expect(controller.state).toStrictEqual({ status: 'error', error: 'xxx' } satisfies RouteState);
       expect(controller.loadingPromise).toBeNull();
-      await expect(promise).rejects.toEqual('xxx');
+      await expect(promise).rejects.toStrictEqual('xxx');
     });
 
     test('aborts background pending route loading and preserves state', async () => {
@@ -359,9 +359,9 @@ describe('RouteController', () => {
       controller.abort('xxx');
 
       expect(promise).not.toBeNull();
-      expect(controller.state).toEqual({ status: 'ok', data: 'zzz' } satisfies RouteState);
+      expect(controller.state).toStrictEqual({ status: 'ok', data: 'zzz' } satisfies RouteState);
       expect(controller.loadingPromise).toBeNull();
-      await expect(promise).rejects.toEqual('xxx');
+      await expect(promise).rejects.toStrictEqual('xxx');
 
       expect(routeListenerMock).toHaveBeenCalledTimes(3);
       expect(routeListenerMock).toHaveBeenNthCalledWith(1, { type: 'ready', controller } satisfies RouterEvent);
@@ -390,7 +390,9 @@ describe('getOrLoadRouteState', () => {
   test('returns OK state for outlet route', () => {
     const route = createRoute();
 
-    expect(getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })).toEqual({
+    expect(
+      getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })
+    ).toStrictEqual({
       status: 'ok',
       data: undefined,
     });
@@ -403,7 +405,9 @@ describe('getOrLoadRouteState', () => {
       component: Component,
     });
 
-    expect(getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })).toEqual({
+    expect(
+      getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })
+    ).toStrictEqual({
       status: 'ok',
       data: undefined,
     });
@@ -414,7 +418,9 @@ describe('getOrLoadRouteState', () => {
       dataLoader: () => 111,
     });
 
-    expect(getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })).toEqual({
+    expect(
+      getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })
+    ).toStrictEqual({
       status: 'ok',
       data: 111,
     });
@@ -427,7 +433,7 @@ describe('getOrLoadRouteState', () => {
 
     await expect(
       getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })
-    ).resolves.toEqual({
+    ).resolves.toStrictEqual({
       status: 'ok',
       data: 111,
     });
@@ -441,7 +447,7 @@ describe('getOrLoadRouteState', () => {
     expect(route.component).toBeUndefined();
     await expect(
       getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })
-    ).resolves.toEqual({
+    ).resolves.toStrictEqual({
       status: 'ok',
       data: undefined,
     });
@@ -457,7 +463,7 @@ describe('getOrLoadRouteState', () => {
     expect(route.component).toBeUndefined();
     await expect(
       getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })
-    ).resolves.toEqual({
+    ).resolves.toStrictEqual({
       status: 'ok',
       data: 111,
     });
@@ -471,7 +477,7 @@ describe('getOrLoadRouteState', () => {
 
     await expect(
       getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })
-    ).resolves.toEqual({
+    ).resolves.toStrictEqual({
       status: 'error',
       error: 111,
     });
@@ -486,7 +492,9 @@ describe('getOrLoadRouteState', () => {
     });
 
     expect(route.component).toBe(Outlet);
-    expect(getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })).toEqual({
+    expect(
+      getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })
+    ).toStrictEqual({
       status: 'error',
       error: 111,
     });
@@ -499,7 +507,7 @@ describe('getOrLoadRouteState', () => {
 
     await expect(
       getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })
-    ).resolves.toEqual({
+    ).resolves.toStrictEqual({
       status: 'error',
       error: 111,
     });
@@ -513,7 +521,7 @@ describe('getOrLoadRouteState', () => {
 
     await expect(
       getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })
-    ).resolves.toEqual({
+    ).resolves.toStrictEqual({
       status: 'error',
       error: 222,
     });
@@ -527,7 +535,7 @@ describe('getOrLoadRouteState', () => {
 
     await expect(
       getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })
-    ).resolves.toEqual({
+    ).resolves.toStrictEqual({
       status: 'error',
       error: 111,
     });

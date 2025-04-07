@@ -1,5 +1,6 @@
 import { parseLocation, stringifyLocation } from '../../main/history';
 import { concatPathname, debasePathname } from '../../main/history/utils';
+import { Location } from '../../main';
 
 describe('stringifyLocation', () => {
   test('returns a URL', () => {
@@ -13,22 +14,44 @@ describe('stringifyLocation', () => {
 
 describe('parseLocation', () => {
   test('parses a URL', () => {
-    expect(parseLocation('/aaa')).toEqual({ pathname: '/aaa', searchParams: {}, hash: '' });
-    expect(parseLocation('/aaa#')).toEqual({ pathname: '/aaa', searchParams: {}, hash: '' });
-    expect(parseLocation('/aaa?')).toEqual({ pathname: '/aaa', searchParams: {}, hash: '' });
-    expect(parseLocation('/aaa?#')).toEqual({ pathname: '/aaa', searchParams: {}, hash: '' });
+    expect(parseLocation('/aaa')).toStrictEqual({
+      pathname: '/aaa',
+      searchParams: {},
+      hash: '',
+      state: undefined,
+    } satisfies Location);
+    expect(parseLocation('/aaa#')).toStrictEqual({
+      pathname: '/aaa',
+      searchParams: {},
+      hash: '',
+      state: undefined,
+    } satisfies Location);
+    expect(parseLocation('/aaa?')).toStrictEqual({
+      pathname: '/aaa',
+      searchParams: {},
+      hash: '',
+      state: undefined,
+    } satisfies Location);
+    expect(parseLocation('/aaa?#')).toStrictEqual({
+      pathname: '/aaa',
+      searchParams: {},
+      hash: '',
+      state: undefined,
+    } satisfies Location);
 
-    expect(parseLocation('/aaa?xxx=111')).toEqual({
+    expect(parseLocation('/aaa?xxx=111')).toStrictEqual({
       pathname: '/aaa',
       searchParams: { xxx: 111 },
       hash: '',
-    });
+      state: undefined,
+    } satisfies Location);
 
-    expect(parseLocation('/aaa#%23%24%25')).toEqual({
+    expect(parseLocation('/aaa#%23%24%25')).toStrictEqual({
       pathname: '/aaa',
       searchParams: {},
       hash: '#$%',
-    });
+      state: undefined,
+    } satisfies Location);
   });
 });
 

@@ -38,7 +38,7 @@ export interface Location {
   /**
    * An arbitrary data associated with the location.
    */
-  state?: any;
+  state: any;
 }
 
 /**
@@ -50,7 +50,7 @@ export interface LocationOptions {
   /**
    * A URL fragment identifier.
    *
-   * If hash begins with a `#` then it is used as is. Otherwise, it is encoded using {@link encodeURIComponent}.
+   * If hash begins with a `#` then it is used as is. Otherwise, it is decoded using {@link decodeURIComponent}.
    */
   hash?: string;
 

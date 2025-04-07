@@ -1053,7 +1053,7 @@ history.toURL(helloRoute.getLocation({ color: 'red' }));
 
 By default, history serializes
 [search params](https://smikhalevski.github.io/react-corsair/interfaces/react_corsair.Location.html#searchParams) with
-[`jsonSearchParamsAdapter`](https://smikhalevski.github.io/react-corsair/variables/history.jsonSearchParamsAdapter.html)
+[`jsonSearchParamsSerializer`](https://smikhalevski.github.io/react-corsair/variables/history.jsonSearchParamsSerializer.html)
 which serializes individual params with
 [`JSON`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON):
 
@@ -1076,16 +1076,16 @@ history.toURL(helloRoute.getLocation({
 // ⮕ '/shop?pageIndex=3&categories=%5B%22electronics%22%2C%22gifts%22%5D&sortBy=price&available=true'
 ```
 
-`jsonSearchParamsAdapter` allows you to store complex data structures in a URL.
+`jsonSearchParamsSerializer` allows you to store complex data structures in a URL.
 
 You can create
-[a custom search params adapter](https://smikhalevski.github.io/react-corsair/interfaces/history.HistoryOptions.html#searchParamsAdapter)
+[a custom search params adapter](https://smikhalevski.github.io/react-corsair/interfaces/history.HistoryOptions.html#searchParamsSerializer)
 and provide it to a history. Here's how to create
 a basic adapter that uses [`URLSearchParams`](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams): 
 
 ```ts
 createBrowserHistory({
-  searchParamsAdapter: {
+  searchParamsSerializer: {
 
     parse: search => Object.fromEntries(new URLSearchParams(search)),
 

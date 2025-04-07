@@ -1,4 +1,5 @@
 import { toLocation } from '../main/utils';
+import { Location } from '../main';
 
 describe('toLocation', () => {
   test('returns a location', () => {
@@ -7,7 +8,7 @@ describe('toLocation', () => {
       searchParams: {},
       hash: '',
       state: undefined,
-    });
+    } satisfies Location);
   });
 
   test('preserves pathname', () => {
@@ -16,7 +17,7 @@ describe('toLocation', () => {
       searchParams: {},
       hash: '',
       state: undefined,
-    });
+    } satisfies Location);
   });
 
   test('preserves params', () => {
@@ -25,7 +26,7 @@ describe('toLocation', () => {
       searchParams: { aaa: 111 },
       hash: '',
       state: undefined,
-    });
+    } satisfies Location);
   });
 
   test('preserves hash', () => {
@@ -34,7 +35,7 @@ describe('toLocation', () => {
       searchParams: {},
       hash: '#foo',
       state: undefined,
-    });
+    } satisfies Location);
   });
 
   test('preserves state', () => {
@@ -43,6 +44,6 @@ describe('toLocation', () => {
       searchParams: {},
       hash: '',
       state: 'aaa',
-    });
+    } satisfies Location);
   });
 });

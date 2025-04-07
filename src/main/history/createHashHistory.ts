@@ -2,16 +2,16 @@ import { PubSub } from 'parallel-universe';
 import { Location } from '../types';
 import { History, HistoryOptions } from './types';
 import { concatPathname, parseLocation, parseOrCastLocation, stringifyLocation } from './utils';
-import { jsonSearchParamsAdapter } from './jsonSearchParamsAdapter';
+import { jsonSearchParamsSerializer } from './jsonSearchParamsSerializer';
 
 /**
- * Create the history adapter that reads and writes location to a browser's session history using only URL hash.
+ * Creates the history adapter that reads and writes location to a browser's session history using only URL hash.
  *
  * @param options History options.
  * @group History
  */
 export function createHashHistory(options: HistoryOptions = {}): History {
-  const { basePathname, searchParamsAdapter = jsonSearchParamsAdapter } = options;
+  const { basePathname, searchParamsSerializer = jsonSearchParamsSerializer } = options;
   const pubSub = new PubSub();
   const handlePopstate = () => pubSub.publish();
 
@@ -23,41 +23,53 @@ export function createHashHistory(options: HistoryOptions = {}): History {
       return this.toURL(this.location);
     },
 
+    get index() {
+      return 0;
+    },
+
+    get length() {
+      return 0;
+    },
+
     get location() {
       const href = decodeURIComponent(window.location.hash.substring(1));
 
       if (prevHref !== href) {
         prevHref = href;
-        location = parseLocation(href, searchParamsAdapter);
+        location = parseLocation(href, searchParamsSerializer);
       }
       return location;
     },
 
     toURL(to) {
-      return stringifyLocation(to, searchParamsAdapter);
+      return stringifyLocation(to, searchParamsSerializer);
     },
 
     toAbsoluteURL(to) {
       return concatPathname(
         basePathname,
-        '#' + encodeHash(typeof to === 'string' ? to : stringifyLocation(to, searchParamsAdapter))
+        '#' + encodeHash(typeof to === 'string' ? to : stringifyLocation(to, searchParamsSerializer))
       );
     },
 
     push(to) {
-      location = parseOrCastLocation(to, searchParamsAdapter);
+      location = parseOrCastLocation(to, searchParamsSerializer);
 
-      window.history.pushState(location.state, '', '#' + encodeHash(stringifyLocation(location, searchParamsAdapter)));
+      window.history.pushState(
+        location.state,
+        '',
+        '#' + encodeHash(stringifyLocation(location, searchParamsSerializer))
+      );
       pubSub.publish();
     },
 
     replace(to) {
-      location = parseOrCastLocation(to, searchParamsAdapter);
+      location = parseOrCastLocation(to, searchParamsSerializer);
 
       window.history.replaceState(
         location.state,
         '',
-        '#' + encodeHash(stringifyLocation(location, searchParamsAdapter))
+        '#' + encodeHash(stringifyLocation(location, searchParamsSerializer))
       );
       pubSub.publish();
     },
@@ -80,6 +92,10 @@ export function createHashHistory(options: HistoryOptions = {}): History {
           window.removeEventListener('popstate', handlePopstate);
         }
       };
+    },
+
+    registerBlocker(blocker) {
+      return () => {};
     },
   };
 }

@@ -12,9 +12,9 @@ export interface HistoryOptions {
   /**
    * An adapter that extracts params from a URL search string and stringifies them back.
    *
-   * @default {@link jsonSearchParamsAdapter}
+   * @default {@link jsonSearchParamsSerializer}
    */
-  searchParamsAdapter?: SearchParamsAdapter;
+  searchParamsSerializer?: Serializer<Dict>;
 }
 
 /**
@@ -27,6 +27,10 @@ export interface History {
    * A history-local URL that represents {@link location}.
    */
   readonly url: string;
+
+  readonly index: number;
+
+  readonly length: number;
 
   /**
    * The current history location.
@@ -88,25 +92,57 @@ export interface History {
    * @returns A callback to unsubscribe a listener.
    */
   subscribe(listener: () => void): () => void;
+
+  /**
+   * Registers a {@link blocker} that prevents navigation with history.
+   *
+   * @param blocker A blocker to register.
+   * @returns A callback that removes blocker.
+   */
+  registerBlocker(blocker: HistoryBlocker): () => void;
 }
 
 /**
- * Extracts params from a URL search string and stringifies them back.
- *
- * @group History
+ * An intended history transaction.
  */
-export interface SearchParamsAdapter {
+export interface HistoryTransaction {
   /**
-   * Extract params from a URL search string.
-   *
-   * @param search The URL search string to extract params from.
+   * A location to which navigation is intended.
    */
-  parse(search: string): Dict;
+  location: Location;
 
   /**
-   * Stringifies params as a search string.
-   *
-   * @param params Params to stringify.
+   * Proceeds with navigation to a {@link location}.
    */
-  stringify(params: Dict): string;
+  proceed(): void;
+}
+
+/**
+ * A callback that is called when a history navigation is intended.
+ *
+ * @param transaction A transaction that describes the navigation.
+ * @returns `true` if the transaction should be blocked until {@link HistoryTransaction.proceed} is called,
+ * or `false` if the transaction shouldn't be blocked.
+ */
+export type HistoryBlocker = (transaction: HistoryTransaction) => boolean;
+
+/**
+ * Serializes and deserializes values.
+ *
+ * @template Value The value to serialize.
+ */
+export interface Serializer<Value> {
+  /**
+   * Serializes a value as a string.
+   *
+   * @param value The value to serialize.
+   */
+  stringify(value: Value): string;
+
+  /**
+   * Deserializes a stringified value.
+   *
+   * @param serializedValue The stringified value.
+   */
+  parse(serializedValue: string): Value;
 }

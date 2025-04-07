@@ -1,16 +1,16 @@
-import { Location, To } from '../types';
+import { Dict, Location, To } from '../types';
 import { toLocation } from '../utils';
-import { SearchParamsAdapter } from './types';
-import { jsonSearchParamsAdapter } from './jsonSearchParamsAdapter';
+import { Serializer } from './types';
+import { jsonSearchParamsSerializer } from './jsonSearchParamsSerializer';
 
 /**
  * Parses a pathname-search-hash string as a location.
  *
  * @param to A pathname-search-hash string to parse.
- * @param searchParamsAdapter An adapter that parses a search string.
+ * @param searchParamsSerializer An adapter that parses a search string.
  * @group History
  */
-export function parseLocation(to: string, searchParamsAdapter = jsonSearchParamsAdapter): Location {
+export function parseLocation(to: string, searchParamsSerializer = jsonSearchParamsSerializer): Location {
   const hashIndex = to.indexOf('#');
 
   let searchIndex = to.indexOf('?');
@@ -23,7 +23,7 @@ export function parseLocation(to: string, searchParamsAdapter = jsonSearchParams
 
   return {
     pathname: pathname === '' || pathname.charCodeAt(0) !== 47 ? '/' + pathname : pathname,
-    searchParams: searchParamsAdapter.parse(
+    searchParams: searchParamsSerializer.parse(
       searchIndex === -1 ? '' : to.substring(searchIndex + 1, hashIndex === -1 ? undefined : hashIndex)
     ),
     hash: hashIndex === -1 ? '' : decodeURIComponent(to.substring(hashIndex + 1)),
@@ -35,13 +35,13 @@ export function parseLocation(to: string, searchParamsAdapter = jsonSearchParams
  * Stringifies a location as pathname-search-hash string.
  *
  * @param to A location to stringify.
- * @param searchParamsAdapter An adapter that stringifies a search string.
+ * @param searchParamsSerializer An adapter that stringifies a search string.
  * @group History
  */
-export function stringifyLocation(to: To, searchParamsAdapter = jsonSearchParamsAdapter): string {
+export function stringifyLocation(to: To, searchParamsSerializer = jsonSearchParamsSerializer): string {
   const { pathname, searchParams, hash } = toLocation(to);
 
-  const search = searchParamsAdapter.stringify(searchParams);
+  const search = searchParamsSerializer.stringify(searchParams);
 
   return (
     pathname +
@@ -92,6 +92,6 @@ export function debasePathname(basePathname: string | undefined, pathname: strin
   throw new Error("Pathname doesn't match base pathname: " + basePathname);
 }
 
-export function parseOrCastLocation(to: To | string, searchParamsAdapter: SearchParamsAdapter): Location {
-  return typeof to === 'string' ? parseLocation(to, searchParamsAdapter) : toLocation(to);
+export function parseOrCastLocation(to: To | string, searchParamsSerializer: Serializer<Dict>): Location {
+  return typeof to === 'string' ? parseLocation(to, searchParamsSerializer) : toLocation(to);
 }

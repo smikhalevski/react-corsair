@@ -52,7 +52,7 @@ test('does not reuse loading state if nothing is changed', () => {
   const controller = reconcileControllers(router, router.rootController, [{ route, params: {} }])!;
 
   expect(controller.state).not.toBe(router.rootController.state);
-  expect(controller.state).toEqual({ status: 'loading' } satisfies RouteState);
+  expect(controller.state).toStrictEqual({ status: 'loading' } satisfies RouteState);
   expect(controller.route).toBe(route);
   expect(controller.fallbackController).toBeNull();
 });
@@ -69,7 +69,7 @@ test('uses replaced controller as a fallback if params have changed', () => {
   const controller = reconcileControllers(router, router.rootController, [{ route, params: { zzz: 222 } }])!;
 
   expect(controller.state).not.toBe(router.rootController.state);
-  expect(controller.state).toEqual({ status: 'loading' } satisfies RouteState);
+  expect(controller.state).toStrictEqual({ status: 'loading' } satisfies RouteState);
   expect(controller.route).toBe(route);
   expect(controller.fallbackController).toBe(router.rootController);
 });
@@ -88,7 +88,7 @@ test('uses replaced controller as a fallback if context has changed', () => {
   const controller = reconcileControllers(router, router.rootController, [{ route, params: {} }])!;
 
   expect(controller.state).not.toBe(router.rootController.state);
-  expect(controller.state).toEqual({ status: 'loading' } satisfies RouteState);
+  expect(controller.state).toStrictEqual({ status: 'loading' } satisfies RouteState);
   expect(controller.route).toBe(route);
   expect(controller.fallbackController).toBe(router.rootController);
 });
@@ -105,7 +105,7 @@ test('does not use replaced controller as a fallback if its state is not OK and 
   const controller = reconcileControllers(router, router.rootController, [{ route, params: { zzz: 222 } }])!;
 
   expect(controller.state).not.toBe(router.rootController.state);
-  expect(controller.state).toEqual({ status: 'loading' } satisfies RouteState);
+  expect(controller.state).toStrictEqual({ status: 'loading' } satisfies RouteState);
   expect(controller.route).toBe(route);
   expect(controller.fallbackController).toBeNull();
 });
@@ -125,7 +125,7 @@ test('does not use replaced controller as a fallback if loadingAppearance is loa
   const controller = reconcileControllers(router, router.rootController, [{ route, params: { zzz: 222 } }])!;
 
   expect(controller.state).not.toBe(router.rootController.state);
-  expect(controller.state).toEqual({ status: 'loading' } satisfies RouteState);
+  expect(controller.state).toStrictEqual({ status: 'loading' } satisfies RouteState);
   expect(controller.route).toBe(route);
   expect(controller.fallbackController).toBeNull();
 });
@@ -146,7 +146,7 @@ test('uses replaced controller as a fallback if route has changed and its state 
   const controller = reconcileControllers(router, router.rootController, [{ route: routeBbb, params: {} }])!;
 
   expect(controller.state).not.toBe(router.rootController.state);
-  expect(controller.state).toEqual({ status: 'loading' } satisfies RouteState);
+  expect(controller.state).toStrictEqual({ status: 'loading' } satisfies RouteState);
   expect(controller.route).toBe(routeBbb);
   expect(controller.fallbackController).toBe(router.rootController);
 });
@@ -167,7 +167,7 @@ test('uses replaced controller as a fallback if route has changed and loadingApp
   const controller = reconcileControllers(router, router.rootController, [{ route: routeBbb, params: {} }])!;
 
   expect(controller.state).not.toBe(router.rootController.state);
-  expect(controller.state).toEqual({ status: 'loading' } satisfies RouteState);
+  expect(controller.state).toStrictEqual({ status: 'loading' } satisfies RouteState);
   expect(controller.route).toBe(routeBbb);
   expect(controller.fallbackController).toBeNull();
 });
@@ -185,7 +185,7 @@ test('does not use replaced controller as a fallback if route has changed and it
   const controller = reconcileControllers(router, router.rootController, [{ route: routeBbb, params: {} }])!;
 
   expect(controller.state).not.toBe(router.rootController.state);
-  expect(controller.state).toEqual({ status: 'loading' } satisfies RouteState);
+  expect(controller.state).toStrictEqual({ status: 'loading' } satisfies RouteState);
   expect(controller.route).toBe(routeBbb);
   expect(controller.fallbackController).toBeNull();
 });

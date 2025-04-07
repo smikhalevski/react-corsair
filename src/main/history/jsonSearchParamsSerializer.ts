@@ -1,4 +1,4 @@
-import { SearchParamsAdapter } from './types';
+import { Serializer } from './types';
 import { Dict } from '../types';
 
 /**
@@ -6,7 +6,7 @@ import { Dict } from '../types';
  *
  * @group History
  */
-export const jsonSearchParamsAdapter: SearchParamsAdapter = {
+export const jsonSearchParamsSerializer: Serializer<Dict> = {
   parse(search) {
     const searchParams = new URLSearchParams(search);
     const params: Dict = {};
