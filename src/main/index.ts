@@ -12,6 +12,7 @@
 
 export { createRoute } from './createRoute';
 export { hydrateRouter, type HydrateRouterOptions } from './hydrateRouter';
+export { type RouteMatch } from './matchRoutes';
 export { notFound } from './notFound';
 export { Outlet, RouteOutlet, type RouteOutletProps } from './Outlet';
 export { PathnameTemplate, type PathnameMatch } from './PathnameTemplate';

@@ -65,14 +65,6 @@ export function createMemoryHistory(initialEntries: Array<To | string>, options:
       return entries[cursor];
     },
 
-    get index() {
-      return cursor;
-    },
-
-    get length() {
-      return entries.length;
-    },
-
     toURL(to) {
       return stringifyLocation(to, searchParamsSerializer);
     },

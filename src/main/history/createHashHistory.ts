@@ -23,14 +23,6 @@ export function createHashHistory(options: HistoryOptions = {}): History {
       return this.toURL(this.location);
     },
 
-    get index() {
-      return 0;
-    },
-
-    get length() {
-      return 0;
-    },
-
     get location() {
       const href = decodeURIComponent(window.location.hash.substring(1));
 

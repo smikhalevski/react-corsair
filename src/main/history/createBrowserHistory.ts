@@ -67,14 +67,6 @@ export function createBrowserHistory(options: HistoryOptions = {}): History {
       return this.toURL(entry.location);
     },
 
-    get index() {
-      return entry.index;
-    },
-
-    get length() {
-      return 0;
-    },
-
     get location() {
       return entry.location;
     },

@@ -28,10 +28,6 @@ export interface History {
    */
   readonly url: string;
 
-  readonly index: number;
-
-  readonly length: number;
-
   /**
    * The current history location.
    */
@@ -104,6 +100,8 @@ export interface History {
 
 /**
  * An intended history transaction.
+ *
+ * @group History
  */
 export interface HistoryTransaction {
   /**
@@ -123,6 +121,7 @@ export interface HistoryTransaction {
  * @param transaction A transaction that describes the navigation.
  * @returns `true` if the transaction should be blocked until {@link HistoryTransaction.proceed} is called,
  * or `false` if the transaction shouldn't be blocked.
+ * @group History
  */
 export type HistoryBlocker = (transaction: HistoryTransaction) => boolean;
 
@@ -130,6 +129,7 @@ export type HistoryBlocker = (transaction: HistoryTransaction) => boolean;
  * Serializes and deserializes values.
  *
  * @template Value The value to serialize.
+ * @group History
  */
 export interface Serializer<Value> {
   /**
