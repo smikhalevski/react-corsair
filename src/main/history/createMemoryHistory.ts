@@ -26,36 +26,6 @@ export function createMemoryHistory(initialEntries: Array<To | string>, options:
 
   let cursor = entries.length - 1;
 
-  const blockOrSetLocation = (to: To | string, setLocation: (location: Location) => void): void => {
-    const location = parseOrCastLocation(to, searchParamsSerializer);
-
-    if (blockers.size === 0) {
-      setLocation(location);
-      return;
-    }
-
-    let isProceeded = false;
-
-    const transaction: HistoryTransaction = {
-      location,
-      proceed() {
-        if (isProceeded) {
-          return;
-        }
-        isProceeded = true;
-        setLocation(location);
-      },
-    };
-
-    for (const blocker of blockers) {
-      if (blocker(transaction) || isProceeded) {
-        return;
-      }
-    }
-
-    setLocation(location);
-  };
-
   return {
     get url() {
       return this.toURL(this.location);
@@ -74,25 +44,30 @@ export function createMemoryHistory(initialEntries: Array<To | string>, options:
     },
 
     push(to) {
-      blockOrSetLocation(to, location => {
-        cursor++;
-        entries.splice(cursor, entries.length, location);
+      navigateOrBlock(blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
+        entries.splice(++cursor, entries.length, location);
         pubSub.publish();
       });
     },
 
     replace(to) {
-      blockOrSetLocation(to, location => {
+      navigateOrBlock(blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
         entries.splice(cursor, entries.length, location);
         pubSub.publish();
       });
     },
 
     back() {
-      if (cursor > 0) {
+      if (cursor === 0) {
+        return;
+      }
+      navigateOrBlock(blockers, entries[cursor - 1], _location => {
+        if (cursor === 0) {
+          return;
+        }
         cursor--;
         pubSub.publish();
-      }
+      });
     },
 
     subscribe(listener) {
@@ -107,4 +82,42 @@ export function createMemoryHistory(initialEntries: Array<To | string>, options:
       };
     },
   };
+}
+
+/**
+ * Returns `true` if navigation was blocked.
+ */
+export function navigateOrBlock(
+  blockers: Set<HistoryBlocker>,
+  location: Location,
+  setLocation: (location: Location, isPostponed: boolean) => void
+): boolean {
+  if (blockers.size === 0) {
+    setLocation(location, false);
+    return false;
+  }
+
+  let isPostponed = false;
+  let hasProceeded = false;
+
+  const transaction: HistoryTransaction = {
+    location,
+    proceed() {
+      if (hasProceeded) {
+        return;
+      }
+      hasProceeded = true;
+      setLocation(location, isPostponed);
+    },
+  };
+
+  for (const blocker of blockers) {
+    if (blocker(transaction) || hasProceeded) {
+      isPostponed = true;
+      return !hasProceeded;
+    }
+  }
+
+  setLocation(location, false);
+  return false;
 }

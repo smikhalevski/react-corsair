@@ -3,6 +3,7 @@ import { History, HistoryBlocker, HistoryOptions } from './types';
 import { concatPathname, debasePathname, parseLocation, parseOrCastLocation, stringifyLocation } from './utils';
 import { jsonSearchParamsSerializer } from './jsonSearchParamsSerializer';
 import { Location, To } from '../types';
+import { navigateOrBlock } from './createMemoryHistory';
 
 interface HistoryEntry {
   index: number;
@@ -19,7 +20,7 @@ export function createBrowserHistory(options: HistoryOptions = {}): History {
   const { basePathname, searchParamsSerializer = jsonSearchParamsSerializer } = options;
 
   const pubSub = new PubSub();
-  const blockers: HistoryBlocker[] = [];
+  const blockers = new Set<HistoryBlocker>();
 
   const getHistoryEntry = (): HistoryEntry => {
     const { pathname, search, hash } = window.location;
@@ -35,29 +36,33 @@ export function createBrowserHistory(options: HistoryOptions = {}): History {
     return { index: state.index, location };
   };
 
-  const setHistoryEntry = (to: To | string, isReplace: boolean): void => {
-    const location = parseOrCastLocation(to, searchParamsSerializer);
-    const url = concatPathname(basePathname, stringifyLocation(location, searchParamsSerializer));
-
-    if (isReplace) {
-      window.history.replaceState({ index: entry.index, state: location.state }, '', url);
-    } else {
-      window.history.pushState({ index: entry.index + 1, state: location.state }, '', url);
-    }
-
-    entry = getHistoryEntry();
-  };
-
   let entry = getHistoryEntry();
 
   if (entry.index === -1) {
     entry.index = 0;
-    setHistoryEntry(entry.location, true);
+
+    window.history.replaceState(
+      { index: 0, state: entry.location.state },
+      '',
+      concatPathname(basePathname, stringifyLocation(entry.location, searchParamsSerializer))
+    );
   }
 
-  const handlePopstate = (event: PopStateEvent) => {
-    entry = getHistoryEntry();
-    pubSub.publish();
+  const handlePopstate = (_event: PopStateEvent) => {
+    const nextEntry = getHistoryEntry();
+
+    const isBlocked = navigateOrBlock(blockers, nextEntry.location, (_location, isPostponed) => {
+      if (isPostponed) {
+        window.history.go(nextEntry.index - entry.index);
+      }
+      entry = nextEntry;
+      pubSub.publish();
+    });
+
+    if (isBlocked) {
+      // Rollback location
+      window.history.go(entry.index - nextEntry.index);
+    }
   };
 
   const handleBeforeUnload = (event: BeforeUnloadEvent) => {};
@@ -80,18 +85,33 @@ export function createBrowserHistory(options: HistoryOptions = {}): History {
     },
 
     push(to) {
-      setHistoryEntry(to, false);
-      pubSub.publish();
+      navigateOrBlock(blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
+        window.history.pushState(
+          { index: entry.index + 1, state: location.state },
+          '',
+          concatPathname(basePathname, stringifyLocation(location, searchParamsSerializer))
+        );
+
+        entry = getHistoryEntry();
+        pubSub.publish();
+      });
     },
 
     replace(to) {
-      setHistoryEntry(to, true);
-      pubSub.publish();
+      navigateOrBlock(blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
+        window.history.replaceState(
+          { index: entry.index, state: location.state },
+          '',
+          concatPathname(basePathname, stringifyLocation(location, searchParamsSerializer))
+        );
+
+        entry = getHistoryEntry();
+        pubSub.publish();
+      });
     },
 
     back() {
       window.history.back();
-      entry = getHistoryEntry();
     },
 
     subscribe(listener) {
@@ -113,10 +133,10 @@ export function createBrowserHistory(options: HistoryOptions = {}): History {
     },
 
     registerBlocker(blocker) {
-      blockers.push(blocker);
+      blockers.add(blocker);
 
       return () => {
-        blockers.splice(blockers.indexOf(blocker), 1);
+        blockers.delete(blocker);
       };
     },
   };

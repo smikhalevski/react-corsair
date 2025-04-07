@@ -1,5 +1,4 @@
 import { Dict, Location, To } from '../types';
-import { jsonSearchParamsSerializer } from './jsonSearchParamsSerializer';
 
 /**
  * @group History
@@ -11,7 +10,7 @@ export interface HistoryOptions {
   basePathname?: string;
 
   /**
-   * An adapter that extracts params from a URL search string and stringifies them back.
+   * Serializes/parses a URL search string.
    *
    * @default {@link jsonSearchParamsSerializer}
    */
