@@ -22,7 +22,7 @@ export { parseLocation, stringifyLocation } from './utils';
 export {
   type HistoryOptions,
   type History,
-  type Serializer,
+  type SearchParamsSerializer,
   type HistoryBlocker,
   type HistoryTransaction,
 } from './types';

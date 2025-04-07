@@ -1,4 +1,5 @@
 import { Dict, Location, To } from '../types';
+import { jsonSearchParamsSerializer } from './jsonSearchParamsSerializer';
 
 /**
  * @group History
@@ -14,7 +15,7 @@ export interface HistoryOptions {
    *
    * @default {@link jsonSearchParamsSerializer}
    */
-  searchParamsSerializer?: Serializer<Dict>;
+  searchParamsSerializer?: SearchParamsSerializer;
 }
 
 /**
@@ -126,23 +127,22 @@ export interface HistoryTransaction {
 export type HistoryBlocker = (transaction: HistoryTransaction) => boolean;
 
 /**
- * Serializes and deserializes values.
+ * Extracts params from a URL search string and stringifies them back.
  *
- * @template Value The value to serialize.
  * @group History
  */
-export interface Serializer<Value> {
+export interface SearchParamsSerializer {
   /**
-   * Serializes a value as a string.
+   * Extract params from a URL search string.
    *
-   * @param value The value to serialize.
+   * @param search The URL search string to extract params from.
    */
-  stringify(value: Value): string;
+  parse(search: string): Dict;
 
   /**
-   * Deserializes a stringified value.
+   * Stringifies params as a search string.
    *
-   * @param serializedValue The stringified value.
+   * @param params Params to stringify.
    */
-  parse(serializedValue: string): Value;
+  stringify(params: Dict): string;
 }

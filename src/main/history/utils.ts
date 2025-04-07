@@ -1,6 +1,6 @@
 import { Dict, Location, To } from '../types';
 import { toLocation } from '../utils';
-import { Serializer } from './types';
+import { SearchParamsSerializer } from './types';
 import { jsonSearchParamsSerializer } from './jsonSearchParamsSerializer';
 
 /**
@@ -92,6 +92,6 @@ export function debasePathname(basePathname: string | undefined, pathname: strin
   throw new Error("Pathname doesn't match base pathname: " + basePathname);
 }
 
-export function parseOrCastLocation(to: To | string, searchParamsSerializer: Serializer<Dict>): Location {
+export function parseOrCastLocation(to: To | string, searchParamsSerializer: SearchParamsSerializer): Location {
   return typeof to === 'string' ? parseLocation(to, searchParamsSerializer) : toLocation(to);
 }
