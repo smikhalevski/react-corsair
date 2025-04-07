@@ -1,15 +1,21 @@
 import { HistoryBlocker } from './types';
 import { useHistory } from './useHistory';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 /**
- * Registers a {@link blocker} that prevents navigation with history, and unregisters it when component unmounts.
+ * Registers a {@link blocker} that prevents history navigation.
  *
- * @param blocker A blocker to register.
+ * @example
+ * useHistoryBlocker(() => hasUnsavedChanges && !confirm('Discard unsaved changes?'));
+ *
+ * @param blocker A history navigation blocker.
  * @group History
  */
 export function useHistoryBlocker(blocker: HistoryBlocker): void {
+  const blockerRef = useRef(blocker);
   const history = useHistory();
 
-  useEffect(() => history.registerBlocker(blocker), [history]);
+  blockerRef.current = blocker;
+
+  useEffect(() => history.registerBlocker(transaction => blockerRef.current(transaction)), [history]);
 }
