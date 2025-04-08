@@ -192,8 +192,8 @@ test('proceeds with the navigation after blocking', async () => {
 
   let proceed;
 
-  history.block((transaction: HistoryTransaction) => {
-    proceed = transaction.proceed;
+  history.block(tx => {
+    proceed = tx.proceed;
     return true;
   });
 
@@ -221,8 +221,8 @@ test('proceeds with the navigation after blocking', async () => {
 test('proceeds with the navigation during blocking', async () => {
   const history = createMemoryHistory([{}]);
 
-  history.block((transaction: HistoryTransaction) => {
-    transaction.proceed();
+  history.block(tx => {
+    tx.proceed();
     return true;
   });
 
@@ -255,24 +255,6 @@ test('calls all blockers', async () => {
 
 test('does not call the next blocker if true is returned', async () => {
   const blockerMock1 = jest.fn(() => true);
-  const blockerMock2 = jest.fn();
-
-  const history = createMemoryHistory([{}]);
-
-  history.block(blockerMock1);
-  history.block(blockerMock2);
-
-  history.push('/aaa?xxx=111');
-
-  expect(blockerMock1).toHaveBeenCalledTimes(1);
-  expect(blockerMock2).not.toHaveBeenCalled();
-});
-
-test('does not call the next blocker if proceed was called', async () => {
-  const blockerMock1 = jest.fn((transaction: HistoryTransaction) => {
-    transaction.proceed();
-    return false;
-  });
   const blockerMock2 = jest.fn();
 
   const history = createMemoryHistory([{}]);

@@ -1,8 +1,9 @@
 import { PubSub } from 'parallel-universe';
-import { Location, To } from '../types';
-import { History, HistoryBlocker, HistoryOptions, HistoryTransaction } from './types';
-import { concatPathname, debasePathname, parseOrCastLocation, stringifyLocation } from './utils';
+import { To } from '../types';
+import { History, HistoryBlocker, HistoryOptions } from './types';
+import { concatPathname, debasePathname, navigateOrBlock, parseOrCastLocation, stringifyLocation } from './utils';
 import { jsonSearchParamsSerializer } from './jsonSearchParamsSerializer';
+import { noop } from '../utils';
 
 /**
  * Creates the history adapter that reads and writes location to an in-memory stack.
@@ -24,6 +25,7 @@ export function createMemoryHistory(initialEntries: Array<To | string>, options:
     throw new Error('Expected at least one initial entry');
   }
 
+  let abort = noop;
   let cursor = entries.length - 1;
 
   return {
@@ -44,14 +46,17 @@ export function createMemoryHistory(initialEntries: Array<To | string>, options:
     },
 
     push(to) {
-      navigateOrBlock(blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
-        entries.splice(++cursor, entries.length, location);
+      abort();
+      abort = navigateOrBlock(blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
+        cursor++;
+        entries.splice(cursor, entries.length, location);
         pubSub.publish();
       });
     },
 
     replace(to) {
-      navigateOrBlock(blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
+      abort();
+      abort = navigateOrBlock(blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
         entries.splice(cursor, entries.length, location);
         pubSub.publish();
       });
@@ -61,10 +66,9 @@ export function createMemoryHistory(initialEntries: Array<To | string>, options:
       if (cursor === 0) {
         return;
       }
-      navigateOrBlock(blockers, entries[cursor - 1], _location => {
-        if (cursor === 0) {
-          return;
-        }
+
+      abort();
+      abort = navigateOrBlock(blockers, entries[cursor - 1], () => {
         cursor--;
         pubSub.publish();
       });
@@ -82,42 +86,4 @@ export function createMemoryHistory(initialEntries: Array<To | string>, options:
       };
     },
   };
-}
-
-/**
- * Returns `true` if navigation was blocked.
- */
-export function navigateOrBlock(
-  blockers: Set<HistoryBlocker>,
-  location: Location,
-  setLocation: (location: Location, isPostponed: boolean) => void
-): boolean {
-  if (blockers.size === 0) {
-    setLocation(location, false);
-    return false;
-  }
-
-  let isPostponed = false;
-  let hasProceeded = false;
-
-  const transaction: HistoryTransaction = {
-    location,
-    proceed() {
-      if (hasProceeded) {
-        return;
-      }
-      hasProceeded = true;
-      setLocation(location, isPostponed);
-    },
-  };
-
-  for (const blocker of blockers) {
-    if (blocker(transaction) || hasProceeded) {
-      isPostponed = true;
-      return !hasProceeded;
-    }
-  }
-
-  setLocation(location, false);
-  return false;
 }
