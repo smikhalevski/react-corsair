@@ -108,7 +108,7 @@ export function parseOrCastLocation(to: To | string, searchParamsSerializer: Sea
  * @param blockers A set of blockers that should grant permission to run an {@link navigate}.
  * @param location A location to pass to {@link blockers}.
  * @param navigate A navigate callback.
- * @returns A callback that aborts navigation.
+ * @returns A callback that cancels navigation.
  */
 export function navigateOrBlock(
   blockers: Set<HistoryBlocker>,
@@ -124,7 +124,11 @@ export function navigateOrBlock(
 
   let cursor = 0;
 
-  const nextBlocker = () => {
+  const cancel = (): void => {
+    cursor = -1;
+  };
+
+  const nextBlocker = (): void => {
     if (cursor === -1) {
       // Aborted
       return;
@@ -145,21 +149,19 @@ export function navigateOrBlock(
       return;
     }
 
-    const proceed = () => {
+    const proceed = (): void => {
       if (blockerIndex === cursor) {
         cursor++;
         nextBlocker();
       }
     };
 
-    if (!blocker({ location, proceed })) {
+    if (!blocker({ location, proceed, cancel })) {
       proceed();
     }
   };
 
   nextBlocker();
 
-  return () => {
-    cursor = -1;
-  };
+  return cancel;
 }

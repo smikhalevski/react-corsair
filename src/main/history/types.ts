@@ -93,9 +93,14 @@ export interface HistoryTransaction {
   location: Location;
 
   /**
-   * Proceeds with navigation to a {@link location}.
+   * Proceeds with navigation to a {@link location}. If there are enqueued blockers, they are called.
    */
   proceed(): void;
+
+  /**
+   * Cancels navigation and prevents enqueued blockers invocation.
+   */
+  cancel(): void;
 }
 
 /**
