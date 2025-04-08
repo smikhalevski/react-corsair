@@ -156,6 +156,7 @@ test('does not block the navigation', async () => {
       state: undefined,
     },
     proceed: expect.any(Function),
+    cancel: expect.any(Function),
   } satisfies HistoryTransaction);
 
   expect(history.location).toStrictEqual({

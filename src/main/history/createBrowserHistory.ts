@@ -69,8 +69,8 @@ export function createBrowserHistory(options: HistoryOptions = {}): History {
 
     commitPopstate = () => {
       commitPopstate = noop;
-      abort();
-      abort = navigateOrBlock(blockers, nextEntry.location, () => {
+      cancel();
+      cancel = navigateOrBlock(blockers, nextEntry.location, () => {
         entry = nextEntry;
         window.history.go(delta);
         pubSub.publish();
@@ -80,7 +80,7 @@ export function createBrowserHistory(options: HistoryOptions = {}): History {
 
   let commitPopstate = noop;
 
-  let abort = noop;
+  let cancel = noop;
   let entry = getHistoryEntry();
 
   if (entry.index === -1) {
@@ -110,8 +110,8 @@ export function createBrowserHistory(options: HistoryOptions = {}): History {
     },
 
     push(to) {
-      abort();
-      abort = navigateOrBlock(blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
+      cancel();
+      cancel = navigateOrBlock(blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
         const historyState: HistoryState = { index: entry.index + 1, state: location.state };
         const url = concatPathname(basePathname, stringifyLocation(location, searchParamsSerializer));
 
@@ -123,8 +123,8 @@ export function createBrowserHistory(options: HistoryOptions = {}): History {
     },
 
     replace(to) {
-      abort();
-      abort = navigateOrBlock(blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
+      cancel();
+      cancel = navigateOrBlock(blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
         const historyState: HistoryState = { index: entry.index, state: location.state };
         const url = concatPathname(basePathname, stringifyLocation(location, searchParamsSerializer));
 

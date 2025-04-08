@@ -14,18 +14,19 @@ import { noop } from '../utils';
  */
 export function createMemoryHistory(initialEntries: Array<To | string>, options: HistoryOptions = {}): History {
   const { basePathname, searchParamsSerializer = jsonSearchParamsSerializer } = options;
-  const pubSub = new PubSub();
+
   const entries = initialEntries.map(entry =>
     parseOrCastLocation(typeof entry === 'string' ? debasePathname(basePathname, entry) : entry, searchParamsSerializer)
   );
 
   const blockers = new Set<HistoryBlocker>();
+  const pubSub = new PubSub();
 
   if (entries.length === 0) {
     throw new Error('Expected at least one initial entry');
   }
 
-  let abort = noop;
+  let cancel = noop;
   let cursor = entries.length - 1;
 
   return {
@@ -46,8 +47,8 @@ export function createMemoryHistory(initialEntries: Array<To | string>, options:
     },
 
     push(to) {
-      abort();
-      abort = navigateOrBlock(blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
+      cancel();
+      cancel = navigateOrBlock(blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
         cursor++;
         entries.splice(cursor, entries.length, location);
         pubSub.publish();
@@ -55,8 +56,8 @@ export function createMemoryHistory(initialEntries: Array<To | string>, options:
     },
 
     replace(to) {
-      abort();
-      abort = navigateOrBlock(blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
+      cancel();
+      cancel = navigateOrBlock(blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
         entries.splice(cursor, entries.length, location);
         pubSub.publish();
       });
@@ -67,8 +68,8 @@ export function createMemoryHistory(initialEntries: Array<To | string>, options:
         return;
       }
 
-      abort();
-      abort = navigateOrBlock(blockers, entries[cursor - 1], () => {
+      cancel();
+      cancel = navigateOrBlock(blockers, entries[cursor - 1], () => {
         cursor--;
         pubSub.publish();
       });

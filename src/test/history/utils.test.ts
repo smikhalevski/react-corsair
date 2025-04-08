@@ -100,9 +100,17 @@ describe('navigateOrBlock', () => {
     navigateOrBlock(blockers, location, navigationMock);
 
     expect(blockerMock0).toHaveBeenCalledTimes(1);
-    expect(blockerMock0).toHaveBeenNthCalledWith(1, { location, proceed: expect.any(Function) });
+    expect(blockerMock0).toHaveBeenNthCalledWith(1, {
+      location,
+      proceed: expect.any(Function),
+      cancel: expect.any(Function),
+    });
     expect(blockerMock1).toHaveBeenCalledTimes(1);
-    expect(blockerMock1).toHaveBeenNthCalledWith(1, { location, proceed: expect.any(Function) });
+    expect(blockerMock1).toHaveBeenNthCalledWith(1, {
+      location,
+      proceed: expect.any(Function),
+      cancel: expect.any(Function),
+    });
     expect(navigationMock).toHaveBeenCalledTimes(1);
     expect(navigationMock).toHaveBeenNthCalledWith(1, location);
   });
@@ -116,14 +124,22 @@ describe('navigateOrBlock', () => {
     navigateOrBlock(blockers, location, navigationMock);
 
     expect(blockerMock0).toHaveBeenCalledTimes(1);
-    expect(blockerMock0).toHaveBeenNthCalledWith(1, { location, proceed: expect.any(Function) });
+    expect(blockerMock0).toHaveBeenNthCalledWith(1, {
+      location,
+      proceed: expect.any(Function),
+      cancel: expect.any(Function),
+    });
     expect(blockerMock1).not.toHaveBeenCalled();
     expect(navigationMock).not.toHaveBeenCalled();
 
     blockerMock0.mock.calls[0][0].proceed();
 
     expect(blockerMock1).toHaveBeenCalledTimes(1);
-    expect(blockerMock1).toHaveBeenNthCalledWith(1, { location, proceed: expect.any(Function) });
+    expect(blockerMock1).toHaveBeenNthCalledWith(1, {
+      location,
+      proceed: expect.any(Function),
+      cancel: expect.any(Function),
+    });
     expect(navigationMock).toHaveBeenCalledTimes(1);
     expect(navigationMock).toHaveBeenNthCalledWith(1, location);
   });
