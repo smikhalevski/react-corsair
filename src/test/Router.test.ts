@@ -44,7 +44,6 @@ describe('navigate', () => {
       controller: router.rootController,
       router,
       location: { pathname: '/aaa', searchParams: {}, hash: '', state: undefined },
-      isIntercepted: false,
     } satisfies RouterEvent);
     expect(listenerMock).toHaveBeenNthCalledWith(2, {
       type: 'ready',
@@ -61,7 +60,6 @@ describe('navigate', () => {
       controller: router.rootController,
       router,
       location: { pathname: '/bbb', searchParams: { xxx: 111 }, hash: '', state: undefined },
-      isIntercepted: false,
     } satisfies RouterEvent);
     expect(listenerMock).toHaveBeenNthCalledWith(4, {
       type: 'ready',
@@ -126,7 +124,7 @@ describe('navigate', () => {
 
     router.subscribe(listenerMock);
 
-    router['_registerInterceptedRoute'](routeBbb);
+    router.intercept(routeBbb);
 
     router.navigate(routeAaa);
 
@@ -140,7 +138,6 @@ describe('navigate', () => {
       controller: router.rootController,
       router,
       location: { pathname: '/aaa', searchParams: {}, hash: '', state: undefined },
-      isIntercepted: false,
     } satisfies RouterEvent);
 
     expect(listenerMock).toHaveBeenNthCalledWith(2, {
@@ -160,7 +157,6 @@ describe('navigate', () => {
       controller: router.interceptedController,
       router,
       location: { pathname: '/bbb', searchParams: {}, hash: '', state: undefined },
-      isIntercepted: true,
     } satisfies RouterEvent);
 
     expect(listenerMock).toHaveBeenNthCalledWith(4, {
@@ -179,7 +175,7 @@ describe('navigate', () => {
 
     router.subscribe(listenerMock);
 
-    router['_registerInterceptedRoute'](routeBbb);
+    router.intercept(routeBbb);
 
     router.navigate(routeAaa);
     router.navigate(routeBbb, { isInterceptionBypassed: true });
@@ -194,7 +190,6 @@ describe('navigate', () => {
       controller: router.rootController,
       router,
       location: { pathname: '/bbb', searchParams: {}, hash: '', state: undefined },
-      isIntercepted: false,
     } satisfies RouterEvent);
 
     expect(listenerMock).toHaveBeenNthCalledWith(4, {
@@ -267,8 +262,8 @@ describe('_registerInterceptedRoute', () => {
 
     const router = new Router({ routes: [route] });
 
-    const unregister0 = router['_registerInterceptedRoute'](route);
-    const unregister1 = router['_registerInterceptedRoute'](route);
+    const unregister0 = router.intercept(route);
+    const unregister1 = router.intercept(route);
 
     expect(router['_interceptorRegistry'].get(route)).toBe(2);
 
@@ -288,7 +283,7 @@ describe('_registerInterceptedRoute', () => {
 
     const router = new Router({ routes: [routeAaa, routeBbb] });
 
-    const unregister = router['_registerInterceptedRoute'](routeBbb);
+    const unregister = router.intercept(routeBbb);
 
     router.navigate(routeAaa);
     router.navigate(routeBbb);
@@ -310,7 +305,7 @@ describe('cancelInterception', () => {
 
     const router = new Router({ routes: [routeAaa, routeBbb] });
 
-    router['_registerInterceptedRoute'](routeBbb);
+    router.intercept(routeBbb);
 
     router.navigate(routeAaa);
     router.navigate(routeBbb);
@@ -346,7 +341,7 @@ describe('cancelInterception', () => {
 
     const router = new Router({ routes: [routeAaa, routeBbb] });
 
-    router['_registerInterceptedRoute'](routeBbb);
+    router.intercept(routeBbb);
 
     router.navigate(routeAaa);
     router.navigate(routeBbb);

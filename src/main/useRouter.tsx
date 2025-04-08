@@ -8,12 +8,6 @@ const RouterContext = createContext<Router | null>(null);
 
 RouterContext.displayName = 'RouterContext';
 
-export const InterceptedRouteControllerContext = createContext<RouteController | null>(null);
-
-InterceptedRouteControllerContext.displayName = 'InterceptedRouteControllerContext';
-
-export const InterceptedRouteControllerProvider = InterceptedRouteControllerContext.Provider;
-
 /**
  * Returns a router provided by an enclosing {@link RouterProvider}.
  *
@@ -60,16 +54,10 @@ export function RouterProvider(props: RouterProviderProps): ReactElement {
 
   const rootController = useSyncExternalStore(subscribe, getRootController, getRootController);
 
-  const getInterceptedController = () => value.interceptedController;
-
-  const interceptedController = useSyncExternalStore(subscribe, getInterceptedController, getInterceptedController);
-
   return (
     <RouterContext.Provider value={value}>
       <RouteControllerProvider value={null}>
-        <InterceptedRouteControllerProvider value={interceptedController}>
-          <OutletContentProvider value={rootController || value}>{children}</OutletContentProvider>
-        </InterceptedRouteControllerProvider>
+        <OutletContentProvider value={rootController || value}>{children}</OutletContentProvider>
       </RouteControllerProvider>
     </RouterContext.Provider>
   );

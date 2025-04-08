@@ -2,7 +2,7 @@ import { AbortablePromise, PubSub } from 'parallel-universe';
 import { ComponentType } from 'react';
 import { matchRoutes, RouteMatch } from './matchRoutes';
 import { Route } from './Route';
-import { Fallbacks, NavigateOptions, RouterEvent, RouterOptions, To } from './types';
+import { Fallbacks, NavigateOptions, RouteInterceptor, RouterEvent, RouterOptions, To } from './types';
 import { AbortError, getTailController, noop, toLocation } from './utils';
 import { getOrLoadRouteState, RouteController } from './RouteController';
 import { reconcileControllers } from './reconcileControllers';
@@ -37,13 +37,6 @@ export class Router<Context = any> implements Fallbacks {
    */
   rootController: RouteController<any, any, Context> | null = null;
 
-  /**
-   * A controller of the intercepted route, or `null` if there's no intercepted route.
-   *
-   * @see {@link navigate}
-   */
-  interceptedController: RouteController<any, any, Context> | null = null;
-
   readonly errorComponent: ComponentType | undefined;
   readonly loadingComponent: ComponentType | undefined;
   readonly notFoundComponent: ComponentType | undefined;
@@ -51,7 +44,7 @@ export class Router<Context = any> implements Fallbacks {
   /**
    * A map from an intercepted route to a number of registered interceptors.
    */
-  protected _interceptorRegistry = new Map<Route, number>();
+  protected _interceptors: RouteInterceptor[] = [];
   protected _pubSub = new PubSub<RouterEvent>();
 
   /**
@@ -88,38 +81,24 @@ export class Router<Context = any> implements Fallbacks {
     const location = toLocation(to);
     const routeMatches = matchRoutes(location.pathname, location.searchParams, this.routes);
 
-    let prevController;
-    let nextController;
-
-    // Check that the matched route is intercepted
-    const isIntercepted =
+    if (
       !options.isInterceptionBypassed &&
-      this.rootController !== null &&
       routeMatches.length !== 0 &&
-      this._interceptorRegistry.has(routeMatches[routeMatches.length - 1].route);
-
-    if (isIntercepted) {
-      prevController = this.interceptedController?.fallbackController || this.interceptedController;
-      nextController = reconcileControllers(this, prevController, routeMatches);
-
-      this.interceptedController = nextController;
-    } else {
-      prevController = this.rootController?.fallbackController || this.rootController;
-      nextController = reconcileControllers(this, prevController, routeMatches);
-
-      this.rootController = nextController;
-      this.interceptedController = null;
+      this._interceptors.length !== 0 &&
+      this._interceptors.some(interceptor => interceptor(routeMatches))
+    ) {
+      // Navigation was intercepted
+      return;
     }
 
-    this._pubSub.publish({
-      type: 'navigate',
-      controller: nextController,
-      router: this,
-      location,
-      isIntercepted,
-    });
+    const prevController = this.rootController?.fallbackController || this.rootController;
+    const nextController = reconcileControllers(this, prevController, routeMatches);
 
-    if (this.rootController !== nextController && this.interceptedController !== nextController) {
+    this.rootController = nextController;
+
+    this._pubSub.publish({ type: 'navigate', controller: nextController, router: this, location });
+
+    if (this.rootController !== nextController) {
       // Navigation was superseded
       return;
     }
@@ -171,22 +150,6 @@ export class Router<Context = any> implements Fallbacks {
   }
 
   /**
-   * If there's an {@link interceptedController} then it is made a {@link rootController}. No-op otherwise.
-   */
-  cancelInterception(): void {
-    if (this.interceptedController === null) {
-      return;
-    }
-
-    const prevRootController = this.rootController;
-
-    this.rootController = this.interceptedController;
-    this.interceptedController = null;
-
-    prevRootController!.abort(AbortError('Route interception was cancelled'));
-  }
-
-  /**
    * Subscribes a listener to events published by a router.
    *
    * @param listener A listener to subscribe.
@@ -196,40 +159,11 @@ export class Router<Context = any> implements Fallbacks {
     return this._pubSub.subscribe(listener);
   }
 
-  /**
-   * Registers a {@link route} interceptor, so the {@link route} is {@link navigate navigated to} it populates
-   * the {@link interceptedController} instead of the {@link rootController}.
-   *
-   * @param route The route to intercept.
-   * @returns A callback that discards route interception.
-   */
-  protected _registerInterceptedRoute(route: Route<any, any, any, Context>): () => void {
-    const registry = this._interceptorRegistry;
-
-    registry.set(route, (registry.get(route) || 0) + 1);
-
-    let isDiscarded = false;
+  intercept(interceptor: RouteInterceptor): () => void {
+    this._interceptors.push(interceptor);
 
     return () => {
-      if (isDiscarded) {
-        // Can use unregister callback only once
-        return;
-      }
-
-      isDiscarded = true;
-
-      const interceptorCount = registry.get(route);
-
-      if (interceptorCount !== 1) {
-        registry.set(route, interceptorCount! - 1);
-        return;
-      }
-
-      registry.delete(route);
-
-      if (getTailController(this.interceptedController)?.route === route) {
-        this.cancelInterception();
-      }
+      this._interceptors.splice(this._interceptors.indexOf(interceptor), 1);
     };
   }
 }

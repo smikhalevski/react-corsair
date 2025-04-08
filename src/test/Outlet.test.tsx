@@ -375,7 +375,6 @@ test('not found bubbles to the closest route with a notFoundComponent', () => {
     controller: router.rootController,
     router,
     location: { pathname: '/aaa/bbb', searchParams: {}, hash: '', state: undefined },
-    isIntercepted: false,
   } satisfies RouterEvent);
 
   expect(listenerMock).toHaveBeenNthCalledWith(2, {
@@ -493,7 +492,6 @@ test('redirect bubbles to the closest route with a loadingComponent', () => {
     controller: router.rootController,
     router,
     location: { pathname: '/aaa/bbb', searchParams: {}, hash: '', state: undefined },
-    isIntercepted: false,
   } satisfies RouterEvent);
 
   expect(listenerMock).toHaveBeenNthCalledWith(2, {

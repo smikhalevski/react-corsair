@@ -2,6 +2,7 @@ import { ComponentType } from 'react';
 import { Route } from './Route';
 import { Router } from './Router';
 import { RouteController } from './RouteController';
+import { RouteMatch } from './matchRoutes';
 
 export interface Dict {
   [key: string]: any;
@@ -357,14 +358,9 @@ export interface NavigateEvent {
    * A location to which a router was navigated.
    */
   location: Location;
-
-  /**
-   * `true` if the {@link controller} rendering was intercepted.
-   *
-   * @see {@link Router.cancelInterception}
-   */
-  isIntercepted: boolean;
 }
+
+export type RouteInterceptor = (routeMatches: RouteMatch[]) => boolean;
 
 /**
  * An event published by a {@link Router} when a route component or its data are being loaded.
