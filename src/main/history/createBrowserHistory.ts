@@ -50,10 +50,11 @@ export function createBrowserHistory(options: HistoryOptions = {}): History {
 
   const handlePopstate = () => {
     const nextEntry = getHistoryEntry();
-    const delta = entry.index - nextEntry.index;
+    const delta = nextEntry.index - entry.index;
 
     if (delta === 0) {
       // Navigation rollback
+      commitPopstate();
       return;
     }
 
@@ -66,13 +67,18 @@ export function createBrowserHistory(options: HistoryOptions = {}): History {
     // Navigation rollback
     window.history.go(-delta);
 
-    abort();
-    abort = navigateOrBlock(blockers, nextEntry.location, () => {
-      entry = nextEntry;
-      window.history.go(delta);
-      pubSub.publish();
-    });
+    commitPopstate = () => {
+      commitPopstate = noop;
+      abort();
+      abort = navigateOrBlock(blockers, nextEntry.location, () => {
+        entry = nextEntry;
+        window.history.go(delta);
+        pubSub.publish();
+      });
+    };
   };
+
+  let commitPopstate = noop;
 
   let abort = noop;
   let entry = getHistoryEntry();
