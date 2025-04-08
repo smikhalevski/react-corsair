@@ -101,7 +101,7 @@ export interface HistoryTransaction {
 /**
  * A callback that is called when a history navigation is intended.
  *
- * @param transaction A transaction that describes the navigation.
+ * @param transaction A transaction that describes the intended navigation.
  * @returns `true` if the transaction should be blocked until {@link HistoryTransaction.proceed} is called,
  * or `false` if the transaction shouldn't be blocked.
  * @group History

@@ -102,7 +102,8 @@ export function parseOrCastLocation(to: To | string, searchParamsSerializer: Sea
 }
 
 /**
- * Calls {@link navigate} if proceed was called for all {@link blockers} or all blockers returned `false`.
+ * Calls {@link navigate} if {@link HistoryBlocker.proceed} was called for all {@link blockers} or all blockers
+ * returned `false`.
  *
  * @param blockers A set of blockers that should grant permission to run an {@link navigate}.
  * @param location A location to pass to {@link blockers}.
