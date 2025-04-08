@@ -1,13 +1,25 @@
 import { PubSub } from 'parallel-universe';
 import { History, HistoryBlocker, HistoryOptions } from './types';
-import { concatPathname, debasePathname, parseLocation, parseOrCastLocation, stringifyLocation } from './utils';
+import {
+  concatPathname,
+  debasePathname,
+  navigateOrBlock,
+  parseLocation,
+  parseOrCastLocation,
+  stringifyLocation,
+} from './utils';
 import { jsonSearchParamsSerializer } from './jsonSearchParamsSerializer';
-import { Location, To } from '../types';
-import { navigateOrBlock } from './createMemoryHistory';
+import { Location } from '../types';
+import { noop } from '../utils';
 
 interface HistoryEntry {
   index: number;
   location: Location;
+}
+
+interface HistoryState {
+  index: number;
+  state: unknown;
 }
 
 /**
@@ -19,53 +31,60 @@ interface HistoryEntry {
 export function createBrowserHistory(options: HistoryOptions = {}): History {
   const { basePathname, searchParamsSerializer = jsonSearchParamsSerializer } = options;
 
-  const pubSub = new PubSub();
   const blockers = new Set<HistoryBlocker>();
+  const pubSub = new PubSub();
 
   const getHistoryEntry = (): HistoryEntry => {
     const { pathname, search, hash } = window.location;
-    const { state } = window.history;
-    const location = parseLocation(debasePathname(basePathname, pathname + search + hash), searchParamsSerializer);
+    const historyState: HistoryState = window.history.state;
+    const location = parseLocation(debasePathname(basePathname, pathname) + search + hash, searchParamsSerializer);
 
-    if (state === null) {
+    if (historyState === null) {
       return { index: -1, location };
     }
 
-    location.state = state.state;
+    location.state = historyState.state;
 
-    return { index: state.index, location };
+    return { index: historyState.index, location };
   };
 
+  const handlePopstate = () => {
+    const nextEntry = getHistoryEntry();
+    const delta = entry.index - nextEntry.index;
+
+    if (delta === 0) {
+      return;
+    }
+
+    if (blockers.size === 0) {
+      entry = nextEntry;
+      pubSub.publish();
+      return;
+    }
+
+    // Rollback navigation
+    window.history.go(-delta);
+
+    abort();
+
+    abort = navigateOrBlock(blockers, nextEntry.location, () => {
+      entry = nextEntry;
+      window.history.go(delta);
+      pubSub.publish();
+    });
+  };
+
+  let abort = noop;
   let entry = getHistoryEntry();
 
   if (entry.index === -1) {
     entry.index = 0;
 
-    window.history.replaceState(
-      { index: 0, state: entry.location.state },
-      '',
-      concatPathname(basePathname, stringifyLocation(entry.location, searchParamsSerializer))
-    );
+    const historyState: HistoryState = { index: 0, state: entry.location.state };
+    const url = concatPathname(basePathname, stringifyLocation(entry.location, searchParamsSerializer));
+
+    window.history.replaceState(historyState, '', url);
   }
-
-  const handlePopstate = (_event: PopStateEvent) => {
-    const nextEntry = getHistoryEntry();
-
-    const isBlocked = navigateOrBlock(blockers, nextEntry.location, (_location, isPostponed) => {
-      if (isPostponed) {
-        window.history.go(nextEntry.index - entry.index);
-      }
-      entry = nextEntry;
-      pubSub.publish();
-    });
-
-    if (isBlocked) {
-      // Rollback location
-      window.history.go(entry.index - nextEntry.index);
-    }
-  };
-
-  const handleBeforeUnload = (event: BeforeUnloadEvent) => {};
 
   return {
     get url() {
@@ -85,12 +104,13 @@ export function createBrowserHistory(options: HistoryOptions = {}): History {
     },
 
     push(to) {
-      navigateOrBlock(blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
-        window.history.pushState(
-          { index: entry.index + 1, state: location.state },
-          '',
-          concatPathname(basePathname, stringifyLocation(location, searchParamsSerializer))
-        );
+      abort();
+
+      abort = navigateOrBlock(blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
+        const historyState: HistoryState = { index: entry.index + 1, state: location.state };
+        const url = concatPathname(basePathname, stringifyLocation(location, searchParamsSerializer));
+
+        window.history.pushState(historyState, '', url);
 
         entry = getHistoryEntry();
         pubSub.publish();
@@ -98,12 +118,13 @@ export function createBrowserHistory(options: HistoryOptions = {}): History {
     },
 
     replace(to) {
-      navigateOrBlock(blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
-        window.history.replaceState(
-          { index: entry.index, state: location.state },
-          '',
-          concatPathname(basePathname, stringifyLocation(location, searchParamsSerializer))
-        );
+      abort();
+
+      abort = navigateOrBlock(blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
+        const historyState: HistoryState = { index: entry.index, state: location.state };
+        const url = concatPathname(basePathname, stringifyLocation(location, searchParamsSerializer));
+
+        window.history.replaceState(historyState, '', url);
 
         entry = getHistoryEntry();
         pubSub.publish();
@@ -117,7 +138,6 @@ export function createBrowserHistory(options: HistoryOptions = {}): History {
     subscribe(listener) {
       if (pubSub.listenerCount === 0) {
         window.addEventListener('popstate', handlePopstate);
-        window.addEventListener('beforeunload', handleBeforeUnload);
       }
 
       const unsubscribe = pubSub.subscribe(listener);
@@ -127,12 +147,11 @@ export function createBrowserHistory(options: HistoryOptions = {}): History {
 
         if (pubSub.listenerCount === 0) {
           window.removeEventListener('popstate', handlePopstate);
-          window.removeEventListener('beforeunload', handleBeforeUnload);
         }
       };
     },
 
-    registerBlocker(blocker) {
+    block(blocker) {
       blockers.add(blocker);
 
       return () => {

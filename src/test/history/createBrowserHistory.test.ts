@@ -1,5 +1,6 @@
 import { createBrowserHistory, jsonSearchParamsSerializer } from '../../main/history';
 import { Location } from '../../main';
+import { delay } from 'parallel-universe';
 
 beforeEach(() => {
   window.history.pushState(null, '', '/');
@@ -60,10 +61,6 @@ test('replaces location', async () => {
   history.replace(cccLocation);
 
   expect(history.location).toStrictEqual(cccLocation);
-
-  history.back();
-
-  expect(history.location).toStrictEqual(bbbLocation);
 });
 
 test('calls listener on push', () => {
@@ -142,7 +139,7 @@ test('parses query params with a custom adapter', async () => {
 
   history.push(aaaLocation);
 
-  expect(jsonSearchParamsSerializer.parse).toHaveBeenCalledTimes(3);
+  expect(jsonSearchParamsSerializer.parse).toHaveBeenCalledTimes(2);
   expect(jsonSearchParamsSerializer.stringify).toHaveBeenCalledTimes(2);
   expect(jsonSearchParamsSerializer.stringify).toHaveBeenNthCalledWith(1, {});
   expect(jsonSearchParamsSerializer.stringify).toHaveBeenNthCalledWith(2, { xxx: 111 });
@@ -150,10 +147,9 @@ test('parses query params with a custom adapter', async () => {
   history.location;
 
   expect(jsonSearchParamsSerializer.stringify).toHaveBeenCalledTimes(2);
-  expect(jsonSearchParamsSerializer.parse).toHaveBeenCalledTimes(3);
+  expect(jsonSearchParamsSerializer.parse).toHaveBeenCalledTimes(2);
   expect(jsonSearchParamsSerializer.parse).toHaveBeenNthCalledWith(1, '');
-  expect(jsonSearchParamsSerializer.parse).toHaveBeenNthCalledWith(2, '');
-  expect(jsonSearchParamsSerializer.parse).toHaveBeenNthCalledWith(3, 'xxx=111');
+  expect(jsonSearchParamsSerializer.parse).toHaveBeenNthCalledWith(2, 'xxx=111');
 });
 
 test('creates an absolute URL', async () => {

@@ -141,7 +141,7 @@ test('does not block the navigation', async () => {
 
   const history = createMemoryHistory([{}]);
 
-  history.registerBlocker(blockerMock);
+  history.block(blockerMock);
 
   history.push('/aaa?xxx=111');
 
@@ -173,7 +173,7 @@ test('blocks the navigation', async () => {
 
   const history = createMemoryHistory([{}]);
 
-  history.registerBlocker(blockerMock);
+  history.block(blockerMock);
 
   history.push('/aaa?xxx=111');
 
@@ -192,7 +192,7 @@ test('proceeds with the navigation after blocking', async () => {
 
   let proceed;
 
-  history.registerBlocker((transaction: HistoryTransaction) => {
+  history.block((transaction: HistoryTransaction) => {
     proceed = transaction.proceed;
     return true;
   });
@@ -221,7 +221,7 @@ test('proceeds with the navigation after blocking', async () => {
 test('proceeds with the navigation during blocking', async () => {
   const history = createMemoryHistory([{}]);
 
-  history.registerBlocker((transaction: HistoryTransaction) => {
+  history.block((transaction: HistoryTransaction) => {
     transaction.proceed();
     return true;
   });
@@ -244,8 +244,8 @@ test('calls all blockers', async () => {
 
   const history = createMemoryHistory([{}]);
 
-  history.registerBlocker(blockerMock1);
-  history.registerBlocker(blockerMock2);
+  history.block(blockerMock1);
+  history.block(blockerMock2);
 
   history.push('/aaa?xxx=111');
 
@@ -259,8 +259,8 @@ test('does not call the next blocker if true is returned', async () => {
 
   const history = createMemoryHistory([{}]);
 
-  history.registerBlocker(blockerMock1);
-  history.registerBlocker(blockerMock2);
+  history.block(blockerMock1);
+  history.block(blockerMock2);
 
   history.push('/aaa?xxx=111');
 
@@ -277,8 +277,8 @@ test('does not call the next blocker if proceed was called', async () => {
 
   const history = createMemoryHistory([{}]);
 
-  history.registerBlocker(blockerMock1);
-  history.registerBlocker(blockerMock2);
+  history.block(blockerMock1);
+  history.block(blockerMock2);
 
   history.push('/aaa?xxx=111');
 
@@ -291,7 +291,7 @@ test('unregisters a blocker', async () => {
 
   const history = createMemoryHistory([{}]);
 
-  const unregister = history.registerBlocker(blockerMock);
+  const unregister = history.block(blockerMock);
 
   unregister();
   history.push('/aaa?xxx=111');

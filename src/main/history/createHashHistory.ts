@@ -86,7 +86,7 @@ export function createHashHistory(options: HistoryOptions = {}): History {
       };
     },
 
-    registerBlocker(blocker) {
+    block(blocker) {
       return () => {};
     },
   };

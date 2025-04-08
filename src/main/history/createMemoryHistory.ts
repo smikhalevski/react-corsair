@@ -74,7 +74,7 @@ export function createMemoryHistory(initialEntries: Array<To | string>, options:
       return pubSub.subscribe(listener);
     },
 
-    registerBlocker(blocker) {
+    block(blocker) {
       blockers.add(blocker);
 
       return () => {

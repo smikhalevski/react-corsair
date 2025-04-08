@@ -17,5 +17,5 @@ export function useHistoryBlocker(blocker: HistoryBlocker): void {
 
   blockerRef.current = blocker;
 
-  useEffect(() => history.registerBlocker(transaction => blockerRef.current(transaction)), [history]);
+  useEffect(() => history.block(transaction => blockerRef.current(transaction)), [history]);
 }

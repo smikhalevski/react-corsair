@@ -1,23 +1,6 @@
 import { Dict, Location, To } from '../types';
 
 /**
- * @group History
- */
-export interface HistoryOptions {
-  /**
-   * A base pathname.
-   */
-  basePathname?: string;
-
-  /**
-   * Serializes/parses a URL search string.
-   *
-   * @default {@link jsonSearchParamsSerializer}
-   */
-  searchParamsSerializer?: SearchParamsSerializer;
-}
-
-/**
  * A history abstraction.
  *
  * @group History
@@ -95,7 +78,7 @@ export interface History {
    * @param blocker A blocker to register.
    * @returns A callback that removes blocker.
    */
-  registerBlocker(blocker: HistoryBlocker): () => void;
+  block(blocker: HistoryBlocker): () => void;
 }
 
 /**
@@ -124,6 +107,23 @@ export interface HistoryTransaction {
  * @group History
  */
 export type HistoryBlocker = (transaction: HistoryTransaction) => boolean;
+
+/**
+ * @group History
+ */
+export interface HistoryOptions {
+  /**
+   * A base pathname.
+   */
+  basePathname?: string;
+
+  /**
+   * Serializes/parses a URL search string.
+   *
+   * @default {@link jsonSearchParamsSerializer}
+   */
+  searchParamsSerializer?: SearchParamsSerializer;
+}
 
 /**
  * Extracts params from a URL search string and stringifies them back.

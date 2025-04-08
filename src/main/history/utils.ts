@@ -1,6 +1,6 @@
-import { Dict, Location, To } from '../types';
-import { toLocation } from '../utils';
-import { SearchParamsSerializer } from './types';
+import { Location, To } from '../types';
+import { noop, toLocation } from '../utils';
+import { HistoryBlocker, SearchParamsSerializer } from './types';
 import { jsonSearchParamsSerializer } from './jsonSearchParamsSerializer';
 
 /**
@@ -92,6 +92,73 @@ export function debasePathname(basePathname: string | undefined, pathname: strin
   throw new Error("Pathname doesn't match base pathname: " + basePathname);
 }
 
+/**
+ * Parses {@link to} as a location.
+ *
+ * @returns A new location.
+ */
 export function parseOrCastLocation(to: To | string, searchParamsSerializer: SearchParamsSerializer): Location {
   return typeof to === 'string' ? parseLocation(to, searchParamsSerializer) : toLocation(to);
+}
+
+/**
+ * Calls {@link navigate} if proceed was called for all {@link blockers} or all blockers returned `false`.
+ *
+ * @param blockers A set of blockers that should grant permission to run an {@link navigate}.
+ * @param location A location to pass to {@link blockers}.
+ * @param navigate A navigate callback.
+ * @returns A callback that aborts navigation.
+ */
+export function navigateOrBlock(
+  blockers: Set<HistoryBlocker>,
+  location: Location,
+  navigate: (location: Location) => void
+): () => void {
+  if (blockers.size === 0) {
+    navigate(location);
+    return noop;
+  }
+
+  const blockerQueue = Array.from(blockers);
+
+  let cursor = 0;
+
+  const nextBlocker = () => {
+    if (cursor === -1) {
+      // Aborted
+      return;
+    }
+
+    if (cursor >= blockerQueue.length) {
+      navigate(location);
+      return;
+    }
+
+    const blockerIndex = cursor;
+    const blocker = blockerQueue[blockerIndex];
+
+    if (!blockers.has(blocker)) {
+      // Blocker was removed
+      cursor++;
+      nextBlocker();
+      return;
+    }
+
+    const proceed = () => {
+      if (blockerIndex === cursor) {
+        cursor++;
+        nextBlocker();
+      }
+    };
+
+    if (!blocker({ location, proceed })) {
+      proceed();
+    }
+  };
+
+  nextBlocker();
+
+  return () => {
+    cursor = -1;
+  };
 }
