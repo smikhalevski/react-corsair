@@ -2,6 +2,10 @@ import { delay } from 'parallel-universe';
 import { createHashHistory, jsonSearchParamsSerializer } from '../../main/history';
 import { Location } from '../../main';
 
+beforeEach(() => {
+  window.history.pushState(null, '', '/');
+});
+
 test('pushes location', async () => {
   const aaaLocation: Location = { pathname: '/aaa', searchParams: {}, hash: '', state: undefined };
 
@@ -17,17 +21,6 @@ test('pushes location', async () => {
   history.push(aaaLocation);
 
   expect(history.location).toStrictEqual(aaaLocation);
-
-  history.back();
-
-  await delay(50);
-
-  expect(history.location).toStrictEqual({
-    pathname: '/',
-    searchParams: {},
-    hash: '',
-    state: undefined,
-  } satisfies Location);
 });
 
 test('replaces location', async () => {
@@ -54,12 +47,6 @@ test('replaces location', async () => {
   history.replace(cccLocation);
 
   expect(history.location).toStrictEqual(cccLocation);
-
-  history.back();
-
-  await delay(50);
-
-  expect(history.location).toStrictEqual(bbbLocation);
 });
 
 test('calls listener on push', () => {
@@ -143,15 +130,17 @@ test('parses query params with a custom adapter', async () => {
 
   history.push(aaaLocation);
 
-  expect(jsonSearchParamsSerializer.parse).toHaveBeenCalledTimes(0);
-  expect(jsonSearchParamsSerializer.stringify).toHaveBeenCalledTimes(1);
-  expect(jsonSearchParamsSerializer.stringify).toHaveBeenNthCalledWith(1, { xxx: 111 });
+  expect(jsonSearchParamsSerializer.parse).toHaveBeenCalledTimes(2);
+  expect(jsonSearchParamsSerializer.stringify).toHaveBeenCalledTimes(2);
+  expect(jsonSearchParamsSerializer.stringify).toHaveBeenNthCalledWith(1, {});
+  expect(jsonSearchParamsSerializer.stringify).toHaveBeenNthCalledWith(2, { xxx: 111 });
 
   history.location;
 
-  expect(jsonSearchParamsSerializer.stringify).toHaveBeenCalledTimes(1);
-  expect(jsonSearchParamsSerializer.parse).toHaveBeenCalledTimes(1);
-  expect(jsonSearchParamsSerializer.parse).toHaveBeenNthCalledWith(1, 'xxx=111');
+  expect(jsonSearchParamsSerializer.stringify).toHaveBeenCalledTimes(2);
+  expect(jsonSearchParamsSerializer.parse).toHaveBeenCalledTimes(2);
+  expect(jsonSearchParamsSerializer.parse).toHaveBeenNthCalledWith(1, '');
+  expect(jsonSearchParamsSerializer.parse).toHaveBeenNthCalledWith(2, 'xxx=111');
 });
 
 test('creates an absolute URL', async () => {

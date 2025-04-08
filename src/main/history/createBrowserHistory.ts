@@ -53,6 +53,7 @@ export function createBrowserHistory(options: HistoryOptions = {}): History {
     const delta = entry.index - nextEntry.index;
 
     if (delta === 0) {
+      // Navigation rollback
       return;
     }
 
@@ -62,11 +63,10 @@ export function createBrowserHistory(options: HistoryOptions = {}): History {
       return;
     }
 
-    // Rollback navigation
+    // Navigation rollback
     window.history.go(-delta);
 
     abort();
-
     abort = navigateOrBlock(blockers, nextEntry.location, () => {
       entry = nextEntry;
       window.history.go(delta);
@@ -80,7 +80,7 @@ export function createBrowserHistory(options: HistoryOptions = {}): History {
   if (entry.index === -1) {
     entry.index = 0;
 
-    const historyState: HistoryState = { index: 0, state: entry.location.state };
+    const historyState: HistoryState = { index: entry.index, state: entry.location.state };
     const url = concatPathname(basePathname, stringifyLocation(entry.location, searchParamsSerializer));
 
     window.history.replaceState(historyState, '', url);
@@ -105,7 +105,6 @@ export function createBrowserHistory(options: HistoryOptions = {}): History {
 
     push(to) {
       abort();
-
       abort = navigateOrBlock(blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
         const historyState: HistoryState = { index: entry.index + 1, state: location.state };
         const url = concatPathname(basePathname, stringifyLocation(location, searchParamsSerializer));
@@ -119,7 +118,6 @@ export function createBrowserHistory(options: HistoryOptions = {}): History {
 
     replace(to) {
       abort();
-
       abort = navigateOrBlock(blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
         const historyState: HistoryState = { index: entry.index, state: location.state };
         const url = concatPathname(basePathname, stringifyLocation(location, searchParamsSerializer));
