@@ -1,5 +1,5 @@
 import { HistoryTransaction, parseLocation, stringifyLocation } from '../../main/history';
-import { concatPathname, debasePathname, navigateOrBlock } from '../../main/history/utils';
+import { concatPathname, debasePathname, isUnloadBlocked, navigateOrBlock } from '../../main/history/utils';
 import { Location } from '../../main';
 
 describe('stringifyLocation', () => {
@@ -85,6 +85,97 @@ describe('debasePathname', () => {
   test('throws if cannot debase', () => {
     expect(() => debasePathname('/aaa', '/aaaaaa')).toThrow();
     expect(() => debasePathname('/aaa', '/aaa   ')).toThrow();
+  });
+});
+
+describe('isUnloadBlocked', () => {
+  const location = parseLocation('/aaa/bbb');
+
+  test('calls blockers', () => {
+    const blockerMock0 = jest.fn(() => false);
+    const blockerMock1 = jest.fn(() => false);
+    const blockers = new Set([blockerMock0, blockerMock1]);
+
+    expect(isUnloadBlocked(blockers, location)).toBe(false);
+
+    expect(blockerMock0).toHaveBeenCalledTimes(1);
+    expect(blockerMock0).toHaveBeenNthCalledWith(1, {
+      type: 'unload',
+      location,
+      proceed: expect.any(Function),
+      cancel: expect.any(Function),
+    } satisfies HistoryTransaction);
+
+    expect(blockerMock1).toHaveBeenCalledTimes(1);
+    expect(blockerMock1).toHaveBeenNthCalledWith(1, {
+      type: 'unload',
+      location,
+      proceed: expect.any(Function),
+      cancel: expect.any(Function),
+    } satisfies HistoryTransaction);
+  });
+
+  test('returns true if blocker returns true', () => {
+    const blockerMock0 = jest.fn(() => true);
+    const blockerMock1 = jest.fn(() => false);
+    const blockers = new Set([blockerMock0, blockerMock1]);
+
+    expect(isUnloadBlocked(blockers, location)).toBe(true);
+
+    expect(blockerMock0).toHaveBeenCalledTimes(1);
+    expect(blockerMock1).not.toHaveBeenCalled();
+  });
+
+  test('returns true if blocker called cancel', () => {
+    const blockerMock0 = jest.fn(tx => tx.cancel());
+    const blockerMock1 = jest.fn(() => false);
+    const blockers = new Set([blockerMock0, blockerMock1]);
+
+    expect(isUnloadBlocked(blockers, location)).toBe(true);
+
+    expect(blockerMock0).toHaveBeenCalledTimes(1);
+    expect(blockerMock1).not.toHaveBeenCalled();
+  });
+
+  test('returns false if blocker called proceed', () => {
+    const blockerMock0 = jest.fn(tx => tx.proceed());
+    const blockerMock1 = jest.fn(() => false);
+    const blockers = new Set([blockerMock0, blockerMock1]);
+
+    expect(isUnloadBlocked(blockers, location)).toBe(false);
+
+    expect(blockerMock0).toHaveBeenCalledTimes(1);
+    expect(blockerMock1).toHaveBeenCalledTimes(1);
+  });
+
+  test('returns false if blocker called proceed and returned true', () => {
+    const blockerMock0 = jest.fn(tx => {
+      tx.proceed();
+      return true;
+    });
+
+    const blockerMock1 = jest.fn(() => false);
+    const blockers = new Set([blockerMock0, blockerMock1]);
+
+    expect(isUnloadBlocked(blockers, location)).toBe(false);
+
+    expect(blockerMock0).toHaveBeenCalledTimes(1);
+    expect(blockerMock1).toHaveBeenCalledTimes(1);
+  });
+
+  test('returns true if blocker called cancel and returned false', () => {
+    const blockerMock0 = jest.fn(tx => {
+      tx.cancel();
+      return false;
+    });
+
+    const blockerMock1 = jest.fn(() => false);
+    const blockers = new Set([blockerMock0, blockerMock1]);
+
+    expect(isUnloadBlocked(blockers, location)).toBe(true);
+
+    expect(blockerMock0).toHaveBeenCalledTimes(1);
+    expect(blockerMock1).not.toHaveBeenCalled();
   });
 });
 

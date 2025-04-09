@@ -113,11 +113,13 @@ export function isUnloadBlocked(blockers: Set<HistoryBlocker>, location: Locatio
   let isProceeded = false;
 
   const cancel = (): void => {
-    isCancelled = !isProceeded;
+    isCancelled = true;
+    isProceeded = false;
   };
 
   const proceed = (): void => {
-    isProceeded = !isCancelled;
+    isCancelled = false;
+    isProceeded = true;
   };
 
   for (const blocker of blockers) {
