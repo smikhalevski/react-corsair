@@ -23,6 +23,7 @@ export {
   type HistoryOptions,
   type History,
   type HistoryBlocker,
+  type HistoryTransactionType,
   type HistoryTransaction,
   type SearchParamsSerializer,
 } from './types';

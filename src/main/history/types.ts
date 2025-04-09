@@ -99,12 +99,14 @@ export interface History {
  *
  * <dl>
  * <dt>"push"</dt>
- * <dd>The new {@link location} is intended to be pushed to the history stack.</dd>
+ * <dd>The new {@link HistoryTransaction.location location} is intended to be pushed to the history stack.</dd>
  * <dt>"replace"</dt>
- * <dd>The new {@link location} is intended to replace the current location on the history stack.</dd>
+ * <dd>The new {@link HistoryTransaction.location location} is intended to replace the current location on the history
+ * stack.</dd>
  * <dt>"pop"</dt>
- * <dd>The user navigated to a {@link location} that was previously visited by clicking _Back_ or _Forward_ browser
- * button, or if {@link History.go}, {@link History.back} or {@link History.forward} was called.</dd>
+ * <dd>The user navigated to a {@link HistoryTransaction.location location} that was previously visited by clicking
+ * <em>Back</em> or <em>Forward</em> browser button, or if {@link History.go}, {@link History.back} or
+ * {@link History.forward} was called.</dd>
  * <dt>"unload"</dt>
  * <dd>The user is trying to close the window.</dd>
  * </dl>
