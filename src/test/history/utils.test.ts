@@ -1,4 +1,4 @@
-import { parseLocation, stringifyLocation } from '../../main/history';
+import { HistoryTransaction, parseLocation, stringifyLocation } from '../../main/history';
 import { concatPathname, debasePathname, navigateOrBlock } from '../../main/history/utils';
 import { Location } from '../../main';
 
@@ -97,20 +97,22 @@ describe('navigateOrBlock', () => {
     const blockerMock1 = jest.fn(() => false);
     const blockers = new Set([blockerMock0, blockerMock1]);
 
-    navigateOrBlock(blockers, location, navigationMock);
+    navigateOrBlock('push', blockers, location, navigationMock);
 
     expect(blockerMock0).toHaveBeenCalledTimes(1);
     expect(blockerMock0).toHaveBeenNthCalledWith(1, {
+      type: 'push',
       location,
       proceed: expect.any(Function),
       cancel: expect.any(Function),
-    });
+    } satisfies HistoryTransaction);
     expect(blockerMock1).toHaveBeenCalledTimes(1);
     expect(blockerMock1).toHaveBeenNthCalledWith(1, {
+      type: 'push',
       location,
       proceed: expect.any(Function),
       cancel: expect.any(Function),
-    });
+    } satisfies HistoryTransaction);
     expect(navigationMock).toHaveBeenCalledTimes(1);
     expect(navigationMock).toHaveBeenNthCalledWith(1, location);
   });
@@ -121,14 +123,15 @@ describe('navigateOrBlock', () => {
     const blockerMock1 = jest.fn(tx => false);
     const blockers = new Set([blockerMock0, blockerMock1]);
 
-    navigateOrBlock(blockers, location, navigationMock);
+    navigateOrBlock('push', blockers, location, navigationMock);
 
     expect(blockerMock0).toHaveBeenCalledTimes(1);
     expect(blockerMock0).toHaveBeenNthCalledWith(1, {
+      type: 'push',
       location,
       proceed: expect.any(Function),
       cancel: expect.any(Function),
-    });
+    } satisfies HistoryTransaction);
     expect(blockerMock1).not.toHaveBeenCalled();
     expect(navigationMock).not.toHaveBeenCalled();
 
@@ -136,10 +139,11 @@ describe('navigateOrBlock', () => {
 
     expect(blockerMock1).toHaveBeenCalledTimes(1);
     expect(blockerMock1).toHaveBeenNthCalledWith(1, {
+      type: 'push',
       location,
       proceed: expect.any(Function),
       cancel: expect.any(Function),
-    });
+    } satisfies HistoryTransaction);
     expect(navigationMock).toHaveBeenCalledTimes(1);
     expect(navigationMock).toHaveBeenNthCalledWith(1, location);
   });
@@ -153,7 +157,7 @@ describe('navigateOrBlock', () => {
     const blockerMock1 = jest.fn(() => false);
     const blockers = new Set([blockerMock0, blockerMock1]);
 
-    navigateOrBlock(blockers, location, navigationMock);
+    navigateOrBlock('push', blockers, location, navigationMock);
 
     expect(blockerMock0).toHaveBeenCalledTimes(1);
     expect(blockerMock1).toHaveBeenCalledTimes(1);
@@ -166,7 +170,7 @@ describe('navigateOrBlock', () => {
     const blockerMock1 = jest.fn(tx => false);
     const blockers = new Set([blockerMock0, blockerMock1]);
 
-    navigateOrBlock(blockers, location, navigationMock);
+    navigateOrBlock('push', blockers, location, navigationMock);
 
     expect(blockerMock0).toHaveBeenCalledTimes(1);
     expect(blockerMock1).not.toHaveBeenCalled();
@@ -185,7 +189,7 @@ describe('navigateOrBlock', () => {
     const blockerMock = jest.fn(tx => true);
     const blockers = new Set([blockerMock]);
 
-    const cancel = navigateOrBlock(blockers, location, navigationMock);
+    const cancel = navigateOrBlock('push', blockers, location, navigationMock);
 
     expect(blockerMock).toHaveBeenCalledTimes(1);
     expect(navigationMock).not.toHaveBeenCalled();
@@ -203,7 +207,7 @@ describe('navigateOrBlock', () => {
     const blockerMock1 = jest.fn(tx => false);
     const blockers = new Set([blockerMock0, blockerMock1]);
 
-    navigateOrBlock(blockers, location, navigationMock);
+    navigateOrBlock('push', blockers, location, navigationMock);
 
     expect(blockerMock0).toHaveBeenCalledTimes(1);
     expect(blockerMock1).not.toHaveBeenCalled();

@@ -60,9 +60,22 @@ export interface History {
   replace(to: To | string): void;
 
   /**
-   * Move back to the previous history entry.
+   * Move back one page in the history.
    */
   back(): void;
+
+  /**
+   * Move forward one page in the history.
+   */
+  forward(): void;
+
+  /**
+   * Move forwards and backwards through the history depending on the {@link delta}.
+   *
+   * @param delta The position in the history to which you want to move, relative to the current page. A negative value
+   * moves backwards, a positive value moves forwards.
+   */
+  go(delta: number): void;
 
   /**
    * Subscribe to location changes.
@@ -82,11 +95,37 @@ export interface History {
 }
 
 /**
+ * The transaction type:
+ *
+ * <dl>
+ * <dt>"push"</dt>
+ * <dd>The new {@link location} is intended to be pushed to the history stack.</dd>
+ * <dt>"replace"</dt>
+ * <dd>The new {@link location} is intended to replace the current location on the history stack.</dd>
+ * <dt>"pop"</dt>
+ * <dd>The user navigated to a {@link location} that was previously visited by clicking _Back_ or _Forward_ browser
+ * button, or if {@link History.go}, {@link History.back} or {@link History.forward} was called.</dd>
+ * <dt>"unload"</dt>
+ * <dd>The user is trying to close the window.</dd>
+ * </dl>
+ *
+ * @group History
+ */
+export type HistoryTransactionType = 'push' | 'replace' | 'pop' | 'unload';
+
+/**
  * An intended history transaction.
+ *
+ * If {@link type} is "unload" then the transaction cannot be handled asynchronously.
  *
  * @group History
  */
 export interface HistoryTransaction {
+  /**
+   * The transaction type.
+   */
+  type: HistoryTransactionType;
+
   /**
    * A location to which navigation is intended.
    */
@@ -106,12 +145,31 @@ export interface HistoryTransaction {
 /**
  * A callback that is called when a history navigation is intended.
  *
+ * @example
+ * const blocker: HistoryBlocker = transaction => {
+ *   return hasUnsavedChanges && !confirm('Discard unsaved changes?')
+ * };
+ *
+ * @example
+ * const blocker: HistoryBlocker = transaction => {
+ *   if (!hasUnsavedChanges) {
+ *     // No unsaved changes, proceed with navigation
+ *     transaction.proceed();
+ *     return;
+ *   }
+ *
+ *   if (!confirm('Discard unsaved changes?')) {
+ *     // User decided to keep unsaved changes
+ *     transaction.cancel();
+ *   }
+ * };
+ *
  * @param transaction A transaction that describes the intended navigation.
- * @returns `true` if the transaction should be blocked until {@link HistoryTransaction.proceed} is called,
- * or `false` if the transaction shouldn't be blocked.
+ * @returns `true` or `undefined` if the transaction should be blocked until {@link HistoryTransaction.proceed} is
+ * called, or `false` if the transaction shouldn't be blocked.
  * @group History
  */
-export type HistoryBlocker = (transaction: HistoryTransaction) => boolean;
+export type HistoryBlocker = (transaction: HistoryTransaction) => boolean | void;
 
 /**
  * @group History

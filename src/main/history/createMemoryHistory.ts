@@ -8,7 +8,8 @@ import { noop } from '../utils';
 /**
  * Creates the history adapter that reads and writes location to an in-memory stack.
  *
- * @param initialEntries A non-empty array of initial history entries.
+ * @param initialEntries A non-empty array of initial history entries. If an entry is a string, it should start with
+ * a {@link HistoryOptions.basePathname}.
  * @param options History options.
  * @group History
  */
@@ -22,12 +23,25 @@ export function createMemoryHistory(initialEntries: Array<To | string>, options:
   const blockers = new Set<HistoryBlocker>();
   const pubSub = new PubSub();
 
-  if (entries.length === 0) {
+  let cancel = noop;
+  let cursor = entries.length - 1;
+
+  if (cursor === -1) {
     throw new Error('Expected at least one initial entry');
   }
 
-  let cancel = noop;
-  let cursor = entries.length - 1;
+  const go = (delta: number): void => {
+    if (cursor + delta < 0 || cursor + delta >= entries.length) {
+      return;
+    }
+
+    cancel();
+
+    cancel = navigateOrBlock('pop', blockers, entries[cursor + delta], () => {
+      cursor += delta;
+      pubSub.publish();
+    });
+  };
 
   return {
     get url() {
@@ -48,7 +62,8 @@ export function createMemoryHistory(initialEntries: Array<To | string>, options:
 
     push(to) {
       cancel();
-      cancel = navigateOrBlock(blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
+
+      cancel = navigateOrBlock('push', blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
         cursor++;
         entries.splice(cursor, entries.length, location);
         pubSub.publish();
@@ -57,23 +72,22 @@ export function createMemoryHistory(initialEntries: Array<To | string>, options:
 
     replace(to) {
       cancel();
-      cancel = navigateOrBlock(blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
+
+      cancel = navigateOrBlock('replace', blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
         entries.splice(cursor, entries.length, location);
         pubSub.publish();
       });
     },
 
     back() {
-      if (cursor === 0) {
-        return;
-      }
-
-      cancel();
-      cancel = navigateOrBlock(blockers, entries[cursor - 1], () => {
-        cursor--;
-        pubSub.publish();
-      });
+      go(-1);
     },
+
+    forward() {
+      go(1);
+    },
+
+    go,
 
     subscribe(listener) {
       return pubSub.subscribe(listener);

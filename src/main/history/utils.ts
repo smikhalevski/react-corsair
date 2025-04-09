@@ -1,6 +1,6 @@
 import { Location, To } from '../types';
 import { noop, toLocation } from '../utils';
-import { HistoryBlocker, SearchParamsSerializer } from './types';
+import { HistoryBlocker, HistoryTransactionType, SearchParamsSerializer } from './types';
 import { jsonSearchParamsSerializer } from './jsonSearchParamsSerializer';
 
 /**
@@ -102,18 +102,48 @@ export function parseOrCastLocation(to: To | string, searchParamsSerializer: Sea
 }
 
 /**
+ * Returns `true` if page unload was blocked by any of blockers.
+ */
+export function isUnloadBlocked(blockers: Set<HistoryBlocker>, location: Location): boolean {
+  if (blockers.size === 0) {
+    return false;
+  }
+
+  let isCancelled = false;
+  let isProceeded = false;
+
+  const cancel = (): void => {
+    isCancelled = !isProceeded;
+  };
+
+  const proceed = (): void => {
+    isProceeded = !isCancelled;
+  };
+
+  for (const blocker of blockers) {
+    if ((blocker({ type: 'unload', location, cancel, proceed }) !== false && !isProceeded) || isCancelled) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
  * Calls {@link navigate} if {@link HistoryBlocker.proceed} was called for all {@link blockers} or all blockers
  * returned `false`.
  *
+ * @param type The transaction type.
  * @param blockers A set of blockers that should grant permission to run an {@link navigate}.
- * @param location A location to pass to {@link blockers}.
+ * @param location A location to which navigation is intended.
  * @param navigate A navigate callback.
  * @returns A callback that cancels navigation.
  */
 export function navigateOrBlock(
+  type: HistoryTransactionType,
   blockers: Set<HistoryBlocker>,
   location: Location,
-  navigate: (location: Location) => void
+  navigate: (targetLocation: Location) => void
 ): () => void {
   if (blockers.size === 0) {
     navigate(location);
@@ -156,7 +186,7 @@ export function navigateOrBlock(
       }
     };
 
-    if (!blocker({ location, proceed, cancel })) {
+    if (blocker({ type, location, proceed, cancel }) === false) {
       proceed();
     }
   };

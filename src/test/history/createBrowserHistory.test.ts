@@ -140,13 +140,12 @@ test('parses query params with a custom adapter', async () => {
   history.push(aaaLocation);
 
   expect(jsonSearchParamsSerializer.parse).toHaveBeenCalledTimes(2);
-  expect(jsonSearchParamsSerializer.stringify).toHaveBeenCalledTimes(2);
-  expect(jsonSearchParamsSerializer.stringify).toHaveBeenNthCalledWith(1, {});
-  expect(jsonSearchParamsSerializer.stringify).toHaveBeenNthCalledWith(2, { xxx: 111 });
+  expect(jsonSearchParamsSerializer.stringify).toHaveBeenCalledTimes(1);
+  expect(jsonSearchParamsSerializer.stringify).toHaveBeenNthCalledWith(1, { xxx: 111 });
 
   history.location;
 
-  expect(jsonSearchParamsSerializer.stringify).toHaveBeenCalledTimes(2);
+  expect(jsonSearchParamsSerializer.stringify).toHaveBeenCalledTimes(1);
   expect(jsonSearchParamsSerializer.parse).toHaveBeenCalledTimes(2);
   expect(jsonSearchParamsSerializer.parse).toHaveBeenNthCalledWith(1, '');
   expect(jsonSearchParamsSerializer.parse).toHaveBeenNthCalledWith(2, 'xxx=111');

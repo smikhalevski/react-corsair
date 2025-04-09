@@ -136,8 +136,8 @@ test('creates an absolute URL with a default base', async () => {
   ).toBe('http://bbb.ccc/aaa?xxx=111');
 });
 
-test('does not block the navigation', async () => {
-  const blockerMock = jest.fn();
+test('does not block the navigation', () => {
+  const blockerMock = jest.fn(tx => false);
 
   const history = createMemoryHistory([{}]);
 
@@ -147,6 +147,7 @@ test('does not block the navigation', async () => {
 
   expect(blockerMock).toHaveBeenCalledTimes(1);
   expect(blockerMock.mock.calls[0][0]).toStrictEqual({
+    type: 'push',
     location: {
       hash: '',
       pathname: '/aaa',
@@ -240,8 +241,8 @@ test('proceeds with the navigation during blocking', async () => {
 });
 
 test('calls all blockers', async () => {
-  const blockerMock1 = jest.fn();
-  const blockerMock2 = jest.fn();
+  const blockerMock1 = jest.fn(() => false);
+  const blockerMock2 = jest.fn(() => false);
 
   const history = createMemoryHistory([{}]);
 

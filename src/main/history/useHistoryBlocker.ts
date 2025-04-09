@@ -6,10 +6,30 @@ import { useEffect, useRef, useState } from 'react';
  * Registers a {@link blocker} that prevents history navigation.
  *
  * @example
- * useHistoryBlocker(() => hasUnsavedChanges && !confirm('Discard unsaved changes?'));
+ * useHistoryBlocker(transaction => {
+ *   return hasUnsavedChanges && !confirm('Discard unsaved changes?')
+ * });
  *
  * @example
+ * useHistoryBlocker(transaction => {
+ *   if (!hasUnsavedChanges) {
+ *     // No unsaved changes, proceed with navigation
+ *     transaction.proceed();
+ *     return;
+ *   }
+ *
+ *   if (!confirm('Discard unsaved changes?')) {
+ *     // User decided to keep unsaved changes
+ *     transaction.cancel();
+ *   }
+ * });
+ *
+ * @example
+ * const transaction = useHistoryBlocker(() => hasUnsavedChanges);
+ * // or
  * const transaction = useHistoryBlocker(hasUnsavedChanges);
+ * // or
+ * const transaction = useHistoryBlocker();
  *
  * transaction && (
  *   <dialog open={true}>
@@ -21,11 +41,11 @@ import { useEffect, useRef, useState } from 'react';
  * )
  *
  * @param blocker A history navigation blocker or a boolean that indicates whether blocker is blocked or not.
- * @returns A pending history transaction that must be cancelled or proceeded. Or `null` if there's no pending blocked
- * transaction.
+ * @returns A pending navigation transaction that must be cancelled or proceeded. Or `null` if there's no blocked
+ * navigation transaction.
  * @group History
  */
-export function useHistoryBlocker(blocker: boolean | HistoryBlocker): HistoryTransaction | null {
+export function useHistoryBlocker(blocker?: boolean | HistoryBlocker): HistoryTransaction | null {
   const blockerRef = useRef(blocker);
   const history = useHistory();
   const [transaction, setTransaction] = useState<HistoryTransaction | null>(null);
@@ -53,7 +73,7 @@ export function useHistoryBlocker(blocker: boolean | HistoryBlocker): HistoryTra
 
         const isBlocked = typeof blockerRef.current === 'function' ? blockerRef.current(tx) : blockerRef.current;
 
-        setTransaction(tx);
+        setTransaction(transaction.type === 'unload' ? null : tx);
 
         return isBlocked;
       }),
