@@ -1,16 +1,16 @@
 import { Location, To } from '../types';
-import { toLocation } from '../utils';
-import { SearchParamsAdapter } from './types';
-import { jsonSearchParamsAdapter } from './jsonSearchParamsAdapter';
+import { noop, toLocation } from '../utils';
+import { HistoryBlocker, HistoryTransactionType, SearchParamsSerializer } from './types';
+import { jsonSearchParamsSerializer } from './jsonSearchParamsSerializer';
 
 /**
  * Parses a pathname-search-hash string as a location.
  *
  * @param to A pathname-search-hash string to parse.
- * @param searchParamsAdapter An adapter that parses a search string.
+ * @param searchParamsSerializer An adapter that parses a search string.
  * @group History
  */
-export function parseLocation(to: string, searchParamsAdapter = jsonSearchParamsAdapter): Location {
+export function parseLocation(to: string, searchParamsSerializer = jsonSearchParamsSerializer): Location {
   const hashIndex = to.indexOf('#');
 
   let searchIndex = to.indexOf('?');
@@ -23,7 +23,7 @@ export function parseLocation(to: string, searchParamsAdapter = jsonSearchParams
 
   return {
     pathname: pathname === '' || pathname.charCodeAt(0) !== 47 ? '/' + pathname : pathname,
-    searchParams: searchParamsAdapter.parse(
+    searchParams: searchParamsSerializer.parse(
       searchIndex === -1 ? '' : to.substring(searchIndex + 1, hashIndex === -1 ? undefined : hashIndex)
     ),
     hash: hashIndex === -1 ? '' : decodeURIComponent(to.substring(hashIndex + 1)),
@@ -35,13 +35,13 @@ export function parseLocation(to: string, searchParamsAdapter = jsonSearchParams
  * Stringifies a location as pathname-search-hash string.
  *
  * @param to A location to stringify.
- * @param searchParamsAdapter An adapter that stringifies a search string.
+ * @param searchParamsSerializer An adapter that stringifies a search string.
  * @group History
  */
-export function stringifyLocation(to: To, searchParamsAdapter = jsonSearchParamsAdapter): string {
+export function stringifyLocation(to: To, searchParamsSerializer = jsonSearchParamsSerializer): string {
   const { pathname, searchParams, hash } = toLocation(to);
 
-  const search = searchParamsAdapter.stringify(searchParams);
+  const search = searchParamsSerializer.stringify(searchParams);
 
   return (
     pathname +
@@ -92,6 +92,108 @@ export function debasePathname(basePathname: string | undefined, pathname: strin
   throw new Error("Pathname doesn't match base pathname: " + basePathname);
 }
 
-export function parseOrCastLocation(to: To | string, searchParamsAdapter: SearchParamsAdapter): Location {
-  return typeof to === 'string' ? parseLocation(to, searchParamsAdapter) : toLocation(to);
+/**
+ * Parses {@link to} as a location.
+ *
+ * @returns A new location.
+ */
+export function parseOrCastLocation(to: To | string, searchParamsSerializer: SearchParamsSerializer): Location {
+  return typeof to === 'string' ? parseLocation(to, searchParamsSerializer) : toLocation(to);
+}
+
+/**
+ * Returns `true` if page unload was blocked by any of blockers.
+ */
+export function isUnloadBlocked(blockers: Set<HistoryBlocker>, location: Location): boolean {
+  if (blockers.size === 0) {
+    return false;
+  }
+
+  let isCancelled = false;
+  let isProceeded = false;
+
+  const cancel = (): void => {
+    isCancelled = true;
+    isProceeded = false;
+  };
+
+  const proceed = (): void => {
+    isCancelled = false;
+    isProceeded = true;
+  };
+
+  for (const blocker of blockers) {
+    if ((blocker({ type: 'unload', location, cancel, proceed }) !== false && !isProceeded) || isCancelled) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Calls {@link navigate} if {@link HistoryBlocker.proceed} was called for all {@link blockers} or all blockers
+ * returned `false`.
+ *
+ * @param type The transaction type.
+ * @param blockers A set of blockers that should grant permission to run an {@link navigate}.
+ * @param location A location to which navigation is intended.
+ * @param navigate A navigate callback.
+ * @returns A callback that cancels navigation.
+ */
+export function navigateOrBlock(
+  type: HistoryTransactionType,
+  blockers: Set<HistoryBlocker>,
+  location: Location,
+  navigate: (targetLocation: Location) => void
+): () => void {
+  if (blockers.size === 0) {
+    navigate(location);
+    return noop;
+  }
+
+  const blockerQueue = Array.from(blockers);
+
+  let cursor = 0;
+
+  const cancel = (): void => {
+    cursor = -1;
+  };
+
+  const nextBlocker = (): void => {
+    if (cursor === -1) {
+      // Aborted
+      return;
+    }
+
+    if (cursor >= blockerQueue.length) {
+      navigate(location);
+      return;
+    }
+
+    const blockerIndex = cursor;
+    const blocker = blockerQueue[blockerIndex];
+
+    if (!blockers.has(blocker)) {
+      // Blocker was removed
+      cursor++;
+      nextBlocker();
+      return;
+    }
+
+    const proceed = (): void => {
+      if (blockerIndex === cursor) {
+        cursor++;
+        nextBlocker();
+      }
+    };
+
+    if (blocker({ type, location, proceed, cancel }) === false) {
+      proceed();
+    }
+  };
+
+  nextBlocker();
+
+  return cancel;
 }

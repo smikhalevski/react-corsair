@@ -198,7 +198,9 @@ export class Route<
    * @param params Route params.
    * @param options Location options.
    */
-  getLocation(params: InferLocationParams<this>, options?: LocationOptions): Location {
+  getLocation(params: InferLocationParams<this>, options: LocationOptions = {}): Location {
+    const { hash = '', state } = options;
+
     let pathname = '';
     let searchParams: Dict = {};
     let hasLooseParams = false;
@@ -246,8 +248,8 @@ export class Route<
     return {
       pathname,
       searchParams,
-      hash: options === undefined || options.hash === undefined ? '' : options.hash,
-      state: options?.state,
+      hash: hash.length === 0 || hash.charCodeAt(0) !== 35 ? hash : decodeURIComponent(hash.substring(1)),
+      state,
     };
   }
 }

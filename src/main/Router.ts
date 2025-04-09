@@ -1,6 +1,6 @@
 import { AbortablePromise, PubSub } from 'parallel-universe';
 import { ComponentType } from 'react';
-import { matchRoutes } from './matchRoutes';
+import { matchRoutes, RouteMatch } from './matchRoutes';
 import { Route } from './Route';
 import { Fallbacks, NavigateOptions, RouterEvent, RouterOptions, To } from './types';
 import { AbortError, getTailController, noop, toLocation } from './utils';
@@ -66,6 +66,16 @@ export class Router<Context = any> implements Fallbacks {
     this.errorComponent = options.errorComponent;
     this.loadingComponent = options.loadingComponent;
     this.notFoundComponent = options.notFoundComponent;
+  }
+
+  /**
+   * Returns the array of matched routes and extracted params for a given {@link to location}.
+   *
+   * @param to The location to match.
+   */
+  match(to: To): RouteMatch[] {
+    const location = toLocation(to);
+    return matchRoutes(location.pathname, location.searchParams, this.routes);
   }
 
   /**

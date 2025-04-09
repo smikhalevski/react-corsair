@@ -1,26 +1,47 @@
 import { PubSub } from 'parallel-universe';
 import { To } from '../types';
-import { History, HistoryOptions } from './types';
-import { concatPathname, parseOrCastLocation, stringifyLocation } from './utils';
-import { jsonSearchParamsAdapter } from './jsonSearchParamsAdapter';
+import { History, HistoryBlocker, HistoryOptions } from './types';
+import { concatPathname, debasePathname, navigateOrBlock, parseOrCastLocation, stringifyLocation } from './utils';
+import { jsonSearchParamsSerializer } from './jsonSearchParamsSerializer';
+import { noop } from '../utils';
 
 /**
- * Create the history adapter that reads and writes location to an in-memory stack.
+ * Creates the history adapter that reads and writes location to an in-memory stack.
  *
- * @param initialEntries A non-empty array of initial history entries.
+ * @param initialEntries A non-empty array of initial history entries. If an entry is a string, it should start with
+ * a {@link HistoryOptions.basePathname}.
  * @param options History options.
  * @group History
  */
 export function createMemoryHistory(initialEntries: Array<To | string>, options: HistoryOptions = {}): History {
-  const { basePathname, searchParamsAdapter = jsonSearchParamsAdapter } = options;
-  const pubSub = new PubSub();
-  const entries = initialEntries.map(entry => parseOrCastLocation(entry, searchParamsAdapter));
+  const { basePathname, searchParamsSerializer = jsonSearchParamsSerializer } = options;
 
-  if (entries.length === 0) {
+  const entries = initialEntries.map(entry =>
+    parseOrCastLocation(typeof entry === 'string' ? debasePathname(basePathname, entry) : entry, searchParamsSerializer)
+  );
+
+  const blockers = new Set<HistoryBlocker>();
+  const pubSub = new PubSub();
+
+  let cancel = noop;
+  let cursor = entries.length - 1;
+
+  if (cursor === -1) {
     throw new Error('Expected at least one initial entry');
   }
 
-  let cursor = entries.length - 1;
+  const go = (delta: number): void => {
+    if (cursor + delta < 0 || cursor + delta >= entries.length) {
+      return;
+    }
+
+    cancel();
+
+    cancel = navigateOrBlock('pop', blockers, entries[cursor + delta], () => {
+      cursor += delta;
+      pubSub.publish();
+    });
+  };
 
   return {
     get url() {
@@ -32,34 +53,52 @@ export function createMemoryHistory(initialEntries: Array<To | string>, options:
     },
 
     toURL(to) {
-      return stringifyLocation(to, searchParamsAdapter);
+      return stringifyLocation(to, searchParamsSerializer);
     },
 
     toAbsoluteURL(to) {
-      return concatPathname(basePathname, typeof to === 'string' ? to : stringifyLocation(to, searchParamsAdapter));
+      return concatPathname(basePathname, typeof to === 'string' ? to : stringifyLocation(to, searchParamsSerializer));
     },
 
     push(to) {
-      cursor++;
+      cancel();
 
-      entries.splice(cursor, entries.length, parseOrCastLocation(to, searchParamsAdapter));
-      pubSub.publish();
+      cancel = navigateOrBlock('push', blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
+        cursor++;
+        entries.splice(cursor, entries.length, location);
+        pubSub.publish();
+      });
     },
 
     replace(to) {
-      entries.splice(cursor, entries.length, parseOrCastLocation(to, searchParamsAdapter));
-      pubSub.publish();
+      cancel();
+
+      cancel = navigateOrBlock('replace', blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
+        entries.splice(cursor, entries.length, location);
+        pubSub.publish();
+      });
     },
 
     back() {
-      if (cursor > 0) {
-        cursor--;
-        pubSub.publish();
-      }
+      go(-1);
     },
+
+    forward() {
+      go(1);
+    },
+
+    go,
 
     subscribe(listener) {
       return pubSub.subscribe(listener);
+    },
+
+    block(blocker) {
+      blockers.add(blocker);
+
+      return () => {
+        blockers.delete(blocker);
+      };
     },
   };
 }

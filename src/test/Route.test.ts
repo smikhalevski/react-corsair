@@ -1,4 +1,4 @@
-import { createRoute, Outlet, ParamsAdapter } from '../main';
+import { createRoute, Outlet, ParamsAdapter, Location } from '../main';
 
 const Component = () => null;
 
@@ -23,58 +23,85 @@ describe('getLocation', () => {
     const bbbRoute = createRoute(aaaRoute, '/bbb');
     const cccRoute = createRoute(bbbRoute, '/ccc');
 
-    expect(aaaRoute.getLocation()).toEqual({ pathname: '/aaa', searchParams: {}, hash: '' });
-    expect(bbbRoute.getLocation()).toEqual({ pathname: '/aaa/bbb', searchParams: {}, hash: '' });
-    expect(cccRoute.getLocation()).toEqual({ pathname: '/aaa/bbb/ccc', searchParams: {}, hash: '' });
+    expect(aaaRoute.getLocation()).toStrictEqual({
+      pathname: '/aaa',
+      searchParams: {},
+      hash: '',
+      state: undefined,
+    } satisfies Location);
+    expect(bbbRoute.getLocation()).toStrictEqual({
+      pathname: '/aaa/bbb',
+      searchParams: {},
+      hash: '',
+      state: undefined,
+    } satisfies Location);
+    expect(cccRoute.getLocation()).toStrictEqual({
+      pathname: '/aaa/bbb/ccc',
+      searchParams: {},
+      hash: '',
+      state: undefined,
+    } satisfies Location);
 
-    expect(createRoute('aaa').getLocation()).toEqual({ pathname: '/aaa', searchParams: {}, hash: '' });
-    expect(createRoute('aaa/').getLocation()).toEqual({
+    expect(createRoute('aaa').getLocation()).toStrictEqual({
+      pathname: '/aaa',
+      searchParams: {},
+      hash: '',
+      state: undefined,
+    } satisfies Location);
+    expect(createRoute('aaa/').getLocation()).toStrictEqual({
       pathname: '/aaa/',
       searchParams: {},
       hash: '',
-    });
+      state: undefined,
+    } satisfies Location);
 
-    expect(createRoute(createRoute('/'), { pathname: '/' }).getLocation()).toEqual({
+    expect(createRoute(createRoute('/'), { pathname: '/' }).getLocation()).toStrictEqual({
       pathname: '/',
       searchParams: {},
       hash: '',
-    });
+      state: undefined,
+    } satisfies Location);
   });
 
   test('adds hash', () => {
-    expect(createRoute('aaa').getLocation(undefined, { hash: '' })).toEqual({
+    expect(createRoute('aaa').getLocation(undefined, { hash: '' })).toStrictEqual({
       pathname: '/aaa',
       searchParams: {},
       hash: '',
-    });
+      state: undefined,
+    } satisfies Location);
 
-    expect(createRoute('aaa').getLocation(undefined, { hash: '#$%' })).toEqual({
+    expect(createRoute('aaa').getLocation(undefined, { hash: '#$%D1%84' })).toStrictEqual({
       pathname: '/aaa',
       searchParams: {},
-      hash: '#$%',
-    });
+      hash: '$ф',
+      state: undefined,
+    } satisfies Location);
 
-    expect(createRoute('aaa').getLocation(undefined, { hash: 'xxx' })).toEqual({
+    expect(createRoute('aaa').getLocation(undefined, { hash: 'xxx' })).toStrictEqual({
       pathname: '/aaa',
       searchParams: {},
       hash: 'xxx',
-    });
+      state: undefined,
+    } satisfies Location);
   });
 
   test('interpolates pathname params', () => {
-    expect(createRoute<{ bbb: string }>('aaa/:bbb').getLocation({ bbb: 'xxx' })).toEqual({
+    expect(createRoute<{ bbb: string }>('aaa/:bbb').getLocation({ bbb: 'xxx' })).toStrictEqual({
       pathname: '/aaa/xxx',
       searchParams: {},
       hash: '',
-    });
+      state: undefined,
+    } satisfies Location);
   });
 
   test('unexpected search params are loose if there is no paramsAdapter', () => {
-    expect(createRoute<any>('aaa/:bbb').getLocation({ bbb: 'xxx', ccc: 'yyy' })).toEqual({
+    expect(createRoute<any>('aaa/:bbb').getLocation({ bbb: 'xxx', ccc: 'yyy' })).toStrictEqual({
       pathname: '/aaa/xxx',
       searchParams: { ccc: 'yyy' },
       hash: '',
-    });
+      state: undefined,
+    } satisfies Location);
   });
 
   test('adds search params by omitting pathname params', () => {
@@ -83,22 +110,24 @@ describe('getLocation', () => {
         bbb: 'xxx',
         ccc: 'yyy',
       })
-    ).toEqual({
+    ).toStrictEqual({
       pathname: '/aaa/xxx',
       searchParams: { ccc: 'yyy' },
       hash: '',
-    });
+      state: undefined,
+    } satisfies Location);
   });
 
   test('adds search params by omitting pathname params for nested routes', () => {
     const aaaRoute = createRoute({ pathname: 'aaa/:xxx', paramsAdapter: params => params });
     const bbbRoute = createRoute(aaaRoute, { pathname: 'bbb/:yyy', paramsAdapter: params => params });
 
-    expect(bbbRoute.getLocation({ xxx: '111', yyy: '222', ccc: 'yyy' })).toEqual({
+    expect(bbbRoute.getLocation({ xxx: '111', yyy: '222', ccc: 'yyy' })).toStrictEqual({
       pathname: '/aaa/111/bbb/222',
       searchParams: { ccc: 'yyy' },
       hash: '',
-    });
+      state: undefined,
+    } satisfies Location);
   });
 
   test('no loose params if route has an adapter with toSearchParams', () => {
@@ -110,11 +139,12 @@ describe('getLocation', () => {
       },
     });
 
-    expect(route.getLocation({ xxx: 'bbb', ccc: 'yyy' })).toEqual({
+    expect(route.getLocation({ xxx: 'bbb', ccc: 'yyy' })).toStrictEqual({
       pathname: '/aaa/bbb',
       searchParams: { vvv: 111 },
       hash: '',
-    });
+      state: undefined,
+    } satisfies Location);
   });
 
   test('does not add loose params that already exist on searchParams', () => {
@@ -131,11 +161,12 @@ describe('getLocation', () => {
       paramsAdapter: params => params,
     });
 
-    expect(bbbRoute.getLocation({ vvv: 222, ccc: 'yyy' })).toEqual({
+    expect(bbbRoute.getLocation({ vvv: 222, ccc: 'yyy' })).toStrictEqual({
       pathname: '/aaa/bbb',
       searchParams: { vvv: 111, ccc: 'yyy' },
       hash: '',
-    });
+      state: undefined,
+    } satisfies Location);
   });
 
   test('adds search params via adapter', () => {
@@ -148,11 +179,12 @@ describe('getLocation', () => {
       createRoute({ pathname: 'aaa/:bbb', paramsAdapter }).getLocation({
         bbb: 'xxx',
       })
-    ).toEqual({
+    ).toStrictEqual({
       pathname: '/aaa/xxx',
       searchParams: { ccc: 'yyy' },
       hash: '',
-    });
+      state: undefined,
+    } satisfies Location);
 
     expect(paramsAdapter.toSearchParams).toHaveBeenCalledTimes(1);
     expect(paramsAdapter.toSearchParams).toHaveBeenNthCalledWith(1, { bbb: 'xxx' });
@@ -171,7 +203,7 @@ describe('getOrLoadComponent', () => {
       lazyComponent: () => Promise.resolve<any>({ foo: Component }),
     });
 
-    await expect(route.getOrLoadComponent()).rejects.toEqual(
+    await expect(route.getOrLoadComponent()).rejects.toStrictEqual(
       new TypeError('Module loaded by a lazyComponent must default-export a component')
     );
   });
@@ -189,7 +221,7 @@ describe('getOrLoadComponent', () => {
       lazyComponent: () => Promise.resolve({ default: Component }),
     });
 
-    await expect(route.getOrLoadComponent()).resolves.toEqual(Component);
+    await expect(route.getOrLoadComponent()).resolves.toStrictEqual(Component);
   });
 
   test('throws if lazy component module does not default-export a function', async () => {
@@ -197,7 +229,7 @@ describe('getOrLoadComponent', () => {
       lazyComponent: () => Promise.resolve({ default: 'not_a_function' as any }),
     });
 
-    await expect(() => route.getOrLoadComponent()).rejects.toEqual(
+    await expect(() => route.getOrLoadComponent()).rejects.toStrictEqual(
       new TypeError('Module loaded by a lazyComponent must default-export a component')
     );
   });
@@ -234,10 +266,10 @@ describe('getOrLoadComponent', () => {
       lazyComponent: lazyComponentMock,
     });
 
-    await expect(() => route.getOrLoadComponent()).rejects.toEqual(
+    await expect(() => route.getOrLoadComponent()).rejects.toStrictEqual(
       new TypeError('Module loaded by a lazyComponent must default-export a component')
     );
-    await expect(route.getOrLoadComponent()).resolves.toEqual(Component);
+    await expect(route.getOrLoadComponent()).resolves.toStrictEqual(Component);
 
     expect(lazyComponentMock).toHaveBeenCalledTimes(2);
   });
@@ -263,6 +295,6 @@ describe('getOrLoadComponent', () => {
       },
     });
 
-    await expect(route.getOrLoadComponent()).rejects.toEqual(new Error('expected'));
+    await expect(route.getOrLoadComponent()).rejects.toStrictEqual(new Error('expected'));
   });
 });

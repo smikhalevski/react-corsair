@@ -6,55 +6,55 @@ describe('parsePattern', () => {
   const FLAG_OPTIONAL = 1 << 2;
 
   test('parses pathname as a template', () => {
-    expect(parsePattern('')).toEqual({ segments: [''], flags: [0], paramNames: new Set() });
-    expect(parsePattern('/')).toEqual({ segments: [''], flags: [0], paramNames: new Set() });
-    expect(parsePattern('//')).toEqual({ segments: ['', ''], flags: [0, 0], paramNames: new Set() });
-    expect(parsePattern('///')).toEqual({ segments: ['', '', ''], flags: [0, 0, 0], paramNames: new Set() });
-    expect(parsePattern('aaa')).toEqual({ segments: ['aaa'], flags: [0], paramNames: new Set() });
-    expect(parsePattern('/aaa')).toEqual({ segments: ['aaa'], flags: [0], paramNames: new Set() });
-    expect(parsePattern('/aaa/bbb')).toEqual({ segments: ['aaa', 'bbb'], flags: [0, 0], paramNames: new Set() });
-    expect(parsePattern('/aaa?')).toEqual({ segments: ['aaa'], flags: [FLAG_OPTIONAL], paramNames: new Set() });
-    expect(parsePattern('/aaa?/')).toEqual({
+    expect(parsePattern('')).toStrictEqual({ segments: [''], flags: [0], paramNames: new Set() });
+    expect(parsePattern('/')).toStrictEqual({ segments: [''], flags: [0], paramNames: new Set() });
+    expect(parsePattern('//')).toStrictEqual({ segments: ['', ''], flags: [0, 0], paramNames: new Set() });
+    expect(parsePattern('///')).toStrictEqual({ segments: ['', '', ''], flags: [0, 0, 0], paramNames: new Set() });
+    expect(parsePattern('aaa')).toStrictEqual({ segments: ['aaa'], flags: [0], paramNames: new Set() });
+    expect(parsePattern('/aaa')).toStrictEqual({ segments: ['aaa'], flags: [0], paramNames: new Set() });
+    expect(parsePattern('/aaa/bbb')).toStrictEqual({ segments: ['aaa', 'bbb'], flags: [0, 0], paramNames: new Set() });
+    expect(parsePattern('/aaa?')).toStrictEqual({ segments: ['aaa'], flags: [FLAG_OPTIONAL], paramNames: new Set() });
+    expect(parsePattern('/aaa?/')).toStrictEqual({
       segments: ['aaa', ''],
       flags: [FLAG_OPTIONAL, 0],
       paramNames: new Set(),
     });
-    expect(parsePattern('/aaa?/bbb?')).toEqual({
+    expect(parsePattern('/aaa?/bbb?')).toStrictEqual({
       segments: ['aaa', 'bbb'],
       flags: [FLAG_OPTIONAL, FLAG_OPTIONAL],
       paramNames: new Set(),
     });
-    expect(parsePattern(':xxx')).toEqual({
+    expect(parsePattern(':xxx')).toStrictEqual({
       segments: ['xxx'],
       flags: [FLAG_PARAM],
       paramNames: new Set(['xxx']),
     });
-    expect(parsePattern('/:xxx')).toEqual({
+    expect(parsePattern('/:xxx')).toStrictEqual({
       segments: ['xxx'],
       flags: [FLAG_PARAM],
       paramNames: new Set(['xxx']),
     });
-    expect(parsePattern('/:xxx')).toEqual({
+    expect(parsePattern('/:xxx')).toStrictEqual({
       segments: ['xxx'],
       flags: [FLAG_PARAM],
       paramNames: new Set(['xxx']),
     });
-    expect(parsePattern('/:xxx?')).toEqual({
+    expect(parsePattern('/:xxx?')).toStrictEqual({
       segments: ['xxx'],
       flags: [FLAG_PARAM | FLAG_OPTIONAL],
       paramNames: new Set(['xxx']),
     });
-    expect(parsePattern('/:xxx*')).toEqual({
+    expect(parsePattern('/:xxx*')).toStrictEqual({
       segments: ['xxx'],
       flags: [FLAG_PARAM | FLAG_WILDCARD],
       paramNames: new Set(['xxx']),
     });
-    expect(parsePattern('/:xxx*?')).toEqual({
+    expect(parsePattern('/:xxx*?')).toStrictEqual({
       segments: ['xxx'],
       flags: [FLAG_PARAM | FLAG_WILDCARD | FLAG_OPTIONAL],
       paramNames: new Set(['xxx']),
     });
-    expect(parsePattern('/:xxx*?/:yyy?')).toEqual({
+    expect(parsePattern('/:xxx*?/:yyy?')).toStrictEqual({
       segments: ['xxx', 'yyy'],
       flags: [FLAG_PARAM | FLAG_WILDCARD | FLAG_OPTIONAL, FLAG_PARAM | FLAG_OPTIONAL],
       paramNames: new Set(['xxx', 'yyy']),
@@ -62,7 +62,7 @@ describe('parsePattern', () => {
   });
 
   test('parses pathname with non-ASCII characters', () => {
-    expect(new PathnameTemplate('/ффф')['_segments']).toEqual(['ффф']);
+    expect(new PathnameTemplate('/ффф')['_segments']).toStrictEqual(['ффф']);
   });
 
   test('throws an error if syntax is invalid', () => {
@@ -82,39 +82,59 @@ describe('parsePattern', () => {
 
 describe('createPatternRegExp', () => {
   test('creates a RegExp from a pathname template', () => {
-    expect(createPatternRegExp(parsePattern(''))).toEqual(/^\//i);
-    expect(createPatternRegExp(parsePattern('/'))).toEqual(/^\//i);
-    expect(createPatternRegExp(parsePattern('//'))).toEqual(/^\/\//i);
-    expect(createPatternRegExp(parsePattern('aaa'))).toEqual(/^\/aaa(?=\/|$)/i);
-    expect(createPatternRegExp(parsePattern('aaa?'))).toEqual(/^(?:\/aaa)?(?=\/|$)/i);
-    expect(createPatternRegExp(parsePattern('aaa?/bbb'))).toEqual(/^(?:\/aaa)?\/bbb(?=\/|$)/i);
-    expect(createPatternRegExp(parsePattern('aaa?/bbb?'))).toEqual(/^(?:\/aaa)?(?:\/bbb)?(?=\/|$)/i);
-    expect(createPatternRegExp(parsePattern(':xxx'))).toEqual(/^\/([^/]+)(?=\/|$)/i);
-    expect(createPatternRegExp(parsePattern(':xxx?'))).toEqual(/^(?:\/([^/]+))?(?=\/|$)/i);
-    expect(createPatternRegExp(parsePattern(':xxx*'))).toEqual(/^\/(.+)(?=\/|$)/i);
-    expect(createPatternRegExp(parsePattern(':xxx*?'))).toEqual(/^(?:\/(.+))?(?=\/|$)/i);
-    expect(createPatternRegExp(parsePattern('aaa/:xxx'))).toEqual(/^\/aaa\/([^/]+)(?=\/|$)/i);
-    expect(createPatternRegExp(parsePattern('aaa/:xxx?'))).toEqual(/^\/aaa(?:\/([^/]+))?(?=\/|$)/i);
-    expect(createPatternRegExp(parsePattern('aaa/:xxx*'))).toEqual(/^\/aaa\/(.+)(?=\/|$)/i);
-    expect(createPatternRegExp(parsePattern('aaa/:xxx*?'))).toEqual(/^\/aaa(?:\/(.+))?(?=\/|$)/i);
-    expect(createPatternRegExp(parsePattern('aaa/:xxx?/bbb'))).toEqual(/^\/aaa(?:\/([^/]+))?\/bbb(?=\/|$)/i);
+    expect(createPatternRegExp(parsePattern(''))).toStrictEqual(/^\//i);
+    expect(createPatternRegExp(parsePattern('/'))).toStrictEqual(/^\//i);
+    expect(createPatternRegExp(parsePattern('//'))).toStrictEqual(/^\/\//i);
+    expect(createPatternRegExp(parsePattern('aaa'))).toStrictEqual(/^\/aaa(?=\/|$)/i);
+    expect(createPatternRegExp(parsePattern('aaa?'))).toStrictEqual(/^(?:\/aaa)?(?=\/|$)/i);
+    expect(createPatternRegExp(parsePattern('aaa?/bbb'))).toStrictEqual(/^(?:\/aaa)?\/bbb(?=\/|$)/i);
+    expect(createPatternRegExp(parsePattern('aaa?/bbb?'))).toStrictEqual(/^(?:\/aaa)?(?:\/bbb)?(?=\/|$)/i);
+    expect(createPatternRegExp(parsePattern(':xxx'))).toStrictEqual(/^\/([^/]+)(?=\/|$)/i);
+    expect(createPatternRegExp(parsePattern(':xxx?'))).toStrictEqual(/^(?:\/([^/]+))?(?=\/|$)/i);
+    expect(createPatternRegExp(parsePattern(':xxx*'))).toStrictEqual(/^\/(.+)(?=\/|$)/i);
+    expect(createPatternRegExp(parsePattern(':xxx*?'))).toStrictEqual(/^(?:\/(.+))?(?=\/|$)/i);
+    expect(createPatternRegExp(parsePattern('aaa/:xxx'))).toStrictEqual(/^\/aaa\/([^/]+)(?=\/|$)/i);
+    expect(createPatternRegExp(parsePattern('aaa/:xxx?'))).toStrictEqual(/^\/aaa(?:\/([^/]+))?(?=\/|$)/i);
+    expect(createPatternRegExp(parsePattern('aaa/:xxx*'))).toStrictEqual(/^\/aaa\/(.+)(?=\/|$)/i);
+    expect(createPatternRegExp(parsePattern('aaa/:xxx*?'))).toStrictEqual(/^\/aaa(?:\/(.+))?(?=\/|$)/i);
+    expect(createPatternRegExp(parsePattern('aaa/:xxx?/bbb'))).toStrictEqual(/^\/aaa(?:\/([^/]+))?\/bbb(?=\/|$)/i);
   });
 });
 
 describe('PathnameTemplate', () => {
   test('matches a pathname without params', () => {
-    expect(new PathnameTemplate('').match('/')).toEqual({ pathname: '/', childPathname: '/', params: {} });
-    expect(new PathnameTemplate('').match('/aaa')).toEqual({ pathname: '/', childPathname: '/aaa', params: {} });
-    expect(new PathnameTemplate('/aaa').match('/aaa')).toEqual({ pathname: '/aaa', childPathname: '/', params: {} });
-    expect(new PathnameTemplate('/aaa').match('/aaa/')).toEqual({ pathname: '/aaa', childPathname: '/', params: {} });
-    expect(new PathnameTemplate('/AAA').match('/aaa')).toEqual({ pathname: '/aaa', childPathname: '/', params: {} });
-    expect(new PathnameTemplate('/aaa').match('/AAA')).toEqual({ pathname: '/AAA', childPathname: '/', params: {} });
-    expect(new PathnameTemplate('/aaa').match('/aaa/bbb')).toEqual({
+    expect(new PathnameTemplate('').match('/')).toStrictEqual({ pathname: '/', childPathname: '/', params: {} });
+    expect(new PathnameTemplate('').match('/aaa')).toStrictEqual({ pathname: '/', childPathname: '/aaa', params: {} });
+    expect(new PathnameTemplate('/aaa').match('/aaa')).toStrictEqual({
+      pathname: '/aaa',
+      childPathname: '/',
+      params: {},
+    });
+    expect(new PathnameTemplate('/aaa').match('/aaa/')).toStrictEqual({
+      pathname: '/aaa',
+      childPathname: '/',
+      params: {},
+    });
+    expect(new PathnameTemplate('/AAA').match('/aaa')).toStrictEqual({
+      pathname: '/aaa',
+      childPathname: '/',
+      params: {},
+    });
+    expect(new PathnameTemplate('/aaa').match('/AAA')).toStrictEqual({
+      pathname: '/AAA',
+      childPathname: '/',
+      params: {},
+    });
+    expect(new PathnameTemplate('/aaa').match('/aaa/bbb')).toStrictEqual({
       pathname: '/aaa',
       childPathname: '/bbb',
       params: {},
     });
-    expect(new PathnameTemplate('/aaa').match('/aaa/')).toEqual({ pathname: '/aaa', childPathname: '/', params: {} });
+    expect(new PathnameTemplate('/aaa').match('/aaa/')).toStrictEqual({
+      pathname: '/aaa',
+      childPathname: '/',
+      params: {},
+    });
   });
 
   test('does not match a pathname without params', () => {
@@ -126,13 +146,13 @@ describe('PathnameTemplate', () => {
   });
 
   test('matches a pathname with params', () => {
-    expect(new PathnameTemplate('/aaa/:xxx').match('/aaa/yyy')).toEqual({
+    expect(new PathnameTemplate('/aaa/:xxx').match('/aaa/yyy')).toStrictEqual({
       pathname: '/aaa/yyy',
       childPathname: '/',
       params: { xxx: 'yyy' },
     });
 
-    expect(new PathnameTemplate('/aaa/:xxx*').match('/aaa/bbb/ccc')).toEqual({
+    expect(new PathnameTemplate('/aaa/:xxx*').match('/aaa/bbb/ccc')).toStrictEqual({
       pathname: '/aaa/bbb/ccc',
       childPathname: '/',
       params: { xxx: 'bbb/ccc' },
@@ -164,19 +184,19 @@ describe('PathnameTemplate', () => {
   });
 
   test('matches a wildcard param', () => {
-    expect(new PathnameTemplate('/aaa/:xxx*').match('/aaa/bbb/ccc')).toEqual({
+    expect(new PathnameTemplate('/aaa/:xxx*').match('/aaa/bbb/ccc')).toStrictEqual({
       pathname: '/aaa/bbb/ccc',
       childPathname: '/',
       params: { xxx: 'bbb/ccc' },
     });
 
-    expect(new PathnameTemplate('/aaa/:xxx*/ccc').match('/aaa/bbb/ccc')).toEqual({
+    expect(new PathnameTemplate('/aaa/:xxx*/ccc').match('/aaa/bbb/ccc')).toStrictEqual({
       pathname: '/aaa/bbb/ccc',
       childPathname: '/',
       params: { xxx: 'bbb' },
     });
 
-    expect(new PathnameTemplate('/aaa/:xxx*/ddd').match('/aaa/bbb/ccc/ddd')).toEqual({
+    expect(new PathnameTemplate('/aaa/:xxx*/ddd').match('/aaa/bbb/ccc/ddd')).toStrictEqual({
       pathname: '/aaa/bbb/ccc/ddd',
       childPathname: '/',
       params: { xxx: 'bbb/ccc' },
@@ -184,7 +204,7 @@ describe('PathnameTemplate', () => {
   });
 
   test('matches an optional wildcard param', () => {
-    expect(new PathnameTemplate('/aaa/:xxx*?').match('/aaa/bbb/ccc')).toEqual({
+    expect(new PathnameTemplate('/aaa/:xxx*?').match('/aaa/bbb/ccc')).toStrictEqual({
       pathname: '/aaa/bbb/ccc',
       childPathname: '/',
       params: { xxx: 'bbb/ccc' },
@@ -192,19 +212,19 @@ describe('PathnameTemplate', () => {
   });
 
   test('matches an optional param', () => {
-    expect(new PathnameTemplate('/aaa/:xxx?').match('/aaa')).toEqual({
+    expect(new PathnameTemplate('/aaa/:xxx?').match('/aaa')).toStrictEqual({
       pathname: '/aaa',
       childPathname: '/',
       params: { xxx: undefined },
     });
 
-    expect(new PathnameTemplate('/aaa/:xxx?/ccc').match('/aaa/ccc')).toEqual({
+    expect(new PathnameTemplate('/aaa/:xxx?/ccc').match('/aaa/ccc')).toStrictEqual({
       pathname: '/aaa/ccc',
       childPathname: '/',
       params: { xxx: undefined },
     });
 
-    expect(new PathnameTemplate('/aaa/:xxx?/ccc').match('/aaa/bbb/ccc')).toEqual({
+    expect(new PathnameTemplate('/aaa/:xxx?/ccc').match('/aaa/bbb/ccc')).toStrictEqual({
       pathname: '/aaa/bbb/ccc',
       childPathname: '/',
       params: { xxx: 'bbb' },
