@@ -32,6 +32,7 @@ npm install --save-prod react-corsair
 - [Local and absolute URLs](#local-and-absolute-URLs)
 - [Search strings](#search-strings)
 - [Links](#links)
+- [Navigation blocking](#navigation-blocking)
 
 🚀&ensp;[**Server-side rendering**](#server-side-rendering)
 
@@ -1120,6 +1121,62 @@ Links can automatically [prefetch](#prefetching) a route component and [related 
 >
   {'Go to a product 42'}
 </Link>
+```
+
+## Navigation blocking
+
+Navigation blocking is a way to prevent navigation from happening. This is typical if a user attempts to navigate while
+there are unsaved changes. Usually, in such situation, a prompt or a custom UI should be shown to the user to confirm
+the navigation.
+
+Show a browser confirmation popup to the user:
+
+```tsx
+useHistoryBlocker(() => {
+  return hasUnsavedChanges && !confirm('Discard unsaved changes?')
+});
+```
+
+With [`proceed`](https://smikhalevski.github.io/react-corsair/interfaces/history.HistoryTransaction.html#proceed) and
+[`cancel`](https://smikhalevski.github.io/react-corsair/interfaces/history.HistoryTransaction.html#cancel) you can
+handle a navigation transaction in an asynchronous manner: 
+
+```tsx
+useHistoryBlocker(transaction => {
+  if (!hasUnsavedChanges) {
+    // No unsaved changes, proceed with the navigation
+    transaction.proceed();
+    return;
+  }
+
+  if (!confirm('Discard unsaved changes?')) {
+    // User decided to keep unsaved changes
+    transaction.cancel();
+  }
+});
+```
+
+Ask user to confirm the navigation only if there are unsaved changes:
+
+```tsx
+const transaction = useHistoryBlocker(() => hasUnsavedChanges);
+// or
+// const transaction = useHistoryBlocker(hasUnsavedChanges);
+
+transaction && (
+  <dialog open={true}>
+    <p>{'Discard unsaved changes?'}</p>
+
+    <button onClick={transaction.proceed}>{'Discard'}</button>
+    <button onClick={transaction.cancel}>{'Cancel'}</button>
+  </dialog>
+)
+```
+
+Always ask user to confirm the navigation:
+
+```tsx
+const transaction = useHistoryBlocker();
 ```
 
 # Server-side rendering
