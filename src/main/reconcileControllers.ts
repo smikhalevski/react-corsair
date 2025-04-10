@@ -1,5 +1,5 @@
 import isDeepEqual from 'fast-deep-equal';
-import { RouteMatch } from './matchRoutes';
+import { RouteMatch } from './__matchRoutes';
 import { RouteController } from './RouteController';
 import { Router } from './Router';
 
@@ -43,7 +43,7 @@ export function reconcileControllers(
     } else {
       if (replacedController.status !== 'loading') {
         // Nothing has changed and route is loaded
-        controller['_state'] = replacedController['_state'];
+        controller._state = replacedController._state;
       }
 
       replacedController = replacedController.childController;

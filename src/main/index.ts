@@ -10,15 +10,15 @@
  * @module react-corsair
  */
 
-export { createRoute } from './createRoute';
+export { createRoute } from './__createRoute';
 export { hydrateRouter, type HydrateRouterOptions } from './hydrateRouter';
-export { type RouteMatch } from './matchRoutes';
-export { notFound } from './notFound';
+export { type RouteMatch } from './__matchRoutes';
+export { notFound } from './__notFound';
 export { Outlet, RouteOutlet, type RouteOutletProps } from './Outlet';
-export { PathnameTemplate, type PathnameMatch } from './PathnameTemplate';
+export { PathnameTemplate, type PathnameMatch } from './__PathnameTemplate';
 export { Prefetch, type PrefetchProps } from './Prefetch';
-export { redirect, Redirect } from './redirect';
-export { Route, type InferLocationParams } from './Route';
+export { redirect, Redirect } from './__redirect';
+export { Route, type InferLocationParams } from './__Route';
 export { Router } from './Router';
 export {
   RouteController,
@@ -53,4 +53,4 @@ export {
   type NotFoundEvent,
   type RedirectEvent,
   type RouterEvent,
-} from './types';
+} from './__types';

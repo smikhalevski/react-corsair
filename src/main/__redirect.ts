@@ -1,4 +1,4 @@
-import { To } from './types';
+import { Location, To } from './__types';
 import { toLocation } from './utils';
 
 /**
@@ -19,7 +19,10 @@ export function redirect(to: To | string): never {
  * @group Routing
  */
 export class Redirect {
-  readonly to;
+  /**
+   *  A location or a URL to redirect to.
+   */
+  readonly to: Location | string;
 
   /**
    * Creates a new {@link Redirect} instance.

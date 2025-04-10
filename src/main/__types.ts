@@ -1,5 +1,5 @@
 import { ComponentType } from 'react';
-import { Route } from './Route';
+import { Route } from './__Route';
 import { Router } from './Router';
 import { RouteController } from './RouteController';
 
@@ -132,14 +132,14 @@ export type RenderingDisposition = 'server' | 'client';
  */
 export interface DataLoaderOptions<Params extends Dict, Context> {
   /**
-   * A route for which data is loaded.
-   */
-  route: Route<any, Params, any, Context>;
-
-  /**
    * A router that triggered data loading.
    */
   router: Router<Context>;
+
+  /**
+   * A route for which data is loaded.
+   */
+  route: Route<any, Params, any, Context>;
 
   /**
    * Route params extracted from a location.

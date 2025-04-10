@@ -1,9 +1,9 @@
 import { Router } from './Router';
-import { Dict, LoadingAppearance, Location, RenderingDisposition, To } from './types';
-import { Route } from './Route';
+import { Dict, LoadingAppearance, Location, RenderingDisposition, To } from './__types';
+import { Route } from './__Route';
 import { ComponentType } from 'react';
-import { NotFoundError } from './notFound';
-import { Redirect } from './redirect';
+import { NotFoundError } from './__notFound';
+import { Redirect } from './__redirect';
 import { AbortablePromise } from 'parallel-universe';
 import { AbortError, isPromiseLike, noop } from './utils';
 
@@ -25,13 +25,13 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
 
   protected _context;
 
-  protected _state: RouteState = { status: 'loading' };
+  _state: RouteState = { status: 'loading' };
 
   protected _renderedState = this._state;
 
   protected _errorCause: any = undefined;
 
-  protected _loadingPromise: AbortablePromise<void> | null = null;
+  _loadingPromise: AbortablePromise<void> | null = null;
 
   /**
    * Creates a new {@link RouteController} instance.

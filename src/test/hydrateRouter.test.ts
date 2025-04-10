@@ -1,5 +1,4 @@
-import { createRoute, hydrateRouter, Router } from '../main';
-import { RouteState } from '../main/RouteController';
+import { createRoute, hydrateRouter, Router, RouteState } from '../main';
 
 beforeEach(() => {
   window.__REACT_CORSAIR_SSR_STATE__ = undefined;

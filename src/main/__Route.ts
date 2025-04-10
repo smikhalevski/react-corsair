@@ -1,5 +1,5 @@
 import { ComponentType } from 'react';
-import { PathnameTemplate } from './PathnameTemplate';
+import { PathnameTemplate } from './__PathnameTemplate';
 import {
   ComponentModule,
   DataLoaderOptions,
@@ -10,7 +10,7 @@ import {
   ParamsAdapter,
   RenderingDisposition,
   RouteOptions,
-} from './types';
+} from './__types';
 import { Outlet } from './Outlet';
 
 type Prettify<T> = { [K in keyof T]: T[K] } & {};
@@ -19,7 +19,6 @@ type PartialAsVoid<T> = Partial<T> extends T ? T | void : T;
 
 /**
  * For testing purposes only!
- * @internal
  */
 export declare const LOCATION_PARAMS: unique symbol;
 

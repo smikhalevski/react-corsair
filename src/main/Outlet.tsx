@@ -1,9 +1,9 @@
 import React, { Component, ComponentType, createContext, ReactElement, ReactNode, Suspense, useContext } from 'react';
 import { createErrorState, NO_CAPTURED_ERROR, RouteController } from './RouteController';
 import { Router } from './Router';
-import { redirect } from './redirect';
-import { notFound } from './notFound';
-import { RouterEvent } from './types';
+import { redirect } from './__redirect';
+import { notFound } from './__notFound';
+import { RouterEvent } from './__types';
 import { RouteControllerProvider } from './useRoute';
 import { noop } from './utils';
 

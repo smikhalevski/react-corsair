@@ -1,8 +1,8 @@
-import { To } from './types';
+import { To } from './__types';
 import { Router } from './Router';
 import { RouteController, RouteState } from './RouteController';
 import { noop, toLocation } from './utils';
-import { matchRoutes } from './matchRoutes';
+import { matchRoutes } from './__matchRoutes';
 import { AbortablePromise } from 'parallel-universe';
 
 /**
@@ -108,8 +108,8 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
 
     // Server-rendering is in progress, defer hydration
     if (controller.status === 'loading') {
-      controller['_loadingPromise'] = new AbortablePromise(noop);
-      controller['_loadingPromise'].catch(noop);
+      controller._loadingPromise = new AbortablePromise(noop);
+      controller._loadingPromise.catch(noop);
     }
   }
 

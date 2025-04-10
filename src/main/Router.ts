@@ -1,8 +1,8 @@
 import { AbortablePromise, PubSub } from 'parallel-universe';
 import { ComponentType } from 'react';
-import { matchRoutes, RouteMatch } from './matchRoutes';
-import { Route } from './Route';
-import { LoadingAppearance, NavigateOptions, RenderingDisposition, RouterEvent, RouterOptions, To } from './types';
+import { matchRoutes, RouteMatch } from './__matchRoutes';
+import { Route } from './__Route';
+import { LoadingAppearance, NavigateOptions, RenderingDisposition, RouterEvent, RouterOptions, To } from './__types';
 import { AbortError, getTailController, noop, toLocation } from './utils';
 import { reconcileControllers } from './reconcileControllers';
 import { RouteController } from './RouteController';

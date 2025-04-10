@@ -1,5 +1,5 @@
 import { PubSub } from 'parallel-universe';
-import { To } from '../types';
+import { To } from '../__types';
 import { History, HistoryBlocker, HistoryOptions } from './types';
 import { concatPathname, debasePathname, navigateOrBlock, parseOrCastLocation, stringifyLocation } from './utils';
 import { jsonSearchParamsSerializer } from './jsonSearchParamsSerializer';

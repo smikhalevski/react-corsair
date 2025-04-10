@@ -1,7 +1,7 @@
 import { PubSub } from 'parallel-universe';
 import { History, HistoryBlocker, SearchParamsSerializer } from './types';
 import { isUnloadBlocked, navigateOrBlock, parseLocation, parseOrCastLocation, stringifyLocation } from './utils';
-import { Location } from '../types';
+import { Location } from '../__types';
 import { noop } from '../utils';
 
 interface HistoryRecord {

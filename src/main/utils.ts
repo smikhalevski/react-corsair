@@ -1,4 +1,4 @@
-import { Location, To } from './types';
+import { Location, To } from './__types';
 import { RouteController } from './RouteController';
 
 export function isPromiseLike(value: unknown): value is PromiseLike<unknown> {

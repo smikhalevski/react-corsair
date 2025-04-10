@@ -20,8 +20,8 @@ describe('RouteController', () => {
   });
 
   test('creates a new instance', () => {
-    expect(controller['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
-    expect(controller['_loadingPromise']).toBeNull();
+    expect(controller._state).toStrictEqual({ status: 'loading' } satisfies RouteState);
+    expect(controller._loadingPromise).toBeNull();
     expect(() => controller.getData()).toThrow();
     expect(controller.getError()).toBeUndefined();
     expect(controller.params).toStrictEqual({ aaa: 111 });
@@ -34,7 +34,7 @@ describe('RouteController', () => {
     test('sets state and notifies router', () => {
       controller.notFound();
 
-      expect(controller['_state']).toStrictEqual({ status: 'not_found' } satisfies RouteState);
+      expect(controller._state).toStrictEqual({ status: 'not_found' } satisfies RouteState);
       expect(routeListenerMock).toHaveBeenCalledTimes(1);
       expect(routeListenerMock).toHaveBeenNthCalledWith(1, { type: 'not_found', controller } satisfies RouterEvent);
     });
@@ -42,10 +42,10 @@ describe('RouteController', () => {
     test('aborts loading promise', async () => {
       const promise = new AbortablePromise<void>(noop);
 
-      controller['_loadingPromise'] = promise;
+      controller._loadingPromise = promise;
       controller.notFound();
 
-      expect(controller['_loadingPromise']).toBeNull();
+      expect(controller._loadingPromise).toBeNull();
       expect(routeListenerMock).toHaveBeenCalledTimes(1);
 
       await expect(promise).rejects.toStrictEqual(AbortError('Route loading was aborted'));
@@ -56,7 +56,7 @@ describe('RouteController', () => {
     test('sets state and notifies router', () => {
       controller.redirect(route.getLocation(undefined));
 
-      expect(controller['_state']).toStrictEqual({
+      expect(controller._state).toStrictEqual({
         status: 'redirect',
         to: { pathname: '/foo', searchParams: {}, hash: '', state: undefined },
       } satisfies RouteState);
@@ -73,10 +73,10 @@ describe('RouteController', () => {
     test('aborts loading promise', async () => {
       const promise = new AbortablePromise<void>(noop);
 
-      controller['_loadingPromise'] = promise;
+      controller._loadingPromise = promise;
       controller.redirect(route.getLocation(undefined));
 
-      expect(controller['_loadingPromise']).toBeNull();
+      expect(controller._loadingPromise).toBeNull();
       expect(routeListenerMock).toHaveBeenCalledTimes(1);
 
       await expect(promise).rejects.toStrictEqual(AbortError('Route loading was aborted'));
@@ -89,7 +89,7 @@ describe('RouteController', () => {
     test('sets state and notifies router', () => {
       controller.setError(error);
 
-      expect(controller['_state']).toStrictEqual({ status: 'error', error } satisfies RouteState);
+      expect(controller._state).toStrictEqual({ status: 'error', error } satisfies RouteState);
       expect(routeListenerMock).toHaveBeenCalledTimes(1);
       expect(routeListenerMock).toHaveBeenNthCalledWith(1, { type: 'error', controller, error } satisfies RouterEvent);
     });
@@ -97,10 +97,10 @@ describe('RouteController', () => {
     test('aborts loading promise', async () => {
       const promise = new AbortablePromise<void>(noop);
 
-      controller['_loadingPromise'] = promise;
+      controller._loadingPromise = promise;
       controller.setError(error);
 
-      expect(controller['_loadingPromise']).toBeNull();
+      expect(controller._loadingPromise).toBeNull();
       expect(routeListenerMock).toHaveBeenCalledTimes(1);
 
       await expect(promise).rejects.toStrictEqual(AbortError('Route loading was aborted'));
@@ -125,7 +125,7 @@ describe('RouteController', () => {
     test('sets state and notifies router', () => {
       controller.setData(data);
 
-      expect(controller['_state']).toStrictEqual({ status: 'ready', data } satisfies RouteState);
+      expect(controller._state).toStrictEqual({ status: 'ready', data } satisfies RouteState);
       expect(routeListenerMock).toHaveBeenCalledTimes(1);
       expect(routeListenerMock).toHaveBeenNthCalledWith(1, { type: 'ready', controller } satisfies RouterEvent);
     });
@@ -133,10 +133,10 @@ describe('RouteController', () => {
     test('aborts loading promise', async () => {
       const promise = new AbortablePromise<void>(noop);
 
-      controller['_loadingPromise'] = promise;
+      controller._loadingPromise = promise;
       controller.setData(data);
 
-      expect(controller['_loadingPromise']).toBeNull();
+      expect(controller._loadingPromise).toBeNull();
       expect(routeListenerMock).toHaveBeenCalledTimes(1);
 
       await expect(promise).rejects.toStrictEqual(AbortError('Route loading was aborted'));
@@ -163,8 +163,8 @@ describe('RouteController', () => {
     test('synchronously sets controller state', () => {
       controller.reload();
 
-      expect(controller['_loadingPromise']).toBeNull();
-      expect(controller['_state']).toStrictEqual({ status: 'ready', data: undefined } satisfies RouteState);
+      expect(controller._loadingPromise).toBeNull();
+      expect(controller._state).toStrictEqual({ status: 'ready', data: undefined } satisfies RouteState);
       expect(routeListenerMock).toHaveBeenCalledTimes(1);
       expect(routeListenerMock).toHaveBeenNthCalledWith(1, { type: 'ready', controller } satisfies RouterEvent);
     });
@@ -180,14 +180,14 @@ describe('RouteController', () => {
 
       controller.reload();
 
-      expect(controller['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
+      expect(controller._state).toStrictEqual({ status: 'loading' } satisfies RouteState);
       expect(routeListenerMock).toHaveBeenCalledTimes(1);
       expect(routeListenerMock).toHaveBeenNthCalledWith(1, { type: 'loading', controller } satisfies RouterEvent);
 
-      await controller['_loadingPromise']!.catch(noop);
+      await controller._loadingPromise!.catch(noop);
 
-      expect(controller['_loadingPromise']).toBeNull();
-      expect(controller['_state']).toStrictEqual({ status: 'ready', data: { zzz: 777 } } satisfies RouteState);
+      expect(controller._loadingPromise).toBeNull();
+      expect(controller._state).toStrictEqual({ status: 'ready', data: { zzz: 777 } } satisfies RouteState);
       expect(controller.route.component).toBe(Component);
       expect(routeListenerMock).toHaveBeenCalledTimes(2);
       expect(routeListenerMock).toHaveBeenNthCalledWith(2, { type: 'ready', controller } satisfies RouterEvent);
@@ -204,15 +204,15 @@ describe('RouteController', () => {
       controller.setData('zzz');
       controller.reload();
 
-      expect(controller['_state']).toStrictEqual({ status: 'ready', data: 'zzz' } satisfies RouteState);
+      expect(controller._state).toStrictEqual({ status: 'ready', data: 'zzz' } satisfies RouteState);
       expect(routeListenerMock).toHaveBeenCalledTimes(2);
       expect(routeListenerMock).toHaveBeenNthCalledWith(1, { type: 'ready', controller } satisfies RouterEvent);
       expect(routeListenerMock).toHaveBeenNthCalledWith(2, { type: 'loading', controller } satisfies RouterEvent);
 
-      await controller['_loadingPromise']!.catch(noop);
+      await controller._loadingPromise!.catch(noop);
 
-      expect(controller['_loadingPromise']).toBeNull();
-      expect(controller['_state']).toStrictEqual({ status: 'ready', data: undefined } satisfies RouteState);
+      expect(controller._loadingPromise).toBeNull();
+      expect(controller._state).toStrictEqual({ status: 'ready', data: undefined } satisfies RouteState);
       expect(controller.route.component).toBe(Component);
       expect(routeListenerMock).toHaveBeenCalledTimes(3);
       expect(routeListenerMock).toHaveBeenNthCalledWith(3, { type: 'ready', controller } satisfies RouterEvent);
@@ -230,15 +230,15 @@ describe('RouteController', () => {
       controller.setData('zzz');
       controller.reload();
 
-      expect(controller['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
+      expect(controller._state).toStrictEqual({ status: 'loading' } satisfies RouteState);
       expect(routeListenerMock).toHaveBeenCalledTimes(2);
       expect(routeListenerMock).toHaveBeenNthCalledWith(1, { type: 'ready', controller } satisfies RouterEvent);
       expect(routeListenerMock).toHaveBeenNthCalledWith(2, { type: 'loading', controller } satisfies RouterEvent);
 
-      await controller['_loadingPromise']!.catch(noop);
+      await controller._loadingPromise!.catch(noop);
 
-      expect(controller['_loadingPromise']).toBeNull();
-      expect(controller['_state']).toStrictEqual({ status: 'ready', data: undefined } satisfies RouteState);
+      expect(controller._loadingPromise).toBeNull();
+      expect(controller._state).toStrictEqual({ status: 'ready', data: undefined } satisfies RouteState);
       expect(controller.route.component).toBe(Component);
       expect(routeListenerMock).toHaveBeenCalledTimes(3);
       expect(routeListenerMock).toHaveBeenNthCalledWith(3, { type: 'ready', controller } satisfies RouterEvent);
@@ -256,7 +256,7 @@ describe('RouteController', () => {
       controller.setError('zzz');
       controller.reload();
 
-      expect(controller['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
+      expect(controller._state).toStrictEqual({ status: 'loading' } satisfies RouteState);
       expect(routeListenerMock).toHaveBeenCalledTimes(2);
 
       expect(routeListenerMock).toHaveBeenNthCalledWith(1, {
@@ -267,10 +267,10 @@ describe('RouteController', () => {
 
       expect(routeListenerMock).toHaveBeenNthCalledWith(2, { type: 'loading', controller } satisfies RouterEvent);
 
-      await controller['_loadingPromise']!.catch(noop);
+      await controller._loadingPromise!.catch(noop);
 
-      expect(controller['_loadingPromise']).toBeNull();
-      expect(controller['_state']).toStrictEqual({ status: 'ready', data: undefined } satisfies RouteState);
+      expect(controller._loadingPromise).toBeNull();
+      expect(controller._state).toStrictEqual({ status: 'ready', data: undefined } satisfies RouteState);
       expect(controller.route.component).toBe(Component);
       expect(routeListenerMock).toHaveBeenCalledTimes(3);
       expect(routeListenerMock).toHaveBeenNthCalledWith(3, { type: 'ready', controller } satisfies RouterEvent);
@@ -286,12 +286,12 @@ describe('RouteController', () => {
 
       controller.reload();
 
-      const promise = controller['_loadingPromise'];
+      const promise = controller._loadingPromise;
 
       controller.reload();
 
       expect(promise).not.toBeNull();
-      expect(controller['_loadingPromise']).toBe(promise);
+      expect(controller._loadingPromise).toBe(promise);
       await expect(promise).resolves.toBeUndefined();
 
       expect(routeListenerMock).toHaveBeenCalledTimes(2);
@@ -315,7 +315,7 @@ describe('RouteController', () => {
       controller.setData('zzz');
       controller.abort();
 
-      expect(controller['_state']).toStrictEqual({ status: 'ready', data: 'zzz' } satisfies RouteState);
+      expect(controller._state).toStrictEqual({ status: 'ready', data: 'zzz' } satisfies RouteState);
     });
 
     test('aborts pending route loading and sets error state', async () => {
@@ -328,13 +328,13 @@ describe('RouteController', () => {
 
       controller.reload();
 
-      const promise = controller['_loadingPromise'];
+      const promise = controller._loadingPromise;
 
       controller.abort('xxx');
 
       expect(promise).not.toBeNull();
-      expect(controller['_state']).toStrictEqual({ status: 'error', error: 'xxx' } satisfies RouteState);
-      expect(controller['_loadingPromise']).toBeNull();
+      expect(controller._state).toStrictEqual({ status: 'error', error: 'xxx' } satisfies RouteState);
+      expect(controller._loadingPromise).toBeNull();
       await expect(promise).rejects.toStrictEqual('xxx');
     });
 
@@ -350,13 +350,13 @@ describe('RouteController', () => {
 
       controller.reload();
 
-      const promise = controller['_loadingPromise'];
+      const promise = controller._loadingPromise;
 
       controller.abort('xxx');
 
       expect(promise).not.toBeNull();
-      expect(controller['_state']).toStrictEqual({ status: 'ready', data: 'zzz' } satisfies RouteState);
-      expect(controller['_loadingPromise']).toBeNull();
+      expect(controller._state).toStrictEqual({ status: 'ready', data: 'zzz' } satisfies RouteState);
+      expect(controller._loadingPromise).toBeNull();
       await expect(promise).rejects.toStrictEqual('xxx');
 
       expect(routeListenerMock).toHaveBeenCalledTimes(3);
