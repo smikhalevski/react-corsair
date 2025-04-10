@@ -1,5 +1,5 @@
 import React, { Component, ComponentType, createContext, ReactElement, ReactNode, Suspense, useContext } from 'react';
-import { createErrorState, RouteController } from './RouteController';
+import { createErrorState, NO_BOUNDARY_ERROR, RouteController } from './RouteController';
 import { Router } from './Router';
 import { redirect } from './redirect';
 import { notFound } from './notFound';
@@ -113,7 +113,29 @@ class OutletErrorBoundary extends Component<OutletErrorBoundaryProps, OutletErro
       return null;
     }
 
-    (nextProps.controller.fallbackController || nextProps.controller)['_setState'](createErrorState(prevState.error));
+    const { error } = prevState;
+    const controller = nextProps.controller.fallbackController || nextProps.controller;
+    const nextState = createErrorState(error);
+    const renderedState = controller['_renderedState'];
+
+    if (controller['_boundaryError'] !== error) {
+      // Handle each error only once
+      controller['_boundaryError'] = error;
+      controller['_setState'](nextState);
+    }
+
+    if (
+      // Cannot render the same state after it has caused an error
+      renderedState.status === nextState.status ||
+      // Cannot redirect from a loading component, because redirect renders a loading component itself
+      // (renderedState.status === 'loading' && nextState.status === 'redirect') ||
+      // Rendering would cause an error anyway, because there's no component to render
+      (nextState.status === 'not_found' && controller.notFoundComponent === undefined) ||
+      (nextState.status === 'redirect' && controller.loadingComponent === undefined) ||
+      (nextState.status === 'error' && controller.errorComponent === undefined)
+    ) {
+      throw error;
+    }
 
     return { hasError: false, error: null };
   }
@@ -141,15 +163,18 @@ class OutletErrorBoundary extends Component<OutletErrorBoundaryProps, OutletErro
     const { controller } = this.props;
 
     const fallback =
-      (controller.state.status === 'ok' || controller.state.status === 'loading') &&
-      ((controller.fallbackController !== null && <OutletContent controller={controller.fallbackController} />) ||
-        (controller.loadingComponent !== undefined && (
+      // Show fallback controller only during initial component and data loading
+      (controller.state.status === 'loading' && controller.fallbackController !== null && (
+        <OutletContent controller={controller.fallbackController} />
+      )) ||
+      ((controller.state.status === 'ok' || controller.state.status === 'loading') &&
+        controller.loadingComponent !== undefined && (
           <RouteControllerProvider value={controller}>
             <OutletContentProvider value={null}>
               <OutletRenderer component={controller.loadingComponent} />
             </OutletContentProvider>
           </RouteControllerProvider>
-        )));
+        ));
 
     if (fallback === false) {
       return <OutletContent controller={controller} />;
@@ -174,6 +199,9 @@ function OutletContent(props: OutletContentProps): ReactNode {
   const { controller } = props;
   const { route } = controller;
   const { status } = controller.state;
+
+  controller['_boundaryError'] = NO_BOUNDARY_ERROR;
+  controller['_renderedState'] = controller.state;
 
   let component;
   let childController = null;

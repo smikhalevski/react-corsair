@@ -7,6 +7,8 @@ import { Redirect } from './redirect';
 import { Route } from './Route';
 import { ComponentType } from 'react';
 
+export const NO_BOUNDARY_ERROR: any = {};
+
 /**
  * Manages state of a route rendered in an {@link Outlet}.
  *
@@ -45,6 +47,18 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
    * A router context that was provided to a {@link route} {@link RouteOptions.dataLoader data loader}.
    */
   readonly context: Context;
+
+  /**
+   * An error that was captured by the error boundary but not rendered yet.
+   * @internal
+   */
+  protected _boundaryError = NO_BOUNDARY_ERROR;
+
+  /**
+   * A state that was rendered the last time.
+   * @internal
+   */
+  protected _renderedState = this.state;
 
   /**
    * Creates a new {@link RouteController} instance.

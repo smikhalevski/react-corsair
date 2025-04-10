@@ -368,7 +368,7 @@ test('not found bubbles to the closest route with a notFoundComponent', () => {
   expect(router.rootController!.state).toStrictEqual({ status: 'not_found' } satisfies RouteState);
   expect(renderResult.container.innerHTML).toBe('AAA');
 
-  expect(listenerMock).toHaveBeenCalledTimes(7);
+  expect(listenerMock).toHaveBeenCalledTimes(5);
 
   expect(listenerMock).toHaveBeenNthCalledWith(1, {
     type: 'navigate',
@@ -393,19 +393,7 @@ test('not found bubbles to the closest route with a notFoundComponent', () => {
     controller: router.rootController!.childController!,
   } satisfies RouterEvent);
 
-  // Caused by StrictMode
   expect(listenerMock).toHaveBeenNthCalledWith(5, {
-    type: 'not_found',
-    controller: router.rootController!.childController!,
-  } satisfies RouterEvent);
-
-  expect(listenerMock).toHaveBeenNthCalledWith(6, {
-    type: 'not_found',
-    controller: router.rootController!,
-  } satisfies RouterEvent);
-
-  // Caused by StrictMode
-  expect(listenerMock).toHaveBeenNthCalledWith(7, {
     type: 'not_found',
     controller: router.rootController!,
   } satisfies RouterEvent);
@@ -486,7 +474,7 @@ test('redirect bubbles to the closest route with a loadingComponent', () => {
   expect(router.rootController!.state).toStrictEqual({ status: 'redirect', to: 'zzz' } satisfies RouteState);
   expect(renderResult.container.innerHTML).toBe('AAA');
 
-  expect(listenerMock).toHaveBeenCalledTimes(7);
+  expect(listenerMock).toHaveBeenCalledTimes(5);
 
   expect(listenerMock).toHaveBeenNthCalledWith(1, {
     type: 'navigate',
@@ -512,21 +500,65 @@ test('redirect bubbles to the closest route with a loadingComponent', () => {
     to: 'zzz',
   } satisfies RouterEvent);
 
-  // Caused by StrictMode
   expect(listenerMock).toHaveBeenNthCalledWith(5, {
-    type: 'redirect',
-    controller: router.rootController!.childController!,
-    to: 'zzz',
-  } satisfies RouterEvent);
-
-  expect(listenerMock).toHaveBeenNthCalledWith(6, {
     type: 'redirect',
     controller: router.rootController!,
     to: 'zzz',
   } satisfies RouterEvent);
+});
 
-  // Caused by StrictMode
-  expect(listenerMock).toHaveBeenNthCalledWith(7, {
+test('redirect can be thrown from errorComponent', () => {
+  const listenerMock = jest.fn();
+
+  const error = new Error('Expected');
+
+  const route = createRoute({
+    pathname: '/aaa',
+    component: () => {
+      throw error;
+    },
+    loadingComponent: () => 'AAA',
+    errorComponent: () => redirect('zzz'),
+  });
+
+  const router = new Router({ routes: [route] });
+
+  router.subscribe(listenerMock);
+  router.navigate(route);
+
+  const renderResult = render(
+    <StrictMode>
+      <RouterProvider value={router}>
+        <Outlet />
+      </RouterProvider>
+    </StrictMode>
+  );
+
+  expect(router.rootController!.state).toStrictEqual({ status: 'redirect', to: 'zzz' } satisfies RouteState);
+  expect(renderResult.container.innerHTML).toBe('AAA');
+
+  expect(listenerMock).toHaveBeenCalledTimes(4);
+
+  expect(listenerMock).toHaveBeenNthCalledWith(1, {
+    type: 'navigate',
+    controller: router.rootController,
+    router,
+    location: { pathname: '/aaa', searchParams: {}, hash: '', state: undefined },
+    isIntercepted: false,
+  } satisfies RouterEvent);
+
+  expect(listenerMock).toHaveBeenNthCalledWith(2, {
+    type: 'ready',
+    controller: router.rootController!,
+  } satisfies RouterEvent);
+
+  expect(listenerMock).toHaveBeenNthCalledWith(3, {
+    type: 'error',
+    controller: router.rootController!,
+    error,
+  } satisfies RouterEvent);
+
+  expect(listenerMock).toHaveBeenNthCalledWith(4, {
     type: 'redirect',
     controller: router.rootController!,
     to: 'zzz',
