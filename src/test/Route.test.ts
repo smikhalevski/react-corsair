@@ -1,4 +1,4 @@
-import { createRoute, Outlet, ParamsAdapter, Location } from '../main';
+import { createRoute, Location, Outlet, ParamsAdapter } from '../main';
 
 const Component = () => null;
 
@@ -191,11 +191,12 @@ describe('getLocation', () => {
   });
 });
 
-describe('getOrLoadComponent', () => {
-  test('returns an Outlet if there is no component', () => {
+describe('loadComponent', () => {
+  test('returns an Outlet if there is no component', async () => {
     const route = createRoute();
 
-    expect(route.getOrLoadComponent()).toBe(Outlet);
+    expect(route.component).toBe(Outlet);
+    await expect(route.loadComponent()).resolves.toBe(Outlet);
   });
 
   test("throws if lazyComponent doesn't return a module", async () => {
@@ -203,7 +204,7 @@ describe('getOrLoadComponent', () => {
       lazyComponent: () => Promise.resolve<any>({ foo: Component }),
     });
 
-    await expect(route.getOrLoadComponent()).rejects.toStrictEqual(
+    await expect(route.loadComponent()).rejects.toStrictEqual(
       new TypeError('Module loaded by a lazyComponent must default-export a component')
     );
   });
@@ -213,7 +214,7 @@ describe('getOrLoadComponent', () => {
       component: Component,
     });
 
-    expect(route.getOrLoadComponent()).toBe(Component);
+    await expect(route.loadComponent()).resolves.toBe(Component);
   });
 
   test('loads a lazy component', async () => {
@@ -221,7 +222,7 @@ describe('getOrLoadComponent', () => {
       lazyComponent: () => Promise.resolve({ default: Component }),
     });
 
-    await expect(route.getOrLoadComponent()).resolves.toStrictEqual(Component);
+    await expect(route.loadComponent()).resolves.toStrictEqual(Component);
   });
 
   test('throws if lazy component module does not default-export a function', async () => {
@@ -229,7 +230,7 @@ describe('getOrLoadComponent', () => {
       lazyComponent: () => Promise.resolve({ default: 'not_a_function' as any }),
     });
 
-    await expect(() => route.getOrLoadComponent()).rejects.toStrictEqual(
+    await expect(() => route.loadComponent()).rejects.toStrictEqual(
       new TypeError('Module loaded by a lazyComponent must default-export a component')
     );
   });
@@ -239,7 +240,7 @@ describe('getOrLoadComponent', () => {
       lazyComponent: () => Promise.reject(111),
     });
 
-    await expect(() => route.getOrLoadComponent()).rejects.toBe(111);
+    await expect(() => route.loadComponent()).rejects.toBe(111);
   });
 
   test('does not load a lazy component twice', async () => {
@@ -249,9 +250,9 @@ describe('getOrLoadComponent', () => {
       lazyComponent: lazyComponentMock,
     });
 
-    await route.getOrLoadComponent();
-    await route.getOrLoadComponent();
-    await route.getOrLoadComponent();
+    await route.loadComponent();
+    await route.loadComponent();
+    await route.loadComponent();
 
     expect(lazyComponentMock).toHaveBeenCalledTimes(1);
   });
@@ -266,10 +267,10 @@ describe('getOrLoadComponent', () => {
       lazyComponent: lazyComponentMock,
     });
 
-    await expect(() => route.getOrLoadComponent()).rejects.toStrictEqual(
+    await expect(() => route.loadComponent()).rejects.toStrictEqual(
       new TypeError('Module loaded by a lazyComponent must default-export a component')
     );
-    await expect(route.getOrLoadComponent()).resolves.toStrictEqual(Component);
+    await expect(route.loadComponent()).resolves.toStrictEqual(Component);
 
     expect(lazyComponentMock).toHaveBeenCalledTimes(2);
   });
@@ -281,9 +282,11 @@ describe('getOrLoadComponent', () => {
       lazyComponent: lazyComponentMock,
     });
 
-    await route.getOrLoadComponent();
+    const promise = route.loadComponent();
 
-    expect(route.getOrLoadComponent()).toBe(Component);
+    await promise;
+
+    expect(route.loadComponent()).toBe(promise);
 
     expect(lazyComponentMock).toHaveBeenCalledTimes(1);
   });
@@ -295,6 +298,6 @@ describe('getOrLoadComponent', () => {
       },
     });
 
-    await expect(route.getOrLoadComponent()).rejects.toStrictEqual(new Error('expected'));
+    await expect(route.loadComponent()).rejects.toStrictEqual(new Error('expected'));
   });
 });

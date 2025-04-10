@@ -96,7 +96,7 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
     // Client-only route, no hydration
     if (controller.route.renderingDisposition !== 'server') {
       for (; i < controllers.length; ++i) {
-        controllers[i].load();
+        controllers[i].reload();
       }
       break;
     }
@@ -107,9 +107,9 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
     }
 
     // Server-rendering is in progress, defer hydration
-    if (controller.state.status === 'loading') {
-      controller.loadingPromise = new AbortablePromise(noop);
-      controller.loadingPromise.catch(noop);
+    if (controller.status === 'loading') {
+      controller['_loadingPromise'] = new AbortablePromise(noop);
+      controller['_loadingPromise'].catch(noop);
     }
   }
 

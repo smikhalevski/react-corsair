@@ -121,7 +121,7 @@ test('renders route errorComponent if an error is thrown during rendering', () =
     </StrictMode>
   );
 
-  expect(router.rootController!.state).toStrictEqual({ status: 'error', error } satisfies RouteState);
+  expect(router.rootController!._state).toStrictEqual({ status: 'error', error } satisfies RouteState);
   expect(renderResult.container.innerHTML).toBe('XXX');
 });
 
@@ -152,7 +152,7 @@ test('renders router errorComponent if an error is thrown during rendering', () 
     </StrictMode>
   );
 
-  expect(router.rootController!.state).toStrictEqual({ status: 'error', error } satisfies RouteState);
+  expect(router.rootController!._state).toStrictEqual({ status: 'error', error } satisfies RouteState);
   expect(renderResult.container.innerHTML).toBe('XXX');
 });
 
@@ -185,8 +185,8 @@ test('error bubbles to the closest route with an errorComponent', () => {
     </StrictMode>
   );
 
-  expect(router.rootController!.state).toStrictEqual({ status: 'error', error } satisfies RouteState);
-  expect(router.rootController!.childController!.state).toStrictEqual({ status: 'error', error } satisfies RouteState);
+  expect(router.rootController!._state).toStrictEqual({ status: 'error', error } satisfies RouteState);
+  expect(router.rootController!.childController!._state).toStrictEqual({ status: 'error', error } satisfies RouteState);
   expect(renderResult.container.innerHTML).toBe('XXX');
 });
 
@@ -214,7 +214,7 @@ test('rendering throws an error if no errorComponent exists', () => {
     )
   ).toThrow(error);
 
-  expect(router.rootController!.state).toStrictEqual({ status: 'error', error } satisfies RouteState);
+  expect(router.rootController!._state).toStrictEqual({ status: 'error', error } satisfies RouteState);
 });
 
 test('renders loadingComponent of a route', () => {
@@ -236,7 +236,7 @@ test('renders loadingComponent of a route', () => {
     </StrictMode>
   );
 
-  expect(router.rootController!.state).toStrictEqual({ status: 'loading' } satisfies RouteState);
+  expect(router.rootController!._state).toStrictEqual({ status: 'loading' } satisfies RouteState);
   expect(renderResult.container.innerHTML).toBe('AAA');
 });
 
@@ -261,7 +261,7 @@ test('renders loadingComponent of a router', () => {
     </StrictMode>
   );
 
-  expect(router.rootController!.state).toStrictEqual({ status: 'loading' } satisfies RouteState);
+  expect(router.rootController!._state).toStrictEqual({ status: 'loading' } satisfies RouteState);
   expect(renderResult.container.innerHTML).toBe('AAA');
 });
 
@@ -288,8 +288,8 @@ test('loading bubbles to the closest route with a loadingComponent', () => {
     </StrictMode>
   );
 
-  expect(router.rootController!.state).toStrictEqual({ status: 'ok', data: undefined } satisfies RouteState);
-  expect(router.rootController!.childController!.state).toStrictEqual({ status: 'loading' } satisfies RouteState);
+  expect(router.rootController!._state).toStrictEqual({ status: 'ready', data: undefined } satisfies RouteState);
+  expect(router.rootController!.childController!._state).toStrictEqual({ status: 'loading' } satisfies RouteState);
   expect(renderResult.container.innerHTML).toBe('AAA');
 });
 
@@ -312,7 +312,7 @@ test('renders notFoundComponent if notFound is called during rendering', () => {
     </StrictMode>
   );
 
-  expect(router.rootController!.state).toStrictEqual({ status: 'not_found' } satisfies RouteState);
+  expect(router.rootController!._state).toStrictEqual({ status: 'not_found' } satisfies RouteState);
   expect(renderResult.container.innerHTML).toBe('AAA');
 });
 
@@ -335,7 +335,7 @@ test('renders notFoundComponent if notFound is called from data loader', () => {
     </StrictMode>
   );
 
-  expect(router.rootController!.state).toStrictEqual({ status: 'not_found' } satisfies RouteState);
+  expect(router.rootController!._state).toStrictEqual({ status: 'not_found' } satisfies RouteState);
   expect(renderResult.container.innerHTML).toBe('AAA');
 });
 
@@ -365,7 +365,7 @@ test('not found bubbles to the closest route with a notFoundComponent', () => {
     </StrictMode>
   );
 
-  expect(router.rootController!.state).toStrictEqual({ status: 'not_found' } satisfies RouteState);
+  expect(router.rootController!._state).toStrictEqual({ status: 'not_found' } satisfies RouteState);
   expect(renderResult.container.innerHTML).toBe('AAA');
 
   expect(listenerMock).toHaveBeenCalledTimes(5);
@@ -418,7 +418,7 @@ test('renders loadingComponent if redirect is called during rendering', () => {
     </StrictMode>
   );
 
-  expect(router.rootController!.state).toStrictEqual({ status: 'redirect', to: 'zzz' } satisfies RouteState);
+  expect(router.rootController!._state).toStrictEqual({ status: 'redirect', to: 'zzz' } satisfies RouteState);
   expect(renderResult.container.innerHTML).toBe('AAA');
 });
 
@@ -441,7 +441,7 @@ test('renders loadingComponent if redirect is called from a data loader', () => 
     </StrictMode>
   );
 
-  expect(router.rootController!.state).toStrictEqual({ status: 'redirect', to: 'zzz' } satisfies RouteState);
+  expect(router.rootController!._state).toStrictEqual({ status: 'redirect', to: 'zzz' } satisfies RouteState);
   expect(renderResult.container.innerHTML).toBe('AAA');
 });
 
@@ -471,7 +471,7 @@ test('redirect bubbles to the closest route with a loadingComponent', () => {
     </StrictMode>
   );
 
-  expect(router.rootController!.state).toStrictEqual({ status: 'redirect', to: 'zzz' } satisfies RouteState);
+  expect(router.rootController!._state).toStrictEqual({ status: 'redirect', to: 'zzz' } satisfies RouteState);
   expect(renderResult.container.innerHTML).toBe('AAA');
 
   expect(listenerMock).toHaveBeenCalledTimes(5);
@@ -534,7 +534,7 @@ test('redirect can be thrown from errorComponent', () => {
     </StrictMode>
   );
 
-  expect(router.rootController!.state).toStrictEqual({ status: 'redirect', to: 'zzz' } satisfies RouteState);
+  expect(router.rootController!._state).toStrictEqual({ status: 'redirect', to: 'zzz' } satisfies RouteState);
   expect(renderResult.container.innerHTML).toBe('AAA');
 
   expect(listenerMock).toHaveBeenCalledTimes(4);

@@ -41,7 +41,6 @@ export {
   type LoadingAppearance,
   type RenderingDisposition,
   type DataLoaderOptions,
-  type Fallbacks,
   type ComponentModule,
   type RouteOptions,
   type RouterOptions,

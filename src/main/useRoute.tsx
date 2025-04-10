@@ -43,7 +43,7 @@ export function useRoute(route?: Route) {
 
   const subscribe = useCallback(controller.router.subscribe.bind(controller.router), [controller]);
 
-  const getSnapshot = () => controller.state;
+  const getSnapshot = () => controller['_state'];
 
   useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 

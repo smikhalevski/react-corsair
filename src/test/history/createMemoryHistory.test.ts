@@ -1,6 +1,5 @@
 import { createMemoryHistory, HistoryTransaction } from '../../main/history';
 import { createRoute, Location } from '../../main';
-import { HistoryBlocker } from '../../main/history/types';
 
 test('throws if there is no initial entry', () => {
   expect(() => createMemoryHistory([])).toThrow(new Error('Expected at least one initial entry'));

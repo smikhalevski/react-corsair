@@ -1,6 +1,5 @@
 import { render } from '@testing-library/react';
 import { createRoute, Router, RouterProvider, useInterceptedRoute } from '../main';
-import { noop } from '../main/utils';
 import React, { act, StrictMode } from 'react';
 
 test('returns the intercepted controller of the provided route or null', () => {

@@ -22,28 +22,28 @@ export function reconcileControllers(
     if (replacedController === null || replacedController.route !== routeMatch.route) {
       // Route has changed
 
-      if (replacedController !== null && replacedController.state.status === 'ok' && loadingAppearance === 'avoid') {
+      if (replacedController !== null && replacedController.status === 'ready' && loadingAppearance === 'avoid') {
         // Keep the current page on screen
         controller.fallbackController = replacedController;
       }
 
       replacedController = null;
     } else if (
-      replacedController.context !== router.context ||
+      replacedController['_context'] !== router.context ||
       !isDeepEqual(replacedController.params, routeMatch.params)
     ) {
       // Params or router context have changed
 
-      if (replacedController.state.status === 'ok' && loadingAppearance !== 'loading') {
+      if (replacedController.status === 'ready' && loadingAppearance !== 'loading') {
         // Keep the current page on screen
         controller.fallbackController = replacedController;
       }
 
       replacedController = replacedController.childController;
     } else {
-      if (replacedController.state.status !== 'loading') {
+      if (replacedController.status !== 'loading') {
         // Nothing has changed and route is loaded
-        controller.state = replacedController.state;
+        controller['_state'] = replacedController['_state'];
       }
 
       replacedController = replacedController.childController;

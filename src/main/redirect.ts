@@ -1,4 +1,4 @@
-import { Location, To } from './types';
+import { To } from './types';
 import { toLocation } from './utils';
 
 /**
@@ -8,7 +8,7 @@ import { toLocation } from './utils';
  * @group Routing
  */
 export function redirect(to: To | string): never {
-  throw new Redirect(typeof to === 'string' ? to : toLocation(to));
+  throw new Redirect(to);
 }
 
 /**
@@ -19,10 +19,14 @@ export function redirect(to: To | string): never {
  * @group Routing
  */
 export class Redirect {
+  readonly to;
+
   /**
    * Creates a new {@link Redirect} instance.
    *
    * @param to A location or a URL to redirect to.
    */
-  constructor(public to: Location | string) {}
+  constructor(to: To | string) {
+    this.to = typeof to === 'string' ? to : toLocation(to);
+  }
 }
