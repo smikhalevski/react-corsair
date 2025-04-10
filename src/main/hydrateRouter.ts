@@ -45,7 +45,7 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
 
   window.__REACT_CORSAIR_SSR_STATE__ = {
     set(index, stateStr) {
-      controllers[index]['_setState'](stateParser(stateStr));
+      setControllerState(controllers[index], stateParser(stateStr));
     },
   };
 
@@ -61,7 +61,7 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
 
     if (i !== 0) {
       controller.parentController = controllers[i - 1];
-      controllers[i - 1].childController = controller;
+      controllers[i - 1].nestedController = controller;
     }
   }
 
@@ -103,15 +103,20 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
 
     // Hydrated state already available
     if (ssrState !== undefined && ssrState.has(i)) {
-      controller['_setState'](stateParser(ssrState.get(i)));
+      setControllerState(controller, stateParser(ssrState.get(i)));
     }
 
     // Server-rendering is in progress, defer hydration
     if (controller.status === 'loading') {
-      controller._loadingPromise = new AbortablePromise(noop);
-      controller._loadingPromise.catch(noop);
+      // Start loading component prematurely
+      void controller.route.loadComponent();
+
+      controller.loadingPromise = new AbortablePromise(noop);
+      controller.loadingPromise.catch(noop);
     }
   }
 
   return router;
 }
+
+function setControllerState(controller: RouteController, state: RouteState) {}

@@ -18,8 +18,8 @@ export function AbortError(message: string): Error {
 }
 
 export function getTailController(controller: RouteController | null): RouteController | null {
-  while (controller !== null && controller.childController !== null) {
-    controller = controller.childController;
+  while (controller !== null && controller.nestedController !== null) {
+    controller = controller.nestedController;
   }
   return controller;
 }

@@ -1,11 +1,9 @@
 import React, { Component, ComponentType, createContext, ReactElement, ReactNode, Suspense, useContext } from 'react';
-import { createErrorState, NO_CAPTURED_ERROR, RouteController } from './RouteController';
 import { Router } from './Router';
-import { redirect } from './__redirect';
-import { notFound } from './__notFound';
 import { RouterEvent } from './__types';
 import { RouteControllerProvider } from './useRoute';
 import { noop } from './utils';
+import { RouteController } from './RouteController';
 
 const OutletContentContext = createContext<RouteController | Router | null>(null);
 
@@ -84,6 +82,7 @@ interface OutletErrorBoundaryProps {
 }
 
 interface OutletErrorBoundaryState {
+  controller: RouteController;
   hasError: boolean;
   error: unknown;
 }
@@ -91,15 +90,23 @@ interface OutletErrorBoundaryState {
 class OutletErrorBoundary extends Component<OutletErrorBoundaryProps, OutletErrorBoundaryState> {
   static displayName = 'OutletErrorBoundary';
 
-  state = { hasError: false, error: null };
-
   unsubscribe = noop;
 
   routerListener = (event: RouterEvent) => {
-    if (this.props.controller === event.controller) {
-      this.forceUpdate();
+    if (this.state.controller === event.controller) {
+      this.setState({});
     }
   };
+
+  constructor(props: OutletErrorBoundaryProps) {
+    super(props);
+
+    this.state = {
+      controller: props.controller,
+      hasError: false,
+      error: null,
+    };
+  }
 
   static getDerivedStateFromError(error: unknown): Partial<OutletErrorBoundaryState> | null {
     return { hasError: true, error };
@@ -109,49 +116,31 @@ class OutletErrorBoundary extends Component<OutletErrorBoundaryProps, OutletErro
     nextProps: Readonly<OutletErrorBoundaryProps>,
     prevState: OutletErrorBoundaryState
   ): Partial<OutletErrorBoundaryState> | null {
+    if (nextProps.controller !== prevState.controller) {
+      return {
+        controller: nextProps.controller,
+        hasError: false,
+        error: null,
+      };
+    }
+
     if (!prevState.hasError) {
       return null;
     }
 
-    const { error } = prevState;
-    const controller = nextProps.controller.fallbackController || nextProps.controller;
-    const nextState = createErrorState(error);
-    const renderedState = controller['_renderedState'];
-
-    if (controller['_capturedError'] !== error) {
-      // Handle each error only once
-      controller['_capturedError'] = error;
-      controller['_setState'](nextState);
-    }
-
-    if (
-      // Cannot render the same state after it has caused an error
-      renderedState.status === nextState.status ||
-      // Cannot redirect from a loading component, because redirect renders a loading component itself
-      // (renderedState.status === 'loading' && nextState.status === 'redirect') ||
-      // Rendering would cause an error anyway, because there's no component to render
-      (nextState.status === 'not_found' && controller.notFoundComponent === undefined) ||
-      (nextState.status === 'redirect' && controller.loadingComponent === undefined) ||
-      (nextState.status === 'error' && controller.errorComponent === undefined)
-    ) {
-      throw error;
-    }
+    (nextProps.controller['_supersededController'] || nextProps.controller)['_catch'](prevState.error);
 
     return { hasError: false, error: null };
   }
 
-  shouldComponentUpdate(nextProps: Readonly<OutletErrorBoundaryProps>): boolean {
-    return this.props.controller !== nextProps.controller;
-  }
-
   componentDidMount() {
-    this.unsubscribe = this.props.controller.router.subscribe(this.routerListener);
+    this.unsubscribe = this.state.controller.router.subscribe(this.routerListener);
   }
 
-  componentDidUpdate(prevProps: Readonly<OutletErrorBoundaryProps>) {
-    if (this.props.controller !== prevProps.controller) {
+  componentDidUpdate(_prevProps: Readonly<OutletErrorBoundaryProps>, prevState: Readonly<OutletErrorBoundaryState>) {
+    if (this.state.controller !== prevState.controller) {
       this.unsubscribe();
-      this.unsubscribe = this.props.controller.router.subscribe(this.routerListener);
+      this.unsubscribe = this.state.controller.router.subscribe(this.routerListener);
     }
   }
 
@@ -160,18 +149,18 @@ class OutletErrorBoundary extends Component<OutletErrorBoundaryProps, OutletErro
   }
 
   render(): ReactNode {
-    const { controller } = this.props;
+    const { controller } = this.state;
 
     const fallback =
-      // Show fallback controller only during initial component and data loading
-      (controller._state.status === 'loading' && controller.fallbackController !== null && (
-        <OutletContent controller={controller.fallbackController} />
+      // Superseded controller is available only during initial component and data loading
+      (controller['_supersededController'] !== null && (
+        <OutletContent controller={controller['_supersededController']} />
       )) ||
-      ((controller._state.status === 'ready' || controller._state.status === 'loading') &&
-        controller.loadingComponent !== undefined && (
+      ((controller.status === 'ready' || controller.status === 'loading') &&
+        controller['_loadingComponent'] !== undefined && (
           <RouteControllerProvider value={controller}>
             <OutletContentProvider value={null}>
-              <OutletRenderer component={controller.loadingComponent} />
+              <OutletRenderer component={controller['_loadingComponent']} />
             </OutletContentProvider>
           </RouteControllerProvider>
         ));
@@ -198,18 +187,16 @@ interface OutletContentProps {
 function OutletContent(props: OutletContentProps): ReactNode {
   const { controller } = props;
   const { route } = controller;
-  const { status } = controller._state;
 
-  controller['_capturedError'] = NO_CAPTURED_ERROR;
-  controller['_renderedState'] = controller._state;
+  controller['_renderedState'] = controller['_state'];
 
   let component;
-  let childController = null;
+  let nestedController = null;
 
-  switch (status) {
+  switch (controller.status) {
     case 'ready':
       component = route.component;
-      childController = controller.childController;
+      nestedController = controller.nestedController;
 
       if (component === undefined) {
         throw new Error("Route component wasn't loaded");
@@ -217,31 +204,31 @@ function OutletContent(props: OutletContentProps): ReactNode {
       break;
 
     case 'error':
-      component = controller.errorComponent;
-
-      if (component === undefined) {
-        throw controller._state.error;
-      }
+      component = controller['_errorComponent'];
       break;
 
     case 'not_found':
-      component = controller.notFoundComponent || notFound();
+      component = controller['_notFoundComponent'];
       break;
 
     case 'redirect':
-      component = controller.loadingComponent || redirect(controller._state.to);
+      component = controller['_loadingComponent'];
       break;
 
     case 'loading':
-      throw controller._loadingPromise || new Error('Cannot suspend route controller');
+      throw controller.loadingPromise || new Error('Cannot suspend route controller');
 
     default:
-      throw new Error('Unexpected route status: ' + status);
+      throw new Error('Unexpected route status');
+  }
+
+  if (component === undefined) {
+    throw controller.error;
   }
 
   return (
     <RouteControllerProvider value={controller}>
-      <OutletContentProvider value={childController}>
+      <OutletContentProvider value={nestedController}>
         <OutletRenderer component={component} />
       </OutletContentProvider>
     </RouteControllerProvider>

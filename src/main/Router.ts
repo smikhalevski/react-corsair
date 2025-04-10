@@ -127,12 +127,12 @@ export class Router<Context = any> {
       this._interceptorRegistry.has(routeMatches[routeMatches.length - 1].route);
 
     if (isIntercepted) {
-      prevController = this.interceptedController?.fallbackController || this.interceptedController;
+      prevController = this.interceptedController?.['_supersededController'] || this.interceptedController;
       nextController = reconcileControllers(this, prevController, routeMatches);
 
       this.interceptedController = nextController;
     } else {
-      prevController = this.rootController?.fallbackController || this.rootController;
+      prevController = this.rootController?.['_supersededController'] || this.rootController;
       nextController = reconcileControllers(this, prevController, routeMatches);
 
       this.rootController = nextController;
@@ -153,17 +153,12 @@ export class Router<Context = any> {
     }
 
     // Lookup a controller that requires loading
-    for (let controller = nextController; controller !== null; controller = controller.childController) {
+    for (let controller = nextController; controller !== null; controller = controller.nestedController) {
       if (this.isSSR && controller.route.renderingDisposition !== 'server') {
         // Cannot load the route and its nested routes on the server
         break;
       }
-
-      if (controller.status === 'loading') {
-        // Load controller and its descendants
-        controller.reload();
-        break;
-      }
+      controller.retry();
     }
 
     // Abort loading of the replaced controller

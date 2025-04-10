@@ -23,7 +23,7 @@ export { Router } from './Router';
 export {
   RouteController,
   type LoadingState,
-  type OkState,
+  type ReadyState,
   type ErrorState,
   type NotFoundState,
   type RedirectState,
