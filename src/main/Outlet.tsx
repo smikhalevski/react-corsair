@@ -1,8 +1,16 @@
-import React, { Component, ComponentType, createContext, ReactElement, ReactNode, Suspense, useContext } from 'react';
+import React, {
+  Component,
+  ComponentType,
+  createContext,
+  ReactElement,
+  ReactNode,
+  Suspense,
+  useCallback,
+  useContext,
+  useSyncExternalStore,
+} from 'react';
 import { Router } from './Router';
-import { RouterEvent } from './__types';
 import { RouteControllerProvider } from './useRoute';
-import { noop } from './utils';
 import { RouteController } from './RouteController';
 
 const OutletContentContext = createContext<RouteController | Router | null>(null);
@@ -20,7 +28,7 @@ export function Outlet(): ReactElement | null {
   const content = useContext(OutletContentContext);
 
   if (content instanceof RouteController) {
-    return <OutletErrorBoundary controller={content} />;
+    return <RouteOutlet controller={content} />;
   }
 
   if (content === null || content.notFoundComponent === undefined) {
@@ -65,11 +73,29 @@ export interface RouteOutletProps {
  * @group Routing
  */
 export function RouteOutlet(props: RouteOutletProps): ReactElement | null {
-  if (!(props.controller instanceof RouteController)) {
+  const { controller } = props;
+
+  if (!(controller instanceof RouteController)) {
     throw new Error('Expected a route controller');
   }
 
-  return <OutletErrorBoundary controller={props.controller} />;
+  const getState = () => controller['_state'];
+
+  useSyncExternalStore(
+    useCallback(
+      listener =>
+        controller.router.subscribe(event => {
+          if (event.controller === controller) {
+            listener();
+          }
+        }),
+      [controller]
+    ),
+    getState,
+    getState
+  );
+
+  return <OutletErrorBoundary controller={controller} />;
 }
 
 /**
@@ -89,14 +115,6 @@ interface OutletErrorBoundaryState {
 
 class OutletErrorBoundary extends Component<OutletErrorBoundaryProps, OutletErrorBoundaryState> {
   static displayName = 'OutletErrorBoundary';
-
-  unsubscribe = noop;
-
-  routerListener = (event: RouterEvent) => {
-    if (this.state.controller === event.controller) {
-      this.setState({});
-    }
-  };
 
   constructor(props: OutletErrorBoundaryProps) {
     super(props);
@@ -131,21 +149,6 @@ class OutletErrorBoundary extends Component<OutletErrorBoundaryProps, OutletErro
     (nextProps.controller['_supersededController'] || nextProps.controller)['_catch'](prevState.error);
 
     return { hasError: false, error: null };
-  }
-
-  componentDidMount() {
-    this.unsubscribe = this.state.controller.router.subscribe(this.routerListener);
-  }
-
-  componentDidUpdate(_prevProps: Readonly<OutletErrorBoundaryProps>, prevState: Readonly<OutletErrorBoundaryState>) {
-    if (this.state.controller !== prevState.controller) {
-      this.unsubscribe();
-      this.unsubscribe = this.state.controller.router.subscribe(this.routerListener);
-    }
-  }
-
-  componentWillUnmount() {
-    this.unsubscribe();
   }
 
   render(): ReactNode {

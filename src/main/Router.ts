@@ -154,11 +154,9 @@ export class Router<Context = any> {
 
     // Lookup a controller that requires loading
     for (let controller = nextController; controller !== null; controller = controller.nestedController) {
-      if (this.isSSR && controller.route.renderingDisposition !== 'server') {
-        // Cannot load the route and its nested routes on the server
-        break;
+      if (controller.status === 'loading' && (!this.isSSR || controller.route.renderingDisposition === 'server')) {
+        controller.reload();
       }
-      controller.retry();
     }
 
     // Abort loading of the replaced controller
