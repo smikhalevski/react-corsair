@@ -1,4 +1,4 @@
-import { RouterOptions } from '../types';
+import { RouterOptions } from '../__types';
 import { Router } from '../Router';
 import { RouteController, RouteState } from '../RouteController';
 
@@ -72,13 +72,13 @@ export class SSRRouter<Context = any> extends Router<Context> {
   hasChanges(): Promise<boolean> {
     const promises = [];
 
-    for (let controller = this.rootController; controller !== null; controller = controller.childController) {
+    for (let controller = this.rootController; controller !== null; controller = controller.nestedController) {
       promises.push(controller.loadingPromise);
     }
 
     return Promise.all(promises).then(() => {
-      for (let controller = this.rootController; controller !== null; controller = controller.childController) {
-        if (this._hydratedStates.get(controller) !== controller.state) {
+      for (let controller = this.rootController; controller !== null; controller = controller.nestedController) {
+        if (this._hydratedStates.get(controller) !== controller['_state']) {
           return true;
         }
       }
@@ -110,13 +110,13 @@ export class SSRRouter<Context = any> extends Router<Context> {
     for (
       let controller = this.rootController, index = 0;
       controller !== null;
-      controller = controller.childController, index++
+      controller = controller.nestedController, index++
     ) {
-      if (this._hydratedStates.get(controller) === controller.state) {
+      if (this._hydratedStates.get(controller) === controller['_state']) {
         continue;
       }
 
-      this._hydratedStates.set(controller, controller.state);
+      this._hydratedStates.set(controller, controller['_state']);
 
       if (script === '') {
         script = 'var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();';
@@ -126,7 +126,7 @@ export class SSRRouter<Context = any> extends Router<Context> {
         's.set(' +
         index +
         ',' +
-        JSON.stringify(this._stateStringifier(controller.state)).replace(/</g, '\\u003C') +
+        JSON.stringify(this._stateStringifier(controller['_state'])).replace(/</g, '\\u003C') +
         ');';
     }
 

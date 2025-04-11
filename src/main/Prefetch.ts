@@ -1,4 +1,4 @@
-import { To } from './types';
+import { To } from './__types';
 import { usePrefetch } from './usePrefetch';
 
 /**

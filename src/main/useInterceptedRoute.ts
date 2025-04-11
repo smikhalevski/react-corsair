@@ -1,5 +1,5 @@
-import { Dict } from './types';
-import { Route } from './Route';
+import { Dict } from './__types';
+import { Route } from './__Route';
 import { RouteController } from './RouteController';
 import { useContext, useEffect } from 'react';
 import { InterceptedRouteControllerContext, useRouter } from './useRouter';

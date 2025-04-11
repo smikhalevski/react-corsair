@@ -1,8 +1,8 @@
-import { To } from './types';
+import { To } from './__types';
 import { Router } from './Router';
 import { RouteController, RouteState } from './RouteController';
 import { noop, toLocation } from './utils';
-import { matchRoutes } from './matchRoutes';
+import { matchRoutes } from './__matchRoutes';
 import { AbortablePromise } from 'parallel-universe';
 
 /**
@@ -45,7 +45,7 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
 
   window.__REACT_CORSAIR_SSR_STATE__ = {
     set(index, stateStr) {
-      controllers[index]['_setState'](stateParser(stateStr));
+      setControllerState(controllers[index], stateParser(stateStr));
     },
   };
 
@@ -61,7 +61,7 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
 
     if (i !== 0) {
       controller.parentController = controllers[i - 1];
-      controllers[i - 1].childController = controller;
+      controllers[i - 1].nestedController = controller;
     }
   }
 
@@ -96,18 +96,21 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
     // Client-only route, no hydration
     if (controller.route.renderingDisposition !== 'server') {
       for (; i < controllers.length; ++i) {
-        controllers[i].load();
+        controllers[i].reload();
       }
       break;
     }
 
     // Hydrated state already available
     if (ssrState !== undefined && ssrState.has(i)) {
-      controller['_setState'](stateParser(ssrState.get(i)));
+      setControllerState(controller, stateParser(ssrState.get(i)));
     }
 
     // Server-rendering is in progress, defer hydration
-    if (controller.state.status === 'loading') {
+    if (controller.status === 'loading') {
+      // Start loading component prematurely
+      void controller.route.loadComponent();
+
       controller.loadingPromise = new AbortablePromise(noop);
       controller.loadingPromise.catch(noop);
     }
@@ -115,3 +118,5 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
 
   return router;
 }
+
+function setControllerState(controller: RouteController, state: RouteState) {}

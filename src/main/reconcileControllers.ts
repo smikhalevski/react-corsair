@@ -1,5 +1,5 @@
 import isDeepEqual from 'fast-deep-equal';
-import { RouteMatch } from './matchRoutes';
+import { RouteMatch } from './__matchRoutes';
 import { RouteController } from './RouteController';
 import { Router } from './Router';
 
@@ -8,7 +8,7 @@ import { Router } from './Router';
  */
 export function reconcileControllers(
   router: Router,
-  replacedController: RouteController | null,
+  supersededController: RouteController | null,
   routeMatches: RouteMatch[]
 ): RouteController | null {
   let rootController = null;
@@ -17,42 +17,43 @@ export function reconcileControllers(
   for (let i = 0; i < routeMatches.length; ++i) {
     const routeMatch = routeMatches[i];
     const controller = new RouteController(router, routeMatch.route, routeMatch.params);
-    const { loadingAppearance } = routeMatch.route;
+    const loadingAppearance = controller['_loadingAppearance'];
 
-    if (replacedController === null || replacedController.route !== routeMatch.route) {
+    if (supersededController === null || supersededController.route !== routeMatch.route) {
       // Route has changed
 
-      if (replacedController !== null && replacedController.state.status === 'ok' && loadingAppearance === 'avoid') {
+      if (supersededController !== null && supersededController.status === 'ready' && loadingAppearance === 'avoid') {
         // Keep the current page on screen
-        controller.fallbackController = replacedController;
+        controller['_supersededController'] = supersededController;
       }
 
-      replacedController = null;
+      supersededController = null;
     } else if (
-      replacedController.context !== router.context ||
-      !isDeepEqual(replacedController.params, routeMatch.params)
+      supersededController['_context'] !== router.context ||
+      !isDeepEqual(supersededController.params, routeMatch.params)
     ) {
       // Params or router context have changed
 
-      if (replacedController.state.status === 'ok' && loadingAppearance !== 'loading') {
+      if (supersededController.status === 'ready' && loadingAppearance !== 'loading') {
         // Keep the current page on screen
-        controller.fallbackController = replacedController;
+        controller['_supersededController'] = supersededController;
       }
 
-      replacedController = replacedController.childController;
+      supersededController = supersededController.nestedController;
     } else {
-      if (replacedController.state.status !== 'loading') {
+      if (supersededController.status !== 'loading') {
         // Nothing has changed and route is loaded
-        controller.state = replacedController.state;
+        controller['_state'] = supersededController['_state'];
+        controller.error = supersededController.error;
       }
 
-      replacedController = replacedController.childController;
+      supersededController = supersededController.nestedController;
     }
 
     if (parentController === null) {
       rootController = controller;
     } else {
-      parentController.childController = controller;
+      parentController.nestedController = controller;
     }
 
     controller.parentController = parentController;

@@ -1,4 +1,4 @@
-import { Location, To } from '../types';
+import { Location, To } from '../__types';
 import { noop, toLocation } from '../utils';
 import { HistoryBlocker, HistoryTransactionType, SearchParamsSerializer } from './types';
 import { jsonSearchParamsSerializer } from './jsonSearchParamsSerializer';

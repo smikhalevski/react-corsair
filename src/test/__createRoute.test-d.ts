@@ -1,6 +1,6 @@
 import { expectType } from 'tsd';
 import { createRoute } from '../main';
-import { LOCATION_PARAMS } from '../main/Route';
+import { LOCATION_PARAMS } from '../main/__Route';
 
 expectType<{} | void>(createRoute()[LOCATION_PARAMS]);
 

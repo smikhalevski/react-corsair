@@ -1,6 +1,5 @@
 import { createBrowserHistory, jsonSearchParamsSerializer } from '../../main/history';
 import { Location } from '../../main';
-import { delay } from 'parallel-universe';
 
 beforeEach(() => {
   window.history.pushState(null, '', '/');

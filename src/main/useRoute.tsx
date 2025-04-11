@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useSyncExternalStore } from 'react';
 import { RouteController } from './RouteController';
-import { Route } from './Route';
-import { Dict } from './types';
+import { Route } from './__Route';
+import { Dict } from './__types';
 
 const RouteControllerContext = createContext<RouteController | null>(null);
 
@@ -43,7 +43,7 @@ export function useRoute(route?: Route) {
 
   const subscribe = useCallback(controller.router.subscribe.bind(controller.router), [controller]);
 
-  const getSnapshot = () => controller.state;
+  const getSnapshot = () => controller['_state'];
 
   useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 

@@ -1,11 +1,11 @@
 import { AbortablePromise, PubSub } from 'parallel-universe';
 import { ComponentType } from 'react';
-import { matchRoutes, RouteMatch } from './matchRoutes';
-import { Route } from './Route';
-import { Fallbacks, NavigateOptions, RouterEvent, RouterOptions, To } from './types';
+import { matchRoutes, RouteMatch } from './__matchRoutes';
+import { Route } from './__Route';
+import { LoadingAppearance, NavigateOptions, RenderingDisposition, RouterEvent, RouterOptions, To } from './__types';
 import { AbortError, getTailController, noop, toLocation } from './utils';
-import { getOrLoadRouteState, RouteController } from './RouteController';
 import { reconcileControllers } from './reconcileControllers';
+import { RouteController } from './RouteController';
 
 /**
  * A router that matches routes by a location.
@@ -13,7 +13,7 @@ import { reconcileControllers } from './reconcileControllers';
  * @template Context A context provided to {@link RouteOptions.dataLoader route data loaders}.
  * @group Routing
  */
-export class Router<Context = any> implements Fallbacks {
+export class Router<Context = any> {
   /**
    * `true` if router is used in the server environment.
    */
@@ -30,6 +30,32 @@ export class Router<Context = any> implements Fallbacks {
   context: Context;
 
   /**
+   * A component that is rendered when an error was thrown during route rendering.
+   */
+  errorComponent: ComponentType | undefined;
+
+  /**
+   * A component that is rendered when a route is being loaded.
+   */
+  loadingComponent: ComponentType | undefined;
+
+  /**
+   * A component that is rendered if {@link react-corsair!notFound notFound} was called during route loading or
+   * rendering
+   */
+  notFoundComponent: ComponentType | undefined;
+
+  /**
+   * What to render when a component or data are being loaded.
+   */
+  loadingAppearance: LoadingAppearance | undefined;
+
+  /**
+   * Where the route is rendered.
+   */
+  renderingDisposition: RenderingDisposition | undefined;
+
+  /**
    * A root controller rendered in a router {@link react-corsair!Outlet Outlet}, or `null` if there's no matching route
    * or if {@link navigate navigation} didn't occur yet.
    *
@@ -44,14 +70,14 @@ export class Router<Context = any> implements Fallbacks {
    */
   interceptedController: RouteController<any, any, Context> | null = null;
 
-  readonly errorComponent: ComponentType | undefined;
-  readonly loadingComponent: ComponentType | undefined;
-  readonly notFoundComponent: ComponentType | undefined;
-
   /**
    * A map from an intercepted route to a number of registered interceptors.
    */
   protected _interceptorRegistry = new Map<Route, number>();
+
+  /**
+   * Manages router subscribers.
+   */
   protected _pubSub = new PubSub<RouterEvent>();
 
   /**
@@ -66,6 +92,8 @@ export class Router<Context = any> implements Fallbacks {
     this.errorComponent = options.errorComponent;
     this.loadingComponent = options.loadingComponent;
     this.notFoundComponent = options.notFoundComponent;
+    this.loadingAppearance = options.loadingAppearance;
+    this.renderingDisposition = options.renderingDisposition;
   }
 
   /**
@@ -99,12 +127,12 @@ export class Router<Context = any> implements Fallbacks {
       this._interceptorRegistry.has(routeMatches[routeMatches.length - 1].route);
 
     if (isIntercepted) {
-      prevController = this.interceptedController?.fallbackController || this.interceptedController;
+      prevController = this.interceptedController?.['_supersededController'] || this.interceptedController;
       nextController = reconcileControllers(this, prevController, routeMatches);
 
       this.interceptedController = nextController;
     } else {
-      prevController = this.rootController?.fallbackController || this.rootController;
+      prevController = this.rootController?.['_supersededController'] || this.rootController;
       nextController = reconcileControllers(this, prevController, routeMatches);
 
       this.rootController = nextController;
@@ -125,16 +153,9 @@ export class Router<Context = any> implements Fallbacks {
     }
 
     // Lookup a controller that requires loading
-    for (let controller = nextController; controller !== null; controller = controller.childController) {
-      if (this.isSSR && controller.route.renderingDisposition !== 'server') {
-        // Cannot load the route and its nested routes on the server
-        break;
-      }
-
-      if (controller.state.status === 'loading') {
-        // Load controller and its descendants
-        controller.load();
-        break;
+    for (let controller = nextController; controller !== null; controller = controller.nestedController) {
+      if (controller.status === 'loading' && (!this.isSSR || controller.route.renderingDisposition === 'server')) {
+        controller.reload();
       }
     }
 
@@ -149,25 +170,24 @@ export class Router<Context = any> implements Fallbacks {
    * @returns An promise that can be aborted to discard prefetching.
    */
   prefetch(to: To): AbortablePromise<void> {
-    return new AbortablePromise((resolve, _reject, signal) => {
+    const promise = new AbortablePromise<void>((resolve, _reject, signal) => {
       const location = toLocation(to);
-      const routeMatches = matchRoutes(location.pathname, location.searchParams, this.routes);
+      const promises = [];
 
-      resolve(
-        Promise.all(
-          routeMatches.map(routeMatch =>
-            getOrLoadRouteState({
-              route: routeMatch.route,
-              router: this,
-              params: routeMatch.params,
-              context: this.context,
-              signal,
-              isPrefetch: true,
-            })
-          )
-        ).then(noop)
-      );
+      for (const { route, params } of matchRoutes(location.pathname, location.searchParams, this.routes)) {
+        promises.push(route.loadComponent());
+
+        try {
+          promises.push(route.dataLoader?.({ route, router: this, params, signal, isPrefetch: true }));
+        } catch {}
+      }
+
+      Promise.allSettled(promises).then(() => resolve());
     });
+
+    promise.catch(noop);
+
+    return promise;
   }
 
   /**

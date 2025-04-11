@@ -1,4 +1,4 @@
-import { Location, To } from './types';
+import { Location, To } from './__types';
 import { RouteController } from './RouteController';
 
 export function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
@@ -18,8 +18,8 @@ export function AbortError(message: string): Error {
 }
 
 export function getTailController(controller: RouteController | null): RouteController | null {
-  while (controller !== null && controller.childController !== null) {
-    controller = controller.childController;
+  while (controller !== null && controller.nestedController !== null) {
+    controller = controller.nestedController;
   }
   return controller;
 }

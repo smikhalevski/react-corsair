@@ -90,7 +90,7 @@ describe('nextHydrationScript', () => {
     router.nextHydrationScript();
 
     expect(stateStringifierMock).toHaveBeenCalledTimes(1);
-    expect(stateStringifierMock).toHaveBeenNthCalledWith(1, { status: 'ok', data: undefined });
+    expect(stateStringifierMock).toHaveBeenNthCalledWith(1, { status: 'ready', data: undefined });
   });
 
   test('escapes XSS-prone strings', () => {
@@ -153,11 +153,11 @@ describe('hasChanges', () => {
 
     router.navigate(route);
 
-    expect(router.rootController!.state.status).toBe('loading');
+    expect(router.rootController!._state.status).toBe('loading');
 
     await expect(router.hasChanges()).resolves.toBe(true);
 
-    expect(router.rootController!.state.status).toBe('ok');
+    expect(router.rootController!._state.status).toBe('ready');
   });
 
   describe('abort', () => {
@@ -171,12 +171,12 @@ describe('hasChanges', () => {
 
       router.navigate(route);
 
-      const promise = router.rootController!.loadingPromise;
+      const promise = router.rootController!._loadingPromise;
 
       router.abort('xxx');
 
-      expect(router.rootController!.state).toStrictEqual({ status: 'error', error: 'xxx' } satisfies RouteState);
-      expect(router.rootController!.loadingPromise).toBeNull();
+      expect(router.rootController!._state).toStrictEqual({ status: 'error', error: 'xxx' } satisfies RouteState);
+      expect(router.rootController!._loadingPromise).toBeNull();
       await expect(promise).rejects.toBe('xxx');
     });
   });
