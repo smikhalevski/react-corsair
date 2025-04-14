@@ -1,7 +1,7 @@
-import { To } from './types';
+import { RouteState, To } from './types';
 import { Router } from './Router';
-import { RouteController, RouteState } from './RouteController';
-import { noop, toLocation } from './utils';
+import { getRenderingDisposition, RouteController } from './RouteController';
+import { AbortError, noop, toLocation } from './utils';
 import { matchRoutes } from './matchRoutes';
 import { AbortablePromise } from 'parallel-universe';
 
@@ -45,7 +45,7 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
 
   window.__REACT_CORSAIR_SSR_STATE__ = {
     set(index, stateStr) {
-      controllers[index]['_setState'](stateParser(stateStr));
+      setControllerState(controllers[index], stateParser(stateStr));
     },
   };
 
@@ -94,24 +94,34 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
     const controller = controllers[i];
 
     // Client-only route, no hydration
-    if (controller.route.renderingDisposition !== 'server') {
-      for (; i < controllers.length; ++i) {
-        controllers[i].load();
-      }
-      break;
+    if (getRenderingDisposition(controller) !== 'server') {
+      controllers[i].reload();
+      continue;
     }
 
-    // Hydrated state already available
+    // Hydrated state is already available
     if (ssrState !== undefined && ssrState.has(i)) {
-      controller['_setState'](stateParser(ssrState.get(i)));
+      setControllerState(controller, stateParser(ssrState.get(i)));
     }
 
     // Server-rendering is in progress, defer hydration
-    if (controller.state.status === 'loading') {
-      controller.loadingPromise = new AbortablePromise(noop);
-      controller.loadingPromise.catch(noop);
+    if (controller.status === 'loading') {
+      // Start loading the route component ahead of time
+      void controller.route.loadComponent();
+
+      controller.promise = new AbortablePromise(noop);
+      controller.promise.catch(noop);
     }
   }
 
   return router;
+}
+
+function setControllerState(controller: RouteController, state: RouteState) {
+  if (state.status === 'loading') {
+    return;
+  }
+  controller['_state'] = state;
+  controller.promise?.abort(AbortError('The route was hydrated'));
+  controller.promise = null;
 }

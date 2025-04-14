@@ -132,24 +132,19 @@ export type RenderingDisposition = 'server' | 'client';
  */
 export interface DataLoaderOptions<Params extends Dict, Context> {
   /**
-   * A route for which data is loaded.
-   */
-  route: Route<any, Params, any, Context>;
-
-  /**
    * A router that triggered data loading.
    */
   router: Router<Context>;
 
   /**
+   * A route for which data is loaded.
+   */
+  route: Route<any, Params, any, Context>;
+
+  /**
    * Route params extracted from a location.
    */
   params: Params;
-
-  /**
-   * A router context.
-   */
-  context: Context;
 
   /**
    * A signal that is aborted if a loader result isn't needed anymore.
@@ -160,42 +155,6 @@ export interface DataLoaderOptions<Params extends Dict, Context> {
    * `true` if a loader is called during {@link Router.prefetch prefetch}.
    */
   isPrefetch: boolean;
-}
-
-/**
- * Fallbacks that are used when a {@link RouteOptions.component} cannot be rendered.
- *
- * @group Routing
- */
-export interface Fallbacks {
-  /**
-   * A component that is rendered when an error was thrown during route rendering.
-   *
-   * A {@link react-corsair!Router Router}-level {@link errorComponent} is used only for root routes. Nested routes must
-   * specify their own {@link react-corsair!RouteOptions.errorComponent error components}.
-   *
-   * Routes without an {@link errorComponent} don't have an error boundary.
-   */
-  errorComponent?: ComponentType;
-
-  /**
-   * A component that is rendered when a {@link RouteOptions.lazyComponent lazyComponent} or a {@link RouteOptions.dataLoader dataLoader}
-   * are being loaded. Render a skeleton or a spinner in this component to notify user that a new route is being loaded.
-   *
-   * A {@link react-corsair!Router Router}-level {@link loadingComponent} is used only for root routes. Child routes
-   * must specify their own {@link react-corsair!RouteOptions.loadingComponent loading components}.
-   *
-   * Routes without a {@link loadingComponent} suspend a parent route.
-   */
-  loadingComponent?: ComponentType;
-
-  /**
-   * A component that is rendered if {@link react-corsair!notFound notFound} was called during route rendering
-   * or if there's no route that matches the location a router was navigated to.
-   *
-   * Routes without {@link notFoundComponent} propagate {@link react-corsair!notFound notFound} to a parent route.
-   */
-  notFoundComponent?: ComponentType;
 }
 
 /**
@@ -218,7 +177,7 @@ export interface ComponentModule {
  * @template Context A router context.
  * @group Routing
  */
-export interface RouteOptions<Params extends Dict, Data, Context> extends Fallbacks {
+export interface RouteOptions<Params extends Dict, Data, Context> {
   /**
    * A URL pathname pattern.
    *
@@ -286,16 +245,40 @@ export interface RouteOptions<Params extends Dict, Data, Context> extends Fallba
   dataLoader?: (options: DataLoaderOptions<Params, Context>) => PromiseLike<Data> | Data;
 
   /**
+   * A component that is rendered when an error was thrown during route rendering.
+   *
+   * Routes without an {@link errorComponent} don't have an error boundary.
+   */
+  errorComponent?: ComponentType;
+
+  /**
+   * A component that is rendered when a {@link RouteOptions.lazyComponent lazyComponent} or
+   * a {@link RouteOptions.dataLoader dataLoader} are being loaded. Render a skeleton or a spinner in this component
+   * to notify user that a new route is being loaded.
+   *
+   * Routes without a {@link loadingComponent} suspend a parent route.
+   */
+  loadingComponent?: ComponentType;
+
+  /**
+   * A component that is rendered if {@link react-corsair!notFound notFound} was called during route loading or
+   * rendering or if there's no route that matches the location a router was navigated to.
+   *
+   * Routes without {@link notFoundComponent} propagate {@link react-corsair!notFound notFound} to a parent route.
+   */
+  notFoundComponent?: ComponentType;
+
+  /**
    * What to render when {@link lazyComponent} or {@link dataLoader} are being loaded.
    *
-   * @default "route_loading"
+   * If not specified then {@link RouterOptions.loadingAppearance} is used instead.
    */
   loadingAppearance?: LoadingAppearance;
 
   /**
    * Where the route is rendered.
    *
-   * @default "server"
+   * If not specified then {@link RouterOptions.renderingDisposition} is used instead.
    */
   renderingDisposition?: RenderingDisposition;
 }
@@ -306,16 +289,70 @@ export interface RouteOptions<Params extends Dict, Data, Context> extends Fallba
  * @template Context A router context.
  * @group Routing
  */
-export interface RouterOptions<Context = void> extends Fallbacks {
+export interface RouterOptions<Context = void> {
   /**
    * Routes that a router can match.
    */
   routes: Route<any, any, any, Context>[];
 
   /**
-   * An arbitrary context.
+   * A context provided to {@link RouteOptions.dataLoader route data loaders}.
    */
   context?: Context;
+
+  /**
+   * A component that is rendered when an error was thrown during route rendering.
+   *
+   * This component is used only for root routes that don't specify their own
+   * {@link RouteOptions.errorComponent errorComponent}.
+   *
+   * Routes without an {@link errorComponent} don't have an error boundary.
+   */
+  errorComponent?: ComponentType;
+
+  /**
+   * A component that is rendered when a {@link RouteOptions.lazyComponent lazyComponent} or
+   * a {@link RouteOptions.dataLoader dataLoader} are being loaded. Render a skeleton or a spinner in this component
+   * to notify user that a new route is being loaded.
+   *
+   * This component is used only for root routes that don't specify their own
+   * {@link RouteOptions.loadingComponent loadingComponent}.
+   *
+   * Routes without a {@link loadingComponent} suspend a parent route.
+   */
+  loadingComponent?: ComponentType;
+
+  /**
+   * A component that is rendered if {@link react-corsair!notFound notFound} was called during route loading or
+   * rendering or if there's no route that matches the location a router was navigated to.
+   *
+   * This component is used only for root routes that don't specify their own
+   * {@link RouteOptions.notFoundComponent notFoundComponent}.
+   *
+   * Routes without {@link notFoundComponent} propagate {@link react-corsair!notFound notFound} to a parent route.
+   */
+  notFoundComponent?: ComponentType;
+
+  /**
+   * What to render when {@link RouteOptions.lazyComponent lazyComponent} or {@link RouteOptions.dataLoader dataLoader}
+   * are being loaded.
+   *
+   * This is the default setting for all routes that don't specify their own
+   * {@link RouteOptions.loadingAppearance loadingAppearance}.
+   *
+   * @default "route_loading"
+   */
+  loadingAppearance?: LoadingAppearance;
+
+  /**
+   * Where the route is rendered.
+   *
+   * This is the default setting for all routes that don't specify their own
+   * {@link RouteOptions.renderingDisposition renderingDisposition}.
+   *
+   * @default "server"
+   */
+  renderingDisposition?: RenderingDisposition;
 }
 
 /**
@@ -482,3 +519,87 @@ export type RouterEvent =
   | ErrorEvent
   | NotFoundEvent
   | RedirectEvent;
+
+/**
+ * The state of a route that is being actively loaded.
+ *
+ * @group Routing
+ */
+export interface LoadingState {
+  /**
+   * The route status.
+   */
+  status: 'loading';
+}
+
+/**
+ * The state of a route for which the component and data were loaded.
+ *
+ * @template Data Data loaded by a route.
+ * @group Routing
+ */
+export interface ReadyState<Data> {
+  /**
+   * The route status.
+   */
+  status: 'ready';
+
+  /**
+   * The data loaded for a route, or `undefined` if route has no {@link RouteOptions.dataLoader dataLoader}.
+   */
+  data: Data;
+}
+
+/**
+ * The state of a route which has thrown an error during rendering or from a data loader.
+ *
+ * @group Routing
+ */
+export interface ErrorState {
+  /**
+   * The route status.
+   */
+  status: 'error';
+
+  /**
+   * A thrown error.
+   */
+  error: any;
+}
+
+/**
+ * The state of a route that was marked as not found.
+ *
+ * @group Routing
+ */
+export interface NotFoundState {
+  /**
+   * The route status.
+   */
+  status: 'not_found';
+}
+
+/**
+ * The state of a route that has requested a redirect.
+ *
+ * @group Routing
+ */
+export interface RedirectState {
+  /**
+   * The route status.
+   */
+  status: 'redirect';
+
+  /**
+   * A location to redirect to.
+   */
+  to: Location | string;
+}
+
+/**
+ * State used by a {@link RouteController}.
+ *
+ * @template Data Data loaded by a route.
+ * @group Routing
+ */
+export type RouteState<Data = any> = LoadingState | ReadyState<Data> | ErrorState | NotFoundState | RedirectState;

@@ -16,7 +16,7 @@ test('pushes location', async () => {
     searchParams: {},
     hash: '',
     state: undefined,
-  } satisfies Location);
+  } as Location);
 
   history.push(aaaLocation);
 
@@ -104,7 +104,7 @@ test('parses query params', async () => {
     searchParams: { xxx: 111 },
     hash: '',
     state: undefined,
-  } satisfies Location);
+  } as Location);
 
   expect(window.location.href).toBe('http://localhost/#/aaa?xxx=111');
 
@@ -115,7 +115,7 @@ test('parses query params', async () => {
     searchParams: { yyy: [111, 222] },
     hash: '',
     state: undefined,
-  } satisfies Location);
+  } as Location);
 
   expect(window.location.href).toBe('http://localhost/#/bbb?yyy=%255B111%252C222%255D');
 });

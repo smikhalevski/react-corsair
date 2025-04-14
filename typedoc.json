@@ -27,7 +27,7 @@
     "./src/main/ssr/index.ts",
     "./src/main/ssr/node/index.ts"
   ],
-  "intentionallyNotExported": ["Dict", "PartialAsVoid", "LOCATION_PARAMS"],
+  "intentionallyNotExported": ["PartialAsVoid", "LOCATION_PARAMS"],
   "kindSortOrder": ["Function", "Class", "Variable", "TypeAlias"],
   "groupOrder": ["Routing"],
   "externalSymbolLinkMappings": {

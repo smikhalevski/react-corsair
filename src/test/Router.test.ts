@@ -1,4 +1,4 @@
-import { createRoute, Route, Router, RouterEvent } from '../main';
+import { createRoute, DataLoaderOptions, Route, Router, RouterEvent } from '../main';
 import { AbortablePromise, delay } from 'parallel-universe';
 
 test('creates a new router instance', () => {
@@ -39,6 +39,7 @@ describe('navigate', () => {
 
     expect(router.rootController!.route).toBe(routeAaa);
     expect(listenerMock).toHaveBeenCalledTimes(2);
+
     expect(listenerMock).toHaveBeenNthCalledWith(1, {
       type: 'navigate',
       controller: router.rootController,
@@ -46,6 +47,7 @@ describe('navigate', () => {
       location: { pathname: '/aaa', searchParams: {}, hash: '', state: undefined },
       isIntercepted: false,
     } satisfies RouterEvent);
+
     expect(listenerMock).toHaveBeenNthCalledWith(2, {
       type: 'ready',
       controller: router.rootController!,
@@ -56,6 +58,7 @@ describe('navigate', () => {
     expect(router.rootController!.route).toBe(routeBbb);
 
     expect(listenerMock).toHaveBeenCalledTimes(4);
+
     expect(listenerMock).toHaveBeenNthCalledWith(3, {
       type: 'navigate',
       controller: router.rootController,
@@ -63,6 +66,7 @@ describe('navigate', () => {
       location: { pathname: '/bbb', searchParams: { xxx: 111 }, hash: '', state: undefined },
       isIntercepted: false,
     } satisfies RouterEvent);
+
     expect(listenerMock).toHaveBeenNthCalledWith(4, {
       type: 'ready',
       controller: router.rootController!,
@@ -77,7 +81,7 @@ describe('navigate', () => {
       dataLoader: dataLoaderMock,
     });
 
-    const router = new Router({ routes: [route], context: 'xxx' });
+    const router = new Router({ routes: [route] });
 
     router.navigate(route);
 
@@ -85,11 +89,10 @@ describe('navigate', () => {
     expect(dataLoaderMock).toHaveBeenNthCalledWith(1, {
       route,
       router,
-      context: 'xxx',
-      isPrefetch: false,
       params: {},
       signal: expect.any(AbortSignal),
-    });
+      isPrefetch: false,
+    } satisfies DataLoaderOptions<any, any>);
   });
 
   test('does not start data loading if navigation was superseded', () => {

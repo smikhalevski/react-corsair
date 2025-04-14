@@ -20,7 +20,7 @@ interface HistoryState {
 /**
  * Creates the DOM history adapter that reads and writes location to a browser's session history.
  *
- * @param getURL Returns the history-local URL.
+ * @param getURL Returns the current history-local URL.
  * @param toAbsoluteURL Converts the history-local URL to absolute URL.
  * @param searchParamsSerializer Serializes/parses a URL search string.
  */
@@ -99,7 +99,7 @@ export function createSessionHistory(
     record.index = 0;
 
     // Ensure the history state is ordinal
-    window.history.replaceState({ index: 0, state: record.location.state } satisfies HistoryState, '');
+    window.history.replaceState({ index: 0, state: record.location.state } as HistoryState, '');
   }
 
   return {
@@ -125,7 +125,7 @@ export function createSessionHistory(
       cancel = navigateOrBlock('push', blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
         const url = toAbsoluteURL(stringifyLocation(location, searchParamsSerializer));
 
-        window.history.pushState({ index: record.index + 1, state: location.state } satisfies HistoryState, '', url);
+        window.history.pushState({ index: record.index + 1, state: location.state } as HistoryState, '', url);
 
         applyPopstate = noop;
         record = getHistoryRecord();
@@ -139,7 +139,7 @@ export function createSessionHistory(
       cancel = navigateOrBlock('replace', blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
         const url = toAbsoluteURL(stringifyLocation(location, searchParamsSerializer));
 
-        window.history.replaceState({ index: record.index, state: location.state } satisfies HistoryState, '', url);
+        window.history.replaceState({ index: record.index, state: location.state } as HistoryState, '', url);
 
         applyPopstate = noop;
         record = getHistoryRecord();

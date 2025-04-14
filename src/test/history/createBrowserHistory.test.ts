@@ -1,6 +1,5 @@
 import { createBrowserHistory, jsonSearchParamsSerializer } from '../../main/history';
 import { Location } from '../../main';
-import { delay } from 'parallel-universe';
 
 beforeEach(() => {
   window.history.pushState(null, '', '/');
@@ -16,13 +15,13 @@ test('removes base from location', async () => {
     searchParams: {},
     hash: '',
     state: undefined,
-  } satisfies Location);
+  } as Location);
   expect(createBrowserHistory({ basePathname: '/aaa/' }).location).toStrictEqual({
     pathname: '/bbb',
     searchParams: {},
     hash: '',
     state: undefined,
-  } satisfies Location);
+  } as Location);
 });
 
 test('pushes location', async () => {

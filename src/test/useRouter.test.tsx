@@ -26,7 +26,7 @@ describe('RouterProvider', () => {
 
 describe('useRouter', () => {
   test('throws if used outside of RouterProvider', () => {
-    expect(() => renderHook(() => useRouter())).toThrow(new Error('Cannot be used outside of RouterProvider'));
+    expect(() => renderHook(() => useRouter())).toThrow(new Error('Cannot be used outside of a RouterProvider'));
   });
 
   test('returns Router instance', () => {

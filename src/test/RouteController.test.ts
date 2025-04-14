@@ -1,55 +1,293 @@
-import { createRoute, Outlet, Route, RouteController, Router, RouterEvent, RouteState } from '../main';
-import { getOrLoadRouteState } from '../main/RouteController';
+import {
+  createRoute,
+  DataLoaderOptions,
+  Outlet,
+  Route,
+  RouteController,
+  Router,
+  RouterEvent,
+  RouteState,
+} from '../main';
+import { AbortError, noop } from '../main/utils';
 import { AbortablePromise } from 'parallel-universe';
-import { noop } from '../main/utils';
+import { handleBoundaryError, reconcileControllers } from '../main/RouteController';
+import { matchRoutes } from '../main/matchRoutes';
 
 describe('RouteController', () => {
-  const routeListenerMock = jest.fn();
-
+  let listenerMock: jest.Mock;
   let route: Route;
   let router: Router;
   let controller: RouteController;
 
   beforeEach(() => {
-    routeListenerMock.mockClear();
+    listenerMock = jest.fn();
 
-    route = createRoute('/foo');
-    router = new Router({ routes: [route], context: { ccc: 333 } });
-    controller = new RouteController(router, route, { aaa: 111 });
+    route = createRoute('/aaa');
+    router = new Router({ routes: [route], context: { xxx: 111 } });
+    controller = new RouteController(router, route, { yyy: 222 });
 
-    router.subscribe(routeListenerMock);
+    router.subscribe(listenerMock);
   });
 
   test('creates a new instance', () => {
-    expect(controller.state).toStrictEqual({ status: 'loading' } satisfies RouteState);
-    expect(controller.loadingPromise).toBeNull();
-    expect(() => controller.getData()).toThrow();
-    expect(controller.getError()).toBeUndefined();
-    expect(controller.params).toStrictEqual({ aaa: 111 });
+    expect(controller.parentController).toBeNull();
+    expect(controller.childController).toBeNull();
+    expect(controller.promise).toBeNull();
     expect(controller.router).toBe(router);
     expect(controller.route).toBe(route);
-    expect(controller.context).toStrictEqual({ ccc: 333 });
+    expect(controller.params).toEqual({ yyy: 222 });
+
+    expect(controller['_fallbackController']).toBeNull();
+    expect(controller['_context']).toBeUndefined();
+    expect(controller['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
+    expect(controller['_error']).toBeUndefined();
+    expect(controller['_renderedState']).toBeUndefined();
+  });
+
+  describe('_load', () => {
+    const Component = () => null;
+
+    test('synchronously loads data', () => {
+      const dataLoaderMock = jest.fn(options => 'zzz');
+
+      controller['_load'](dataLoaderMock);
+
+      expect(controller.promise).toBeNull();
+      expect(controller.route.component).toBe(Outlet);
+      expect(controller['_context']).toStrictEqual({ xxx: 111 });
+      expect(controller['_state']).toStrictEqual({ status: 'ready', data: 'zzz' } satisfies RouteState);
+      expect(listenerMock).toHaveBeenCalledTimes(1);
+      expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'ready', controller } satisfies RouterEvent);
+    });
+
+    test('synchronously sets error', () => {
+      const error = new Error('Expected');
+
+      const dataLoaderMock = jest.fn(options => {
+        throw error;
+      });
+
+      controller['_load'](dataLoaderMock);
+
+      expect(controller.promise).toBeNull();
+      expect(controller.route.component).toBe(Outlet);
+      expect(controller['_context']).toBeUndefined();
+      expect(controller['_state']).toStrictEqual({ status: 'error', error } satisfies RouteState);
+      expect(listenerMock).toHaveBeenCalledTimes(1);
+      expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'error', controller, error } satisfies RouterEvent);
+    });
+
+    test('asynchronously loads data', async () => {
+      const dataLoaderMock = jest.fn(options => Promise.resolve('zzz'));
+
+      const promise = controller['_load'](dataLoaderMock);
+
+      expect(controller.promise).not.toBeNull();
+      expect(controller['_context']).toBeUndefined();
+      expect(controller['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
+      expect(listenerMock).toHaveBeenCalledTimes(1);
+      expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'loading', controller } satisfies RouterEvent);
+
+      await promise;
+
+      expect(controller.promise).toBeNull();
+      expect(controller.route.component).toBe(Outlet);
+      expect(controller['_context']).toStrictEqual({ xxx: 111 });
+      expect(controller['_state']).toStrictEqual({ status: 'ready', data: 'zzz' } satisfies RouteState);
+      expect(listenerMock).toHaveBeenCalledTimes(2);
+      expect(listenerMock).toHaveBeenNthCalledWith(2, { type: 'ready', controller } satisfies RouterEvent);
+    });
+
+    test('asynchronously loads component', async () => {
+      const lazyComponentMock = jest.fn(() => Promise.resolve({ default: Component }));
+
+      const route = createRoute({ lazyComponent: lazyComponentMock });
+
+      controller = new RouteController(router, route, {});
+
+      const promise = controller['_load'](noop);
+
+      expect(controller.promise).not.toBeNull();
+      expect(controller.route.component).toBeUndefined();
+      expect(controller['_context']).toBeUndefined();
+      expect(controller['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
+      expect(listenerMock).toHaveBeenCalledTimes(1);
+      expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'loading', controller } satisfies RouterEvent);
+
+      await promise;
+
+      expect(controller.promise).toBeNull();
+      expect(controller.route.component).toBe(Component);
+      expect(controller['_context']).toStrictEqual({ xxx: 111 });
+      expect(controller['_state']).toStrictEqual({ status: 'ready', data: undefined } satisfies RouteState);
+      expect(listenerMock).toHaveBeenCalledTimes(2);
+      expect(listenerMock).toHaveBeenNthCalledWith(2, { type: 'ready', controller } satisfies RouterEvent);
+    });
+
+    test('asynchronously loads component and data', async () => {
+      const lazyComponentMock = jest.fn(() => Promise.resolve({ default: Component }));
+      const dataLoaderMock = jest.fn(options => Promise.resolve('zzz'));
+
+      const route = createRoute({ lazyComponent: lazyComponentMock });
+
+      controller = new RouteController(router, route, {});
+
+      const promise = controller['_load'](dataLoaderMock);
+
+      expect(controller.promise).not.toBeNull();
+      expect(controller.route.component).toBeUndefined();
+      expect(controller['_context']).toBeUndefined();
+      expect(controller['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
+      expect(listenerMock).toHaveBeenCalledTimes(1);
+      expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'loading', controller } satisfies RouterEvent);
+
+      await promise;
+
+      expect(controller.promise).toBeNull();
+      expect(controller.route.component).toBe(Component);
+      expect(controller['_context']).toStrictEqual({ xxx: 111 });
+      expect(controller['_state']).toStrictEqual({ status: 'ready', data: 'zzz' } satisfies RouteState);
+      expect(listenerMock).toHaveBeenCalledTimes(2);
+      expect(listenerMock).toHaveBeenNthCalledWith(2, { type: 'ready', controller } satisfies RouterEvent);
+    });
+
+    test('asynchronously sets error', async () => {
+      const error = new Error('Expected');
+      const dataLoaderMock = jest.fn(options => Promise.reject(error));
+
+      const promise = controller['_load'](dataLoaderMock);
+
+      expect(controller.promise).not.toBeNull();
+      expect(controller['_context']).toBeUndefined();
+      expect(controller['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
+      expect(listenerMock).toHaveBeenCalledTimes(1);
+      expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'loading', controller } satisfies RouterEvent);
+
+      await expect(promise).rejects.toBe(error);
+
+      expect(controller.promise).toBeNull();
+      expect(controller['_context']).toBeUndefined();
+      expect(controller['_state']).toStrictEqual({ status: 'error', error } satisfies RouteState);
+      expect(listenerMock).toHaveBeenCalledTimes(2);
+      expect(listenerMock).toHaveBeenNthCalledWith(2, { type: 'error', controller, error } satisfies RouterEvent);
+    });
+
+    test('preserves current ready state', async () => {
+      const dataLoaderMock = jest.fn(options => Promise.resolve('zzz'));
+
+      controller['_load'](() => 'ttt');
+
+      const promise = controller['_load'](dataLoaderMock);
+
+      expect(controller.promise).not.toBeNull();
+      expect(controller['_context']).toStrictEqual({ xxx: 111 });
+      expect(controller['_state']).toStrictEqual({ status: 'ready', data: 'ttt' } satisfies RouteState);
+      expect(listenerMock).toHaveBeenCalledTimes(2);
+      expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'ready', controller } satisfies RouterEvent);
+      expect(listenerMock).toHaveBeenNthCalledWith(2, { type: 'loading', controller } satisfies RouterEvent);
+
+      await promise;
+
+      expect(controller.promise).toBeNull();
+      expect(controller.route.component).toBe(Outlet);
+      expect(controller['_state']).toStrictEqual({ status: 'ready', data: 'zzz' } satisfies RouteState);
+      expect(listenerMock).toHaveBeenCalledTimes(3);
+      expect(listenerMock).toHaveBeenNthCalledWith(3, { type: 'ready', controller } satisfies RouterEvent);
+    });
+
+    test('replaces current ready state with loadingAppearance', async () => {
+      const dataLoaderMock = jest.fn(options => Promise.resolve('zzz'));
+
+      const route = createRoute({ loadingAppearance: 'loading' });
+
+      controller = new RouteController(router, route, {});
+
+      controller['_load'](() => 'ttt');
+
+      const promise = controller['_load'](dataLoaderMock);
+
+      expect(controller.promise).not.toBeNull();
+      expect(controller['_context']).toStrictEqual({ xxx: 111 });
+      expect(controller['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
+      expect(listenerMock).toHaveBeenCalledTimes(2);
+      expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'ready', controller } satisfies RouterEvent);
+      expect(listenerMock).toHaveBeenNthCalledWith(2, { type: 'loading', controller } satisfies RouterEvent);
+
+      await promise;
+
+      expect(controller.promise).toBeNull();
+      expect(controller.route.component).toBe(Outlet);
+      expect(controller['_state']).toStrictEqual({ status: 'ready', data: 'zzz' } satisfies RouteState);
+      expect(listenerMock).toHaveBeenCalledTimes(3);
+      expect(listenerMock).toHaveBeenNthCalledWith(3, { type: 'ready', controller } satisfies RouterEvent);
+    });
+
+    test('replaces current non-ready state with loading', async () => {
+      const error = new Error('Expected');
+      const dataLoaderMock = jest.fn(options => Promise.resolve('zzz'));
+
+      controller['_load'](() => {
+        throw error;
+      });
+
+      const promise = controller['_load'](dataLoaderMock);
+
+      expect(controller.promise).not.toBeNull();
+      expect(controller['_context']).toBeUndefined();
+      expect(controller['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
+      expect(listenerMock).toHaveBeenCalledTimes(2);
+      expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'error', controller, error } satisfies RouterEvent);
+      expect(listenerMock).toHaveBeenNthCalledWith(2, { type: 'loading', controller } satisfies RouterEvent);
+
+      await promise;
+
+      expect(controller.promise).toBeNull();
+      expect(controller.route.component).toBe(Outlet);
+      expect(controller['_state']).toStrictEqual({ status: 'ready', data: 'zzz' } satisfies RouteState);
+      expect(listenerMock).toHaveBeenCalledTimes(3);
+      expect(listenerMock).toHaveBeenNthCalledWith(3, { type: 'ready', controller } satisfies RouterEvent);
+    });
+
+    test('aborts the pending route loading', async () => {
+      const dataLoaderMock1 = jest.fn(options => Promise.resolve('zzz'));
+
+      const promise1 = controller['_load'](dataLoaderMock1);
+      const promise2 = controller['_load'](() => 'ttt');
+
+      expect(controller.promise).toBeNull();
+      expect(controller['_context']).toStrictEqual({ xxx: 111 });
+      expect(controller['_state']).toStrictEqual({ status: 'ready', data: 'ttt' } satisfies RouteState);
+      expect(listenerMock).toHaveBeenCalledTimes(3);
+      expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'loading', controller } satisfies RouterEvent);
+      expect(listenerMock).toHaveBeenNthCalledWith(2, { type: 'aborted', controller } satisfies RouterEvent);
+      expect(listenerMock).toHaveBeenNthCalledWith(3, { type: 'ready', controller } satisfies RouterEvent);
+
+      await expect(promise1).rejects.toEqual(AbortError('The route loading was aborted'));
+      await expect(promise2).resolves.toEqual('ttt');
+    });
   });
 
   describe('notFound', () => {
     test('sets state and notifies router', () => {
       controller.notFound();
 
-      expect(controller.state).toStrictEqual({ status: 'not_found' } satisfies RouteState);
-      expect(routeListenerMock).toHaveBeenCalledTimes(1);
-      expect(routeListenerMock).toHaveBeenNthCalledWith(1, { type: 'not_found', controller } satisfies RouterEvent);
+      expect(controller['_state']).toStrictEqual({ status: 'not_found' } satisfies RouteState);
+      expect(listenerMock).toHaveBeenCalledTimes(1);
+      expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'not_found', controller } satisfies RouterEvent);
     });
 
     test('aborts loading promise', async () => {
-      const promise = new AbortablePromise<void>(noop);
+      const promise = controller['_load'](() => Promise.resolve('zzz'));
 
-      controller.loadingPromise = promise;
       controller.notFound();
 
-      expect(controller.loadingPromise).toBeNull();
-      expect(routeListenerMock).toHaveBeenCalledTimes(1);
+      expect(controller.promise).toBeNull();
+      expect(listenerMock).toHaveBeenCalledTimes(3);
+      expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'loading', controller } satisfies RouterEvent);
+      expect(listenerMock).toHaveBeenNthCalledWith(2, { type: 'aborted', controller } satisfies RouterEvent);
+      expect(listenerMock).toHaveBeenNthCalledWith(3, { type: 'not_found', controller } satisfies RouterEvent);
 
-      await expect(promise).rejects.toStrictEqual(expect.any(DOMException));
+      await expect(promise).rejects.toStrictEqual(AbortError('The route loading was aborted'));
     });
   });
 
@@ -57,30 +295,18 @@ describe('RouteController', () => {
     test('sets state and notifies router', () => {
       controller.redirect(route.getLocation(undefined));
 
-      expect(controller.state).toStrictEqual({
+      expect(controller['_state']).toStrictEqual({
         status: 'redirect',
-        to: { pathname: '/foo', searchParams: {}, hash: '', state: undefined },
+        to: { pathname: '/aaa', searchParams: {}, hash: '', state: undefined },
       } satisfies RouteState);
 
-      expect(routeListenerMock).toHaveBeenCalledTimes(1);
+      expect(listenerMock).toHaveBeenCalledTimes(1);
 
-      expect(routeListenerMock).toHaveBeenNthCalledWith(1, {
+      expect(listenerMock).toHaveBeenNthCalledWith(1, {
         type: 'redirect',
         controller,
-        to: { pathname: '/foo', searchParams: {}, hash: '', state: undefined },
+        to: { pathname: '/aaa', searchParams: {}, hash: '', state: undefined },
       } satisfies RouterEvent);
-    });
-
-    test('aborts loading promise', async () => {
-      const promise = new AbortablePromise<void>(noop);
-
-      controller.loadingPromise = promise;
-      controller.redirect(route.getLocation(undefined));
-
-      expect(controller.loadingPromise).toBeNull();
-      expect(routeListenerMock).toHaveBeenCalledTimes(1);
-
-      await expect(promise).rejects.toStrictEqual(expect.any(DOMException));
     });
   });
 
@@ -90,474 +316,509 @@ describe('RouteController', () => {
     test('sets state and notifies router', () => {
       controller.setError(error);
 
-      expect(controller.state).toStrictEqual({ status: 'error', error } satisfies RouteState);
-      expect(routeListenerMock).toHaveBeenCalledTimes(1);
-      expect(routeListenerMock).toHaveBeenNthCalledWith(1, { type: 'error', controller, error } satisfies RouterEvent);
+      expect(controller['_state']).toStrictEqual({ status: 'error', error } satisfies RouteState);
+      expect(listenerMock).toHaveBeenCalledTimes(1);
+      expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'error', controller, error } satisfies RouterEvent);
     });
 
     test('aborts loading promise', async () => {
-      const promise = new AbortablePromise<void>(noop);
-
-      controller.loadingPromise = promise;
-      controller.setError(error);
-
-      expect(controller.loadingPromise).toBeNull();
-      expect(routeListenerMock).toHaveBeenCalledTimes(1);
-
-      await expect(promise).rejects.toStrictEqual(expect.any(DOMException));
-    });
-  });
-
-  describe('getError', () => {
-    test('returns the route error', () => {
-      const error = new Error('Expected');
-
-      expect(controller.getError()).toBeUndefined();
+      const promise = controller['_load'](() => Promise.resolve('zzz'));
 
       controller.setError(error);
 
-      expect(controller.getError()).toBe(error);
+      expect(controller.promise).toBeNull();
+      expect(listenerMock).toHaveBeenCalledTimes(3);
+      expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'loading', controller } satisfies RouterEvent);
+      expect(listenerMock).toHaveBeenNthCalledWith(2, { type: 'aborted', controller } satisfies RouterEvent);
+      expect(listenerMock).toHaveBeenNthCalledWith(3, { type: 'error', controller, error } satisfies RouterEvent);
+
+      await expect(promise).rejects.toStrictEqual(AbortError('The route loading was aborted'));
     });
   });
 
   describe('setData', () => {
-    const data = { bbb: 222 };
+    test('synchronously sets the ready state and notifies router', () => {
+      controller.setData('zzz');
 
-    test('sets state and notifies router', () => {
-      controller.setData(data);
+      expect(controller['_state']).toStrictEqual({ status: 'ready', data: 'zzz' } satisfies RouteState);
+      expect(listenerMock).toHaveBeenCalledTimes(1);
+      expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'ready', controller } satisfies RouterEvent);
+    });
 
-      expect(controller.state).toStrictEqual({ status: 'ok', data } satisfies RouteState);
-      expect(routeListenerMock).toHaveBeenCalledTimes(1);
-      expect(routeListenerMock).toHaveBeenNthCalledWith(1, { type: 'ready', controller } satisfies RouterEvent);
+    test('asynchronously sets the ready state and notifies router', async () => {
+      controller.setData(Promise.resolve('zzz'));
+
+      expect(controller.promise).not.toBeNull();
+      expect(controller['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
+      expect(listenerMock).toHaveBeenCalledTimes(1);
+      expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'loading', controller } satisfies RouterEvent);
+
+      await controller.promise;
+
+      expect(controller.promise).toBeNull();
+      expect(controller['_state']).toStrictEqual({ status: 'ready', data: 'zzz' } satisfies RouteState);
+      expect(listenerMock).toHaveBeenCalledTimes(2);
+      expect(listenerMock).toHaveBeenNthCalledWith(2, { type: 'ready', controller } satisfies RouterEvent);
     });
 
     test('aborts loading promise', async () => {
       const promise = new AbortablePromise<void>(noop);
 
-      controller.loadingPromise = promise;
-      controller.setData(data);
-
-      expect(controller.loadingPromise).toBeNull();
-      expect(routeListenerMock).toHaveBeenCalledTimes(1);
-
-      await expect(promise).rejects.toStrictEqual(expect.any(DOMException));
-    });
-  });
-
-  describe('getData', () => {
-    const data = { bbb: 222 };
-
-    test('throws if controller status is not OK', () => {
-      expect(() => controller.getData()).toThrow(new Error('Route does not have loaded data'));
-    });
-
-    test('returns the route data', () => {
-      controller.setData(data);
-
-      expect(controller.getData()).toBe(data);
-    });
-  });
-
-  describe('load', () => {
-    const Component = () => null;
-
-    test('synchronously sets controller state', () => {
-      controller.load();
-
-      expect(controller.loadingPromise).toBeNull();
-      expect(controller.state).toStrictEqual({ status: 'ok', data: undefined } satisfies RouteState);
-      expect(routeListenerMock).toHaveBeenCalledTimes(1);
-      expect(routeListenerMock).toHaveBeenNthCalledWith(1, { type: 'ready', controller } satisfies RouterEvent);
-    });
-
-    test('loads route component and data', async () => {
-      route = createRoute({
-        pathname: '/foo',
-        lazyComponent: () => Promise.resolve({ default: Component }),
-        dataLoader: () => Promise.resolve({ zzz: 777 }),
-      });
-
-      controller = new RouteController(router, route, {});
-
-      controller.load();
-
-      expect(controller.state).toStrictEqual({ status: 'loading' } satisfies RouteState);
-      expect(routeListenerMock).toHaveBeenCalledTimes(1);
-      expect(routeListenerMock).toHaveBeenNthCalledWith(1, { type: 'loading', controller } satisfies RouterEvent);
-
-      await controller.loadingPromise!.catch(noop);
-
-      expect(controller.loadingPromise).toBeNull();
-      expect(controller.state).toStrictEqual({ status: 'ok', data: { zzz: 777 } } satisfies RouteState);
-      expect(controller.route.component).toBe(Component);
-      expect(routeListenerMock).toHaveBeenCalledTimes(2);
-      expect(routeListenerMock).toHaveBeenNthCalledWith(2, { type: 'ready', controller } satisfies RouterEvent);
-    });
-
-    test('preserves current OK state', async () => {
-      route = createRoute({
-        pathname: '/foo',
-        lazyComponent: () => Promise.resolve({ default: Component }),
-      });
-
-      controller = new RouteController(router, route, {});
-
+      controller.promise = promise;
       controller.setData('zzz');
-      controller.load();
 
-      expect(controller.state).toStrictEqual({ status: 'ok', data: 'zzz' } satisfies RouteState);
-      expect(routeListenerMock).toHaveBeenCalledTimes(2);
-      expect(routeListenerMock).toHaveBeenNthCalledWith(1, { type: 'ready', controller } satisfies RouterEvent);
-      expect(routeListenerMock).toHaveBeenNthCalledWith(2, { type: 'loading', controller } satisfies RouterEvent);
+      expect(controller.promise).toBeNull();
+      expect(listenerMock).toHaveBeenCalledTimes(1);
+      expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'ready', controller } satisfies RouterEvent);
 
-      await controller.loadingPromise!.catch(noop);
-
-      expect(controller.loadingPromise).toBeNull();
-      expect(controller.state).toStrictEqual({ status: 'ok', data: undefined } satisfies RouteState);
-      expect(controller.route.component).toBe(Component);
-      expect(routeListenerMock).toHaveBeenCalledTimes(3);
-      expect(routeListenerMock).toHaveBeenNthCalledWith(3, { type: 'ready', controller } satisfies RouterEvent);
-    });
-
-    test('replaces current OK state with loadingAppearance', async () => {
-      route = createRoute({
-        pathname: '/foo',
-        lazyComponent: () => Promise.resolve({ default: Component }),
-        loadingAppearance: 'loading',
-      });
-
-      controller = new RouteController(router, route, {});
-
-      controller.setData('zzz');
-      controller.load();
-
-      expect(controller.state).toStrictEqual({ status: 'loading' } satisfies RouteState);
-      expect(routeListenerMock).toHaveBeenCalledTimes(2);
-      expect(routeListenerMock).toHaveBeenNthCalledWith(1, { type: 'ready', controller } satisfies RouterEvent);
-      expect(routeListenerMock).toHaveBeenNthCalledWith(2, { type: 'loading', controller } satisfies RouterEvent);
-
-      await controller.loadingPromise!.catch(noop);
-
-      expect(controller.loadingPromise).toBeNull();
-      expect(controller.state).toStrictEqual({ status: 'ok', data: undefined } satisfies RouteState);
-      expect(controller.route.component).toBe(Component);
-      expect(routeListenerMock).toHaveBeenCalledTimes(3);
-      expect(routeListenerMock).toHaveBeenNthCalledWith(3, { type: 'ready', controller } satisfies RouterEvent);
-    });
-
-    test('replaces current non-OK state with loading', async () => {
-      route = createRoute({
-        pathname: '/foo',
-        lazyComponent: () => Promise.resolve({ default: Component }),
-        loadingAppearance: 'loading',
-      });
-
-      controller = new RouteController(router, route, {});
-
-      controller.setError('zzz');
-      controller.load();
-
-      expect(controller.state).toStrictEqual({ status: 'loading' } satisfies RouteState);
-      expect(routeListenerMock).toHaveBeenCalledTimes(2);
-
-      expect(routeListenerMock).toHaveBeenNthCalledWith(1, {
-        type: 'error',
-        controller,
-        error: 'zzz',
-      } satisfies RouterEvent);
-
-      expect(routeListenerMock).toHaveBeenNthCalledWith(2, { type: 'loading', controller } satisfies RouterEvent);
-
-      await controller.loadingPromise!.catch(noop);
-
-      expect(controller.loadingPromise).toBeNull();
-      expect(controller.state).toStrictEqual({ status: 'ok', data: undefined } satisfies RouteState);
-      expect(controller.route.component).toBe(Component);
-      expect(routeListenerMock).toHaveBeenCalledTimes(3);
-      expect(routeListenerMock).toHaveBeenNthCalledWith(3, { type: 'ready', controller } satisfies RouterEvent);
-    });
-
-    test('aborts pending route loading', async () => {
-      route = createRoute({
-        pathname: '/foo',
-        lazyComponent: () => Promise.resolve({ default: Component }),
-      });
-
-      controller = new RouteController(router, route, {});
-
-      controller.load();
-
-      const promise = controller.loadingPromise;
-
-      controller.load();
-
-      expect(promise).not.toBeNull();
-      expect(controller.loadingPromise).not.toBe(promise);
-      await expect(promise).rejects.toStrictEqual(expect.any(DOMException));
-      await expect(controller.loadingPromise).resolves.toBeUndefined();
-
-      expect(routeListenerMock).toHaveBeenCalledTimes(4);
-      expect(routeListenerMock).toHaveBeenNthCalledWith(1, { type: 'loading', controller } satisfies RouterEvent);
-      expect(routeListenerMock).toHaveBeenNthCalledWith(2, { type: 'aborted', controller } satisfies RouterEvent);
-      expect(routeListenerMock).toHaveBeenNthCalledWith(3, { type: 'loading', controller } satisfies RouterEvent);
-      expect(routeListenerMock).toHaveBeenNthCalledWith(4, { type: 'ready', controller } satisfies RouterEvent);
-    });
-
-    test('triggers child controller loading', async () => {
-      controller.childController = new RouteController(router, route, {});
-
-      const loadSpy = jest.spyOn(controller.childController, 'load');
-
-      controller.load();
-
-      expect(loadSpy).toHaveBeenCalledTimes(1);
+      await expect(promise).rejects.toStrictEqual(AbortError('The route loading was aborted'));
     });
   });
 
   describe('abort', () => {
     test('no-op if no pending route loading', () => {
-      controller.setData('zzz');
+      controller['_load'](() => 'zzz');
       controller.abort();
 
-      expect(controller.state).toStrictEqual({ status: 'ok', data: 'zzz' } satisfies RouteState);
+      expect(controller['_state']).toStrictEqual({ status: 'ready', data: 'zzz' } satisfies RouteState);
     });
 
     test('aborts pending route loading and sets error state', async () => {
-      route = createRoute({
-        pathname: '/foo',
-        dataLoader: () => Promise.resolve({ zzz: 777 }),
-      });
+      controller['_load'](() => Promise.resolve({ zzz: 777 }));
 
-      controller = new RouteController(router, route, {});
-
-      controller.load();
-
-      const promise = controller.loadingPromise;
+      const promise = controller.promise;
 
       controller.abort('xxx');
 
-      expect(promise).not.toBeNull();
-      expect(controller.state).toStrictEqual({ status: 'error', error: 'xxx' } satisfies RouteState);
-      expect(controller.loadingPromise).toBeNull();
+      expect(controller['_state']).toStrictEqual({ status: 'error', error: 'xxx' } satisfies RouteState);
+      expect(controller.promise).toBeNull();
       await expect(promise).rejects.toStrictEqual('xxx');
+
+      expect(listenerMock).toHaveBeenCalledTimes(2);
+
+      expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'loading', controller } satisfies RouterEvent);
+
+      expect(listenerMock).toHaveBeenNthCalledWith(2, {
+        type: 'error',
+        controller,
+        error: 'xxx',
+      } satisfies RouterEvent);
     });
 
     test('aborts background pending route loading and preserves state', async () => {
-      route = createRoute({
-        pathname: '/foo',
-        dataLoader: () => Promise.resolve({ zzz: 777 }),
-      });
+      controller['_load'](() => 'aaa');
+      controller['_load'](() => Promise.resolve('bbb'));
 
-      controller = new RouteController(router, route, {});
+      const promise = controller.promise;
 
-      controller.setData('zzz');
-
-      controller.load();
-
-      const promise = controller.loadingPromise;
-
-      controller.abort('xxx');
+      controller.abort('ccc');
 
       expect(promise).not.toBeNull();
-      expect(controller.state).toStrictEqual({ status: 'ok', data: 'zzz' } satisfies RouteState);
-      expect(controller.loadingPromise).toBeNull();
-      await expect(promise).rejects.toStrictEqual('xxx');
+      expect(controller['_state']).toStrictEqual({ status: 'ready', data: 'aaa' } satisfies RouteState);
+      expect(controller.promise).toBeNull();
 
-      expect(routeListenerMock).toHaveBeenCalledTimes(3);
-      expect(routeListenerMock).toHaveBeenNthCalledWith(1, { type: 'ready', controller } satisfies RouterEvent);
-      expect(routeListenerMock).toHaveBeenNthCalledWith(2, { type: 'loading', controller } satisfies RouterEvent);
-      expect(routeListenerMock).toHaveBeenNthCalledWith(3, { type: 'aborted', controller } satisfies RouterEvent);
+      expect(listenerMock).toHaveBeenCalledTimes(3);
+      expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'ready', controller } satisfies RouterEvent);
+      expect(listenerMock).toHaveBeenNthCalledWith(2, { type: 'loading', controller } satisfies RouterEvent);
+      expect(listenerMock).toHaveBeenNthCalledWith(3, { type: 'aborted', controller } satisfies RouterEvent);
+
+      await expect(promise).rejects.toBe('ccc');
     });
   });
 
-  test('aborts child controller loading', async () => {
-    controller.childController = new RouteController(router, route, {});
+  describe('status', () => {
+    test('returns the current status', () => {
+      expect(controller.status).toBe('loading');
 
-    const abortSpy = jest.spyOn(controller.childController, 'abort');
+      controller['_load'](() => 'aaa');
 
-    controller.abort();
+      expect(controller.status).toBe('ready');
+    });
+  });
 
-    expect(abortSpy).toHaveBeenCalledTimes(1);
+  describe('data', () => {
+    test('returns the data if status is ready', () => {
+      controller['_load'](() => 'aaa');
+
+      expect(controller.data).toBe('aaa');
+    });
+
+    test("throws if state if there's no data", () => {
+      expect(() => controller.data).toThrow(new Error("The route data isn't ready"));
+    });
+  });
+
+  describe('error', () => {
+    test('returns the current error', () => {
+      const error = new Error('Expected');
+
+      expect(controller.error).toBeUndefined();
+
+      controller.setError(error);
+
+      expect(controller.error).toBe(error);
+    });
+  });
+
+  describe('reload', () => {
+    test('loads using route dataLoader', () => {
+      const dataLoaderMock = jest.fn(options => 'zzz');
+
+      const route = createRoute({ dataLoader: dataLoaderMock });
+      controller = new RouteController(router, route, {});
+
+      controller.reload();
+
+      expect(controller.promise).toBeNull();
+      expect(controller['_state']).toStrictEqual({ status: 'ready', data: 'zzz' } satisfies RouteState);
+      expect(listenerMock).toHaveBeenCalledTimes(1);
+      expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'ready', controller } satisfies RouterEvent);
+      expect(dataLoaderMock).toHaveBeenCalledTimes(1);
+      expect(dataLoaderMock).toHaveBeenNthCalledWith(1, {
+        router,
+        route,
+        params: {},
+        signal: expect.any(AbortSignal),
+        isPrefetch: false,
+      } as DataLoaderOptions<any, any>);
+    });
   });
 });
 
-describe('getOrLoadRouteState', () => {
-  const Component = () => undefined;
-  const { signal } = new AbortController();
+describe('handleBoundaryError', () => {
+  const Component = () => null;
 
-  const router = new Router({ routes: [] });
+  let listenerMock: jest.Mock;
+  let route: Route;
+  let router: Router;
+  let controller: RouteController;
 
-  test('returns OK state for outlet route', () => {
-    const route = createRoute();
+  beforeEach(() => {
+    listenerMock = jest.fn();
 
-    expect(
-      getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })
-    ).toStrictEqual({
-      status: 'ok',
-      data: undefined,
-    });
+    route = createRoute('/aaa');
+    router = new Router({ routes: [route] });
+    controller = new RouteController(router, route, {});
 
-    expect(route.component).toBe(Outlet);
+    router.subscribe(listenerMock);
   });
 
-  test('returns OK state for route with a component', () => {
-    const route = createRoute({
-      component: Component,
-    });
+  test('sets error', () => {
+    const error = new Error('Expected');
 
-    expect(
-      getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })
-    ).toStrictEqual({
-      status: 'ok',
-      data: undefined,
-    });
+    route.errorComponent = Component;
+    controller['_renderedState'] = { status: 'loading' };
+
+    handleBoundaryError(controller, error);
+
+    expect(controller['_state']).toStrictEqual({ status: 'error', error } satisfies RouteState);
+    expect(listenerMock).toHaveBeenCalledTimes(1);
+    expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'error', controller, error } satisfies RouterEvent);
   });
 
-  test('returns OK state for route with a loader', () => {
-    const route = createRoute({
-      dataLoader: () => 111,
-    });
+  test('ignores if called multiple times with the same error', () => {
+    const error = new Error('Expected');
 
-    expect(
-      getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })
-    ).toStrictEqual({
-      status: 'ok',
-      data: 111,
-    });
+    route.errorComponent = Component;
+    controller['_renderedState'] = { status: 'loading' };
+
+    handleBoundaryError(controller, error);
+    handleBoundaryError(controller, error);
+    handleBoundaryError(controller, error);
+
+    expect(controller['_state']).toStrictEqual({ status: 'error', error } satisfies RouteState);
+    expect(listenerMock).toHaveBeenCalledTimes(1);
+    expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'error', controller, error } satisfies RouterEvent);
   });
 
-  test('returns an async OK state for route with a loader', async () => {
-    const route = createRoute({
-      dataLoader: () => Promise.resolve(111),
-    });
+  test('overwrites previous error', () => {
+    const error1 = new Error('Expected1');
+    const error2 = new Error('Expected2');
 
-    await expect(
-      getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })
-    ).resolves.toStrictEqual({
-      status: 'ok',
-      data: 111,
-    });
+    route.errorComponent = Component;
+    controller['_renderedState'] = { status: 'loading' };
+
+    handleBoundaryError(controller, error1);
+    handleBoundaryError(controller, error2);
+
+    expect(controller['_state']).toStrictEqual({ status: 'error', error: error2 } satisfies RouteState);
+    expect(listenerMock).toHaveBeenCalledTimes(2);
+    expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'error', controller, error: error1 } satisfies RouterEvent);
+    expect(listenerMock).toHaveBeenNthCalledWith(2, { type: 'error', controller, error: error2 } satisfies RouterEvent);
   });
 
-  test('returns an async OK for state for route with a lazy component', async () => {
-    const route = createRoute({
-      lazyComponent: () => Promise.resolve({ default: Component }),
-    });
+  test("throws if there's no errorComponent", () => {
+    const error = new Error('Expected');
 
-    expect(route.component).toBeUndefined();
-    await expect(
-      getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })
-    ).resolves.toStrictEqual({
-      status: 'ok',
-      data: undefined,
-    });
-    expect(route.component).toBe(Component);
+    controller['_renderedState'] = { status: 'loading' };
+
+    expect(() => handleBoundaryError(controller, error)).toThrow(error);
   });
 
-  test('returns an async OK for state for route with a lazy component and loader', async () => {
-    const route = createRoute({
-      lazyComponent: () => Promise.resolve({ default: Component }),
-      dataLoader: () => Promise.resolve(111),
-    });
+  test('throws if state is unchanged', () => {
+    route.errorComponent = Component;
 
-    expect(route.component).toBeUndefined();
-    await expect(
-      getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })
-    ).resolves.toStrictEqual({
-      status: 'ok',
-      data: 111,
-    });
-    expect(route.component).toBe(Component);
+    const error = new Error('Expected');
+
+    controller['_renderedState'] = { status: 'error', error };
+
+    expect(() => handleBoundaryError(controller, error)).toThrow(error);
+  });
+});
+
+describe('reconcileControllers', () => {
+  test('returns null for empty matches', () => {
+    const router = new Router({ routes: [] });
+
+    const controller = reconcileControllers(router, router.rootController, []);
+
+    expect(controller).toBeNull();
   });
 
-  test('returns an error state if lazy component throws during load', async () => {
-    const route = createRoute({
-      lazyComponent: () => Promise.reject(111),
-    });
+  test('reuses ready state if nothing is changed', () => {
+    const route = createRoute('/aaa');
 
-    await expect(
-      getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })
-    ).resolves.toStrictEqual({
-      status: 'error',
-      error: 111,
-    });
-    expect(route.component).toBeUndefined();
+    const router = new Router({ routes: [] });
+
+    const controller1 = new RouteController(router, route, { yyy: 222 });
+    controller1.reload();
+
+    const controller2 = reconcileControllers(router, controller1, [{ route, params: { yyy: 222 } }])!;
+
+    expect(controller2).not.toBe(controller1);
+    expect(controller2['_context']).toBe(controller1['_context']);
+    expect(controller2['_state']).toBe(controller1['_state']);
+    expect(controller2['_error']).toBe(controller1['_error']);
+    expect(controller2['_renderedState']).toBe(controller1['_renderedState']);
+    expect(controller2['_fallbackController']).toBeNull();
   });
 
-  test('returns an error state if loader throws', () => {
-    const route = createRoute({
-      dataLoader: () => {
-        throw 111;
-      },
+  test('reuses error state if nothing is changed', () => {
+    const route = createRoute('/aaa');
+
+    const router = new Router({ routes: [] });
+
+    const controller1 = new RouteController(router, route, { yyy: 222 });
+    controller1['_load'](() => {
+      throw new Error('Expected');
     });
 
-    expect(route.component).toBe(Outlet);
-    expect(
-      getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })
-    ).toStrictEqual({
-      status: 'error',
-      error: 111,
-    });
+    const controller2 = reconcileControllers(router, controller1, [{ route, params: { yyy: 222 } }])!;
+
+    expect(controller2).not.toBe(controller1);
+    expect(controller2['_context']).toBe(controller1['_context']);
+    expect(controller2['_state']).toBe(controller1['_state']);
+    expect(controller2['_error']).toBe(controller1['_error']);
+    expect(controller2['_renderedState']).toBe(controller1['_renderedState']);
+    expect(controller2['_fallbackController']).toBeNull();
   });
 
-  test('returns an error state if loader rejects', async () => {
+  test('does not reuse loading state if nothing is changed', () => {
     const route = createRoute({
-      dataLoader: () => Promise.reject(111),
+      dataLoader: () => Promise.resolve('ttt'),
     });
 
-    await expect(
-      getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })
-    ).resolves.toStrictEqual({
-      status: 'error',
-      error: 111,
-    });
+    const router = new Router({ routes: [] });
+
+    const controller1 = new RouteController(router, route, { yyy: 222 });
+    controller1.reload();
+
+    const controller2 = reconcileControllers(router, controller1, [{ route, params: { yyy: 222 } }])!;
+
+    expect(controller2).not.toBe(controller1);
+    expect(controller2['_context']).toBe(controller1['_context']);
+    expect(controller2['_state']).not.toBe(controller1['_state']);
+    expect(controller2['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
+    expect(controller2['_error']).toBe(controller1['_error']);
+    expect(controller2['_renderedState']).toBe(controller1['_renderedState']);
+    expect(controller2['_fallbackController']).toBeNull();
   });
 
-  test('returns an error state if both lazy component and loader throw', async () => {
-    const route = createRoute({
-      lazyComponent: () => Promise.reject(111),
-      dataLoader: () => Promise.reject(222),
-    });
+  test("reuses ready state if params have changed but there's no dataLoader", () => {
+    const route = createRoute('/aaa');
 
-    await expect(
-      getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })
-    ).resolves.toStrictEqual({
-      status: 'error',
-      error: 222,
-    });
+    const router = new Router({ routes: [] });
+
+    const controller1 = new RouteController(router, route, { yyy: 222 });
+    controller1.reload();
+
+    const controller2 = reconcileControllers(router, controller1, [{ route, params: { zzz: 333 } }])!;
+
+    expect(controller2).not.toBe(controller1);
+    expect(controller2['_context']).toBe(controller1['_context']);
+    expect(controller2['_state']).toBe(controller1['_state']);
+    expect(controller2['_error']).toBe(controller1['_error']);
+    expect(controller2['_renderedState']).toBe(controller1['_renderedState']);
+    expect(controller2['_fallbackController']).toBeNull();
   });
 
-  test('data is ignored if lazy component loader throws', async () => {
-    const route = createRoute({
-      lazyComponent: () => Promise.reject(111),
-      dataLoader: () => 'aaa',
-    });
+  test('uses the evicted controller as a fallback if params have changed', () => {
+    const route = createRoute({ dataLoader: () => 'zzz' });
 
-    await expect(
-      getOrLoadRouteState({ route, router, params: {}, context: undefined, signal, isPrefetch: false })
-    ).resolves.toStrictEqual({
-      status: 'error',
-      error: 111,
-    });
+    const router = new Router({ routes: [] });
+
+    const controller1 = new RouteController(router, route, { yyy: 222 });
+    controller1.reload();
+
+    const controller2 = reconcileControllers(router, controller1, [{ route, params: { yyy: 333 } }])!;
+
+    expect(controller2).not.toBe(controller1);
+    expect(controller2['_context']).toBe(controller1['_context']);
+    expect(controller2['_state']).not.toBe(controller1['_state']);
+    expect(controller2['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
+    expect(controller2['_error']).toBe(controller1['_error']);
+    expect(controller2['_renderedState']).toBe(controller1['_renderedState']);
+    expect(controller2['_fallbackController']).toBe(controller1);
   });
 
-  test('calls loader with params and context', () => {
-    const loaderMock = jest.fn();
+  test('uses the evicted controller as a fallback if context has changed', () => {
+    const route = createRoute({ dataLoader: () => 'zzz' });
 
+    const router = new Router({ routes: [], context: 'ppp' });
+
+    const controller1 = new RouteController(router, route, { yyy: 222 });
+    controller1.reload();
+
+    router.context = 'qqq';
+
+    const controller2 = reconcileControllers(router, controller1, [{ route, params: { yyy: 222 } }])!;
+
+    expect(controller2).not.toBe(controller1);
+    expect(controller2['_context']).not.toBe(controller1['_context']);
+    expect(controller2['_context']).toBeUndefined();
+    expect(controller2['_state']).not.toBe(controller1['_state']);
+    expect(controller2['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
+    expect(controller2['_error']).toBe(controller1['_error']);
+    expect(controller2['_renderedState']).toBe(controller1['_renderedState']);
+    expect(controller2['_fallbackController']).toBe(controller1);
+  });
+
+  test('does not use the evicted controller as a fallback if its state is not ready and params have changed', () => {
+    const route = createRoute({ dataLoader: () => 'zzz' });
+
+    const router = new Router({ routes: [] });
+
+    const controller1 = new RouteController(router, route, { yyy: 222 });
+    controller1['_load'](() => {
+      throw new Error('Expected');
+    });
+
+    const controller2 = reconcileControllers(router, controller1, [{ route, params: { yyy: 333 } }])!;
+
+    expect(controller2).not.toBe(controller1);
+    expect(controller2['_context']).toBe(controller1['_context']);
+    expect(controller2['_state']).not.toBe(controller1['_state']);
+    expect(controller2['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
+    expect(controller2['_error']).toBeUndefined();
+    expect(controller2['_renderedState']).toBe(controller1['_renderedState']);
+    expect(controller2['_fallbackController']).toBeNull();
+  });
+
+  test('does not use the evicted controller as a fallback if loadingAppearance is loading', () => {
     const route = createRoute({
-      dataLoader: loaderMock,
+      dataLoader: () => 'zzz',
+      loadingAppearance: 'loading',
     });
 
-    getOrLoadRouteState({ route, router, params: { aaa: 111 }, context: { bbb: 222 }, signal, isPrefetch: false });
+    const router = new Router({ routes: [] });
 
-    expect(loaderMock).toHaveBeenCalledTimes(1);
-    expect(loaderMock).toHaveBeenNthCalledWith(1, {
-      route,
-      router,
-      params: { aaa: 111 },
-      context: { bbb: 222 },
-      signal,
-      isPrefetch: false,
+    const controller1 = new RouteController(router, route, { yyy: 222 });
+    controller1.reload();
+
+    const controller2 = reconcileControllers(router, controller1, [{ route, params: { yyy: 333 } }])!;
+
+    expect(controller2).not.toBe(controller1);
+    expect(controller2['_context']).toBe(controller1['_context']);
+    expect(controller2['_state']).not.toBe(controller1['_state']);
+    expect(controller2['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
+    expect(controller2['_error']).toBeUndefined();
+    expect(controller2['_renderedState']).toBe(controller1['_renderedState']);
+    expect(controller2['_fallbackController']).toBeNull();
+  });
+
+  test('uses the evicted controller as a fallback if route has changed and loadingAppearance is avoid', () => {
+    const routeAaa = createRoute('/aaa');
+    const routeBbb = createRoute({
+      pathname: '/bbb',
+      loadingAppearance: 'avoid',
     });
+
+    const router = new Router({ routes: [] });
+
+    router.rootController = new RouteController(router, routeAaa, {});
+
+    router.rootController.setData('aaa');
+
+    const controller = reconcileControllers(router, router.rootController, [{ route: routeBbb, params: {} }])!;
+
+    expect(controller['_state']).not.toBe(router.rootController['_state']);
+    expect(controller['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
+    expect(controller.route).toBe(routeBbb);
+    expect(controller['_fallbackController']).toBe(router.rootController);
+  });
+
+  test('does not use the evicted controller as a fallback if route has changed and loadingAppearance is route_loading', () => {
+    const routeAaa = createRoute('/aaa');
+    const routeBbb = createRoute({
+      pathname: '/bbb',
+      loadingAppearance: 'route_loading',
+    });
+
+    const router = new Router({ routes: [] });
+
+    router.rootController = new RouteController(router, routeAaa, {});
+
+    router.rootController.setData('aaa');
+
+    const controller = reconcileControllers(router, router.rootController, [{ route: routeBbb, params: {} }])!;
+
+    expect(controller['_state']).not.toBe(router.rootController['_state']);
+    expect(controller['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
+    expect(controller.route).toBe(routeBbb);
+    expect(controller['_fallbackController']).toBeNull();
+  });
+
+  test('does not use the evicted controller as a fallback if route has changed and its state is not ready', () => {
+    const routeAaa = createRoute('/aaa');
+    const routeBbb = createRoute({ loadingAppearance: 'avoid' });
+
+    const router = new Router({ routes: [] });
+
+    router.rootController = new RouteController(router, routeAaa, {});
+
+    router.rootController.setError('xxx');
+
+    const controller = reconcileControllers(router, router.rootController, [{ route: routeBbb, params: {} }])!;
+
+    expect(controller['_state']).not.toBe(router.rootController['_state']);
+    expect(controller['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
+    expect(controller.route).toBe(routeBbb);
+    expect(controller['_fallbackController']).toBeNull();
+  });
+
+  test('uses the evicted controller as a fallback for a nested route', () => {
+    const routeAaa = createRoute('/aaa');
+    const routeBbb = createRoute(routeAaa, '/bbb');
+    const routeCcc = createRoute(routeAaa, {
+      pathname: '/ccc',
+      loadingAppearance: 'avoid',
+    });
+
+    const router = new Router({ routes: [routeBbb] });
+
+    router.navigate(routeBbb);
+
+    const evictedController = router.rootController;
+
+    const routeMatches = matchRoutes('/aaa/ccc', {}, [routeCcc]);
+
+    const controller = reconcileControllers(router, router.rootController, routeMatches)!;
+
+    expect(controller['_state'].status).toBe('ready');
+    expect(controller.route).toBe(routeAaa);
+    expect(controller['_fallbackController']).toBeNull();
+    expect(controller.childController!['_state'].status).toBe('loading');
+    expect(controller.childController!.route).toBe(routeCcc);
+    expect(controller.childController!['_fallbackController']).toBe(evictedController!.childController);
   });
 });

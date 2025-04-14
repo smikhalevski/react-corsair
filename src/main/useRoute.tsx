@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useSyncExternalStore } from 'react';
+import { createContext, useContext, useSyncExternalStore } from 'react';
 import { RouteController } from './RouteController';
 import { Route } from './Route';
 import { Dict } from './types';
@@ -41,11 +41,7 @@ export function useRoute(route?: Route) {
     throw new Error('Cannot be used outside of a route');
   }
 
-  const subscribe = useCallback(controller.router.subscribe.bind(controller.router), [controller]);
-
-  const getSnapshot = () => controller.state;
-
-  useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  useSyncExternalStore(controller.router.subscribe, () => controller['_state']);
 
   return controller;
 }

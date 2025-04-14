@@ -54,26 +54,27 @@ export function useHistoryBlocker(blocker?: boolean | HistoryBlocker): HistoryTr
 
   useEffect(
     () =>
-      history.block(transaction => {
-        let tx: HistoryTransaction | null = {
-          ...transaction,
+      history.block(actualTransaction => {
+        let transaction: HistoryTransaction | null = {
+          ...actualTransaction,
 
           proceed() {
-            tx = null;
-            setTransaction(tx);
-            transaction.proceed();
+            transaction = null;
+            setTransaction(transaction);
+            actualTransaction.proceed();
           },
 
           cancel() {
-            tx = null;
-            setTransaction(tx);
-            transaction.cancel();
+            transaction = null;
+            setTransaction(transaction);
+            actualTransaction.cancel();
           },
         };
 
-        const isBlocked = typeof blockerRef.current === 'function' ? blockerRef.current(tx) : blockerRef.current;
+        const blocker = blockerRef.current;
+        const isBlocked = typeof blocker === 'function' ? blocker(transaction) : blocker;
 
-        setTransaction(transaction.type === 'unload' ? null : tx);
+        setTransaction(actualTransaction.type === 'unload' ? null : transaction);
 
         return isBlocked;
       }),
