@@ -175,7 +175,7 @@ describe('hasChanges', () => {
 
       router.abort('xxx');
 
-      expect(router.rootController!['_state']).toStrictEqual({ status: 'error', error: 'xxx' } as RouteState);
+      expect(router.rootController!['_state']).toStrictEqual({ status: 'error', error: 'xxx' } satisfies RouteState);
       expect(router.rootController!.promise).toBeNull();
       await expect(promise).rejects.toBe('xxx');
     });

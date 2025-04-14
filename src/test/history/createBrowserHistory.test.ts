@@ -15,13 +15,14 @@ test('removes base from location', async () => {
     searchParams: {},
     hash: '',
     state: undefined,
-  } as Location);
+  } satisfies Location);
+
   expect(createBrowserHistory({ basePathname: '/aaa/' }).location).toStrictEqual({
     pathname: '/bbb',
     searchParams: {},
     hash: '',
     state: undefined,
-  } as Location);
+  } satisfies Location);
 });
 
 test('pushes location', async () => {

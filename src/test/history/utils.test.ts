@@ -19,39 +19,39 @@ describe('parseLocation', () => {
       searchParams: {},
       hash: '',
       state: undefined,
-    } as Location);
+    } satisfies Location);
     expect(parseLocation('/aaa#')).toStrictEqual({
       pathname: '/aaa',
       searchParams: {},
       hash: '',
       state: undefined,
-    } as Location);
+    } satisfies Location);
     expect(parseLocation('/aaa?')).toStrictEqual({
       pathname: '/aaa',
       searchParams: {},
       hash: '',
       state: undefined,
-    } as Location);
+    } satisfies Location);
     expect(parseLocation('/aaa?#')).toStrictEqual({
       pathname: '/aaa',
       searchParams: {},
       hash: '',
       state: undefined,
-    } as Location);
+    } satisfies Location);
 
     expect(parseLocation('/aaa?xxx=111')).toStrictEqual({
       pathname: '/aaa',
       searchParams: { xxx: 111 },
       hash: '',
       state: undefined,
-    } as Location);
+    } satisfies Location);
 
     expect(parseLocation('/aaa#%23%24%25')).toStrictEqual({
       pathname: '/aaa',
       searchParams: {},
       hash: '#$%',
       state: undefined,
-    } as Location);
+    } satisfies Location);
   });
 });
 
@@ -104,7 +104,7 @@ describe('isUnloadBlocked', () => {
       location,
       proceed: expect.any(Function),
       cancel: expect.any(Function),
-    } as HistoryTransaction);
+    } satisfies HistoryTransaction);
 
     expect(blockerMock1).toHaveBeenCalledTimes(1);
     expect(blockerMock1).toHaveBeenNthCalledWith(1, {
@@ -112,7 +112,7 @@ describe('isUnloadBlocked', () => {
       location,
       proceed: expect.any(Function),
       cancel: expect.any(Function),
-    } as HistoryTransaction);
+    } satisfies HistoryTransaction);
   });
 
   test('returns true if blocker returns true', () => {
@@ -196,14 +196,14 @@ describe('navigateOrBlock', () => {
       location,
       proceed: expect.any(Function),
       cancel: expect.any(Function),
-    } as HistoryTransaction);
+    } satisfies HistoryTransaction);
     expect(blockerMock1).toHaveBeenCalledTimes(1);
     expect(blockerMock1).toHaveBeenNthCalledWith(1, {
       type: 'push',
       location,
       proceed: expect.any(Function),
       cancel: expect.any(Function),
-    } as HistoryTransaction);
+    } satisfies HistoryTransaction);
     expect(navigationMock).toHaveBeenCalledTimes(1);
     expect(navigationMock).toHaveBeenNthCalledWith(1, location);
   });
@@ -222,7 +222,7 @@ describe('navigateOrBlock', () => {
       location,
       proceed: expect.any(Function),
       cancel: expect.any(Function),
-    } as HistoryTransaction);
+    } satisfies HistoryTransaction);
     expect(blockerMock1).not.toHaveBeenCalled();
     expect(navigationMock).not.toHaveBeenCalled();
 
@@ -234,7 +234,7 @@ describe('navigateOrBlock', () => {
       location,
       proceed: expect.any(Function),
       cancel: expect.any(Function),
-    } as HistoryTransaction);
+    } satisfies HistoryTransaction);
     expect(navigationMock).toHaveBeenCalledTimes(1);
     expect(navigationMock).toHaveBeenNthCalledWith(1, location);
   });

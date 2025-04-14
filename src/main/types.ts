@@ -238,7 +238,7 @@ export interface RouteOptions<Params extends Dict, Data, Context> {
   /**
    * A callback that loads data required to render a route.
    *
-   * Loaded data is available in route {@link component} via {@link useRoute useRoute().getData()}.
+   * Loaded data is available in route {@link component} via {@link useRoute useRoute().data}.
    *
    * @param options Loader options.
    */

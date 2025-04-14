@@ -11,13 +11,13 @@ test('parses initial entries', () => {
     searchParams: { xxx: 'yyy' },
     hash: '',
     state: undefined,
-  } as Location);
+  } satisfies Location);
   expect(createMemoryHistory([createRoute({ pathname: '/aaa' })]).location).toStrictEqual({
     pathname: '/aaa',
     searchParams: {},
     hash: '',
     state: undefined,
-  } as Location);
+  } satisfies Location);
 });
 
 test('pushes location', () => {
@@ -157,7 +157,7 @@ test('does not block the navigation', () => {
     },
     proceed: expect.any(Function),
     cancel: expect.any(Function),
-  } as HistoryTransaction);
+  } satisfies HistoryTransaction);
 
   expect(history.location).toStrictEqual({
     hash: '',
@@ -166,7 +166,7 @@ test('does not block the navigation', () => {
       xxx: 111,
     },
     state: undefined,
-  } as Location);
+  } satisfies Location);
 });
 
 test('blocks the navigation', async () => {
@@ -185,7 +185,7 @@ test('blocks the navigation', async () => {
     pathname: '/',
     searchParams: {},
     state: undefined,
-  } as Location);
+  } satisfies Location);
 });
 
 test('proceeds with the navigation after blocking', async () => {
@@ -205,7 +205,7 @@ test('proceeds with the navigation after blocking', async () => {
     pathname: '/',
     searchParams: {},
     state: undefined,
-  } as Location);
+  } satisfies Location);
 
   proceed!();
 
@@ -216,7 +216,7 @@ test('proceeds with the navigation after blocking', async () => {
       xxx: 111,
     },
     state: undefined,
-  } as Location);
+  } satisfies Location);
 });
 
 test('proceeds with the navigation during blocking', async () => {
@@ -236,7 +236,7 @@ test('proceeds with the navigation during blocking', async () => {
       xxx: 111,
     },
     state: undefined,
-  } as Location);
+  } satisfies Location);
 });
 
 test('calls all blockers', async () => {
@@ -288,5 +288,5 @@ test('unregisters a blocker', async () => {
       xxx: 111,
     },
     state: undefined,
-  } as Location);
+  } satisfies Location);
 });
