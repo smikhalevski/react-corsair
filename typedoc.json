@@ -29,7 +29,7 @@
   ],
   "intentionallyNotExported": ["PartialAsVoid", "LOCATION_PARAMS"],
   "kindSortOrder": ["Function", "Class", "Variable", "TypeAlias"],
-  "groupOrder": ["Routing"],
+  "groupOrder": ["Routing", "Prefetching", "Server-Side Rendering"],
   "externalSymbolLinkMappings": {
     "react": {
       "ComponentType": "https://react.dev/reference/react/createElement",

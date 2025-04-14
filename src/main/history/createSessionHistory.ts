@@ -99,7 +99,7 @@ export function createSessionHistory(
     record.index = 0;
 
     // Ensure the history state is ordinal
-    window.history.replaceState({ index: 0, state: record.location.state } as HistoryState, '');
+    window.history.replaceState({ index: 0, state: record.location.state } satisfies HistoryState, '');
   }
 
   return {
@@ -125,7 +125,7 @@ export function createSessionHistory(
       cancel = navigateOrBlock('push', blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
         const url = toAbsoluteURL(stringifyLocation(location, searchParamsSerializer));
 
-        window.history.pushState({ index: record.index + 1, state: location.state } as HistoryState, '', url);
+        window.history.pushState({ index: record.index + 1, state: location.state } satisfies HistoryState, '', url);
 
         applyPopstate = noop;
         record = getHistoryRecord();
@@ -139,7 +139,7 @@ export function createSessionHistory(
       cancel = navigateOrBlock('replace', blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
         const url = toAbsoluteURL(stringifyLocation(location, searchParamsSerializer));
 
-        window.history.replaceState({ index: record.index, state: location.state } as HistoryState, '', url);
+        window.history.replaceState({ index: record.index, state: location.state } satisfies HistoryState, '', url);
 
         applyPopstate = noop;
         record = getHistoryRecord();

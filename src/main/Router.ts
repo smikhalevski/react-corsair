@@ -2,7 +2,15 @@ import { AbortablePromise, PubSub } from 'parallel-universe';
 import { ComponentType } from 'react';
 import { matchRoutes, RouteMatch } from './matchRoutes';
 import { Route } from './Route';
-import { LoadingAppearance, NavigateOptions, RenderingDisposition, RouterEvent, RouterOptions, To } from './types';
+import {
+  LoadingAppearance,
+  Location,
+  NavigateOptions,
+  RenderingDisposition,
+  RouterEvent,
+  RouterOptions,
+  To,
+} from './types';
 import { AbortError, getTailController, noop, toLocation } from './utils';
 import { getActiveController, getRenderingDisposition, reconcileControllers, RouteController } from './RouteController';
 
@@ -70,6 +78,11 @@ export class Router<Context = any> {
   interceptedController: RouteController<any, any, Context> | null = null;
 
   /**
+   * The location of the latest router {@link navigate navigation}.
+   */
+  location: Location | null = null;
+
+  /**
    * A map from an intercepted route to a number of registered interceptors.
    */
   protected _interceptorRegistry = new Map<Route, number>();
@@ -114,6 +127,8 @@ export class Router<Context = any> {
   navigate(to: To, options: NavigateOptions = {}): void {
     const location = toLocation(to);
     const routeMatches = matchRoutes(location.pathname, location.searchParams, this.routes);
+
+    this.location = location;
 
     let prevController;
     let nextController;
@@ -199,6 +214,14 @@ export class Router<Context = any> {
     this.interceptedController = null;
 
     prevRootController!.abort(AbortError('Route interception was cancelled'));
+
+    this._pubSub.publish({
+      type: 'navigate',
+      controller: this.rootController,
+      router: this,
+      location: this.location!,
+      isIntercepted: false,
+    });
   }
 
   /**

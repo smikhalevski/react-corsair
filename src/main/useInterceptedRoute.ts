@@ -10,9 +10,9 @@ import { getTailController } from './utils';
  * intercepted.
  *
  * @example
- * const routeController = useInterceptedRoute(route);
+ * const fooController = useInterceptedRoute(fooRoute);
  *
- * <RouteOutlet controller={routeController} />
+ * fooController !== null && <RouteOutlet controller={fooController} />
  *
  * @param route The route to intercept.
  * @template Params Route params.

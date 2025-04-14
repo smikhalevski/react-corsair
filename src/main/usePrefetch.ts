@@ -1,8 +1,7 @@
-import isDeepEqual from 'fast-deep-equal';
 import { useEffect, useRef } from 'react';
 import { To } from './types';
-import { Route } from './Route';
 import { useRouter } from './useRouter';
+import { isEqualLocation } from './utils';
 
 /**
  * Prefetches components and data of routes matched by a location after a component has mounted.
@@ -21,7 +20,7 @@ export function usePrefetch(to: To): void {
   const router = useRouter();
 
   useEffect(() => {
-    if (toRef.current instanceof Route && to instanceof Route ? toRef.current === to : isDeepEqual(toRef.current, to)) {
+    if (isEqualLocation(toRef.current, to)) {
       return;
     }
     toRef.current = to;

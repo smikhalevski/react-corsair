@@ -480,7 +480,7 @@ describe('RouteController', () => {
         params: {},
         signal: expect.any(AbortSignal),
         isPrefetch: false,
-      } as DataLoaderOptions<any, any>);
+      } satisfies DataLoaderOptions<any, any>);
     });
   });
 });
