@@ -26,6 +26,7 @@ npm install --save-prod react-corsair
 - [Redirects](#redirects)
 - [Prefetching](#prefetching)
 - [Route interception](#route-interception)
+- [Inline routes](#inline-routes)
 
 🔗&ensp;[**History**](#history)
 
@@ -830,12 +831,14 @@ for data loaders.
 
 ## Route interception
 
-Intercepting routes allows you to load a route from another part of your application within the current layout.
-This routing paradigm can be useful when you want to display the content of a route without the user switching to
+When a router is navigated to a new location, a target route can be intercepted and rendered in the layout of
+the current route. This can be useful when you want to display the content of a route without the user switching to
 a different context.
 
-Let's create a shop feed and each product from the feed can be opened in a separate page. Here's the product route
-and its component:
+To showcase how to use route interception, let's start with creating create a shop feed from which products can be
+opened in a separate page.
+
+Here's the product route and its component:
 
 ```ts
 import { createRoute, useRoute } from 'react-corsair';
@@ -903,21 +906,21 @@ hook to `<ShopPage>`:
 import { useInterceptedRoute } from 'react-corsair';
 
 function ShopPage() {
-  const productRouteController = useInterceptedRoute(productRoute);
+  const productController = useInterceptedRoute(productRoute);
   // ⮕ RouteController | null
   
   return (
     <>
       <Link to={productRoute.getLocation(42)}>{'Go to product'}</Link>
 
-      {productRouteController !== null && <RouteOutlet controller={productRouteController}/>}
+      {productController !== null && <RouteOutlet controller={productController}/>}
     </>
   );
 }
 ```
 
 Now when user clicks on _Go to product_, the browser location changes to `/product/42` and `<ShopPage>` is re-rendered.
-`productRouteController` would contain
+`productController` would contain
 a [route controller](https://smikhalevski.github.io/react-corsair/classes/react_corsair.RouteController.html) for
 `productRoute`. This controller can be then rendered using
 the [`<RouteOutlet>`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.RouteOutlet.html).
@@ -935,6 +938,23 @@ method to render the intercepted route in a router `<Outlet>`:
 ```ts
 router.cancelInterception();
 ```
+
+## Inline routes
+
+Inline routes allow rendering a route that matches a location inside a component:
+
+```tsx
+import { useInlineRoute, RouteOutlet } from 'react-corsair';
+
+function Product() {
+  const productController = useInlineRoute(productRoute.getLocation(42));
+  
+  return productController !== null && <RouteOutlet controller={productController}/>;
+}
+```
+
+[`useInlineRoute`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.useInlineRoute.html) matches the
+provided location against routes of the current router and returns a corresponding route controller. 
 
 # History
 

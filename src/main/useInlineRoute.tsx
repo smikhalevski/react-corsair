@@ -4,6 +4,18 @@ import { useRouter } from './useRouter';
 import { useEffect, useRef, useState } from 'react';
 import { getTailController, isEqualLocation } from './utils';
 
+/**
+ * Returns the controller of the route matched by the {@link to location}.
+ *
+ * @example
+ * const fooController = useInlineRoute(fooRoute);
+ *
+ * fooController !== null && <RouteOutlet controller={fooController} />
+ *
+ * @param to The location to render.
+ * @see {@link RouteOutlet}
+ * @group Routing
+ */
 export function useInlineRoute(to: To): RouteController | null {
   const router = useRouter();
   const toRef = useRef<To>();

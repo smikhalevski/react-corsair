@@ -77,6 +77,9 @@ export class Router<Context = any> {
    */
   interceptedController: RouteController<any, any, Context> | null = null;
 
+  /**
+   * The location of the latest router {@link navigate navigation}.
+   */
   location: Location | null = null;
 
   /**
