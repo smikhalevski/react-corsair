@@ -3,6 +3,9 @@ import { Route } from './Route';
 import { Router } from './Router';
 import { RouteController } from './RouteController';
 
+/**
+ * @group Other
+ */
 export interface Dict {
   [key: string]: any;
 }

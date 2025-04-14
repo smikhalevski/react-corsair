@@ -78,7 +78,7 @@ export interface RouteOutletProps {
  * @see {@link useInterceptedRoute}
  * @group Routing
  */
-export function RouteOutlet(props: RouteOutletProps): ReactElement | null {
+export function RouteOutlet(props: RouteOutletProps): ReactElement {
   const { controller } = props;
 
   if (!(controller instanceof RouteController)) {

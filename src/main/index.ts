@@ -21,6 +21,7 @@ export { redirect, Redirect } from './Redirect';
 export { Route, type InferLocationParams } from './Route';
 export { Router } from './Router';
 export { RouteController } from './RouteController';
+export { useInlineRoute } from './useInlineRoute';
 export { useInterceptedRoute } from './useInterceptedRoute';
 export { usePrefetch } from './usePrefetch';
 export { useRoute } from './useRoute';
