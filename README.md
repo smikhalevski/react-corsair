@@ -954,7 +954,7 @@ function Product() {
 ```
 
 [`useInlineRoute`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.useInlineRoute.html) matches the
-provided location against routes of the current router and returns a corresponding route controller. 
+provided location against routes of the current router and returns a corresponding route controller.
 
 # History
 
