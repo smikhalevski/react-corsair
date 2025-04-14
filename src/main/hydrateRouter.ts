@@ -4,6 +4,8 @@ import { getRenderingDisposition, RouteController } from './RouteController';
 import { AbortError, noop, toLocation } from './utils';
 import { matchRoutes } from './matchRoutes';
 import { AbortablePromise } from 'parallel-universe';
+import { Redirect } from './Redirect';
+import { NOT_FOUND } from './notFound';
 
 /**
  * Options provided to {@link hydrateRouter}.
@@ -40,7 +42,7 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
     typeof window.__REACT_CORSAIR_SSR_STATE__ !== 'undefined' ? window.__REACT_CORSAIR_SSR_STATE__ : undefined;
 
   if (ssrState !== undefined && !(ssrState instanceof Map)) {
-    throw new Error('Router hydration has already begun');
+    throw new Error('The router hydration has already begun');
   }
 
   window.__REACT_CORSAIR_SSR_STATE__ = {
@@ -77,13 +79,7 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
     }
   });
 
-  router['_pubSub'].publish({
-    type: 'navigate',
-    controller: rootController,
-    router,
-    location,
-    isIntercepted: false,
-  });
+  router['_pubSub'].publish({ type: 'navigate', controller: rootController, router, location, isIntercepted: false });
 
   if (router.rootController !== rootController) {
     // Hydrated navigation was superseded
@@ -117,10 +113,24 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
   return router;
 }
 
-function setControllerState(controller: RouteController, state: RouteState) {
-  if (state.status === 'loading') {
-    return;
+function setControllerState(controller: RouteController, state: RouteState): void {
+  switch (state.status) {
+    case 'loading':
+      return;
+
+    case 'redirect':
+      controller['_error'] = new Redirect(state.to);
+      break;
+
+    case 'not_found':
+      controller['_error'] = NOT_FOUND;
+      break;
+
+    case 'error':
+      controller['_error'] = state.error;
+      break;
   }
+
   controller['_state'] = state;
   controller.promise?.abort(AbortError('The route was hydrated'));
   controller.promise = null;
