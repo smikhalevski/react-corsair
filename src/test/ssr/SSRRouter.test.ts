@@ -48,7 +48,7 @@ describe('nextHydrationScript', () => {
     router.navigate(route);
 
     expect(router.nextHydrationScript()).toBe(
-      'var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();s.set(0,"{\\"status\\":\\"ok\\"}");var e=document.currentScript;e&&e.parentNode.removeChild(e);'
+      'var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();s.set(0,"{\\"status\\":\\"ready\\"}");var e=document.currentScript;e&&e.parentNode.removeChild(e);'
     );
   });
 
@@ -60,7 +60,7 @@ describe('nextHydrationScript', () => {
     router.navigate(routeBbb);
 
     expect(router.nextHydrationScript()).toBe(
-      'var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();s.set(0,"{\\"status\\":\\"ok\\"}");s.set(1,"{\\"status\\":\\"ok\\"}");var e=document.currentScript;e&&e.parentNode.removeChild(e);'
+      'var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();s.set(0,"{\\"status\\":\\"ready\\"}");s.set(1,"{\\"status\\":\\"ready\\"}");var e=document.currentScript;e&&e.parentNode.removeChild(e);'
     );
   });
 
@@ -75,7 +75,7 @@ describe('nextHydrationScript', () => {
     router.rootController!.childController!.setData('xxx');
 
     expect(router.nextHydrationScript()).toBe(
-      'var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();s.set(1,"{\\"status\\":\\"ok\\",\\"data\\":\\"xxx\\"}");var e=document.currentScript;e&&e.parentNode.removeChild(e);'
+      'var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();s.set(1,"{\\"status\\":\\"ready\\",\\"data\\":\\"xxx\\"}");var e=document.currentScript;e&&e.parentNode.removeChild(e);'
     );
   });
 
@@ -90,7 +90,7 @@ describe('nextHydrationScript', () => {
     router.nextHydrationScript();
 
     expect(stateStringifierMock).toHaveBeenCalledTimes(1);
-    expect(stateStringifierMock).toHaveBeenNthCalledWith(1, { status: 'ok', data: undefined });
+    expect(stateStringifierMock).toHaveBeenNthCalledWith(1, { status: 'ready', data: undefined });
   });
 
   test('escapes XSS-prone strings', () => {
@@ -101,7 +101,7 @@ describe('nextHydrationScript', () => {
     router.rootController!.setData('<script src="https://xxx.yyy"></script>');
 
     expect(router.nextHydrationScript()).toBe(
-      'var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();s.set(0,"{\\"status\\":\\"ok\\",\\"data\\":\\"\\u003Cscript src=\\\\\\"https://xxx.yyy\\\\\\">\\u003C/script>\\"}");var e=document.currentScript;e&&e.parentNode.removeChild(e);'
+      'var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();s.set(0,"{\\"status\\":\\"ready\\",\\"data\\":\\"\\u003Cscript src=\\\\\\"https://xxx.yyy\\\\\\">\\u003C/script>\\"}");var e=document.currentScript;e&&e.parentNode.removeChild(e);'
     );
   });
 });
@@ -120,7 +120,7 @@ describe('nextHydrationChunk', () => {
     router.navigate(route);
 
     expect(router.nextHydrationChunk()).toBe(
-      '<script>var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();s.set(0,"{\\"status\\":\\"ok\\"}");var e=document.currentScript;e&&e.parentNode.removeChild(e);</script>'
+      '<script>var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();s.set(0,"{\\"status\\":\\"ready\\"}");var e=document.currentScript;e&&e.parentNode.removeChild(e);</script>'
     );
   });
 
@@ -131,7 +131,7 @@ describe('nextHydrationChunk', () => {
     router.navigate(route);
 
     expect(router.nextHydrationChunk()).toBe(
-      '<script nonce="111">var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();s.set(0,"{\\"status\\":\\"ok\\"}");var e=document.currentScript;e&&e.parentNode.removeChild(e);</script>'
+      '<script nonce="111">var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();s.set(0,"{\\"status\\":\\"ready\\"}");var e=document.currentScript;e&&e.parentNode.removeChild(e);</script>'
     );
   });
 });
@@ -153,11 +153,11 @@ describe('hasChanges', () => {
 
     router.navigate(route);
 
-    expect(router.rootController!.state.status).toBe('loading');
+    expect(router.rootController!['_state'].status).toBe('loading');
 
     await expect(router.hasChanges()).resolves.toBe(true);
 
-    expect(router.rootController!.state.status).toBe('ok');
+    expect(router.rootController!['_state'].status).toBe('ready');
   });
 
   describe('abort', () => {
@@ -171,12 +171,12 @@ describe('hasChanges', () => {
 
       router.navigate(route);
 
-      const promise = router.rootController!.loadingPromise;
+      const promise = router.rootController!.promise;
 
       router.abort('xxx');
 
-      expect(router.rootController!.state).toStrictEqual({ status: 'error', error: 'xxx' } satisfies RouteState);
-      expect(router.rootController!.loadingPromise).toBeNull();
+      expect(router.rootController!['_state']).toStrictEqual({ status: 'error', error: 'xxx' } as RouteState);
+      expect(router.rootController!.promise).toBeNull();
       await expect(promise).rejects.toBe('xxx');
     });
   });

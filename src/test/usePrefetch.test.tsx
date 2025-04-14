@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import { createRoute, Router, RouterProvider, usePrefetch } from '../main';
+import { createRoute, DataLoaderOptions, Router, RouterProvider, usePrefetch } from '../main';
 import { noop } from '../main/utils';
 import React, { FC, PropsWithChildren, StrictMode } from 'react';
 
@@ -8,10 +8,7 @@ console.error = noop;
 test('starts route loading when mounted', () => {
   const dataLoaderMock = jest.fn();
 
-  const route = createRoute({
-    pathname: '/aaa',
-    dataLoader: dataLoaderMock,
-  });
+  const route = createRoute({ dataLoader: dataLoaderMock });
 
   const router = new Router({ routes: [route], context: 'zzz' });
 
@@ -28,10 +25,9 @@ test('starts route loading when mounted', () => {
     route,
     router,
     params: { xxx: 111 },
-    context: 'zzz',
     signal: expect.any(AbortSignal),
     isPrefetch: true,
-  });
+  } satisfies DataLoaderOptions<any, any>);
 });
 
 test('restart loading only if location is changed', () => {

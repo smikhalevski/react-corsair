@@ -1,6 +1,5 @@
 import { createMemoryHistory, HistoryTransaction } from '../../main/history';
 import { createRoute, Location } from '../../main';
-import { HistoryBlocker } from '../../main/history/types';
 
 test('throws if there is no initial entry', () => {
   expect(() => createMemoryHistory([])).toThrow(new Error('Expected at least one initial entry'));
@@ -12,13 +11,13 @@ test('parses initial entries', () => {
     searchParams: { xxx: 'yyy' },
     hash: '',
     state: undefined,
-  } satisfies Location);
+  } as Location);
   expect(createMemoryHistory([createRoute({ pathname: '/aaa' })]).location).toStrictEqual({
     pathname: '/aaa',
     searchParams: {},
     hash: '',
     state: undefined,
-  } satisfies Location);
+  } as Location);
 });
 
 test('pushes location', () => {
@@ -158,7 +157,7 @@ test('does not block the navigation', () => {
     },
     proceed: expect.any(Function),
     cancel: expect.any(Function),
-  } satisfies HistoryTransaction);
+  } as HistoryTransaction);
 
   expect(history.location).toStrictEqual({
     hash: '',

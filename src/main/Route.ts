@@ -1,9 +1,9 @@
 import { ComponentType } from 'react';
 import { PathnameTemplate } from './PathnameTemplate';
 import {
+  ComponentModule,
   DataLoaderOptions,
   Dict,
-  Fallbacks,
   LoadingAppearance,
   Location,
   LocationOptions,
@@ -19,8 +19,6 @@ type PartialAsVoid<T> = Partial<T> extends T ? T | void : T;
 
 /**
  * For testing purposes only!
- *
- * @internal
  */
 export declare const LOCATION_PARAMS: unique symbol;
 
@@ -54,8 +52,7 @@ export class Route<
   Params extends Dict = any,
   Data = any,
   Context = any,
-> implements Fallbacks
-{
+> {
   /**
    * The type of the route location params.
    *
@@ -105,30 +102,41 @@ export class Route<
   dataLoader: ((options: DataLoaderOptions<Params, Context>) => PromiseLike<Data> | Data) | undefined;
 
   /**
-   * What to render when a component or data are being loaded.
-   */
-  loadingAppearance: LoadingAppearance;
-
-  /**
-   * Where the route is rendered.
-   */
-  renderingDisposition: RenderingDisposition;
-
-  /**
-   * A component rendered by the route, or `undefined` if a {@link RouteOptions.lazyComponent lazyComponent} isn't yet
-   * {@link getOrLoadComponent loaded}.
+   * A component rendered by the route, or `undefined` if a {@link RouteOptions.lazyComponent lazyComponent} isn't
+   * {@link loadComponent loaded}.
    */
   component: ComponentType | undefined;
 
   /**
-   * Loads {@link RouteOptions.lazyComponent a lazy route component} once and caches it forever, unless an error
-   * occurred during loading.
+   * A component that is rendered when an error was thrown during route rendering.
    */
-  readonly getOrLoadComponent: () => ComponentType | Promise<ComponentType>;
+  errorComponent: ComponentType | undefined;
 
-  readonly errorComponent: ComponentType | undefined;
-  readonly loadingComponent: ComponentType | undefined;
-  readonly notFoundComponent: ComponentType | undefined;
+  /**
+   * A component that is rendered when a route is being loaded.
+   */
+  loadingComponent: ComponentType | undefined;
+
+  /**
+   * A component that is rendered if {@link react-corsair!notFound notFound} was called during route loading or
+   * rendering
+   */
+  notFoundComponent: ComponentType | undefined;
+
+  /**
+   * What to render when a component or data are being loaded.
+   */
+  loadingAppearance: LoadingAppearance | undefined;
+
+  /**
+   * Where the route is rendered.
+   */
+  renderingDisposition: RenderingDisposition | undefined;
+
+  /**
+   * Loads {@link RouteOptions.lazyComponent} once and caches it forever, unless an error occurred during loading.
+   */
+  loadComponent: () => Promise<ComponentType>;
 
   /**
    * Creates a new instance of a {@link Route}.
@@ -150,10 +158,11 @@ export class Route<
     this.errorComponent = options.errorComponent;
     this.loadingComponent = options.loadingComponent;
     this.notFoundComponent = options.notFoundComponent;
-    this.loadingAppearance = options.loadingAppearance || 'route_loading';
-    this.renderingDisposition = options.renderingDisposition || 'server';
+    this.loadingAppearance = options.loadingAppearance;
+    this.renderingDisposition = options.renderingDisposition;
 
-    let component: Promise<ComponentType> | ComponentType | undefined = options.component;
+    let component = options.component;
+    let promise: Promise<ComponentType> | undefined;
 
     if (component !== undefined && lazyComponent !== undefined) {
       throw new Error('Route must have either a component or a lazyComponent');
@@ -163,32 +172,36 @@ export class Route<
       component = Outlet;
     }
 
+    if (component !== undefined) {
+      promise = Promise.resolve(component);
+    }
+
     this.component = component;
 
-    this.getOrLoadComponent = () => {
-      if (component !== undefined) {
-        return component;
+    this.loadComponent = () => {
+      if (promise !== undefined) {
+        return promise;
       }
 
-      component = new Promise<{ default: ComponentType }>(resolve => resolve(lazyComponent!())).then(
+      promise = new Promise<ComponentModule>(resolve => resolve(lazyComponent!())).then(
         module => {
-          component = module.default;
+          const component = module.default;
 
           if (typeof component === 'function') {
             this.component = component;
             return component;
           }
 
-          component = undefined;
+          promise = undefined;
           throw new TypeError('Module loaded by a lazyComponent must default-export a component');
         },
         error => {
-          component = undefined;
+          promise = undefined;
           throw error;
         }
       );
 
-      return component;
+      return promise;
     };
   }
 

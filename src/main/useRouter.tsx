@@ -23,7 +23,7 @@ export function useRouter(): Router {
   const router = useContext(RouterContext);
 
   if (router === null) {
-    throw new Error('Cannot be used outside of RouterProvider');
+    throw new Error('Cannot be used outside of a RouterProvider');
   }
 
   return router;
@@ -54,21 +54,14 @@ export interface RouterProviderProps {
 export function RouterProvider(props: RouterProviderProps): ReactElement {
   const { value, children = <Outlet /> } = props;
 
-  const subscribe = useCallback(value.subscribe.bind(value), [value]);
-
-  const getRootController = () => value.rootController;
-
-  const rootController = useSyncExternalStore(subscribe, getRootController, getRootController);
-
-  const getInterceptedController = () => value.interceptedController;
-
-  const interceptedController = useSyncExternalStore(subscribe, getInterceptedController, getInterceptedController);
+  useSyncExternalStore(value.subscribe, () => value.rootController);
+  useSyncExternalStore(value.subscribe, () => value.interceptedController);
 
   return (
     <RouterContext.Provider value={value}>
       <RouteControllerProvider value={null}>
-        <InterceptedRouteControllerProvider value={interceptedController}>
-          <OutletContentProvider value={rootController || value}>{children}</OutletContentProvider>
+        <InterceptedRouteControllerProvider value={value.interceptedController}>
+          <OutletContentProvider value={value.rootController || value}>{children}</OutletContentProvider>
         </InterceptedRouteControllerProvider>
       </RouteControllerProvider>
     </RouterContext.Provider>

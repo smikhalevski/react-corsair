@@ -28,7 +28,7 @@ describe('PipeableSSRRouter', () => {
     expect(writeMock).toHaveBeenNthCalledWith(1, 'aaa</script>');
     expect(writeMock).toHaveBeenNthCalledWith(
       2,
-      '<script>var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();s.set(0,"{\\"status\\":\\"ok\\",\\"data\\":\\"zzz\\"}");var e=document.currentScript;e&&e.parentNode.removeChild(e);</script>'
+      '<script>var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();s.set(0,"{\\"status\\":\\"ready\\",\\"data\\":\\"zzz\\"}");var e=document.currentScript;e&&e.parentNode.removeChild(e);</script>'
     );
   });
 
@@ -58,7 +58,7 @@ describe('PipeableSSRRouter', () => {
     expect(writeMock).toHaveBeenNthCalledWith(1, 'aaa</script>');
     expect(writeMock).toHaveBeenNthCalledWith(
       2,
-      '<script>var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();s.set(0,"{\\"status\\":\\"ok\\",\\"data\\":\\"zzz\\"}");var e=document.currentScript;e&&e.parentNode.removeChild(e);</script>'
+      '<script>var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();s.set(0,"{\\"status\\":\\"ready\\",\\"data\\":\\"zzz\\"}");var e=document.currentScript;e&&e.parentNode.removeChild(e);</script>'
     );
     expect(writeMock).toHaveBeenNthCalledWith(3, 'bbb');
     expect(writeMock).toHaveBeenNthCalledWith(4, 'ccc</script>');

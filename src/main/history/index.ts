@@ -17,7 +17,6 @@ export { jsonSearchParamsSerializer } from './jsonSearchParamsSerializer';
 export { Link, type LinkProps } from './Link';
 export { useHistory, HistoryProvider } from './useHistory';
 export { useHistoryBlocker } from './useHistoryBlocker';
-export { useHistorySubscription } from './useHistorySubscription';
 export { parseLocation, stringifyLocation } from './utils';
 export {
   type HistoryOptions,

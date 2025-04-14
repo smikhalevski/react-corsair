@@ -1,6 +1,6 @@
-import { RouterOptions } from '../types';
+import { RouterOptions, RouteState } from '../types';
 import { Router } from '../Router';
-import { RouteController, RouteState } from '../RouteController';
+import { RouteController } from '../RouteController';
 
 /**
  * Options provided to the {@link SSRRouter} constructor.
@@ -73,12 +73,12 @@ export class SSRRouter<Context = any> extends Router<Context> {
     const promises = [];
 
     for (let controller = this.rootController; controller !== null; controller = controller.childController) {
-      promises.push(controller.loadingPromise);
+      promises.push(controller.promise);
     }
 
     return Promise.all(promises).then(() => {
       for (let controller = this.rootController; controller !== null; controller = controller.childController) {
-        if (this._hydratedStates.get(controller) !== controller.state) {
+        if (this._hydratedStates.get(controller) !== controller['_state']) {
           return true;
         }
       }
@@ -112,11 +112,11 @@ export class SSRRouter<Context = any> extends Router<Context> {
       controller !== null;
       controller = controller.childController, index++
     ) {
-      if (this._hydratedStates.get(controller) === controller.state) {
+      if (this._hydratedStates.get(controller) === controller['_state']) {
         continue;
       }
 
-      this._hydratedStates.set(controller, controller.state);
+      this._hydratedStates.set(controller, controller['_state']);
 
       if (script === '') {
         script = 'var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();';
@@ -126,7 +126,7 @@ export class SSRRouter<Context = any> extends Router<Context> {
         's.set(' +
         index +
         ',' +
-        JSON.stringify(this._stateStringifier(controller.state)).replace(/</g, '\\u003C') +
+        JSON.stringify(this._stateStringifier(controller['_state'])).replace(/</g, '\\u003C') +
         ');';
     }
 
@@ -144,6 +144,8 @@ export class SSRRouter<Context = any> extends Router<Context> {
    * @param reason The abort reason that is used for rejection of the loading promise.
    */
   abort(reason?: unknown): void {
-    this.rootController?.abort(reason);
+    for (let controller = this.rootController; controller !== null; controller = controller.childController) {
+      controller.abort(reason);
+    }
   }
 }

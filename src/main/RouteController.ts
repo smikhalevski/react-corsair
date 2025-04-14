@@ -1,11 +1,13 @@
-import { AbortablePromise } from 'parallel-universe';
 import { Router } from './Router';
-import { AbortError, isPromiseLike, noop, toLocation } from './utils';
-import { DataLoaderOptions, Dict, Fallbacks, Location, RouterEvent, To } from './types';
-import { NotFoundError } from './notFound';
-import { Redirect } from './redirect';
+import { DataLoaderOptions, Dict, LoadingAppearance, RenderingDisposition, RouteState, To } from './types';
 import { Route } from './Route';
 import { ComponentType } from 'react';
+import { NOT_FOUND } from './notFound';
+import { Redirect } from './Redirect';
+import { AbortablePromise } from 'parallel-universe';
+import { AbortError, isPromiseLike, noop } from './utils';
+import { RouteMatch } from './matchRoutes';
+import isDeepEqual from 'fast-deep-equal';
 
 /**
  * Manages state of a route rendered in an {@link Outlet}.
@@ -15,36 +17,46 @@ import { ComponentType } from 'react';
  * @template Context A router context.
  * @group Routing
  */
-export class RouteController<Params extends Dict = any, Data = any, Context = any> implements Fallbacks {
-  /**
-   * A fallback controller that is rendered in an {@link Outlet} while this controller loads route component and data.
-   */
-  fallbackController: RouteController<any, any, Context> | null = null;
-
+export class RouteController<Params extends Dict = any, Data = any, Context = any> {
   /**
    * A controller rendered in an enclosing {@link Outlet}.
    */
-  parentController: RouteController<any, any, Context> | null = null;
+  parentController: RouteController | null = null;
 
   /**
    * A controller rendered in a nested {@link Outlet}.
    */
-  childController: RouteController<any, any, Context> | null = null;
+  childController: RouteController | null = null;
 
   /**
    * A promise that settles when the route loading is completed, or `null` if there's no loading in progress.
    */
-  loadingPromise: AbortablePromise<void> | null = null;
+  promise: AbortablePromise<Data> | null = null;
 
   /**
-   * The current state of the managed route. The state is reflected by an {@link Outlet}.
+   * A fallback controller that is rendered in an {@link Outlet} while this controller loads route component and data.
    */
-  state: RouteState = { status: 'loading' };
+  protected _fallbackController: RouteController | null = null;
 
   /**
    * A router context that was provided to a {@link route} {@link RouteOptions.dataLoader data loader}.
    */
-  readonly context: Context;
+  protected _context: Context | undefined = undefined;
+
+  /**
+   * The current state of the managed route. The state is reflected by an {@link Outlet}.
+   */
+  protected _state: RouteState<Data> = { status: 'loading' };
+
+  /**
+   * The last error that was set via {@link setError}, or `undefined` if controller has non-error-related state.
+   */
+  protected _error: any = undefined;
+
+  /**
+   * The last state rendered in an {@link Outlet}, or `undefined` if controller wasn't rendered.
+   */
+  protected _renderedState: RouteState<Data> | undefined = undefined;
 
   /**
    * Creates a new {@link RouteController} instance.
@@ -60,329 +72,356 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
     readonly router: Router<Context>,
     readonly route: Route<any, Params, Data, Context>,
     readonly params: Params
-  ) {
-    this.context = router.context;
-  }
+  ) {}
 
-  get errorComponent(): ComponentType | undefined {
-    return this.route.errorComponent || (this.parentController === null ? this.router.errorComponent : undefined);
-  }
-
-  get loadingComponent(): ComponentType | undefined {
-    return this.route.loadingComponent || (this.parentController === null ? this.router.loadingComponent : undefined);
-  }
-
-  get notFoundComponent(): ComponentType | undefined {
-    return this.route.notFoundComponent || (this.parentController === null ? this.router.notFoundComponent : undefined);
+  /**
+   * The current status of the controller:
+   *
+   * <dl>
+   * <dt>"loading"</dt>
+   * <dd>The route is being actively loaded.</dd>
+   * <dt>"ready"</dt>
+   * <dd>The route component and data were successfully loaded.</dd>
+   * <dt>"error"</dt>
+   * <dd>The route has thrown an error during rendering or from a data loader.</dd>
+   * <dt>"notFound"</dt>
+   * <dd>The route was marked as not found.</dd>
+   * <dt>"redirect"</dt>
+   * <dd>The route has requested a redirect.</dd>
+   * </dl>
+   */
+  get status() {
+    return this._state.status;
   }
 
   /**
-   * Sets {@link NotFoundState} and causes an enclosing {@link Outlet} to render a
-   * {@link RouteOptions.notFoundComponent notFoundComponent}.
+   * The successfully loaded route data.
+   */
+  get data(): Data {
+    if (this._state.status === 'ready') {
+      return this._state.data;
+    }
+    throw new Error("The route data isn't ready");
+  }
+
+  /**
+   * The error that was thrown during component or data loading.
+   */
+  get error(): any {
+    return this._state.status === 'error' ? this._state.error : undefined;
+  }
+
+  /**
+   * Causes an enclosing {@link Outlet} to render a {@link RouteOptions.notFoundComponent notFoundComponent}.
    */
   notFound(): void {
-    this._setState({ status: 'not_found' });
+    this.setError(NOT_FOUND);
   }
 
   /**
-   * Sets {@link RedirectState} and redirects the router to a new location.
+   * Redirects the router to a new location.
    *
    * @param to A location or a URL to redirect to.
    */
   redirect(to: To | string): void {
-    this._setState({ status: 'redirect', to: typeof to === 'string' ? to : toLocation(to) });
+    this.setError(new Redirect(to));
   }
 
   /**
-   * Sets {@link ErrorState} with provided {@link error} and notifies {@link router} subscribers.
+   * Sets an {@link error} and notifies {@link router} subscribers.
    *
    * @param error The error.
    */
-  setError(error: unknown): void {
-    this._setState({ status: 'error', error });
+  setError(error: any): void {
+    const prevPromise = this.promise;
+    const pubSub = this.router['_pubSub'];
+
+    this.promise = null;
+    prevPromise?.abort(AbortError('The route loading was aborted'));
+
+    this._fallbackController = null;
+    this._error = error;
+
+    if (error === NOT_FOUND) {
+      this._state = { status: 'not_found' };
+      pubSub.publish({ type: 'not_found', controller: this });
+      return;
+    }
+
+    if (error instanceof Redirect) {
+      this._state = { status: 'redirect', to: error.to };
+      pubSub.publish({ type: 'redirect', controller: this, to: error.to });
+      return;
+    }
+
+    this._state = { status: 'error', error };
+    pubSub.publish({ type: 'error', controller: this, error });
   }
 
   /**
-   * Returns successfully loaded route data or throws an error.
-   */
-  getError(): any {
-    return this.state.status === 'error' ? this.state.error : undefined;
-  }
-
-  /**
-   * Sets {@link OkState} with provided {@link data} and notifies {@link router} subscribers.
+   * Loads route component, sets provided {@link data} and notifies {@link router} subscribers.
    *
    * @param data The route data.
    */
-  setData(data: Data): void {
-    this._setState({ status: 'ok', data });
+  setData(data: PromiseLike<Data> | Data): void {
+    this._load(options => {
+      return data instanceof AbortablePromise ? data.withSignal(options.signal) : data;
+    });
   }
 
   /**
-   * Returns successfully loaded route data or throws an error if data isn't loaded.
+   * Reloads the data using {@link RouteOptions.dataLoader dataLoader}.
    */
-  getData(): Data {
-    if (this.state.status === 'ok') {
-      return this.state.data;
-    }
-    throw new Error('Route does not have loaded data');
+  reload(): AbortablePromise<Data> {
+    return this._load(options => {
+      return this.route.dataLoader !== undefined ? this.route.dataLoader(options) : undefined!;
+    });
   }
 
   /**
-   * Loads route data for this controller and its descendant controllers. Aborts {@link loadingPromise} is any.
+   * Instantly aborts the pending route loading for this controller.
+   *
+   * @param reason The abort reason that is used for rejection of the loading promise.
    */
-  load(): void {
-    const prevState = this.state;
+  abort(reason: unknown = AbortError('Route loading was aborted')): void {
+    this.promise?.abort(reason);
+  }
 
-    this.childController?.load();
+  /**
+   * Loads route data for this controller. Aborts pending {@link promise} if any.
+   */
+  protected _load(
+    dataLoader: (options: DataLoaderOptions<Params, Context>) => PromiseLike<Data> | Data
+  ): AbortablePromise<Data> {
+    const { router, route, params } = this;
 
-    const promise = new AbortablePromise<void>((resolve, _reject, signal) => {
+    const pubSub = router['_pubSub'];
+
+    const nextContext = router.context;
+    const prevState = this._state;
+    const prevPromise = this.promise;
+
+    this.promise = null;
+    prevPromise?.abort(AbortError('The route loading was aborted'));
+
+    const promise = new AbortablePromise<Data>((resolve, reject, signal) => {
       signal.addEventListener('abort', () => {
-        if (this.loadingPromise === promise) {
-          this.loadingPromise = null;
-
-          if (this.state.status === 'loading') {
-            this.setError(signal.reason);
-          }
+        if (this.promise !== promise || ((this.promise = null), this._state.status !== 'loading')) {
+          // Loading was superseded or background loading was aborted
+          pubSub.publish({ type: 'aborted', controller: this });
+        } else {
+          this.setError(signal.reason);
         }
-
-        this.router['_pubSub'].publish({ type: 'aborted', controller: this });
       });
 
-      const state = getOrLoadRouteState({
-        route: this.route,
-        router: this.router,
-        params: this.params,
-        context: this.context,
-        signal,
-        isPrefetch: false,
-      });
+      let data;
 
-      if (!isPromiseLike(state)) {
-        this._setState(state);
-        resolve();
+      try {
+        data = dataLoader({ router, route, params, signal, isPrefetch: false });
+      } catch (error) {
+        this.setError(error);
+        reject(error);
         return;
       }
 
-      state.then(state => {
-        if (signal.aborted) {
-          return;
+      // Ensure route component is loaded
+      if (route.component === undefined) {
+        data = Promise.all([route.loadComponent(), data]).then(result => result[1]);
+      }
+
+      if (!isPromiseLike(data)) {
+        // Component and data were loaded synchronously
+
+        this._fallbackController = null;
+        this._context = nextContext;
+        this._state = { status: 'ready', data };
+        pubSub.publish({ type: 'ready', controller: this });
+
+        resolve(data);
+        return;
+      }
+
+      // Await component and data loading
+      data.then(
+        data => {
+          // Component and data were successfully loaded
+
+          if (signal.aborted) {
+            return;
+          }
+          this.promise = null;
+
+          this._fallbackController = null;
+          this._context = nextContext;
+          this._state = { status: 'ready', data };
+          pubSub.publish({ type: 'ready', controller: this });
+
+          resolve(data);
+        },
+        error => {
+          // Component and data loading have failed
+
+          if (signal.aborted) {
+            return;
+          }
+          this.promise = null;
+          this.setError(error);
+          reject(error);
         }
-        this.loadingPromise = null;
-        this._setState(state);
-        resolve();
-      });
+      );
     });
 
     promise.catch(noop);
 
-    if (this.state !== prevState) {
-      // Loading has completed or was superseded
-      return;
+    if (prevState !== this._state) {
+      // Component and data were loaded synchronously
+      return promise;
     }
 
-    const { loadingPromise } = this;
-
-    this.loadingPromise = promise;
-
-    loadingPromise?.abort(AbortError('Route controller was reloaded'));
-
-    if (this.route.loadingAppearance === 'loading') {
-      this._setState({ status: 'loading' });
-      return;
+    if (
+      // Should always show loadingComponent
+      getLoadingAppearance(this) === 'loading' ||
+      // Show loadingComponent to hide the current non-ready state
+      (this._fallbackController === null && this._state.status !== 'ready')
+    ) {
+      this._fallbackController = null;
+      this._state = { status: 'loading' };
     }
 
-    this.router['_pubSub'].publish({ type: 'loading', controller: this });
+    this.promise = promise;
+    this._error = undefined;
+    pubSub.publish({ type: 'loading', controller: this });
+
+    return promise;
+  }
+}
+
+export function getActiveController(controller: RouteController): RouteController;
+
+export function getActiveController(controller: RouteController | null): RouteController | null;
+
+export function getActiveController(controller: RouteController | null): RouteController | null {
+  return controller === null ? null : controller['_fallbackController'] || controller;
+}
+
+export function getErrorComponent(c: RouteController): ComponentType | undefined {
+  return c.route.errorComponent || (c.parentController === null ? c.router.errorComponent : undefined);
+}
+
+export function getLoadingComponent(c: RouteController): ComponentType | undefined {
+  return c.route.loadingComponent || (c.parentController === null ? c.router.loadingComponent : undefined);
+}
+
+export function getNotFoundComponent(c: RouteController): ComponentType | undefined {
+  return c.route.notFoundComponent || (c.parentController === null ? c.router.notFoundComponent : undefined);
+}
+
+export function getLoadingAppearance(c: RouteController): LoadingAppearance {
+  return c.route.loadingAppearance || c.router.loadingAppearance || 'route_loading';
+}
+
+export function getRenderingDisposition(c: RouteController): RenderingDisposition {
+  return c.route.renderingDisposition || c.router.renderingDisposition || 'server';
+}
+
+/**
+ * Called when an {@link Outlet} that renders a {@link controller} has caught an {@link error} during rendering.
+ */
+export function handleBoundaryError(controller: RouteController, error: unknown): void {
+  controller = getActiveController(controller);
+
+  if (controller['_error'] !== error) {
+    // Prevent excessive error events
+    controller.setError(error);
   }
 
-  /**
-   * Instantly aborts the pending route loading for this controller and its descendants.
-   *
-   * @param reason The abort reason that is used for rejection of the loading promise.
-   */
-  abort(reason?: unknown): void {
-    this.childController?.abort(reason);
-
-    this.loadingPromise?.abort(reason);
+  if (controller['_renderedState'] === undefined) {
+    // Not rendered yet
+    return;
   }
 
-  /**
-   * Sets the route state and notifies the router.
-   *
-   * **Notes:**
-   * - {@link fallbackController Fallback} is removed, so if {@link LoadingState} is set, then it would be
-   * revealed to the user.
-   * - Aborts {@link loadingPromise pending route loading}, unless {@link LoadingState} is set.
-   *
-   * @param state The new route state.
-   */
-  protected _setState(state: RouteState): void {
-    const { status } = state;
+  const prevStatus = controller['_renderedState'].status;
+  const nextStatus = controller.status;
 
-    let event: RouterEvent;
+  if (
+    // Cannot render the same state after it has caused an error
+    nextStatus === prevStatus ||
+    // Cannot redirect from a loadingComponent because redirect renders a loadingComponent itself
+    (nextStatus === 'redirect' && prevStatus === 'loading') ||
+    // Rendering would cause an error because there's no component to render
+    (nextStatus === 'not_found' && getNotFoundComponent(controller) === undefined) ||
+    (nextStatus === 'redirect' && getLoadingComponent(controller) === undefined) ||
+    (nextStatus === 'error' && getErrorComponent(controller) === undefined)
+  ) {
+    // Rethrow an error that cannot be rendered, so an enclosing error boundary can catch it
+    throw error;
+  }
+}
 
-    switch (status) {
-      case 'ok':
-        event = { type: 'ready', controller: this };
-        break;
+/**
+ * Returns a root controller for a given array of route matches.
+ *
+ * @param router A router that matched routes.
+ * @param evictedController The currently rendered controller that can be used as a fallback for a new controller.
+ * @param routeMatches An array of matches routes and params.
+ */
+export function reconcileControllers(
+  router: Router,
+  evictedController: RouteController | null,
+  routeMatches: RouteMatch[]
+): RouteController | null {
+  let rootController = null;
+  let parentController = null;
 
-      case 'error':
-        event = { type: 'error', controller: this, error: state.error };
-        break;
+  for (const { route, params } of routeMatches) {
+    const controller = new RouteController(router, route, params);
+    const loadingAppearance = getLoadingAppearance(controller);
 
-      case 'not_found':
-        event = { type: 'not_found', controller: this };
-        break;
+    if (evictedController === null || evictedController.route !== route) {
+      // Route has changed, so component and data must be reloaded
 
-      case 'redirect':
-        event = { type: 'redirect', controller: this, to: state.to };
-        break;
+      if (evictedController !== null && evictedController.status === 'ready' && loadingAppearance === 'avoid') {
+        // Keep the current controller on the screen
+        controller['_fallbackController'] = evictedController;
+      }
 
-      case 'loading':
-        event = { type: 'loading', controller: this };
-        break;
+      evictedController = null;
+    } else if (
+      controller.route.dataLoader !== undefined &&
+      (evictedController['_context'] !== router.context || !isDeepEqual(evictedController.params, params))
+    ) {
+      // Params or router context have changed, so data must be reloaded
 
-      default:
-        throw new Error('Unexpected route status: ' + status);
+      if (evictedController.status === 'ready' && loadingAppearance !== 'loading') {
+        // Keep the current controller on the screen
+        controller['_fallbackController'] = evictedController;
+      }
+
+      evictedController = evictedController.childController;
+    } else {
+      // Nothing has changed
+
+      if (evictedController.status !== 'loading') {
+        // Route component and data are already loaded, so reuse the state of the evicted controller
+
+        controller['_context'] = router.context;
+        controller['_state'] = evictedController['_state'];
+        controller['_error'] = evictedController['_error'];
+        controller['_renderedState'] = evictedController['_renderedState'];
+      }
+
+      evictedController = evictedController.childController;
     }
 
-    this.fallbackController = null;
-    this.state = state;
-
-    if (state.status !== 'loading') {
-      const { loadingPromise } = this;
-
-      this.loadingPromise = null;
-
-      loadingPromise?.abort(AbortError('Route state was superseded'));
+    if (parentController === null) {
+      rootController = controller;
+    } else {
+      parentController.childController = controller;
     }
 
-    this.router['_pubSub'].publish(event);
-  }
-}
-
-/**
- * The state of a route that is being actively loaded.
- *
- * @group Routing
- */
-export interface LoadingState {
-  /**
-   * The route status.
-   */
-  readonly status: 'loading';
-}
-
-/**
- * The state of a route for which the component and data were loaded.
- *
- * @template Data Data loaded by a route.
- * @group Routing
- */
-export interface OkState<Data> {
-  /**
-   * The route status.
-   */
-  readonly status: 'ok';
-
-  /**
-   * The data loaded for a route, or `undefined` if route has no {@link RouteOptions.dataLoader dataLoader}.
-   */
-  readonly data: Data;
-}
-
-/**
- * The state of a route which has thrown an error during rendering or from a data loader.
- *
- * @group Routing
- */
-export interface ErrorState {
-  /**
-   * The route status.
-   */
-  readonly status: 'error';
-
-  /**
-   * A thrown error.
-   */
-  readonly error: unknown;
-}
-
-/**
- * The state of a route that was marked as not found.
- *
- * @group Routing
- */
-export interface NotFoundState {
-  /**
-   * The route status.
-   */
-  readonly status: 'not_found';
-}
-
-/**
- * The state of a route that has requested a redirect.
- *
- * @group Routing
- */
-export interface RedirectState {
-  /**
-   * The route status.
-   */
-  readonly status: 'redirect';
-
-  /**
-   * A location to redirect to.
-   */
-  readonly to: Location | string;
-}
-
-/**
- * State used by a {@link RouteController}.
- *
- * @template Data Data loaded by a route.
- * @group Routing
- */
-export type RouteState<Data = any> = LoadingState | OkState<Data> | ErrorState | NotFoundState | RedirectState;
-
-/**
- * Loads a route component and data.
- *
- * A route component is loaded once and cached forever, while data is loaded anew on every call.
- */
-export function getOrLoadRouteState(options: DataLoaderOptions<any, any>): RouteState | Promise<RouteState> {
-  const { route } = options;
-
-  let component;
-  let data;
-
-  try {
-    component = route.getOrLoadComponent();
-
-    data = route.dataLoader === undefined ? undefined : route.dataLoader(options);
-  } catch (error) {
-    return createErrorState(error);
+    controller.parentController = parentController;
+    parentController = controller;
   }
 
-  if (isPromiseLike(component) || isPromiseLike(data)) {
-    return Promise.all([component, data]).then(result => createOkState(result[1]), createErrorState);
-  }
-
-  return createOkState(data);
-}
-
-function createOkState(data: unknown): RouteState {
-  return { status: 'ok', data };
-}
-
-export function createErrorState(error: unknown): RouteState {
-  if (error instanceof NotFoundError) {
-    return { status: 'not_found' };
-  }
-
-  if (error instanceof Redirect) {
-    return { status: 'redirect', to: error.to };
-  }
-
-  return { status: 'error', error };
+  return rootController;
 }

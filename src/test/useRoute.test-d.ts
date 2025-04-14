@@ -3,11 +3,11 @@ import { expectType } from 'tsd';
 
 expectType<any>(useRoute().params);
 
-expectType<any>(useRoute().getData());
+expectType<any>(useRoute().data);
 
 expectType<{}>(useRoute(createRoute('/aaa')).params);
 
-expectType<void>(useRoute(createRoute('/aaa')).getData());
+expectType<void>(useRoute(createRoute('/aaa')).data);
 
 expectType<{ xxx: 111 }>(
   useRoute(
@@ -24,5 +24,5 @@ expectType<{ xxx: 111 }>(
       pathname: '/aaa',
       dataLoader: (): { xxx: 111 } => null as never,
     })
-  ).getData()
+  ).data
 );
