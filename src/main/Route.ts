@@ -10,8 +10,10 @@ import {
   ParamsAdapter,
   RenderingDisposition,
   RouteOptions,
+  To,
 } from './types';
 import { Outlet } from './Outlet';
+import isDeepEqual from 'fast-deep-equal';
 
 type Prettify<T> = { [K in keyof T]: T[K] } & {};
 
@@ -265,4 +267,8 @@ export class Route<
       state,
     };
   }
+}
+
+export function isEqualLocation(a: To | undefined, b: To | undefined): boolean {
+  return a instanceof Route && b instanceof Route ? a === b : isDeepEqual(a, b);
 }

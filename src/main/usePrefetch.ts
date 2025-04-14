@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { To } from './types';
 import { useRouter } from './useRouter';
-import { isEqualLocation } from './utils';
+import { isEqualLocation } from './Route';
 
 /**
  * Prefetches components and data of routes matched by a location after a component has mounted.

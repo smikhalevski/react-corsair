@@ -401,7 +401,7 @@ export function reconcileControllers(
     } else {
       // Nothing has changed
 
-      if (evictedController.status !== 'loading') {
+      if (evictedController.status === 'ready') {
         // Route component and data are already loaded, so reuse the state of the evicted controller
 
         controller['_context'] = router.context;

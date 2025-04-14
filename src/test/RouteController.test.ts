@@ -593,7 +593,7 @@ describe('reconcileControllers', () => {
     expect(controller2['_fallbackController']).toBeNull();
   });
 
-  test('reuses error state if nothing is changed', () => {
+  test('does not reuse error state if nothing is changed', () => {
     const route = createRoute('/aaa');
 
     const router = new Router({ routes: [] });
@@ -607,8 +607,9 @@ describe('reconcileControllers', () => {
 
     expect(controller2).not.toBe(controller1);
     expect(controller2['_context']).toBe(controller1['_context']);
-    expect(controller2['_state']).toBe(controller1['_state']);
-    expect(controller2['_error']).toBe(controller1['_error']);
+    expect(controller2['_state']).not.toBe(controller1['_state']);
+    expect(controller2['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
+    expect(controller2['_error']).toBeUndefined();
     expect(controller2['_renderedState']).toBe(controller1['_renderedState']);
     expect(controller2['_fallbackController']).toBeNull();
   });
