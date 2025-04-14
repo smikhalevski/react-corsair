@@ -591,7 +591,7 @@ the [`useRoute`](https://smikhalevski.github.io/react-corsair/functions/react_co
 
 ```ts
 function UserPage() {
-  const user = useRoute(userRoute).getData();
+  const { data } = useRoute(userRoute);
   // ⮕ User
 }
 ```
@@ -653,7 +653,7 @@ You can access the error that triggered the error boundary within an error compo
 import { useRoute } from 'react-corsair';
 
 function ErrorDetails() {
-  const error = useRoute(userRoute).getError();
+  const { error } = useRoute(userRoute);
   
   return 'An error occurred: ' + error.message;
 }
