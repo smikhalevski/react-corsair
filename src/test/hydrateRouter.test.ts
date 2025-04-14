@@ -162,11 +162,13 @@ test('throws if hydration is started twice for the same router', () => {
   const router = new Router({ routes: [] });
   hydrateRouter(router, {});
 
-  expect(() => hydrateRouter(router, {})).toThrow(new Error('Router hydration has already begun'));
+  expect(() => hydrateRouter(router, {})).toThrow(new Error('The router hydration has already begun'));
 });
 
 test('throws if hydration is started twice for different routers', () => {
   hydrateRouter(new Router({ routes: [] }), {});
 
-  expect(() => hydrateRouter(new Router({ routes: [] }), {})).toThrow(new Error('Router hydration has already begun'));
+  expect(() => hydrateRouter(new Router({ routes: [] }), {})).toThrow(
+    new Error('The router hydration has already begun')
+  );
 });
