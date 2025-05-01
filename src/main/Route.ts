@@ -17,26 +17,13 @@ import isDeepEqual from 'fast-deep-equal';
 
 type Prettify<T> = { [K in keyof T]: T[K] } & {};
 
-type PartialAsVoid<T> = Partial<T> extends T ? T | void : T;
+type Voidable<T> = Partial<T> extends T ? T | void : T;
 
-/**
- * For testing purposes only!
- */
-export declare const LOCATION_PARAMS: unique symbol;
-
-export type LOCATION_PARAMS = typeof LOCATION_PARAMS;
-
+declare const PARAMS: unique symbol;
 declare const CONTEXT: unique symbol;
 
-declare const DATA: unique symbol;
-
-/**
- * Infers route location params.
- *
- * @template R The route to infer location params from.
- * @group Routing
- */
-export type InferLocationParams<R extends Route> = R[LOCATION_PARAMS];
+export type PARAMS = typeof PARAMS;
+export type CONTEXT = typeof CONTEXT;
 
 /**
  * A route that can be rendered by a router.
@@ -49,20 +36,13 @@ export type InferLocationParams<R extends Route> = R[LOCATION_PARAMS];
  * @template Context A router context.
  * @group Routing
  */
-export class Route<
-  ParentRoute extends Route<any, any, Context> | null = any,
-  Params extends Dict = any,
-  Data = any,
-  Context = any,
-> {
+export class Route<ParentRoute extends Route | null = any, Params extends Dict = any, Data = any, Context = any> {
   /**
    * The type of the route location params.
    *
    * @internal
    */
-  declare readonly [LOCATION_PARAMS]: PartialAsVoid<
-    ParentRoute extends Route ? Prettify<Exclude<ParentRoute[LOCATION_PARAMS], void> & Params> : Params
-  >;
+  declare readonly [PARAMS]: ParentRoute extends Route ? Prettify<ParentRoute[PARAMS] & Params> : Params;
 
   /**
    * The type of the route context.
@@ -70,13 +50,6 @@ export class Route<
    * @internal
    */
   declare readonly [CONTEXT]: Context;
-
-  /**
-   * The type of data loaded by the route.
-   *
-   * @internal
-   */
-  declare readonly [DATA]: Data;
 
   /**
    * A parent route or `null` if there is no parent.
@@ -213,7 +186,7 @@ export class Route<
    * @param params Route params.
    * @param options Location options.
    */
-  getLocation(params: InferLocationParams<this>, options: LocationOptions = {}): Location {
+  getLocation(params: Voidable<this[PARAMS]>, options: LocationOptions = {}): Location {
     const { hash = '', state } = options;
 
     let pathname = '';

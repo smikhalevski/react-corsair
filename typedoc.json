@@ -27,7 +27,7 @@
     "./src/main/ssr/index.ts",
     "./src/main/ssr/node/index.ts"
   ],
-  "intentionallyNotExported": ["PartialAsVoid", "LOCATION_PARAMS"],
+  "intentionallyNotExported": ["Voidable", "PARAMS", "CONTEXT"],
   "kindSortOrder": ["Function", "Class", "Variable", "TypeAlias"],
   "groupOrder": ["Routing", "Prefetching", "Server-Side Rendering"],
   "externalSymbolLinkMappings": {
@@ -37,9 +37,6 @@
     },
     "parallel-universe": {
       "AbortablePromise": "https://smikhalevski.github.io/parallel-universe/classes/AbortablePromise.html"
-    },
-    "typescript": {
-      "PromiseLike": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise"
     }
   },
   "plugin": ["typedoc-plugin-mdn-links"]

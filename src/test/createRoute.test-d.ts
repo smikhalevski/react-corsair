@@ -1,45 +1,47 @@
 import { expectType } from 'tsd';
 import { createRoute } from '../main';
-import { LOCATION_PARAMS } from '../main/Route';
+import { type PARAMS } from '../main/Route';
 
-expectType<{} | void>(createRoute()[LOCATION_PARAMS]);
+declare const PARAMS: PARAMS;
 
-expectType<{ aaa: number }>(
-  createRoute({ pathname: '', paramsAdapter: null as unknown as () => { aaa: number } })[LOCATION_PARAMS]
-);
-
-expectType<{ aaa?: number } | void>(
-  createRoute({ pathname: '', paramsAdapter: null as unknown as () => { aaa?: number } })[LOCATION_PARAMS]
-);
+expectType<{}>(createRoute()[PARAMS]);
 
 expectType<{ aaa: number }>(
-  createRoute(createRoute(), { pathname: '', paramsAdapter: null as unknown as () => { aaa: number } })[LOCATION_PARAMS]
+  createRoute({ pathname: '', paramsAdapter: null as unknown as () => { aaa: number } })[PARAMS]
+);
+
+expectType<{ aaa?: number }>(
+  createRoute({ pathname: '', paramsAdapter: null as unknown as () => { aaa?: number } })[PARAMS]
+);
+
+expectType<{ aaa: number }>(
+  createRoute(createRoute(), { pathname: '', paramsAdapter: null as unknown as () => { aaa: number } })[PARAMS]
 );
 
 expectType<{ aaa: number; bbb: string }>(
   createRoute(createRoute({ pathname: '', paramsAdapter: null as unknown as () => { aaa: number } }), {
     pathname: '',
     paramsAdapter: null as unknown as () => { bbb: string },
-  })[LOCATION_PARAMS]
+  })[PARAMS]
 );
 
 expectType<{ aaa?: number; bbb: string }>(
   createRoute(createRoute({ pathname: '', paramsAdapter: null as unknown as () => { aaa?: number } }), {
     pathname: '',
     paramsAdapter: null as unknown as () => { bbb: string },
-  })[LOCATION_PARAMS]
+  })[PARAMS]
 );
 
 expectType<{ aaa: number; bbb?: string }>(
   createRoute(createRoute({ pathname: '', paramsAdapter: null as unknown as () => { aaa: number } }), {
     pathname: '',
     paramsAdapter: null as unknown as () => { bbb?: string },
-  })[LOCATION_PARAMS]
+  })[PARAMS]
 );
 
-expectType<{ aaa?: number; bbb?: string } | void>(
+expectType<{ aaa?: number; bbb?: string }>(
   createRoute(createRoute({ pathname: '', paramsAdapter: null as unknown as () => { aaa?: number } }), {
     pathname: '',
     paramsAdapter: null as unknown as () => { bbb?: string },
-  })[LOCATION_PARAMS]
+  })[PARAMS]
 );

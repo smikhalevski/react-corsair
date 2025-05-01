@@ -18,7 +18,7 @@ export { Outlet, RouteOutlet, type RouteOutletProps } from './Outlet';
 export { PathnameTemplate, type PathnameMatch } from './PathnameTemplate';
 export { Prefetch, type PrefetchProps } from './Prefetch';
 export { redirect, Redirect } from './Redirect';
-export { Route, type InferLocationParams } from './Route';
+export { Route } from './Route';
 export { Router } from './Router';
 export { RouteController } from './RouteController';
 export { useInlineRoute } from './useInlineRoute';
