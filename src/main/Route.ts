@@ -14,6 +14,7 @@ import {
 } from './types';
 import { Outlet } from './Outlet';
 import isDeepEqual from 'fast-deep-equal';
+import { isPromiseLike } from './utils';
 
 type Prettify<T> = { [K in keyof T]: T[K] } & {};
 
@@ -77,12 +78,6 @@ export class Route<ParentRoute extends Route | null = any, Params extends Dict =
   dataLoader: ((options: DataLoaderOptions<Params, Context>) => PromiseLike<Data> | Data) | undefined;
 
   /**
-   * A component rendered by the route, or `undefined` if a {@link RouteOptions.lazyComponent lazyComponent} isn't
-   * {@link loadComponent loaded}.
-   */
-  component: ComponentType | undefined;
-
-  /**
    * A component that is rendered when an error was thrown during route rendering.
    */
   errorComponent: ComponentType | undefined;
@@ -108,10 +103,8 @@ export class Route<ParentRoute extends Route | null = any, Params extends Dict =
    */
   renderingDisposition: RenderingDisposition | undefined;
 
-  /**
-   * Loads {@link RouteOptions.lazyComponent} once and caches it forever, unless an error occurred during loading.
-   */
-  loadComponent: () => Promise<ComponentType>;
+  protected _componentProvider: (() => PromiseLike<ComponentModule> | ComponentType) | undefined;
+  protected _component: ComponentType | Promise<ComponentType> | undefined;
 
   /**
    * Creates a new instance of a {@link Route}.
@@ -124,7 +117,7 @@ export class Route<ParentRoute extends Route | null = any, Params extends Dict =
    * @template Context A router context.
    */
   constructor(parentRoute: ParentRoute, options: RouteOptions<Params, Data, Context> = {}) {
-    const { lazyComponent, paramsAdapter } = options;
+    const { paramsAdapter } = options;
 
     this.parentRoute = parentRoute;
     this.pathnameTemplate = new PathnameTemplate(options.pathname || '/', options.isCaseSensitive);
@@ -135,49 +128,64 @@ export class Route<ParentRoute extends Route | null = any, Params extends Dict =
     this.notFoundComponent = options.notFoundComponent;
     this.loadingAppearance = options.loadingAppearance;
     this.renderingDisposition = options.renderingDisposition;
+    this._componentProvider = options.componentProvider;
+    this._component = undefined;
+  }
 
-    let component = options.component;
-    let promise: Promise<ComponentType> | undefined;
-
-    if (component !== undefined && lazyComponent !== undefined) {
-      throw new Error('Route must have either a component or a lazyComponent');
+  /**
+   * A component rendered by the route, or `undefined` if a {@link RouteOptions.lazyComponent lazyComponent} isn't
+   * {@link loadComponent loaded}.
+   */
+  getComponent(): ComponentType | undefined {
+    if (this._component !== undefined) {
+      return isPromiseLike(this._component) ? undefined : this._component;
     }
 
-    if (component === undefined && lazyComponent === undefined) {
-      component = Outlet;
+    if (this._componentProvider === undefined) {
+      this._component = Outlet;
+      return Outlet;
     }
 
-    if (component !== undefined) {
-      promise = Promise.resolve(component);
+    const component = this._componentProvider();
+
+    if (typeof component === 'function') {
+      this._component = component;
+      return component;
     }
 
-    this.component = component;
+    if (!isPromiseLike(component)) {
+      throw new TypeError('componentProvide must either return a component or import a module');
+    }
 
-    this.loadComponent = () => {
-      if (promise !== undefined) {
-        return promise;
-      }
+    const promise = Promise.resolve(component).then(
+      module => {
+        const component = module.default;
 
-      promise = new Promise<ComponentModule>(resolve => resolve(lazyComponent!())).then(
-        module => {
-          const component = module.default;
-
-          if (typeof component === 'function') {
-            this.component = component;
-            return component;
-          }
-
-          promise = undefined;
-          throw new TypeError('Module loaded by a lazyComponent must default-export a component');
-        },
-        error => {
-          promise = undefined;
-          throw error;
+        if (typeof component !== 'function') {
+          throw new TypeError('Module loaded by a componentProvider must default-export a component');
         }
-      );
+        if (this._component === promise) {
+          this._component = component;
+        }
+        return component;
+      },
+      error => {
+        if (this._component === promise) {
+          this._component = undefined;
+        }
+        throw error;
+      }
+    );
 
-      return promise;
-    };
+    this._component = promise;
+  }
+
+  /**
+   * Returns a promise that resoles with a loaded route component.
+   */
+  loadComponent(): Promise<ComponentType> {
+    this.getComponent();
+    return Promise.resolve(this._component!);
   }
 
   /**

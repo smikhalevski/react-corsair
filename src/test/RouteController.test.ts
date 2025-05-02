@@ -53,7 +53,7 @@ describe('RouteController', () => {
       controller['_load'](dataLoaderMock);
 
       expect(controller.promise).toBeNull();
-      expect(controller.route.component).toBe(Outlet);
+      expect(controller.route.getComponent()).toBe(Outlet);
       expect(controller['_context']).toStrictEqual({ xxx: 111 });
       expect(controller['_state']).toStrictEqual({ status: 'ready', data: 'zzz' } satisfies RouteState);
       expect(listenerMock).toHaveBeenCalledTimes(1);
@@ -70,7 +70,7 @@ describe('RouteController', () => {
       controller['_load'](dataLoaderMock);
 
       expect(controller.promise).toBeNull();
-      expect(controller.route.component).toBe(Outlet);
+      expect(controller.route.getComponent()).toBe(Outlet);
       expect(controller['_context']).toBeUndefined();
       expect(controller['_state']).toStrictEqual({ status: 'error', error } satisfies RouteState);
       expect(listenerMock).toHaveBeenCalledTimes(1);
@@ -91,7 +91,7 @@ describe('RouteController', () => {
       await promise;
 
       expect(controller.promise).toBeNull();
-      expect(controller.route.component).toBe(Outlet);
+      expect(controller.route.getComponent()).toBe(Outlet);
       expect(controller['_context']).toStrictEqual({ xxx: 111 });
       expect(controller['_state']).toStrictEqual({ status: 'ready', data: 'zzz' } satisfies RouteState);
       expect(listenerMock).toHaveBeenCalledTimes(2);
@@ -101,14 +101,14 @@ describe('RouteController', () => {
     test('asynchronously loads component', async () => {
       const lazyComponentMock = jest.fn(() => Promise.resolve({ default: Component }));
 
-      const route = createRoute({ lazyComponent: lazyComponentMock });
+      const route = createRoute({ componentProvider lazyComponentMock });
 
       controller = new RouteController(router, route, {});
 
       const promise = controller['_load'](noop);
 
       expect(controller.promise).not.toBeNull();
-      expect(controller.route.component).toBeUndefined();
+      expect(controller.route.getComponent()).toBeUndefined();
       expect(controller['_context']).toBeUndefined();
       expect(controller['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
       expect(listenerMock).toHaveBeenCalledTimes(1);
@@ -117,7 +117,7 @@ describe('RouteController', () => {
       await promise;
 
       expect(controller.promise).toBeNull();
-      expect(controller.route.component).toBe(Component);
+      expect(controller.route.getComponent()).toBe(Component);
       expect(controller['_context']).toStrictEqual({ xxx: 111 });
       expect(controller['_state']).toStrictEqual({ status: 'ready', data: undefined } satisfies RouteState);
       expect(listenerMock).toHaveBeenCalledTimes(2);
@@ -128,14 +128,14 @@ describe('RouteController', () => {
       const lazyComponentMock = jest.fn(() => Promise.resolve({ default: Component }));
       const dataLoaderMock = jest.fn(options => Promise.resolve('zzz'));
 
-      const route = createRoute({ lazyComponent: lazyComponentMock });
+      const route = createRoute({ componentProvider lazyComponentMock });
 
       controller = new RouteController(router, route, {});
 
       const promise = controller['_load'](dataLoaderMock);
 
       expect(controller.promise).not.toBeNull();
-      expect(controller.route.component).toBeUndefined();
+      expect(controller.route.getComponent()).toBeUndefined();
       expect(controller['_context']).toBeUndefined();
       expect(controller['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
       expect(listenerMock).toHaveBeenCalledTimes(1);
@@ -144,7 +144,7 @@ describe('RouteController', () => {
       await promise;
 
       expect(controller.promise).toBeNull();
-      expect(controller.route.component).toBe(Component);
+      expect(controller.route.getComponent()).toBe(Component);
       expect(controller['_context']).toStrictEqual({ xxx: 111 });
       expect(controller['_state']).toStrictEqual({ status: 'ready', data: 'zzz' } satisfies RouteState);
       expect(listenerMock).toHaveBeenCalledTimes(2);
@@ -189,7 +189,7 @@ describe('RouteController', () => {
       await promise;
 
       expect(controller.promise).toBeNull();
-      expect(controller.route.component).toBe(Outlet);
+      expect(controller.route.getComponent()).toBe(Outlet);
       expect(controller['_state']).toStrictEqual({ status: 'ready', data: 'zzz' } satisfies RouteState);
       expect(listenerMock).toHaveBeenCalledTimes(3);
       expect(listenerMock).toHaveBeenNthCalledWith(3, { type: 'ready', controller } satisfies RouterEvent);
@@ -216,7 +216,7 @@ describe('RouteController', () => {
       await promise;
 
       expect(controller.promise).toBeNull();
-      expect(controller.route.component).toBe(Outlet);
+      expect(controller.route.getComponent()).toBe(Outlet);
       expect(controller['_state']).toStrictEqual({ status: 'ready', data: 'zzz' } satisfies RouteState);
       expect(listenerMock).toHaveBeenCalledTimes(3);
       expect(listenerMock).toHaveBeenNthCalledWith(3, { type: 'ready', controller } satisfies RouterEvent);
@@ -242,7 +242,7 @@ describe('RouteController', () => {
       await promise;
 
       expect(controller.promise).toBeNull();
-      expect(controller.route.component).toBe(Outlet);
+      expect(controller.route.getComponent()).toBe(Outlet);
       expect(controller['_state']).toStrictEqual({ status: 'ready', data: 'zzz' } satisfies RouteState);
       expect(listenerMock).toHaveBeenCalledTimes(3);
       expect(listenerMock).toHaveBeenNthCalledWith(3, { type: 'ready', controller } satisfies RouterEvent);

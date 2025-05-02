@@ -37,7 +37,7 @@ test('renders router notFoundComponent if no route matched', () => {
 });
 
 test('renders the route component', () => {
-  const route = createRoute('/aaa', () => 'AAA');
+  const route = createRoute('/aaa', () => () => 'AAA');
   const router = new Router({ routes: [route] });
 
   router.navigate(route);
@@ -54,7 +54,7 @@ test('renders the route component', () => {
 });
 
 test('renders the route component with a wrapper', () => {
-  const route = createRoute('/aaa', () => 'AAA');
+  const route = createRoute('/aaa', () => () => 'AAA');
   const router = new Router({ routes: [route] });
 
   router.navigate(route);
@@ -73,13 +73,13 @@ test('renders the route component with a wrapper', () => {
 });
 
 test('renders the nested route component in the nested Outlet', () => {
-  const routeAaa = createRoute('/aaa', () => (
+  const routeAaa = createRoute('/aaa', () => () => (
     <div id={'aaa'}>
       <Outlet />
     </div>
   ));
 
-  const routeBbb = createRoute(routeAaa, '/bbb', () => 'BBB');
+  const routeBbb = createRoute(routeAaa, '/bbb', () => () => 'BBB');
 
   const router = new Router({ routes: [routeBbb] });
 
@@ -101,7 +101,7 @@ test('renders route errorComponent if an error is thrown during rendering', () =
 
   const route = createRoute({
     pathname: '/aaa',
-    component: () => {
+    componentProvider: () => {
       throw error;
     },
     errorComponent: () => {
@@ -130,7 +130,7 @@ test('renders router errorComponent if an error is thrown during rendering', () 
 
   const route = createRoute({
     pathname: '/aaa',
-    component: () => {
+    componentProvider: () => {
       throw error;
     },
   });
@@ -168,7 +168,7 @@ test('error bubbles to the closest route with an errorComponent', () => {
 
   const routeBbb = createRoute(routeAaa, {
     pathname: '/bbb',
-    component: () => {
+    componentProvider: () => {
       throw error;
     },
   });
@@ -198,7 +198,7 @@ test('rendering throws an error if no errorComponent exists', () => {
 
   const route = createRoute({
     pathname: '/aaa',
-    component: () => {
+    componentProvider: () => {
       throw error;
     },
   });
@@ -299,7 +299,7 @@ test('loading bubbles to the closest route with a loadingComponent', () => {
 test('renders notFoundComponent if notFound is called during rendering', () => {
   const route = createRoute({
     pathname: '/aaa',
-    component: () => notFound(),
+    componentProvider: () => () => notFound(),
     notFoundComponent: () => 'AAA',
   });
 
@@ -352,7 +352,7 @@ test('not found bubbles to the closest route with a notFoundComponent', () => {
 
   const routeBbb = createRoute(routeAaa, {
     pathname: '/bbb',
-    component: () => notFound(),
+    componentProvider: () => () => notFound(),
   });
 
   const router = new Router({ routes: [routeBbb] });
@@ -405,7 +405,7 @@ test('not found bubbles to the closest route with a notFoundComponent', () => {
 test('renders loadingComponent if redirect is called during rendering', () => {
   const route = createRoute({
     pathname: '/aaa',
-    component: () => redirect('zzz'),
+    componentProvider: () => () => redirect('zzz'),
     loadingComponent: () => 'AAA',
   });
 
@@ -458,7 +458,7 @@ test('redirect bubbles to the closest route with a loadingComponent', () => {
 
   const routeBbb = createRoute(routeAaa, {
     pathname: '/bbb',
-    component: () => redirect('zzz'),
+    componentProvider: () => () => redirect('zzz'),
   });
 
   const router = new Router({ routes: [routeBbb] });
@@ -517,7 +517,7 @@ test('redirect can be thrown from errorComponent', () => {
 
   const route = createRoute({
     pathname: '/aaa',
-    component: () => {
+    componentProvider: () => () => {
       throw error;
     },
     loadingComponent: () => 'AAA',

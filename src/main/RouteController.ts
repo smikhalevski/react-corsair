@@ -225,7 +225,7 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
       }
 
       // Ensure route component is loaded
-      if (route.component === undefined) {
+      if (route.getComponent() === undefined) {
         data = Promise.all([route.loadComponent(), data]).then(result => result[1]);
       }
 

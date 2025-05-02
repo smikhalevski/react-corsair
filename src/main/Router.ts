@@ -184,7 +184,7 @@ export class Router<Context = any> {
       const promises = [];
 
       for (const { route, params } of this.match(location)) {
-        if (route.component === undefined) {
+        if (route.getComponent() === undefined) {
           promises.push(route.loadComponent());
         }
         try {
