@@ -1094,7 +1094,7 @@ history.toURL(helloRoute.getLocation({
   sortBy: 'price',
   available: true
 }));
-// ⮕ '/shop?pageIndex=3&categories=%5B%22electronics%22%2C%22gifts%22%5D&sortBy=price&available=true'
+// ⮕ '/shop?pageIndex=3&categories=["electronics","gifts"]&sortBy=price&available=true'
 ```
 
 `jsonSearchParamsSerializer` allows you to store complex data structures in a URL.

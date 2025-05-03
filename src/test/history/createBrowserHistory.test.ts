@@ -126,7 +126,7 @@ test('parses query params', async () => {
     state: undefined,
   });
 
-  expect(window.location.href).toBe('http://localhost/bbb?yyy=%5B111%2C222%5D');
+  expect(window.location.href).toBe('http://localhost/bbb?yyy=[111,222]');
 });
 
 test('parses query params with a custom adapter', async () => {

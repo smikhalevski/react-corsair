@@ -2,26 +2,42 @@ import { SearchParamsSerializer } from './types';
 import { Dict } from '../types';
 
 /**
- * An adapter that uses {@link URLSearchParams} to serialize query and uses {@link JSON} to serialize param values.
+ * An adapter that serializes search param values with {@link JSON}.
  *
  * @group History
  */
 export const jsonSearchParamsSerializer: SearchParamsSerializer = {
   parse(search) {
-    const searchParams = new URLSearchParams(search);
     const params: Dict = {};
 
-    if (searchParams.size === 0) {
-      return params;
+    let valueIndex = 0;
+    let entryIndex = 0;
+
+    if (search.charAt(0) === '?') {
+      entryIndex = 1;
     }
 
-    for (const key of new Set(searchParams.keys())) {
-      const json = searchParams.get(key)!;
+    for (let i = entryIndex; i < search.length; i = entryIndex + 1) {
+      valueIndex = search.indexOf('=', i);
+      entryIndex = search.indexOf('&', i);
+
+      if (valueIndex === -1) {
+        valueIndex = search.length;
+      }
+      if (entryIndex === -1) {
+        entryIndex = search.length;
+      }
+      if (entryIndex < valueIndex) {
+        valueIndex = entryIndex;
+      }
+
+      const key = decodeURIComponent(search.substring(i, valueIndex));
+      const value = decodeURIComponent(search.substring(valueIndex + 1, entryIndex));
 
       try {
-        params[key] = JSON.parse(json);
+        params[key] = JSON.parse(value);
       } catch {
-        params[key] = json;
+        params[key] = value;
       }
     }
 
@@ -29,7 +45,7 @@ export const jsonSearchParamsSerializer: SearchParamsSerializer = {
   },
 
   stringify(params) {
-    const searchParams = new URLSearchParams();
+    let search = '';
 
     for (const key in params) {
       const value = params[key];
@@ -39,6 +55,12 @@ export const jsonSearchParamsSerializer: SearchParamsSerializer = {
         continue;
       }
 
+      if (search.length !== 0) {
+        search += '&';
+      }
+
+      search += encodeSearchComponent(key) + '=';
+
       if (
         json.charCodeAt(0) === 34 &&
         json !== '"true"' &&
@@ -46,12 +68,16 @@ export const jsonSearchParamsSerializer: SearchParamsSerializer = {
         json !== '"null"' &&
         json.slice(1, -1) === value
       ) {
-        searchParams.append(key, value);
+        search += encodeSearchComponent(value);
       } else {
-        searchParams.append(key, json);
+        search += encodeSearchComponent(json);
       }
     }
 
-    return searchParams.toString();
+    return search;
   },
 };
+
+function encodeSearchComponent(str: string): string {
+  return str.replace(/[#%=&\s]/g, encodeURIComponent);
+}

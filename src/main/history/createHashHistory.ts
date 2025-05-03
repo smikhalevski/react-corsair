@@ -14,11 +14,7 @@ export function createHashHistory(options: HistoryOptions = {}): History {
 
   return createSessionHistory(
     () => decodeURIComponent(window.location.hash.substring(1)),
-    url => concatPathname(basePathname, '#' + encodeHash(url)),
+    url => concatPathname(basePathname, '#' + url),
     searchParamsSerializer
   );
-}
-
-function encodeHash(str: string): string {
-  return str.replace(/[^-?/:@._~!$&'()*+,;=\w]/g, encodeURIComponent);
 }
