@@ -190,7 +190,7 @@ function OutletContent(props: OutletContentProps): ReactNode {
 
   switch (controller.status) {
     case 'ready':
-      component = route.component;
+      component = route.getComponent();
       childController = controller.childController;
 
       if (component === undefined) {

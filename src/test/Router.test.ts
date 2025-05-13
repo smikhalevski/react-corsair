@@ -216,11 +216,11 @@ describe('prefetch', () => {
 
     const route = createRoute({
       pathname: '/aaa',
-      lazyComponent: lazyComponentMock,
+      componentProvider lazyComponentMock,
       dataLoader: dataLoaderMock,
     });
 
-    expect(route.component).toBeUndefined();
+    expect(route.getComponent()).toBeUndefined();
 
     const router = new Router({ routes: [route] });
 
@@ -244,7 +244,7 @@ describe('prefetch', () => {
       signal: expect.any(AbortSignal),
     });
 
-    expect(route.component).toBe(componentModule.default);
+    expect(route.getComponent()).toBe(componentModule.default);
   });
 
   test('aborts prefetch', async () => {

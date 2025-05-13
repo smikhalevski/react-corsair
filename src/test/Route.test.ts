@@ -2,26 +2,17 @@ import { createRoute, Location, Outlet, ParamsAdapter } from '../main';
 
 const Component = () => null;
 
-test('throws if both component and lazyComponent are provided', () => {
-  expect(() =>
-    createRoute({
-      component: Component,
-      lazyComponent: () => Promise.resolve({ default: Component }),
-    })
-  ).toThrow(new Error('Route must have either a component or a lazyComponent'));
-});
-
 describe('loadComponent', () => {
   test('returns an Outlet if there is no component', async () => {
     const route = createRoute();
 
-    expect(route.component).toBe(Outlet);
+    expect(route.getComponent()).toBe(Outlet);
     await expect(route.loadComponent()).resolves.toBe(Outlet);
   });
 
   test("throws if lazyComponent doesn't return a module", async () => {
     const route = createRoute({
-      lazyComponent: () => Promise.resolve<any>({ foo: Component }),
+      componentProvider: () => Promise.resolve<any>({ foo: Component }),
     });
 
     await expect(route.loadComponent()).rejects.toStrictEqual(
@@ -30,14 +21,14 @@ describe('loadComponent', () => {
   });
 
   test('returns a component', async () => {
-    const route = createRoute({ component: Component });
+    const route = createRoute({ componentProvider: () => Component });
 
     await expect(route.loadComponent()).resolves.toBe(Component);
   });
 
   test('loads a lazyComponent', async () => {
     const route = createRoute({
-      lazyComponent: () => Promise.resolve({ default: Component }),
+      componentProvider: () => Promise.resolve({ default: Component }),
     });
 
     await expect(route.loadComponent()).resolves.toStrictEqual(Component);
@@ -45,7 +36,7 @@ describe('loadComponent', () => {
 
   test('throws if lazyComponent module does not default-export a function', async () => {
     const route = createRoute({
-      lazyComponent: () => Promise.resolve({ default: 'not_a_function' as any }),
+      componentProvider: () => Promise.resolve({ default: 'not_a_function' as any }),
     });
 
     await expect(() => route.loadComponent()).rejects.toStrictEqual(
@@ -55,7 +46,7 @@ describe('loadComponent', () => {
 
   test('rejects with an error thrown by a lazyComponent', async () => {
     const route = createRoute({
-      lazyComponent: () => Promise.reject(111),
+      componentProvider: () => Promise.reject(111),
     });
 
     await expect(() => route.loadComponent()).rejects.toBe(111);
@@ -65,7 +56,7 @@ describe('loadComponent', () => {
     const lazyComponentMock = jest.fn(() => Promise.resolve({ default: Component }));
 
     const route = createRoute({
-      lazyComponent: lazyComponentMock,
+      componentProvider: lazyComponentMock,
     });
 
     await route.loadComponent();
@@ -82,7 +73,7 @@ describe('loadComponent', () => {
       .mockReturnValueOnce(Promise.resolve({ default: Component }));
 
     const route = createRoute({
-      lazyComponent: lazyComponentMock,
+      componentProvider lazyComponentMock,
     });
 
     await expect(() => route.loadComponent()).rejects.toStrictEqual(
@@ -97,7 +88,7 @@ describe('loadComponent', () => {
     const lazyComponentMock = jest.fn(() => Promise.resolve({ default: Component }));
 
     const route = createRoute({
-      lazyComponent: lazyComponentMock,
+      componentProvider lazyComponentMock,
     });
 
     const promise = route.loadComponent();
@@ -111,7 +102,7 @@ describe('loadComponent', () => {
 
   test('does not throw synchronously', async () => {
     const route = createRoute({
-      lazyComponent: () => {
+      componentProvider () => {
         throw new Error('expected');
       },
     });

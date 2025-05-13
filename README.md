@@ -472,7 +472,7 @@ option, instead of the
 ```ts
 const userRoute = createRoute({
   pathname: '/user',
-  lazyComponent: () => import('./UserPage.js')
+  componentProvider () => import('./UserPage.js')
 });
 ```
 
@@ -508,7 +508,7 @@ option to your route, so an `<Outlet>` renders a `<Suspense>` for you, using `lo
 ```ts
 const userRoute = createRoute({
   pathname: '/user',
-  lazyComponent: () => import('./UserPage.js'),
+  componentProvider () => import('./UserPage.js'),
   loadingComponent: LoadingIndicator
 });
 ```
@@ -525,7 +525,7 @@ option:
 ```ts
 const userRoute = createRoute({
   pathname: '/user',
-  lazyComponent: () => import('./UserPage.js'),
+  componentProvider () => import('./UserPage.js'),
   loadingComponent: LoadingIndicator,
   loadingAppearance: 'loading'
 });

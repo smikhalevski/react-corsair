@@ -1,6 +1,6 @@
 import { ComponentType } from 'react';
 import { CONTEXT, Route } from './Route';
-import { Dict, RouteOptions } from './types';
+import { ComponentModule, Dict, RouteOptions } from './types';
 
 /**
  * Creates a route that is rendered in an {@link Outlet} of a {@link Router}.
@@ -49,13 +49,14 @@ export function createRoute<ParentRoute extends Route, Params extends Dict = {},
  * const fooRoute = createRoute('/foo', Foo);
  *
  * @param pathname A {@link RouteOptions.pathname pathname} pattern.
- * @param component A component that is rendered by a route.
+ * @param componentProvider A callback that returns a component that is rendered by a route, or a {@link Promise} that
+ * loads a module which default-exports a component.
  * @template Params Route params.
  * @group Routing
  */
 export function createRoute<Params extends Dict = {}>(
   pathname: string,
-  component?: ComponentType
+  componentProvider?: () => ComponentType | PromiseLike<ComponentModule>
 ): Route<null, Params, void>;
 
 /**
@@ -71,7 +72,8 @@ export function createRoute<Params extends Dict = {}>(
  *
  * @param parentRoute A parent route.
  * @param pathname A {@link RouteOptions.pathname pathname} pattern.
- * @param component A component that is rendered by a route.
+ * @param componentProvider A callback that returns a component that is rendered by a route, or a {@link Promise} that
+ * loads a module which default-exports a component.
  * @template ParentRoute A parent route.
  * @template Params Route params.
  * @group Routing
@@ -79,24 +81,28 @@ export function createRoute<Params extends Dict = {}>(
 export function createRoute<ParentRoute extends Route, Params extends Dict = {}>(
   parentRoute: ParentRoute,
   pathname: string,
-  component?: ComponentType
+  componentProvider?: () => ComponentType | PromiseLike<ComponentModule>
 ): Route<ParentRoute, Params, void, ParentRoute[CONTEXT]>;
 
-export function createRoute(arg1: any, arg2?: any, component?: ComponentType): Route {
+export function createRoute(
+  arg1: any,
+  arg2?: any,
+  componentProvider?: () => ComponentType | PromiseLike<ComponentModule>
+): Route {
   return new Route(
     arg1 instanceof Route ? arg1 : null,
 
     typeof arg1 === 'string'
-      ? // (pathname, component)
+      ? // (pathname, componentProvider)
         {
           pathname: arg1,
-          component: arg2,
+          componentProvider: arg2,
         }
       : arg1 instanceof Route && typeof arg2 === 'string'
-        ? // (parentRoute, pathname, component)
+        ? // (parentRoute, pathname, componentProvider)
           {
             pathname: arg2,
-            component,
+            componentProvider,
           }
         : arg1 instanceof Route
           ? // (parentRoute, options)

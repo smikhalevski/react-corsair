@@ -215,20 +215,22 @@ export interface RouteOptions<Params extends Dict, Data, Context> {
   isCaseSensitive?: boolean;
 
   /**
-   * A component that is rendered by a route.
+   * A callback that returns a component that is rendered by a route, or a {@link Promise} that loads a module which
+   * default-exports a component.
    *
-   * If both {@link component} and {@link lazyComponent} are omitted then a route implicitly renders an {@link Outlet}.
-   */
-  component?: ComponentType;
-
-  /**
-   * A lazy-loaded component that is rendered by a route. A component cached forever if a returned {@link Promise}
-   * is fulfilled.
+   * A component cached forever unless a returned {@link Promise} is rejected.
+   *
+   * If there's no {@link componentProvider} then a route implicitly renders an {@link Outlet}.
+   *
+   * @example
+   * import { UserPage } from './UserPage';
+   *
+   * () => UserPage
    *
    * @example
    * () => import('./UserPage')
    */
-  lazyComponent?: () => PromiseLike<ComponentModule>;
+  componentProvider?: () => PromiseLike<ComponentModule> | ComponentType;
 
   /**
    * An adapter that can validate and transform params extracted from the {@link Location.pathname} and
