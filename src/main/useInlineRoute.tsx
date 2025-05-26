@@ -6,7 +6,7 @@ import { getTailController } from './utils.js';
 import { isEqualLocation } from './Route.js';
 
 /**
- * Returns the controller of the route matched by the {@link to location}.
+ * Returns the controller of the route matched by the location.
  *
  * @example
  * const fooController = useInlineRoute(fooRoute);

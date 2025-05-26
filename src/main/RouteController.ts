@@ -128,7 +128,7 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
   }
 
   /**
-   * Sets an {@link error} and notifies {@link router} subscribers.
+   * Sets an `error` and notifies {@link router} subscribers.
    *
    * @param error The error.
    */
@@ -159,7 +159,7 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
   }
 
   /**
-   * Loads route component, sets provided {@link data} and notifies {@link router} subscribers.
+   * Loads route component, sets provided `data` and notifies {@link router} subscribers.
    *
    * @param data The route data.
    */

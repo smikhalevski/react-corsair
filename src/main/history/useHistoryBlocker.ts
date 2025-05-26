@@ -3,7 +3,7 @@ import { useHistory } from './useHistory.js';
 import { useEffect, useRef, useState } from 'react';
 
 /**
- * Registers a {@link blocker} that prevents history navigation.
+ * Registers a blocker that prevents history navigation.
  *
  * @example
  * const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);

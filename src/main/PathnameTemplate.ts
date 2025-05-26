@@ -77,7 +77,7 @@ export class PathnameTemplate {
    * Matches a pathname against a pathname pattern.
    *
    * @param pathname A pathname to match.
-   * @returns A matching result, or `null` if {@link pathname} doesn't match the template.
+   * @returns A matching result, or `null` if `pathname` doesn't match the template.
    */
   match(pathname: string): PathnameMatch | null {
     const { _segments, _flags } = this;

@@ -70,7 +70,7 @@ export interface History {
   forward(): void;
 
   /**
-   * Move forwards and backwards through the history depending on the {@link delta}.
+   * Move forwards and backwards through the history depending on the delta.
    *
    * @param delta The position in the history to which you want to move, relative to the current page. A negative value
    * moves backwards, a positive value moves forwards.
@@ -86,7 +86,7 @@ export interface History {
   subscribe(listener: () => void): () => void;
 
   /**
-   * Registers a {@link blocker} that prevents navigation with history.
+   * Registers a blocker that prevents navigation with history.
    *
    * @param blocker A blocker to register.
    * @returns A callback that removes blocker.

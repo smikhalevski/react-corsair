@@ -22,7 +22,7 @@ export interface HydrateRouterOptions {
 }
 
 /**
- * Hydrates the {@link router} with the state provided by SSR.
+ * Hydrates the `router` with the state provided by SSR.
  *
  * To render SSR state, call {@link hydrateRouter} instead of the initial {@link Router.navigate navigate} call.
  *

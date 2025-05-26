@@ -6,7 +6,7 @@ import { InterceptedRouteControllerContext, useRouter } from './useRouter.js';
 import { getTailController } from './utils.js';
 
 /**
- * Returns the controller of the {@link route} that was intercepted during navigation, or `null` if such route wasn't
+ * Returns the controller of the `route` that was intercepted during navigation, or `null` if such route wasn't
  * intercepted.
  *
  * @example

@@ -17,7 +17,7 @@ export const RouteControllerProvider = RouteControllerContext.Provider;
 export function useRoute(): RouteController;
 
 /**
- * Returns the controller of the {@link route}.
+ * Returns the controller of the `route`.
  *
  * @param route The route to look up.
  * @template Params Route params.

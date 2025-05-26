@@ -114,7 +114,7 @@ export class Router<Context = any> {
   }
 
   /**
-   * Returns the array of matched routes and extracted params for a given {@link to location}.
+   * Returns the array of matched routes and extracted params for a given location.
    *
    * @param to The location to match.
    */
@@ -124,7 +124,7 @@ export class Router<Context = any> {
   }
 
   /**
-   * Looks up a route in {@link routes} that matches a {@link to location}, loads its data and notifies subscribers.
+   * Looks up a route in {@link routes} that matches a location, loads its data and notifies subscribers.
    *
    * @param to A location or a route to navigate to.
    * @param options Navigate options.
