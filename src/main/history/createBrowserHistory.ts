@@ -1,7 +1,7 @@
-import { History, HistoryOptions } from './types';
-import { concatPathname, debasePathname } from './utils';
-import { createSessionHistory } from './createSessionHistory';
-import { jsonSearchParamsSerializer } from './jsonSearchParamsSerializer';
+import { History, HistoryOptions } from './types.js';
+import { concatPathname, debasePathname } from './utils.js';
+import { createSessionHistory } from './createSessionHistory.js';
+import { jsonSearchParamsSerializer } from './jsonSearchParamsSerializer.js';
 
 /**
  * Creates the history adapter that reads and writes location to a browser's session history.
@@ -12,9 +12,10 @@ import { jsonSearchParamsSerializer } from './jsonSearchParamsSerializer';
 export function createBrowserHistory(options: HistoryOptions = {}): History {
   const { basePathname, searchParamsSerializer = jsonSearchParamsSerializer } = options;
 
-  return createSessionHistory(
-    () => debasePathname(basePathname, window.location.pathname) + window.location.search + window.location.hash,
-    url => concatPathname(basePathname, url),
-    searchParamsSerializer
-  );
+  return createSessionHistory({
+    searchParamsSerializer,
+    getURL: () =>
+      debasePathname(basePathname, window.location.pathname) + window.location.search + window.location.hash,
+    toAbsoluteURL: url => concatPathname(basePathname, url),
+  });
 }

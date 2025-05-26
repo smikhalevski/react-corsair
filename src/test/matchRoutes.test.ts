@@ -1,5 +1,6 @@
-import { createRoute } from '../main';
-import { matchRoutes } from '../main/matchRoutes';
+import { expect, test, vi } from 'vitest';
+import { createRoute } from '../main/index.js';
+import { matchRoutes } from '../main/matchRoutes.js';
 
 const aaaRoute = createRoute('/aaa');
 const bbbRoute = createRoute(aaaRoute, '/bbb');
@@ -67,8 +68,8 @@ test('pathname params have precedence over search params', () => {
 });
 
 test('uses params adapter to parse params', () => {
-  const aaaParamsAdapterMock = jest.fn(params => ({ vvv: 111 }));
-  const bbbParamsAdapterMock = jest.fn(params => ({ zzz: 222 }));
+  const aaaParamsAdapterMock = vi.fn(_params => ({ vvv: 111 }));
+  const bbbParamsAdapterMock = vi.fn(_params => ({ zzz: 222 }));
 
   const aaaRoute = createRoute({ pathname: '/aaa/:xxx', paramsAdapter: aaaParamsAdapterMock });
   const bbbRoute = createRoute(aaaRoute, { pathname: '/bbb/:yyy', paramsAdapter: bbbParamsAdapterMock });

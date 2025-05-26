@@ -1,7 +1,7 @@
 import { createContext, useContext, useSyncExternalStore } from 'react';
-import { RouteController } from './RouteController';
-import { Route } from './Route';
-import { Dict } from './types';
+import { RouteController } from './RouteController.js';
+import { Route } from './Route.js';
+import { Dict } from './types.js';
 
 const RouteControllerContext = createContext<RouteController | null>(null);
 

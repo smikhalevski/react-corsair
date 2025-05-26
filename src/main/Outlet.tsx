@@ -8,8 +8,8 @@ import React, {
   useContext,
   useSyncExternalStore,
 } from 'react';
-import { Router } from './Router';
-import { RouteControllerProvider } from './useRoute';
+import { Router } from './Router.js';
+import { RouteControllerProvider } from './useRoute.js';
 import {
   getActiveController,
   getErrorComponent,
@@ -17,7 +17,7 @@ import {
   getNotFoundComponent,
   handleBoundaryError,
   RouteController,
-} from './RouteController';
+} from './RouteController.js';
 
 const OutletContentContext = createContext<RouteController | Router | null>(null);
 

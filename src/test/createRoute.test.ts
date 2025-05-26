@@ -1,4 +1,5 @@
-import { createRoute, Outlet, Route } from '../main';
+import { expect, test } from 'vitest';
+import { createRoute, Outlet, Route } from '../main/index.js';
 
 const Component = () => null;
 

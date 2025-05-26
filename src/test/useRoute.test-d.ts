@@ -1,4 +1,4 @@
-import { createRoute, useRoute } from '../main';
+import { createRoute, useRoute } from '../main/index.js';
 import { expectType } from 'tsd';
 
 expectType<any>(useRoute().params);

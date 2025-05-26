@@ -1,4 +1,4 @@
-import { SSRRouter, SSRRouterOptions } from './SSRRouter';
+import { SSRRouter, SSRRouterOptions } from './SSRRouter.js';
 
 /**
  * The streaming router that can be used as a transformer for

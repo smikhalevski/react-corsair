@@ -8,4 +8,4 @@
  * @module ssr/node
  */
 
-export { PipeableSSRRouter } from './PipeableSSRRouter';
+export { PipeableSSRRouter } from './PipeableSSRRouter.js';

@@ -1,9 +1,9 @@
-import { To } from './types';
-import { reconcileControllers, RouteController } from './RouteController';
-import { useRouter } from './useRouter';
+import { To } from './types.js';
+import { reconcileControllers, RouteController } from './RouteController.js';
+import { useRouter } from './useRouter.js';
 import { useEffect, useRef, useState } from 'react';
-import { getTailController } from './utils';
-import { isEqualLocation } from './Route';
+import { getTailController } from './utils.js';
+import { isEqualLocation } from './Route.js';
 
 /**
  * Returns the controller of the route matched by the {@link to location}.

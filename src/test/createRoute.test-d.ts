@@ -1,6 +1,6 @@
 import { expectType } from 'tsd';
-import { createRoute } from '../main';
-import { type PARAMS } from '../main/Route';
+import { createRoute } from '../main/index.js';
+import { type PARAMS } from '../main/Route.js';
 
 declare const PARAMS: PARAMS;
 

@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import { History } from './types';
+import { History } from './types.js';
 
 export const HistoryContext = createContext<History | null>(null);
 

@@ -8,5 +8,5 @@
  * @module ssr
  */
 
-export { SSRRouter, type SSRRouterOptions } from './SSRRouter';
-export { ReadableSSRRouter } from './ReadableSSRRouter';
+export { SSRRouter, type SSRRouterOptions } from './SSRRouter.js';
+export { ReadableSSRRouter } from './ReadableSSRRouter.js';

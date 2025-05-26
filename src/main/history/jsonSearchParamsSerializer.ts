@@ -1,5 +1,5 @@
-import { SearchParamsSerializer } from './types';
-import { Dict } from '../types';
+import { SearchParamsSerializer } from './types.js';
+import { Dict } from '../types.js';
 
 /**
  * An adapter that serializes search param values with {@link JSON}.

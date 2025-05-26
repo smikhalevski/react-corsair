@@ -1,9 +1,10 @@
-import { SSRRouter } from '../../main/ssr';
-import { createRoute, RouteState } from '../../main';
+import { describe, expect, test, vi } from 'vitest';
+import { SSRRouter } from '../../main/ssr/index.js';
+import { createRoute, RouteState } from '../../main/index.js';
 
 describe('navigate', () => {
   test('loads routes', async () => {
-    const dataLoaderMock = jest.fn();
+    const dataLoaderMock = vi.fn();
 
     const route = createRoute({
       pathname: '/aaa',
@@ -18,7 +19,7 @@ describe('navigate', () => {
   });
 
   test('does not load routes with non-server renderingDisposition', async () => {
-    const dataLoaderMock = jest.fn();
+    const dataLoaderMock = vi.fn();
 
     const route = createRoute({
       pathname: '/aaa',
@@ -80,7 +81,7 @@ describe('nextHydrationScript', () => {
   });
 
   test('respects stateStringifier option', () => {
-    const stateStringifierMock = jest.fn(JSON.stringify);
+    const stateStringifierMock = vi.fn(JSON.stringify);
 
     const route = createRoute('/aaa');
     const router = new SSRRouter({ routes: [route], stateStringifier: stateStringifierMock });

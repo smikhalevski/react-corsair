@@ -1,6 +1,11 @@
+/**
+ * @vitest-environment jsdom
+ */
+
+import { expect, test, vi } from 'vitest';
 import { render, renderHook } from '@testing-library/react';
-import { createRoute, Router, RouterProvider, useRoute } from '../main';
-import { noop } from '../main/utils';
+import { createRoute, Router, RouterProvider, useRoute } from '../main/index.js';
+import { noop } from '../main/utils.js';
 import React, { act, StrictMode } from 'react';
 
 console.error = noop;
@@ -10,7 +15,7 @@ test('throws if used outside of RouterProvider', () => {
 });
 
 test('returns the current route controller', () => {
-  const hookTrap = jest.fn();
+  const hookTrap = vi.fn();
 
   const routeAaa = createRoute('/aaa');
   const routeBbb = createRoute(routeAaa, '/bbb', () => {
@@ -34,7 +39,7 @@ test('returns the current route controller', () => {
 });
 
 test('returns the route controller of the provided route if it is the same as the current route', () => {
-  const hookTrap = jest.fn();
+  const hookTrap = vi.fn();
 
   const routeAaa = createRoute('/aaa');
   const routeBbb = createRoute(routeAaa, '/bbb', () => {
@@ -58,7 +63,7 @@ test('returns the route controller of the provided route if it is the same as th
 });
 
 test('returns the route controller of the provided route if it is the parent route', () => {
-  const hookTrap = jest.fn();
+  const hookTrap = vi.fn();
 
   const routeAaa = createRoute('/aaa');
   const routeBbb = createRoute(routeAaa, '/bbb', () => {
@@ -82,7 +87,7 @@ test('returns the route controller of the provided route if it is the parent rou
 });
 
 test('throws if the provided route is a child', () => {
-  const hookTrap = jest.fn();
+  const hookTrap = vi.fn();
 
   const routeAaa = createRoute('/aaa', () => {
     hookTrap(useRoute(routeBbb));
@@ -105,7 +110,7 @@ test('throws if the provided route is a child', () => {
 });
 
 test('throws if the provided route is not rendered', () => {
-  const hookTrap = jest.fn();
+  const hookTrap = vi.fn();
 
   const routeAaa = createRoute('/aaa', () => {
     hookTrap(useRoute(routeBbb));
@@ -128,7 +133,7 @@ test('throws if the provided route is not rendered', () => {
 });
 
 test('re-renders if controller state is changed', () => {
-  const hookTrap = jest.fn();
+  const hookTrap = vi.fn();
 
   const route = createRoute('/aaa', () => {
     hookTrap(useRoute());

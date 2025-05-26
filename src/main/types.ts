@@ -1,7 +1,7 @@
 import { ComponentType } from 'react';
-import { Route } from './Route';
-import { Router } from './Router';
-import { RouteController } from './RouteController';
+import { Route } from './Route.js';
+import { Router } from './Router.js';
+import { RouteController } from './RouteController.js';
 
 /**
  * @group Other

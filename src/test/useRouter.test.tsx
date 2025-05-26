@@ -1,6 +1,11 @@
+/**
+ * @vitest-environment jsdom
+ */
+
+import { describe, expect, test } from 'vitest';
 import { render, renderHook } from '@testing-library/react';
-import { createRoute, Router, RouterProvider, useRouter } from '../main';
-import { noop } from '../main/utils';
+import { createRoute, Router, RouterProvider, useRouter } from '../main/index.js';
+import { noop } from '../main/utils.js';
 import React, { act, StrictMode } from 'react';
 
 console.error = noop;

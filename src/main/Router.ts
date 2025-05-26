@@ -1,7 +1,7 @@
 import { AbortablePromise, PubSub } from 'parallel-universe';
 import { ComponentType } from 'react';
-import { matchRoutes, RouteMatch } from './matchRoutes';
-import { Route } from './Route';
+import { matchRoutes, RouteMatch } from './matchRoutes.js';
+import { Route } from './Route.js';
 import {
   LoadingAppearance,
   Location,
@@ -10,9 +10,14 @@ import {
   RouterEvent,
   RouterOptions,
   To,
-} from './types';
-import { AbortError, getTailController, noop, toLocation } from './utils';
-import { getActiveController, getRenderingDisposition, reconcileControllers, RouteController } from './RouteController';
+} from './types.js';
+import { AbortError, getTailController, noop, toLocation } from './utils.js';
+import {
+  getActiveController,
+  getRenderingDisposition,
+  reconcileControllers,
+  RouteController,
+} from './RouteController.js';
 
 /**
  * A router that matches routes by a location.

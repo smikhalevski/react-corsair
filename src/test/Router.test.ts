@@ -1,4 +1,9 @@
-import { createRoute, DataLoaderOptions, Route, Router, RouterEvent } from '../main';
+/**
+ * @vitest-environment jsdom
+ */
+
+import { describe, expect, test, vi } from 'vitest';
+import { createRoute, DataLoaderOptions, Route, Router, RouterEvent } from '../main/index.js';
 import { AbortablePromise, delay } from 'parallel-universe';
 
 test('creates a new router instance', () => {
@@ -26,7 +31,7 @@ test('creates a new router instance', () => {
 
 describe('navigate', () => {
   test('navigates router to a location', () => {
-    const listenerMock = jest.fn();
+    const listenerMock = vi.fn();
 
     const routeAaa = createRoute('/aaa');
     const routeBbb = createRoute('/bbb');
@@ -74,7 +79,7 @@ describe('navigate', () => {
   });
 
   test('starts data loading', () => {
-    const dataLoaderMock = jest.fn();
+    const dataLoaderMock = vi.fn();
 
     const route = createRoute({
       pathname: '/aaa',
@@ -96,7 +101,7 @@ describe('navigate', () => {
   });
 
   test('does not start data loading if navigation was superseded', () => {
-    const dataLoaderMock = jest.fn();
+    const dataLoaderMock = vi.fn();
 
     const routeAaa = createRoute({
       pathname: '/aaa',
@@ -120,7 +125,7 @@ describe('navigate', () => {
   });
 
   test('intercepts a route', () => {
-    const listenerMock = jest.fn();
+    const listenerMock = vi.fn();
 
     const routeAaa = createRoute('/aaa');
     const routeBbb = createRoute('/bbb');
@@ -173,7 +178,7 @@ describe('navigate', () => {
   });
 
   test('bypasses route interception', () => {
-    const listenerMock = jest.fn();
+    const listenerMock = vi.fn();
 
     const routeAaa = createRoute('/aaa');
     const routeBbb = createRoute('/bbb');
@@ -209,10 +214,10 @@ describe('navigate', () => {
 
 describe('prefetch', () => {
   test('prefetches route', async () => {
-    const listenerMock = jest.fn();
+    const listenerMock = vi.fn();
     const componentModule = { default: () => null };
-    const lazyComponentMock = jest.fn(() => Promise.resolve(componentModule));
-    const dataLoaderMock = jest.fn();
+    const lazyComponentMock = vi.fn(() => Promise.resolve(componentModule));
+    const dataLoaderMock = vi.fn();
 
     const route = createRoute({
       pathname: '/aaa',
@@ -248,7 +253,7 @@ describe('prefetch', () => {
   });
 
   test('aborts prefetch', async () => {
-    const dataLoaderMock = jest.fn();
+    const dataLoaderMock = vi.fn();
 
     const route = createRoute({
       pathname: '/aaa',
@@ -338,7 +343,7 @@ describe('cancelInterception', () => {
   });
 
   test('aborts rootController', () => {
-    const dataLoaderMock = jest.fn(options => delay(50));
+    const dataLoaderMock = vi.fn(_options => delay(50));
 
     const routeAaa = createRoute({
       pathname: '/aaa',

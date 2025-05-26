@@ -1,5 +1,5 @@
-import { Location, To } from './types';
-import { RouteController } from './RouteController';
+import { Location, To } from './types.js';
+import { RouteController } from './RouteController.js';
 
 export function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
   return value !== null && typeof value === 'object' && 'then' in value;

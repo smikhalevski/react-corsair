@@ -1,12 +1,17 @@
+/**
+ * @vitest-environment jsdom
+ */
+
+import { expect, test, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
-import { createRoute, DataLoaderOptions, Router, RouterProvider, usePrefetch } from '../main';
-import { noop } from '../main/utils';
+import { createRoute, DataLoaderOptions, Router, RouterProvider, usePrefetch } from '../main/index.js';
+import { noop } from '../main/utils.js';
 import React, { FC, PropsWithChildren, StrictMode } from 'react';
 
 console.error = noop;
 
 test('starts route loading when mounted', () => {
-  const dataLoaderMock = jest.fn();
+  const dataLoaderMock = vi.fn();
 
   const route = createRoute({ dataLoader: dataLoaderMock });
 
@@ -31,8 +36,8 @@ test('starts route loading when mounted', () => {
 });
 
 test('restart loading only if location is changed', () => {
-  const dataLoaderAaaMock = jest.fn();
-  const dataLoaderBbbMock = jest.fn();
+  const dataLoaderAaaMock = vi.fn();
+  const dataLoaderBbbMock = vi.fn();
 
   const routeAaa = createRoute({
     pathname: '/aaa',

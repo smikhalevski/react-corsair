@@ -1,7 +1,11 @@
-import { render, renderHook } from '@testing-library/react';
-import { createRoute, DataLoaderOptions, Outlet, Router, RouterProvider, useInlineRoute, usePrefetch } from '../main';
-import { noop } from '../main/utils';
-import React, { FC, PropsWithChildren, StrictMode } from 'react';
+/**
+ * @vitest-environment jsdom
+ */
+
+import { expect, test } from 'vitest';
+import { renderHook } from '@testing-library/react';
+import { createRoute, Router, RouterProvider, useInlineRoute } from '../main/index.js';
+import React, { StrictMode } from 'react';
 
 test('returns the route controller', () => {
   const route = createRoute('/aaa', () => 'AAA');

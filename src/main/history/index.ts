@@ -10,14 +10,14 @@
  * @module history
  */
 
-export { createBrowserHistory } from './createBrowserHistory';
-export { createHashHistory } from './createHashHistory';
-export { createMemoryHistory } from './createMemoryHistory';
-export { jsonSearchParamsSerializer } from './jsonSearchParamsSerializer';
-export { Link, type LinkProps } from './Link';
-export { useHistory, HistoryProvider } from './useHistory';
-export { useHistoryBlocker } from './useHistoryBlocker';
-export { parseLocation, stringifyLocation } from './utils';
+export { createBrowserHistory } from './createBrowserHistory.js';
+export { createHashHistory } from './createHashHistory.js';
+export { createMemoryHistory } from './createMemoryHistory.js';
+export { jsonSearchParamsSerializer } from './jsonSearchParamsSerializer.js';
+export { Link, type LinkProps } from './Link.js';
+export { useHistory, HistoryProvider } from './useHistory.js';
+export { useHistoryBlocker } from './useHistoryBlocker.js';
+export { parseLocation, stringifyLocation } from './utils.js';
 export {
   type HistoryOptions,
   type History,
@@ -25,4 +25,4 @@ export {
   type HistoryTransactionType,
   type HistoryTransaction,
   type SearchParamsSerializer,
-} from './types';
+} from './types.js';

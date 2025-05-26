@@ -1,4 +1,5 @@
-import { createRoute, Location, Outlet, ParamsAdapter } from '../main';
+import { describe, expect, test, vi } from 'vitest';
+import { createRoute, Location, Outlet, ParamsAdapter } from '../main/index.js';
 
 const Component = () => null;
 
@@ -62,7 +63,7 @@ describe('loadComponent', () => {
   });
 
   test('does not load a lazyComponent twice', async () => {
-    const lazyComponentMock = jest.fn(() => Promise.resolve({ default: Component }));
+    const lazyComponentMock = vi.fn(() => Promise.resolve({ default: Component }));
 
     const route = createRoute({
       lazyComponent: lazyComponentMock,
@@ -76,7 +77,7 @@ describe('loadComponent', () => {
   });
 
   test('loads the component again if the previous load failed', async () => {
-    const lazyComponentMock = jest
+    const lazyComponentMock = vi
       .fn()
       .mockReturnValueOnce(Promise.resolve(111))
       .mockReturnValueOnce(Promise.resolve({ default: Component }));
@@ -94,7 +95,7 @@ describe('loadComponent', () => {
   });
 
   test('returns the same lazyComponent', async () => {
-    const lazyComponentMock = jest.fn(() => Promise.resolve({ default: Component }));
+    const lazyComponentMock = vi.fn(() => Promise.resolve({ default: Component }));
 
     const route = createRoute({
       lazyComponent: lazyComponentMock,
@@ -275,7 +276,7 @@ describe('getLocation', () => {
   test('adds search params via adapter', () => {
     const paramsAdapter: ParamsAdapter<any> = {
       parse: params => params,
-      toSearchParams: jest.fn(params => ({ ccc: 'yyy' })),
+      toSearchParams: vi.fn(_params => ({ ccc: 'yyy' })),
     };
 
     expect(createRoute({ pathname: 'aaa/:bbb', paramsAdapter }).getLocation({ bbb: 'xxx' })).toStrictEqual({

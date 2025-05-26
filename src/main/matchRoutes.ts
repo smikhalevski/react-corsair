@@ -1,6 +1,6 @@
-import { PathnameMatch } from './PathnameTemplate';
-import { Route } from './Route';
-import { Dict } from './types';
+import { PathnameMatch } from './PathnameTemplate.js';
+import { Route } from './Route.js';
+import { Dict } from './types.js';
 
 /**
  * The result of matching a route by a location.

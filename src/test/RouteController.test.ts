@@ -1,3 +1,4 @@
+import { describe, beforeEach, test, expect, vi, Mock } from 'vitest';
 import {
   createRoute,
   DataLoaderOptions,
@@ -7,20 +8,20 @@ import {
   Router,
   RouterEvent,
   RouteState,
-} from '../main';
-import { AbortError, noop } from '../main/utils';
+} from '../main/index.js';
+import { AbortError, noop } from '../main/utils.js';
 import { AbortablePromise } from 'parallel-universe';
-import { handleBoundaryError, reconcileControllers } from '../main/RouteController';
-import { matchRoutes } from '../main/matchRoutes';
+import { handleBoundaryError, reconcileControllers } from '../main/RouteController.js';
+import { matchRoutes } from '../main/matchRoutes.js';
 
 describe('RouteController', () => {
-  let listenerMock: jest.Mock;
+  let listenerMock: Mock;
   let route: Route;
   let router: Router;
   let controller: RouteController;
 
   beforeEach(() => {
-    listenerMock = jest.fn();
+    listenerMock = vi.fn();
 
     route = createRoute('/aaa');
     router = new Router({ routes: [route], context: { xxx: 111 } });
@@ -48,7 +49,7 @@ describe('RouteController', () => {
     const Component = () => null;
 
     test('synchronously loads data', () => {
-      const dataLoaderMock = jest.fn(options => 'zzz');
+      const dataLoaderMock = vi.fn(_options => 'zzz');
 
       controller['_load'](dataLoaderMock);
 
@@ -63,7 +64,7 @@ describe('RouteController', () => {
     test('synchronously sets error', () => {
       const error = new Error('Expected');
 
-      const dataLoaderMock = jest.fn(options => {
+      const dataLoaderMock = vi.fn(_options => {
         throw error;
       });
 
@@ -78,7 +79,7 @@ describe('RouteController', () => {
     });
 
     test('asynchronously loads data', async () => {
-      const dataLoaderMock = jest.fn(options => Promise.resolve('zzz'));
+      const dataLoaderMock = vi.fn(_options => Promise.resolve('zzz'));
 
       const promise = controller['_load'](dataLoaderMock);
 
@@ -99,7 +100,7 @@ describe('RouteController', () => {
     });
 
     test('asynchronously loads component', async () => {
-      const lazyComponentMock = jest.fn(() => Promise.resolve({ default: Component }));
+      const lazyComponentMock = vi.fn(() => Promise.resolve({ default: Component }));
 
       const route = createRoute({ lazyComponent: lazyComponentMock });
 
@@ -125,8 +126,8 @@ describe('RouteController', () => {
     });
 
     test('asynchronously loads component and data', async () => {
-      const lazyComponentMock = jest.fn(() => Promise.resolve({ default: Component }));
-      const dataLoaderMock = jest.fn(options => Promise.resolve('zzz'));
+      const lazyComponentMock = vi.fn(() => Promise.resolve({ default: Component }));
+      const dataLoaderMock = vi.fn(_options => Promise.resolve('zzz'));
 
       const route = createRoute({ lazyComponent: lazyComponentMock });
 
@@ -153,7 +154,7 @@ describe('RouteController', () => {
 
     test('asynchronously sets error', async () => {
       const error = new Error('Expected');
-      const dataLoaderMock = jest.fn(options => Promise.reject(error));
+      const dataLoaderMock = vi.fn(_options => Promise.reject(error));
 
       const promise = controller['_load'](dataLoaderMock);
 
@@ -173,7 +174,7 @@ describe('RouteController', () => {
     });
 
     test('preserves current ready state', async () => {
-      const dataLoaderMock = jest.fn(options => Promise.resolve('zzz'));
+      const dataLoaderMock = vi.fn(_options => Promise.resolve('zzz'));
 
       controller['_load'](() => 'ttt');
 
@@ -196,7 +197,7 @@ describe('RouteController', () => {
     });
 
     test('replaces current ready state with loadingAppearance', async () => {
-      const dataLoaderMock = jest.fn(options => Promise.resolve('zzz'));
+      const dataLoaderMock = vi.fn(_options => Promise.resolve('zzz'));
 
       const route = createRoute({ loadingAppearance: 'loading' });
 
@@ -224,7 +225,7 @@ describe('RouteController', () => {
 
     test('replaces current non-ready state with loading', async () => {
       const error = new Error('Expected');
-      const dataLoaderMock = jest.fn(options => Promise.resolve('zzz'));
+      const dataLoaderMock = vi.fn(_options => Promise.resolve('zzz'));
 
       controller['_load'](() => {
         throw error;
@@ -249,7 +250,7 @@ describe('RouteController', () => {
     });
 
     test('aborts the pending route loading', async () => {
-      const dataLoaderMock1 = jest.fn(options => Promise.resolve('zzz'));
+      const dataLoaderMock1 = vi.fn(_options => Promise.resolve('zzz'));
 
       const promise1 = controller['_load'](dataLoaderMock1);
       const promise2 = controller['_load'](() => 'ttt');
@@ -462,7 +463,7 @@ describe('RouteController', () => {
 
   describe('reload', () => {
     test('loads using route dataLoader', () => {
-      const dataLoaderMock = jest.fn(options => 'zzz');
+      const dataLoaderMock = vi.fn(_options => 'zzz');
 
       const route = createRoute({ dataLoader: dataLoaderMock });
       controller = new RouteController(router, route, {});
@@ -488,13 +489,13 @@ describe('RouteController', () => {
 describe('handleBoundaryError', () => {
   const Component = () => null;
 
-  let listenerMock: jest.Mock;
+  let listenerMock: Mock;
   let route: Route;
   let router: Router;
   let controller: RouteController;
 
   beforeEach(() => {
-    listenerMock = jest.fn();
+    listenerMock = vi.fn();
 
     route = createRoute('/aaa');
     router = new Router({ routes: [route] });

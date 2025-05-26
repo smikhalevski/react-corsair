@@ -1,11 +1,11 @@
-import { RouteState, To } from './types';
-import { Router } from './Router';
-import { getRenderingDisposition, RouteController } from './RouteController';
-import { AbortError, noop, toLocation } from './utils';
-import { matchRoutes } from './matchRoutes';
+import { RouteState, To } from './types.js';
+import { Router } from './Router.js';
+import { getRenderingDisposition, RouteController } from './RouteController.js';
+import { AbortError, noop, toLocation } from './utils.js';
+import { matchRoutes } from './matchRoutes.js';
 import { AbortablePromise } from 'parallel-universe';
-import { Redirect } from './Redirect';
-import { NOT_FOUND } from './notFound';
+import { Redirect } from './Redirect.js';
+import { NOT_FOUND } from './notFound.js';
 
 /**
  * Options provided to {@link hydrateRouter}.

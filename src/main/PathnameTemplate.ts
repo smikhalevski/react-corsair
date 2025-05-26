@@ -1,4 +1,4 @@
-import { Dict } from './types';
+import { Dict } from './types.js';
 
 /**
  * A result returned by {@link PathnameTemplate.match} on a successful pathname match.

@@ -1,16 +1,20 @@
-import { HistoryBlocker, HistoryTransaction } from './types';
-import { useHistory } from './useHistory';
+import { HistoryBlocker, HistoryTransaction } from './types.js';
+import { useHistory } from './useHistory.js';
 import { useEffect, useRef, useState } from 'react';
 
 /**
  * Registers a {@link blocker} that prevents history navigation.
  *
  * @example
+ * const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+ *
  * useHistoryBlocker(transaction => {
  *   return hasUnsavedChanges && !confirm('Discard unsaved changes?')
  * });
  *
  * @example
+ * const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+ *
  * useHistoryBlocker(transaction => {
  *   if (!hasUnsavedChanges) {
  *     // No unsaved changes, proceed with navigation
@@ -25,6 +29,8 @@ import { useEffect, useRef, useState } from 'react';
  * });
  *
  * @example
+ * const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+ *
  * const transaction = useHistoryBlocker(() => hasUnsavedChanges);
  * // or
  * const transaction = useHistoryBlocker(hasUnsavedChanges);

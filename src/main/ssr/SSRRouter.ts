@@ -1,6 +1,6 @@
-import { RouterOptions, RouteState } from '../types';
-import { Router } from '../Router';
-import { RouteController } from '../RouteController';
+import { RouterOptions, RouteState } from '../types.js';
+import { Router } from '../Router.js';
+import { RouteController } from '../RouteController.js';
 
 /**
  * Options provided to the {@link SSRRouter} constructor.

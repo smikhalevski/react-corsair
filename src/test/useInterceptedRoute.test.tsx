@@ -1,9 +1,14 @@
-import { render } from '@testing-library/react';
-import { createRoute, Router, RouterProvider, useInterceptedRoute } from '../main';
-import React, { act, StrictMode } from 'react';
+/**
+ * @vitest-environment jsdom
+ */
+
+import { expect, test, vi } from 'vitest';
+import { act, render } from '@testing-library/react';
+import { createRoute, Router, RouterProvider, useInterceptedRoute } from '../main/index.js';
+import React, { StrictMode } from 'react';
 
 test('returns the intercepted controller of the provided route or null', () => {
-  const hookTrap = jest.fn();
+  const hookTrap = vi.fn();
 
   const routeAaa = createRoute('/aaa', () => {
     hookTrap(useInterceptedRoute(routeBbb));

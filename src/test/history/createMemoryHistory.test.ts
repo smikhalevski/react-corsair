@@ -1,5 +1,6 @@
-import { createMemoryHistory, HistoryTransaction } from '../../main/history';
-import { createRoute, Location } from '../../main';
+import { expect, test, vi } from 'vitest';
+import { createMemoryHistory, HistoryTransaction } from '../..//main/history/index.js';
+import { createRoute, Location } from '../../main/index.js';
 
 test('throws if there is no initial entry', () => {
   expect(() => createMemoryHistory([])).toThrow(new Error('Expected at least one initial entry'));
@@ -77,7 +78,7 @@ test('replaces location', () => {
 test('calls listener on push', () => {
   const aaaLocation: Location = { pathname: '/aaa', searchParams: {}, hash: '', state: undefined };
   const bbbLocation: Location = { pathname: '/bbb', searchParams: {}, hash: '', state: undefined };
-  const listenerMock = jest.fn();
+  const listenerMock = vi.fn();
 
   const history = createMemoryHistory([aaaLocation]);
 
@@ -90,7 +91,7 @@ test('calls listener on push', () => {
 test('calls listener on replace', () => {
   const aaaLocation: Location = { pathname: '/aaa', searchParams: {}, hash: '', state: undefined };
   const bbbLocation: Location = { pathname: '/bbb', searchParams: {}, hash: '', state: undefined };
-  const listenerMock = jest.fn();
+  const listenerMock = vi.fn();
 
   const history = createMemoryHistory([aaaLocation]);
 
@@ -101,7 +102,7 @@ test('calls listener on replace', () => {
 });
 
 test('calls listener on back', () => {
-  const listenerMock = jest.fn();
+  const listenerMock = vi.fn();
 
   const history = createMemoryHistory(
     [
@@ -136,7 +137,7 @@ test('creates an absolute URL with a default base', async () => {
 });
 
 test('does not block the navigation', () => {
-  const blockerMock = jest.fn(tx => false);
+  const blockerMock = vi.fn(_tx => false);
 
   const history = createMemoryHistory([{}]);
 
@@ -170,7 +171,7 @@ test('does not block the navigation', () => {
 });
 
 test('blocks the navigation', async () => {
-  const blockerMock = jest.fn(() => true);
+  const blockerMock = vi.fn(() => true);
 
   const history = createMemoryHistory([{}]);
 
@@ -240,8 +241,8 @@ test('proceeds with the navigation during blocking', async () => {
 });
 
 test('calls all blockers', async () => {
-  const blockerMock1 = jest.fn(() => false);
-  const blockerMock2 = jest.fn(() => false);
+  const blockerMock1 = vi.fn(() => false);
+  const blockerMock2 = vi.fn(() => false);
 
   const history = createMemoryHistory([{}]);
 
@@ -255,8 +256,8 @@ test('calls all blockers', async () => {
 });
 
 test('does not call the next blocker if true is returned', async () => {
-  const blockerMock1 = jest.fn(() => true);
-  const blockerMock2 = jest.fn();
+  const blockerMock1 = vi.fn(() => true);
+  const blockerMock2 = vi.fn();
 
   const history = createMemoryHistory([{}]);
 
@@ -270,7 +271,7 @@ test('does not call the next blocker if true is returned', async () => {
 });
 
 test('unregisters a blocker', async () => {
-  const blockerMock = jest.fn(() => true);
+  const blockerMock = vi.fn(() => true);
 
   const history = createMemoryHistory([{}]);
 

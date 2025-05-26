@@ -1,5 +1,5 @@
-import { To } from './types';
-import { usePrefetch } from './usePrefetch';
+import { To } from './types.js';
+import { usePrefetch } from './usePrefetch.js';
 
 /**
  * Props of the {@link Prefetch} component.

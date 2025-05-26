@@ -1,8 +1,8 @@
 import React, { forwardRef, HTMLAttributes, MouseEventHandler } from 'react';
-import { To } from '../types';
-import { toLocation } from '../utils';
-import { Prefetch } from '../Prefetch';
-import { useHistory } from './useHistory';
+import { To } from '../types.js';
+import { toLocation } from '../utils.js';
+import { Prefetch } from '../Prefetch.js';
+import { useHistory } from './useHistory.js';
 
 /**
  * Props of the {@link Link} component.

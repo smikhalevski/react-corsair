@@ -1,4 +1,5 @@
-import { createPatternRegExp, parsePattern, PathnameTemplate } from '../main/PathnameTemplate';
+import { describe, expect, test } from 'vitest';
+import { createPatternRegExp, parsePattern, PathnameTemplate } from '../main/PathnameTemplate.js';
 
 describe('parsePattern', () => {
   const FLAG_PARAM = 1;

@@ -1,6 +1,7 @@
-import { HistoryTransaction, parseLocation, stringifyLocation } from '../../main/history';
-import { concatPathname, debasePathname, isUnloadBlocked, navigateOrBlock } from '../../main/history/utils';
-import { Location } from '../../main';
+import { describe, expect, test, vi } from 'vitest';
+import { HistoryTransaction, parseLocation, stringifyLocation } from '../..//main/history/index.js';
+import { concatPathname, debasePathname, isUnloadBlocked, navigateOrBlock } from '../../main/history/utils.js';
+import { Location } from '../../main/index.js';
 
 describe('stringifyLocation', () => {
   test('returns a URL', () => {
@@ -92,8 +93,8 @@ describe('isUnloadBlocked', () => {
   const location = parseLocation('/aaa/bbb');
 
   test('calls blockers', () => {
-    const blockerMock0 = jest.fn(() => false);
-    const blockerMock1 = jest.fn(() => false);
+    const blockerMock0 = vi.fn(() => false);
+    const blockerMock1 = vi.fn(() => false);
     const blockers = new Set([blockerMock0, blockerMock1]);
 
     expect(isUnloadBlocked(blockers, location)).toBe(false);
@@ -116,8 +117,8 @@ describe('isUnloadBlocked', () => {
   });
 
   test('returns true if blocker returns true', () => {
-    const blockerMock0 = jest.fn(() => true);
-    const blockerMock1 = jest.fn(() => false);
+    const blockerMock0 = vi.fn(() => true);
+    const blockerMock1 = vi.fn(() => false);
     const blockers = new Set([blockerMock0, blockerMock1]);
 
     expect(isUnloadBlocked(blockers, location)).toBe(true);
@@ -127,8 +128,8 @@ describe('isUnloadBlocked', () => {
   });
 
   test('returns true if blocker called cancel', () => {
-    const blockerMock0 = jest.fn(tx => tx.cancel());
-    const blockerMock1 = jest.fn(() => false);
+    const blockerMock0 = vi.fn(tx => tx.cancel());
+    const blockerMock1 = vi.fn(() => false);
     const blockers = new Set([blockerMock0, blockerMock1]);
 
     expect(isUnloadBlocked(blockers, location)).toBe(true);
@@ -138,8 +139,8 @@ describe('isUnloadBlocked', () => {
   });
 
   test('returns false if blocker called proceed', () => {
-    const blockerMock0 = jest.fn(tx => tx.proceed());
-    const blockerMock1 = jest.fn(() => false);
+    const blockerMock0 = vi.fn(tx => tx.proceed());
+    const blockerMock1 = vi.fn(() => false);
     const blockers = new Set([blockerMock0, blockerMock1]);
 
     expect(isUnloadBlocked(blockers, location)).toBe(false);
@@ -149,12 +150,12 @@ describe('isUnloadBlocked', () => {
   });
 
   test('returns false if blocker called proceed and returned true', () => {
-    const blockerMock0 = jest.fn(tx => {
+    const blockerMock0 = vi.fn(tx => {
       tx.proceed();
       return true;
     });
 
-    const blockerMock1 = jest.fn(() => false);
+    const blockerMock1 = vi.fn(() => false);
     const blockers = new Set([blockerMock0, blockerMock1]);
 
     expect(isUnloadBlocked(blockers, location)).toBe(false);
@@ -164,12 +165,12 @@ describe('isUnloadBlocked', () => {
   });
 
   test('returns true if blocker called cancel and returned false', () => {
-    const blockerMock0 = jest.fn(tx => {
+    const blockerMock0 = vi.fn(tx => {
       tx.cancel();
       return false;
     });
 
-    const blockerMock1 = jest.fn(() => false);
+    const blockerMock1 = vi.fn(() => false);
     const blockers = new Set([blockerMock0, blockerMock1]);
 
     expect(isUnloadBlocked(blockers, location)).toBe(true);
@@ -183,9 +184,9 @@ describe('navigateOrBlock', () => {
   const location = parseLocation('/aaa/bbb');
 
   test('calls blockers', () => {
-    const navigationMock = jest.fn();
-    const blockerMock0 = jest.fn(() => false);
-    const blockerMock1 = jest.fn(() => false);
+    const navigationMock = vi.fn();
+    const blockerMock0 = vi.fn(() => false);
+    const blockerMock1 = vi.fn(() => false);
     const blockers = new Set([blockerMock0, blockerMock1]);
 
     navigateOrBlock('push', blockers, location, navigationMock);
@@ -209,9 +210,9 @@ describe('navigateOrBlock', () => {
   });
 
   test('pauses execution until proceed is called', () => {
-    const navigationMock = jest.fn();
-    const blockerMock0 = jest.fn(tx => true);
-    const blockerMock1 = jest.fn(tx => false);
+    const navigationMock = vi.fn();
+    const blockerMock0 = vi.fn(_tx => true);
+    const blockerMock1 = vi.fn(_tx => false);
     const blockers = new Set([blockerMock0, blockerMock1]);
 
     navigateOrBlock('push', blockers, location, navigationMock);
@@ -240,12 +241,12 @@ describe('navigateOrBlock', () => {
   });
 
   test('proceed can be called from a blocker', () => {
-    const navigationMock = jest.fn();
-    const blockerMock0 = jest.fn(tx => {
+    const navigationMock = vi.fn();
+    const blockerMock0 = vi.fn(tx => {
       tx.proceed();
       return true;
     });
-    const blockerMock1 = jest.fn(() => false);
+    const blockerMock1 = vi.fn(() => false);
     const blockers = new Set([blockerMock0, blockerMock1]);
 
     navigateOrBlock('push', blockers, location, navigationMock);
@@ -256,9 +257,9 @@ describe('navigateOrBlock', () => {
   });
 
   test('calling proceed multiple times is a noop', () => {
-    const navigationMock = jest.fn();
-    const blockerMock0 = jest.fn(tx => true);
-    const blockerMock1 = jest.fn(tx => false);
+    const navigationMock = vi.fn();
+    const blockerMock0 = vi.fn(_tx => true);
+    const blockerMock1 = vi.fn(_tx => false);
     const blockers = new Set([blockerMock0, blockerMock1]);
 
     navigateOrBlock('push', blockers, location, navigationMock);
@@ -276,8 +277,8 @@ describe('navigateOrBlock', () => {
   });
 
   test('cancels the navigation', () => {
-    const navigationMock = jest.fn();
-    const blockerMock = jest.fn(tx => true);
+    const navigationMock = vi.fn();
+    const blockerMock = vi.fn(_tx => true);
     const blockers = new Set([blockerMock]);
 
     const cancel = navigateOrBlock('push', blockers, location, navigationMock);
@@ -293,9 +294,9 @@ describe('navigateOrBlock', () => {
   });
 
   test('does not call a deleted blocker', () => {
-    const navigationMock = jest.fn();
-    const blockerMock0 = jest.fn(tx => true);
-    const blockerMock1 = jest.fn(tx => false);
+    const navigationMock = vi.fn();
+    const blockerMock0 = vi.fn(_tx => true);
+    const blockerMock1 = vi.fn(_tx => false);
     const blockers = new Set([blockerMock0, blockerMock1]);
 
     navigateOrBlock('push', blockers, location, navigationMock);

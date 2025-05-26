@@ -1,9 +1,9 @@
 import { PubSub } from 'parallel-universe';
-import { To } from '../types';
-import { History, HistoryBlocker, HistoryOptions } from './types';
-import { concatPathname, debasePathname, navigateOrBlock, parseOrCastLocation, stringifyLocation } from './utils';
-import { jsonSearchParamsSerializer } from './jsonSearchParamsSerializer';
-import { noop } from '../utils';
+import { To } from '../types.js';
+import { History, HistoryBlocker, HistoryOptions } from './types.js';
+import { concatPathname, debasePathname, navigateOrBlock, parseOrCastLocation, stringifyLocation } from './utils.js';
+import { jsonSearchParamsSerializer } from './jsonSearchParamsSerializer.js';
+import { noop } from '../utils.js';
 
 /**
  * Creates the history adapter that reads and writes location to an in-memory stack.

@@ -1,7 +1,7 @@
-import { Location, To } from '../types';
-import { noop, toLocation } from '../utils';
-import { HistoryBlocker, HistoryTransactionType, SearchParamsSerializer } from './types';
-import { jsonSearchParamsSerializer } from './jsonSearchParamsSerializer';
+import { Location, To } from '../types.js';
+import { noop, toLocation } from '../utils.js';
+import { HistoryBlocker, HistoryTransactionType, SearchParamsSerializer } from './types.js';
+import { jsonSearchParamsSerializer } from './jsonSearchParamsSerializer.js';
 
 /**
  * Parses a pathname-search-hash string as a location.

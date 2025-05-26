@@ -1,7 +1,21 @@
-import { createRoute, notFound, Outlet, redirect, Router, RouterEvent, RouterProvider, RouteState } from '../main';
+/**
+ * @vitest-environment jsdom
+ */
+
+import { expect, test, vi } from 'vitest';
+import {
+  createRoute,
+  notFound,
+  Outlet,
+  redirect,
+  Router,
+  RouterEvent,
+  RouterProvider,
+  RouteState,
+} from '../main/index.js';
 import { render } from '@testing-library/react';
 import React, { StrictMode } from 'react';
-import { noop } from '../main/utils';
+import { noop } from '../main/utils.js';
 
 console.error = noop;
 
@@ -118,7 +132,8 @@ test('renders route errorComponent if an error is thrown during rendering', () =
       <RouterProvider value={router}>
         <Outlet />
       </RouterProvider>
-    </StrictMode>
+    </StrictMode>,
+    { onRecoverableError: noop }
   );
 
   expect(router.rootController!['_state']).toStrictEqual({ status: 'error', error } satisfies RouteState);
@@ -149,7 +164,8 @@ test('renders router errorComponent if an error is thrown during rendering', () 
       <RouterProvider value={router}>
         <Outlet />
       </RouterProvider>
-    </StrictMode>
+    </StrictMode>,
+    { onRecoverableError: noop }
   );
 
   expect(router.rootController!['_state']).toStrictEqual({ status: 'error', error } satisfies RouteState);
@@ -182,7 +198,8 @@ test('error bubbles to the closest route with an errorComponent', () => {
       <RouterProvider value={router}>
         <Outlet />
       </RouterProvider>
-    </StrictMode>
+    </StrictMode>,
+    { onRecoverableError: noop }
   );
 
   expect(router.rootController!['_state']).toStrictEqual({ status: 'error', error } satisfies RouteState);
@@ -312,7 +329,8 @@ test('renders notFoundComponent if notFound is called during rendering', () => {
       <RouterProvider value={router}>
         <Outlet />
       </RouterProvider>
-    </StrictMode>
+    </StrictMode>,
+    { onRecoverableError: noop }
   );
 
   expect(router.rootController!['_state']).toStrictEqual({ status: 'not_found' } satisfies RouteState);
@@ -343,7 +361,7 @@ test('renders notFoundComponent if notFound is called from data loader', () => {
 });
 
 test('not found bubbles to the closest route with a notFoundComponent', () => {
-  const listenerMock = jest.fn();
+  const listenerMock = vi.fn();
 
   const routeAaa = createRoute({
     pathname: '/aaa',
@@ -365,7 +383,8 @@ test('not found bubbles to the closest route with a notFoundComponent', () => {
       <RouterProvider value={router}>
         <Outlet />
       </RouterProvider>
-    </StrictMode>
+    </StrictMode>,
+    { onRecoverableError: noop }
   );
 
   expect(router.rootController!['_state']).toStrictEqual({ status: 'not_found' } satisfies RouteState);
@@ -418,7 +437,8 @@ test('renders loadingComponent if redirect is called during rendering', () => {
       <RouterProvider value={router}>
         <Outlet />
       </RouterProvider>
-    </StrictMode>
+    </StrictMode>,
+    { onRecoverableError: noop }
   );
 
   expect(router.rootController!['_state']).toStrictEqual({ status: 'redirect', to: 'zzz' } satisfies RouteState);
@@ -449,7 +469,7 @@ test('renders loadingComponent if redirect is called from a data loader', () => 
 });
 
 test('redirect bubbles to the closest route with a loadingComponent', () => {
-  const listenerMock = jest.fn();
+  const listenerMock = vi.fn();
 
   const routeAaa = createRoute({
     pathname: '/aaa',
@@ -471,7 +491,8 @@ test('redirect bubbles to the closest route with a loadingComponent', () => {
       <RouterProvider value={router}>
         <Outlet />
       </RouterProvider>
-    </StrictMode>
+    </StrictMode>,
+    { onRecoverableError: noop }
   );
 
   expect(router.rootController!['_state']).toStrictEqual({ status: 'redirect', to: 'zzz' } satisfies RouteState);
@@ -511,7 +532,7 @@ test('redirect bubbles to the closest route with a loadingComponent', () => {
 });
 
 test('redirect can be thrown from errorComponent', () => {
-  const listenerMock = jest.fn();
+  const listenerMock = vi.fn();
 
   const error = new Error('Expected');
 

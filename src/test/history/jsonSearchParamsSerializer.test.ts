@@ -1,4 +1,5 @@
-import { jsonSearchParamsSerializer } from '../../main/history';
+import { expect, test } from 'vitest';
+import { jsonSearchParamsSerializer } from '../..//main/history/index.js';
 
 test('stringifies search params', () => {
   expect(jsonSearchParamsSerializer.stringify({})).toBe('');

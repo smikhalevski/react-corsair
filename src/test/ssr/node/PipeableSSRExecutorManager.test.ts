@@ -1,11 +1,12 @@
+import { describe, expect, test, vi } from 'vitest';
 import { delay } from 'parallel-universe';
 import { Writable } from 'stream';
-import { PipeableSSRRouter } from '../../../main/ssr/node';
-import { createRoute } from '../../../main';
+import { PipeableSSRRouter } from '../../../main/ssr/node/index.js';
+import { createRoute } from '../../../main/index.js';
 
 describe('PipeableSSRRouter', () => {
   test('sends hydration chunk after the content chunk', async () => {
-    const writeMock = jest.fn();
+    const writeMock = vi.fn();
 
     const outputStream = new Writable({
       write(chunk, _encoding, callback) {
@@ -33,7 +34,7 @@ describe('PipeableSSRRouter', () => {
   });
 
   test('does not send hydration chunk if nothing has changed', async () => {
-    const writeMock = jest.fn();
+    const writeMock = vi.fn();
 
     const outputStream = new Writable({
       write(chunk, _encoding, callback) {

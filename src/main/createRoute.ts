@@ -1,6 +1,6 @@
 import { ComponentType } from 'react';
-import { CONTEXT, Route } from './Route';
-import { Dict, RouteOptions } from './types';
+import { CONTEXT, Route } from './Route.js';
+import { Dict, RouteOptions } from './types.js';
 
 /**
  * Creates a route that is rendered in an {@link Outlet} of a {@link Router}.

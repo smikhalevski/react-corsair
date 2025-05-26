@@ -1,10 +1,12 @@
 import { PubSub } from 'parallel-universe';
-import { History, HistoryBlocker, SearchParamsSerializer } from './types';
-import { isUnloadBlocked, navigateOrBlock, parseLocation, parseOrCastLocation, stringifyLocation } from './utils';
-import { Location } from '../types';
-import { noop } from '../utils';
+import { History, HistoryBlocker, SearchParamsSerializer } from './types.js';
+import { isUnloadBlocked, navigateOrBlock, parseLocation, parseOrCastLocation, stringifyLocation } from './utils.js';
+import { Location } from '../types.js';
+import { noop } from '../utils.js';
 
-interface HistoryRecord {
+const NO_INDEX = -1;
+
+interface HistoryEntry {
   index: number;
   location: Location;
 }
@@ -17,30 +19,41 @@ interface HistoryState {
   state: unknown;
 }
 
+export interface SessionHistoryOptions {
+  /**
+   * Serializes/parses a URL search string.
+   */
+  searchParamsSerializer: SearchParamsSerializer;
+
+  /**
+   * Returns the current history-local URL.
+   */
+  getURL(): string;
+
+  /**
+   * Converts the history-local URL to absolute URL.
+   */
+  toAbsoluteURL(url: string): string;
+}
+
 /**
  * Creates the DOM history adapter that reads and writes location to a browser's session history.
- *
- * @param getURL Returns the current history-local URL.
- * @param toAbsoluteURL Converts the history-local URL to absolute URL.
- * @param searchParamsSerializer Serializes/parses a URL search string.
  */
-export function createSessionHistory(
-  getURL: () => string,
-  toAbsoluteURL: (url: string) => string,
-  searchParamsSerializer: SearchParamsSerializer
-): History {
+export function createSessionHistory(options: SessionHistoryOptions): History {
+  const { searchParamsSerializer, getURL, toAbsoluteURL } = options;
+
   const pubSub = new PubSub();
   const blockers = new Set<HistoryBlocker>();
 
   /**
-   * Reads the record that reflects the current session history state.
+   * Returns an entry that reflects the current state of the session history.
    */
-  const getHistoryRecord = (): HistoryRecord => {
+  const getCurrentEntry = (): HistoryEntry => {
     const location = parseLocation(getURL(), searchParamsSerializer);
     const historyState: HistoryState | null = window.history.state;
 
     if (historyState === null) {
-      return { index: -1, location };
+      return { index: NO_INDEX, location };
     }
 
     location.state = historyState.state;
@@ -49,8 +62,8 @@ export function createSessionHistory(
   };
 
   const handlePopstate = (): void => {
-    const nextRecord = getHistoryRecord();
-    const delta = nextRecord.index - record.index;
+    const nextEntry = getCurrentEntry();
+    const delta = nextEntry.index - entry.index;
 
     if (delta === 0) {
       applyPopstate();
@@ -58,7 +71,7 @@ export function createSessionHistory(
     }
 
     if (blockers.size === 0) {
-      record = nextRecord;
+      entry = nextEntry;
       pubSub.publish();
       return;
     }
@@ -69,8 +82,8 @@ export function createSessionHistory(
 
       cancel();
 
-      cancel = navigateOrBlock('pop', blockers, nextRecord.location, () => {
-        record = nextRecord;
+      cancel = navigateOrBlock('pop', blockers, nextEntry.location, () => {
+        entry = nextEntry;
 
         window.history.go(delta);
 
@@ -86,29 +99,29 @@ export function createSessionHistory(
   };
 
   const handleBeforeUnload = (event: BeforeUnloadEvent): void => {
-    if (isUnloadBlocked(blockers, record.location)) {
+    if (isUnloadBlocked(blockers, entry.location)) {
       event.preventDefault();
     }
   };
 
   let applyPopstate = noop;
   let cancel = noop;
-  let record = getHistoryRecord();
+  let entry = getCurrentEntry();
 
-  if (record.index === -1) {
-    record.index = 0;
+  if (entry.index === NO_INDEX) {
+    entry.index = 0;
 
     // Ensure the history state is ordinal
-    window.history.replaceState({ index: 0, state: record.location.state } satisfies HistoryState, '');
+    window.history.replaceState({ index: 0, state: entry.location.state } satisfies HistoryState, '');
   }
 
   return {
     get url() {
-      return this.toURL(record.location);
+      return this.toURL(entry.location);
     },
 
     get location() {
-      return record.location;
+      return entry.location;
     },
 
     toURL(to) {
@@ -125,10 +138,10 @@ export function createSessionHistory(
       cancel = navigateOrBlock('push', blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
         const url = toAbsoluteURL(stringifyLocation(location, searchParamsSerializer));
 
-        window.history.pushState({ index: record.index + 1, state: location.state } satisfies HistoryState, '', url);
+        window.history.pushState({ index: entry.index + 1, state: location.state } satisfies HistoryState, '', url);
 
         applyPopstate = noop;
-        record = getHistoryRecord();
+        entry = getCurrentEntry();
         pubSub.publish();
       });
     },
@@ -139,10 +152,10 @@ export function createSessionHistory(
       cancel = navigateOrBlock('replace', blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
         const url = toAbsoluteURL(stringifyLocation(location, searchParamsSerializer));
 
-        window.history.replaceState({ index: record.index, state: location.state } satisfies HistoryState, '', url);
+        window.history.replaceState({ index: entry.index, state: location.state } satisfies HistoryState, '', url);
 
         applyPopstate = noop;
-        record = getHistoryRecord();
+        entry = getCurrentEntry();
         pubSub.publish();
       });
     },

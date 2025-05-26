@@ -1,13 +1,13 @@
-import { Router } from './Router';
-import { DataLoaderOptions, Dict, LoadingAppearance, RenderingDisposition, RouteState, To } from './types';
-import { Route } from './Route';
+import { Router } from './Router.js';
+import { DataLoaderOptions, Dict, LoadingAppearance, RenderingDisposition, RouteState, To } from './types.js';
+import { Route } from './Route.js';
 import { ComponentType } from 'react';
-import { NOT_FOUND } from './notFound';
-import { Redirect } from './Redirect';
+import { NOT_FOUND } from './notFound.js';
+import { Redirect } from './Redirect.js';
 import { AbortablePromise } from 'parallel-universe';
-import { AbortError, isPromiseLike, noop } from './utils';
-import { RouteMatch } from './matchRoutes';
-import isDeepEqual from 'fast-deep-equal';
+import { AbortError, isPromiseLike, noop } from './utils.js';
+import { RouteMatch } from './matchRoutes.js';
+import isDeepEqual from 'fast-deep-equal/es6/index.js';
 
 /**
  * Manages state of a route rendered in an {@link Outlet}.

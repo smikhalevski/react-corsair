@@ -1,6 +1,11 @@
+/**
+ * @vitest-environment jsdom
+ */
+
+import { beforeEach, expect, test, vi } from 'vitest';
 import { delay } from 'parallel-universe';
-import { createHashHistory, jsonSearchParamsSerializer } from '../../main/history';
-import { Location } from '../../main';
+import { createHashHistory, jsonSearchParamsSerializer } from '../..//main/history/index.js';
+import { Location } from '../../main/index.js';
 
 beforeEach(() => {
   window.history.pushState(null, '', '/');
@@ -51,7 +56,7 @@ test('replaces location', async () => {
 
 test('calls listener on push', () => {
   const aaaLocation: Location = { pathname: '/aaa', searchParams: {}, hash: '', state: undefined };
-  const listenerMock = jest.fn();
+  const listenerMock = vi.fn();
 
   const history = createHashHistory();
 
@@ -63,7 +68,7 @@ test('calls listener on push', () => {
 
 test('calls listener on replace', () => {
   const aaaLocation: Location = { pathname: '/aaa', searchParams: {}, hash: '', state: undefined };
-  const listenerMock = jest.fn();
+  const listenerMock = vi.fn();
 
   const history = createHashHistory();
 
@@ -76,7 +81,7 @@ test('calls listener on replace', () => {
 test('calls listener on back', () => {
   const aaaLocation: Location = { pathname: '/aaa', searchParams: {}, hash: '', state: undefined };
   const bbbLocation: Location = { pathname: '/bbb', searchParams: {}, hash: '', state: undefined };
-  const listenerMock = jest.fn();
+  const listenerMock = vi.fn();
 
   const history = createHashHistory();
 
@@ -106,7 +111,7 @@ test('parses query params', async () => {
     state: undefined,
   } satisfies Location);
 
-  expect(window.location.href).toBe('http://localhost/#/aaa?xxx=111');
+  expect(window.location.href).toBe('http://localhost:3000/#/aaa?xxx=111');
 
   history.push(bbbLocation);
 
@@ -117,12 +122,12 @@ test('parses query params', async () => {
     state: undefined,
   } satisfies Location);
 
-  expect(window.location.href).toBe('http://localhost/#/bbb?yyy=[111,222]');
+  expect(window.location.href).toBe('http://localhost:3000/#/bbb?yyy=[111,222]');
 });
 
 test('parses query params with a custom adapter', async () => {
-  jest.spyOn(jsonSearchParamsSerializer, 'parse');
-  jest.spyOn(jsonSearchParamsSerializer, 'stringify');
+  vi.spyOn(jsonSearchParamsSerializer, 'parse');
+  vi.spyOn(jsonSearchParamsSerializer, 'stringify');
 
   const aaaLocation = { pathname: '/aaa', searchParams: { xxx: 111 }, hash: '' };
 

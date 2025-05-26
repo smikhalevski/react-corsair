@@ -1,5 +1,5 @@
 import { Writable } from 'stream';
-import { SSRRouter, SSRRouterOptions } from '../SSRRouter';
+import { SSRRouter, SSRRouterOptions } from '../SSRRouter.js';
 
 /**
  * Streaming router for NodeJS environment.

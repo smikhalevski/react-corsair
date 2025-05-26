@@ -1,9 +1,9 @@
-import { Dict } from './types';
-import { Route } from './Route';
-import { RouteController } from './RouteController';
+import { Dict } from './types.js';
+import { Route } from './Route.js';
+import { RouteController } from './RouteController.js';
 import { useContext, useEffect } from 'react';
-import { InterceptedRouteControllerContext, useRouter } from './useRouter';
-import { getTailController } from './utils';
+import { InterceptedRouteControllerContext, useRouter } from './useRouter.js';
+import { getTailController } from './utils.js';
 
 /**
  * Returns the controller of the {@link route} that was intercepted during navigation, or `null` if such route wasn't

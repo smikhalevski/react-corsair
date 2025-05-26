@@ -1,4 +1,9 @@
-import { createRoute, hydrateRouter, Router, RouteState } from '../main';
+/**
+ * @vitest-environment jsdom
+ */
+
+import { beforeEach, expect, test } from 'vitest';
+import { createRoute, hydrateRouter, Router, RouteState } from '../main/index.js';
 
 beforeEach(() => {
   window.__REACT_CORSAIR_SSR_STATE__ = undefined;

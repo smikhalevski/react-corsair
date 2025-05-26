@@ -10,20 +10,20 @@
  * @module react-corsair
  */
 
-export { createRoute } from './createRoute';
-export { hydrateRouter, type HydrateRouterOptions } from './hydrateRouter';
-export { type RouteMatch } from './matchRoutes';
-export { notFound, NOT_FOUND } from './notFound';
-export { Outlet, RouteOutlet, type RouteOutletProps } from './Outlet';
-export { PathnameTemplate, type PathnameMatch } from './PathnameTemplate';
-export { Prefetch, type PrefetchProps } from './Prefetch';
-export { redirect, Redirect } from './Redirect';
-export { Route } from './Route';
-export { Router } from './Router';
-export { RouteController } from './RouteController';
-export { useInlineRoute } from './useInlineRoute';
-export { useInterceptedRoute } from './useInterceptedRoute';
-export { usePrefetch } from './usePrefetch';
-export { useRoute } from './useRoute';
-export { useRouter, RouterProvider, type RouterProviderProps } from './useRouter';
-export type * from './types';
+export { createRoute } from './createRoute.js';
+export { hydrateRouter, type HydrateRouterOptions } from './hydrateRouter.js';
+export { type RouteMatch } from './matchRoutes.js';
+export { notFound, NOT_FOUND } from './notFound.js';
+export { Outlet, RouteOutlet, type RouteOutletProps } from './Outlet.js';
+export { PathnameTemplate, type PathnameMatch } from './PathnameTemplate.js';
+export { Prefetch, type PrefetchProps } from './Prefetch.js';
+export { redirect, Redirect } from './Redirect.js';
+export { Route } from './Route.js';
+export { Router } from './Router.js';
+export { RouteController } from './RouteController.js';
+export { useInlineRoute } from './useInlineRoute.js';
+export { useInterceptedRoute } from './useInterceptedRoute.js';
+export { usePrefetch } from './usePrefetch.js';
+export { useRoute } from './useRoute.js';
+export { useRouter, RouterProvider, type RouterProviderProps } from './useRouter.js';
+export type * from './types.js';

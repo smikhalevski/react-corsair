@@ -1,5 +1,5 @@
 import { ComponentType } from 'react';
-import { PathnameTemplate } from './PathnameTemplate';
+import { PathnameTemplate } from './PathnameTemplate.js';
 import {
   ComponentModule,
   DataLoaderOptions,
@@ -11,9 +11,9 @@ import {
   RenderingDisposition,
   RouteOptions,
   To,
-} from './types';
-import { Outlet } from './Outlet';
-import isDeepEqual from 'fast-deep-equal';
+} from './types.js';
+import { Outlet } from './Outlet.js';
+import isDeepEqual from 'fast-deep-equal/es6/index.js';
 
 type Prettify<T> = { [K in keyof T]: T[K] } & {};
 

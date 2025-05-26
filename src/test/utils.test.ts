@@ -1,5 +1,6 @@
-import { toLocation } from '../main/utils';
-import { Location } from '../main';
+import { describe, expect, test } from 'vitest';
+import { toLocation } from '../main/utils.js';
+import { Location } from '../main/index.js';
 
 describe('toLocation', () => {
   test('returns a location', () => {
