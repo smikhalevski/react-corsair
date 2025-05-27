@@ -37,7 +37,7 @@ import { useEffect, useRef, useState } from 'react';
  * // or
  * const transaction = useHistoryBlocker();
  *
- * transaction && (
+ * transaction !== null && (
  *   <dialog open={true}>
  *     <p>{'Discard unsaved changes?'}</p>
  *
@@ -47,6 +47,11 @@ import { useEffect, useRef, useState } from 'react';
  * )
  *
  * @param blocker A history navigation blocker or a boolean that indicates whether blocker is blocked or not.
+ * - If `true` (or the callback returns `true`) then the transaction is blocked and the hook returns `null`.
+ * - If `false` (or the callback returns `false`) then the transaction isn't blocked and the hook returns `null`.
+ * - If `undefined` (or the callback returns `undefined`) then the transaction is blocked and the hook returns
+ * the pending transaction.
+ *
  * @returns A pending navigation transaction that must be cancelled or proceeded. Or `null` if there's no blocked
  * navigation transaction.
  * @group History
@@ -60,27 +65,27 @@ export function useHistoryBlocker(blocker?: boolean | HistoryBlocker): HistoryTr
 
   useEffect(
     () =>
-      history.block(actualTransaction => {
+      history.block(blockedTransaction => {
         let transaction: HistoryTransaction | null = {
-          ...actualTransaction,
+          ...blockedTransaction,
 
           proceed() {
             transaction = null;
             setTransaction(transaction);
-            actualTransaction.proceed();
+            blockedTransaction.proceed();
           },
 
           cancel() {
             transaction = null;
             setTransaction(transaction);
-            actualTransaction.cancel();
+            blockedTransaction.cancel();
           },
         };
 
         const blocker = blockerRef.current;
         const isBlocked = typeof blocker === 'function' ? blocker(transaction) : blocker;
 
-        setTransaction(actualTransaction.type === 'unload' ? null : transaction);
+        setTransaction(isBlocked !== undefined || blockedTransaction.type === 'unload' ? null : transaction);
 
         return isBlocked;
       }),
