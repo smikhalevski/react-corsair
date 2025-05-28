@@ -11,7 +11,7 @@ import React, {
 import { Router } from './Router.js';
 import { RouteControllerProvider } from './useRoute.js';
 import {
-  getActiveController,
+  getRenderedController,
   getErrorComponent,
   getLoadingComponent,
   getNotFoundComponent,
@@ -44,7 +44,7 @@ export function Outlet(): ReactElement | null {
   return (
     <RouteControllerProvider value={null}>
       <OutletContentProvider value={null}>
-        <OutletRenderer component={content.notFoundComponent} />
+        <OutletMemo component={content.notFoundComponent} />
       </OutletContentProvider>
     </RouteControllerProvider>
   );
@@ -71,11 +71,12 @@ export interface RouteOutletProps {
  * Renders the given {@link RouteOutletProps.controller controller}.
  *
  * @example
- * const routeController = useInterceptedRoute(route);
+ * const fooRouteController = useInterceptedRoute(fooRoute);
  *
- * <RouteOutlet controller={routeController} />
+ * fooRouteController !== null && <RouteOutlet controller={fooRouteController} />
  *
  * @see {@link useInterceptedRoute}
+ * @see {@link useInlineRoute}
  * @group Routing
  */
 export function RouteOutlet(props: RouteOutletProps): ReactElement {
@@ -146,16 +147,16 @@ class OutletErrorBoundary extends Component<OutletErrorBoundaryProps, OutletErro
   render(): ReactNode {
     const { controller } = this.state;
 
-    const activeController = getActiveController(controller);
+    const renderedController = getRenderedController(controller);
     const loadingComponent = getLoadingComponent(controller);
 
     const fallback =
-      // Superseded controller is available only during initial component and data loading
-      (activeController !== controller && <OutletContent controller={activeController} />) ||
+      // The fallback controller is rendered only during initial component and data loading
+      (renderedController !== controller && <OutletContent controller={renderedController} />) ||
       ((controller.status === 'ready' || controller.status === 'loading') && loadingComponent !== undefined && (
         <RouteControllerProvider value={controller}>
           <OutletContentProvider value={null}>
-            <OutletRenderer component={loadingComponent} />
+            <OutletMemo component={loadingComponent} />
           </OutletContentProvider>
         </RouteControllerProvider>
       ));
@@ -225,7 +226,7 @@ function OutletContent(props: OutletContentProps): ReactNode {
   return (
     <RouteControllerProvider value={controller}>
       <OutletContentProvider value={childController}>
-        <OutletRenderer component={component} />
+        <OutletMemo component={component} />
       </OutletContentProvider>
     </RouteControllerProvider>
   );
@@ -233,17 +234,17 @@ function OutletContent(props: OutletContentProps): ReactNode {
 
 OutletContent.displayName = 'OutletContent';
 
-interface OutletRendererProps {
+interface OutletMemoProps {
   component: ComponentType;
 }
 
 /**
  * Renders a component and prevents its re-rendering.
  */
-class OutletRenderer extends Component<OutletRendererProps, any> {
-  static displayName = 'OutletRenderer';
+class OutletMemo extends Component<OutletMemoProps, any> {
+  static displayName = 'OutletMemo';
 
-  shouldComponentUpdate(nextProps: Readonly<OutletRendererProps>): boolean {
+  shouldComponentUpdate(nextProps: Readonly<OutletMemoProps>): boolean {
     return this.props.component !== nextProps.component;
   }
 

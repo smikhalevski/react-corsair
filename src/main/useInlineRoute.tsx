@@ -2,7 +2,7 @@ import { To } from './types.js';
 import { reconcileControllers, RouteController } from './RouteController.js';
 import { useRouter } from './useRouter.js';
 import { useEffect, useRef, useState } from 'react';
-import { getTailController } from './utils.js';
+import { getTargetController } from './utils.js';
 import { isEqualLocation } from './Route.js';
 
 /**
@@ -42,5 +42,5 @@ export function useInlineRoute(to: To): RouteController | null {
     });
   }, [router, to]);
 
-  return getTailController(controller);
+  return getTargetController(controller);
 }

@@ -11,9 +11,9 @@ import {
   RouterOptions,
   To,
 } from './types.js';
-import { AbortError, getTailController, noop, toLocation } from './utils.js';
+import { AbortError, getTargetController, noop, toLocation } from './utils.js';
 import {
-  getActiveController,
+  getRenderedController,
   getRenderingDisposition,
   reconcileControllers,
   RouteController,
@@ -124,7 +124,7 @@ export class Router<Context = any> {
   }
 
   /**
-   * Looks up a route in {@link routes} that matches a location, loads its data and notifies subscribers.
+   * Looks up a route in {@link routes} that matches a location, loads its data anc component, and notifies subscribers.
    *
    * @param to A location or a route to navigate to.
    * @param options Navigate options.
@@ -147,12 +147,12 @@ export class Router<Context = any> {
       this._interceptorRegistry.has(routeMatches[routeMatches.length - 1].route);
 
     if (isIntercepted) {
-      prevController = getActiveController(this.interceptedController);
+      prevController = getRenderedController(this.interceptedController);
       nextController = reconcileControllers(this, prevController, routeMatches);
 
       this.interceptedController = nextController;
     } else {
-      prevController = getActiveController(this.rootController);
+      prevController = getRenderedController(this.rootController);
       nextController = reconcileControllers(this, prevController, routeMatches);
 
       this.rootController = nextController;
@@ -180,8 +180,10 @@ export class Router<Context = any> {
   /**
    * Prefetches components and data of routes matched by a location.
    *
+   * The returned promise isn't rejected if component or data loading fails.
+   *
    * @param to A location or a route to prefetch.
-   * @returns An promise that can be aborted to discard prefetching.
+   * @returns A promise that can be aborted to discard prefetching.
    */
   prefetch(to: To): AbortablePromise<void> {
     const promise = new AbortablePromise<void>((resolve, _reject, signal) => {
@@ -240,26 +242,26 @@ export class Router<Context = any> {
   };
 
   /**
-   * Registers a {@link route} interceptor, so the {@link route} is {@link navigate navigated to} it populates
+   * Registers a `route` interceptor, so when the `route` is {@link navigate navigated to} it populates
    * the {@link interceptedController} instead of the {@link rootController}.
    *
    * @param route The route to intercept.
-   * @returns A callback that discards route interception.
+   * @returns A callback that unregisters route interception.
    */
   protected _registerInterceptedRoute(route: Route<any, any, any, Context>): () => void {
     const registry = this._interceptorRegistry;
 
     registry.set(route, (registry.get(route) || 0) + 1);
 
-    let isDiscarded = false;
+    let isUnregistered = false;
 
     return () => {
-      if (isDiscarded) {
+      if (isUnregistered) {
         // Can use unregister callback only once
         return;
       }
 
-      isDiscarded = true;
+      isUnregistered = true;
 
       const interceptorCount = registry.get(route);
 
@@ -270,7 +272,7 @@ export class Router<Context = any> {
 
       registry.delete(route);
 
-      if (getTailController(this.interceptedController)?.route === route) {
+      if (getTargetController(this.interceptedController)?.route === route) {
         this.cancelInterception();
       }
     };

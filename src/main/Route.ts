@@ -19,6 +19,10 @@ type Prettify<T> = { [K in keyof T]: T[K] } & {};
 
 type Voidable<T> = Partial<T> extends T ? T | void : T;
 
+type CombineParams<ParentRoute extends Route | null, Params extends Dict> = ParentRoute extends Route
+  ? Prettify<ParentRoute[PARAMS] & Params>
+  : Params;
+
 declare const PARAMS: unique symbol;
 declare const CONTEXT: unique symbol;
 
@@ -42,7 +46,7 @@ export class Route<ParentRoute extends Route | null = any, Params extends Dict =
    *
    * @internal
    */
-  declare readonly [PARAMS]: ParentRoute extends Route ? Prettify<ParentRoute[PARAMS] & Params> : Params;
+  declare readonly [PARAMS]: CombineParams<ParentRoute, Params>;
 
   /**
    * The type of the route context.
@@ -153,12 +157,8 @@ export class Route<ParentRoute extends Route | null = any, Params extends Dict =
 
     this.component = component;
 
-    this.loadComponent = () => {
-      if (promise !== undefined) {
-        return promise;
-      }
-
-      promise = new Promise<ComponentModule>(resolve => resolve(lazyComponent!())).then(
+    this.loadComponent = () =>
+      (promise ||= new Promise<ComponentModule>(resolve => resolve(lazyComponent!())).then(
         module => {
           const component = module.default;
 
@@ -174,10 +174,7 @@ export class Route<ParentRoute extends Route | null = any, Params extends Dict =
           promise = undefined;
           throw error;
         }
-      );
-
-      return promise;
-    };
+      ));
   }
 
   /**

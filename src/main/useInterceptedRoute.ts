@@ -3,7 +3,7 @@ import { Route } from './Route.js';
 import { RouteController } from './RouteController.js';
 import { useContext, useEffect } from 'react';
 import { InterceptedRouteControllerContext, useRouter } from './useRouter.js';
-import { getTailController } from './utils.js';
+import { getTargetController } from './utils.js';
 
 /**
  * Returns the controller of the `route` that was intercepted during navigation, or `null` if such route wasn't
@@ -25,7 +25,7 @@ export function useInterceptedRoute<Params extends Dict, Data, Context>(
   route: Route<any, Params, Data, Context>
 ): RouteController<Params, Data, Context> | null {
   const router = useRouter();
-  const controller = getTailController(useContext(InterceptedRouteControllerContext));
+  const controller = getTargetController(useContext(InterceptedRouteControllerContext));
 
   useEffect(() => router['_registerInterceptedRoute'](route), [router, route]);
 

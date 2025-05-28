@@ -75,7 +75,7 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
   ) {}
 
   /**
-   * The current status of the controller:
+   * Returns the current status of the controller:
    *
    * <dl>
    * <dt>"loading"</dt>
@@ -95,7 +95,7 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
   }
 
   /**
-   * The successfully loaded route data.
+   * Returns the successfully loaded route data, or throws an error if data wasn't loaded.
    */
   get data(): Data {
     if (this._state.status === 'ready') {
@@ -105,7 +105,7 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
   }
 
   /**
-   * The error that was thrown during component or data loading.
+   * Returns the error that was thrown during component or data loading, or `undefined` if there was no error.
    */
   get error(): any {
     return this._state.status === 'error' ? this._state.error : undefined;
@@ -159,7 +159,7 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
   }
 
   /**
-   * Loads route component, sets provided `data` and notifies {@link router} subscribers.
+   * Sets the provided `data` and loads route component if needed and then notifies {@link router} subscribers.
    *
    * @param data The route data.
    */
@@ -171,6 +171,8 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
 
   /**
    * Reloads the data using {@link RouteOptions.dataLoader dataLoader}.
+   *
+   * **Note:** If there's no data loader then {@link data} is set to `undefined`.
    */
   reload(): AbortablePromise<Data> {
     return this._load(options => {
@@ -188,7 +190,9 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
   }
 
   /**
-   * Loads route data for this controller. Aborts pending {@link promise} if any.
+   * Loads route data for this controller and loads the route component if not loaded yet.
+   *
+   * Aborts pending {@link promise} if any.
    */
   protected _load(
     dataLoader: (options: DataLoaderOptions<Params, Context>) => PromiseLike<Data> | Data
@@ -205,20 +209,25 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
     prevPromise?.abort(AbortError('The route loading was aborted'));
 
     const promise = new AbortablePromise<Data>((resolve, reject, signal) => {
-      signal.addEventListener('abort', () => {
+      const handleAbort = () => {
         if (this.promise !== promise || ((this.promise = null), this._state.status !== 'loading')) {
           // Loading was superseded or background loading was aborted
           pubSub.publish({ type: 'aborted', controller: this });
         } else {
           this.setError(signal.reason);
         }
-      });
+      };
+
+      signal.addEventListener('abort', handleAbort);
 
       let data;
 
       try {
         data = dataLoader({ router, route, params, signal, isPrefetch: false });
       } catch (error) {
+        // Data loader failed synchronously
+        signal.removeEventListener('abort', handleAbort);
+
         this.setError(error);
         reject(error);
         return;
@@ -231,6 +240,7 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
 
       if (!isPromiseLike(data)) {
         // Component and data were loaded synchronously
+        signal.removeEventListener('abort', handleAbort);
 
         this._fallbackController = null;
         this._context = nextContext;
@@ -245,6 +255,7 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
       data.then(
         data => {
           // Component and data were successfully loaded
+          signal.removeEventListener('abort', handleAbort);
 
           if (signal.aborted) {
             return;
@@ -260,6 +271,7 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
         },
         error => {
           // Component and data loading have failed
+          signal.removeEventListener('abort', handleAbort);
 
           if (signal.aborted) {
             return;
@@ -271,6 +283,7 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
       );
     });
 
+    // Prevent unhandled promise rejections
     promise.catch(noop);
 
     if (prevState !== this._state) {
@@ -278,6 +291,7 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
       return promise;
     }
 
+    // Component and data are being actively loaded
     if (
       // Should always show loadingComponent
       getLoadingAppearance(this) === 'loading' ||
@@ -296,11 +310,14 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
   }
 }
 
-export function getActiveController(controller: RouteController): RouteController;
+export function getRenderedController(controller: RouteController): RouteController;
 
-export function getActiveController(controller: RouteController | null): RouteController | null;
+export function getRenderedController(controller: RouteController | null): RouteController | null;
 
-export function getActiveController(controller: RouteController | null): RouteController | null {
+/**
+ * Returns the controller that should be rendered by an outlet.
+ */
+export function getRenderedController(controller: RouteController | null): RouteController | null {
   return controller === null ? null : controller['_fallbackController'] || controller;
 }
 
@@ -325,10 +342,10 @@ export function getRenderingDisposition(c: RouteController): RenderingDispositio
 }
 
 /**
- * Called when an {@link Outlet} that renders a {@link controller} has caught an {@link error} during rendering.
+ * Called when an {@link Outlet} that renders a `controller` has caught an `error` during rendering.
  */
 export function handleBoundaryError(controller: RouteController, error: unknown): void {
-  controller = getActiveController(controller);
+  controller = getRenderedController(controller);
 
   if (controller['_error'] !== error) {
     // Prevent excessive error events
@@ -378,7 +395,7 @@ export function reconcileControllers(
     const loadingAppearance = getLoadingAppearance(controller);
 
     if (evictedController === null || evictedController.route !== route) {
-      // Route has changed, so component and data must be reloaded
+      // The route has changed, so the component and data must be reloaded
 
       if (evictedController !== null && evictedController.status === 'ready' && loadingAppearance === 'avoid') {
         // Keep the current controller on the screen
@@ -390,7 +407,7 @@ export function reconcileControllers(
       controller.route.dataLoader !== undefined &&
       (evictedController['_context'] !== router.context || !isDeepEqual(evictedController.params, params))
     ) {
-      // Params or router context have changed, so data must be reloaded
+      // Params or a router context have changed, so data must be reloaded
 
       if (evictedController.status === 'ready' && loadingAppearance !== 'loading') {
         // Keep the current controller on the screen
@@ -402,7 +419,7 @@ export function reconcileControllers(
       // Nothing has changed
 
       if (evictedController.status === 'ready') {
-        // Route component and data are already loaded, so reuse the state of the evicted controller
+        // The route component and data are already loaded, so reuse the state of the evicted controller
 
         controller['_context'] = router.context;
         controller['_state'] = evictedController['_state'];
