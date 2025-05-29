@@ -185,7 +185,7 @@ describe('RouteController', () => {
     test('replaces current ready state with loadingAppearance', async () => {
       const dataLoaderMock = vi.fn(_options => Promise.resolve('zzz'));
 
-      const route = createRoute({ loadingAppearance: 'loading' });
+      const route = createRoute({ loadingAppearance: 'always' });
 
       controller = new RouteController(router, route, {});
 
@@ -598,7 +598,7 @@ describe('reconcileControllers', () => {
   test('does not use the evicted controller as a fallback if loadingAppearance is loading', () => {
     const route = createRoute({
       dataLoader: () => 'zzz',
-      loadingAppearance: 'loading',
+      loadingAppearance: 'always',
     });
 
     const router = new Router({ routes: [] });
@@ -635,11 +635,11 @@ describe('reconcileControllers', () => {
     expect(controller['_fallbackController']).toBe(router.rootController);
   });
 
-  test('does not use the evicted controller as a fallback if route has changed and loadingAppearance is route_loading', () => {
+  test('does not use the evicted controller as a fallback if route has changed and loadingAppearance is reroute', () => {
     const routeAaa = createRoute('/aaa');
     const routeBbb = createRoute({
       pathname: '/bbb',
-      loadingAppearance: 'route_loading',
+      loadingAppearance: 'reroute',
     });
 
     const router = new Router({ routes: [] });

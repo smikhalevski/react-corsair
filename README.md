@@ -527,7 +527,7 @@ const userRoute = createRoute({
   pathname: '/user',
   lazyComponent: () => import('./UserPage.js'),
   loadingComponent: LoadingIndicator,
-  loadingAppearance: 'loading'
+  loadingAppearance: 'always'
 });
 ```
 
@@ -535,13 +535,13 @@ This tells a router to always render `userRoute.loadingComponent` when `userRout
 loaded yet. `loadingAppearance` can be set to:
 
 <dl>
-<dt>"loading"</dt>
+<dt>"always"</dt>
 <dd>
 
 Always render `loadingComponent` if a route requires loading.
 
 </dd>
-<dt>"route_loading"</dt>
+<dt>"reroute"</dt>
 <dd>
 
 Render `loadingComponent` only if a route is changed during navigation. This is the default behavior.

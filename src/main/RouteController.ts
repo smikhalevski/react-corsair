@@ -275,7 +275,7 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
     // Component and data are being actively loaded
     if (
       // Should always show loadingComponent
-      getLoadingAppearance(this) === 'loading' ||
+      getLoadingAppearance(this) === 'always' ||
       // Show loadingComponent to hide the current non-ready state
       (this._fallbackController === null && this._state.status !== 'ready')
     ) {
@@ -314,7 +314,7 @@ export function getNotFoundComponent(c: RouteController): ComponentType | undefi
 }
 
 export function getLoadingAppearance(c: RouteController): LoadingAppearance {
-  return c.route.loadingAppearance || c.router.loadingAppearance || 'route_loading';
+  return c.route.loadingAppearance || c.router.loadingAppearance || 'reroute';
 }
 
 export function getRenderingDisposition(c: RouteController): RenderingDisposition {
@@ -352,7 +352,7 @@ export function reconcileControllers(
     } else if (controller.route.dataLoader !== undefined && !isDeepEqual(evictedController.params, params)) {
       // Params or a router context have changed, so data must be reloaded
 
-      if (evictedController.status === 'ready' && loadingAppearance !== 'loading') {
+      if (evictedController.status === 'ready' && loadingAppearance !== 'always') {
         // Keep the current controller on the screen
         controller['_fallbackController'] = evictedController;
       }

@@ -100,9 +100,9 @@ export interface ParamsAdapter<Params> {
  * are being loaded.
  *
  * <dl>
- * <dt>"loading"</dt>
+ * <dt>"always"</dt>
  * <dd>Always render {@link RouteOptions.loadingComponent loadingComponent} if a route requires loading.</dd>
- * <dt>"route_loading"</dt>
+ * <dt>"reroute"</dt>
  * <dd>Render {@link RouteOptions.loadingComponent loadingComponent} only if a route is changed during navigation.</dd>
  * <dt>"avoid"</dt>
  * <dd>If there's a route that is already rendered then keep it on the screen until the new route is loaded.</dd>
@@ -110,7 +110,7 @@ export interface ParamsAdapter<Params> {
  *
  * @group Routing
  */
-export type LoadingAppearance = 'loading' | 'route_loading' | 'avoid';
+export type LoadingAppearance = 'always' | 'reroute' | 'avoid';
 
 /**
  * Where the route is rendered.
@@ -343,7 +343,7 @@ export interface RouterOptions<Context = void> {
    * This is the default setting for all routes that don't specify their own
    * {@link RouteOptions.loadingAppearance loadingAppearance}.
    *
-   * @default "route_loading"
+   * @default "reroute"
    */
   loadingAppearance?: LoadingAppearance;
 
@@ -412,6 +412,9 @@ export interface NavigateEvent {
  * @group Routing
  */
 export interface LoadingEvent {
+  /**
+   * The event type.
+   */
   type: 'loading';
 
   /**
@@ -426,6 +429,9 @@ export interface LoadingEvent {
  * @group Routing
  */
 export interface AbortedEvent {
+  /**
+   * The event type.
+   */
   type: 'aborted';
 
   /**
@@ -440,6 +446,9 @@ export interface AbortedEvent {
  * @group Routing
  */
 export interface ReadyEvent {
+  /**
+   * The event type.
+   */
   type: 'ready';
 
   /**
