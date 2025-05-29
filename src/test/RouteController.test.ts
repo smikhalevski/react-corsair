@@ -1,4 +1,4 @@
-import { describe, beforeEach, test, expect, vi, Mock } from 'vitest';
+import { beforeEach, describe, expect, Mock, test, vi } from 'vitest';
 import {
   createRoute,
   DataLoaderOptions,
@@ -11,7 +11,7 @@ import {
 } from '../main/index.js';
 import { AbortError, noop } from '../main/utils.js';
 import { AbortablePromise } from 'parallel-universe';
-import { handleBoundaryError, reconcileControllers } from '../main/RouteController.js';
+import { reconcileControllers } from '../main/RouteController.js';
 import { matchRoutes } from '../main/matchRoutes.js';
 
 describe('RouteController', () => {
@@ -39,10 +39,7 @@ describe('RouteController', () => {
     expect(controller.params).toEqual({ yyy: 222 });
 
     expect(controller['_fallbackController']).toBeNull();
-    expect(controller['_context']).toBeUndefined();
     expect(controller['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
-    expect(controller['_error']).toBeUndefined();
-    expect(controller['_renderedState']).toBeUndefined();
   });
 
   describe('_load', () => {
@@ -55,7 +52,6 @@ describe('RouteController', () => {
 
       expect(controller.promise).toBeNull();
       expect(controller.route.component).toBe(Outlet);
-      expect(controller['_context']).toStrictEqual({ xxx: 111 });
       expect(controller['_state']).toStrictEqual({ status: 'ready', data: 'zzz' } satisfies RouteState);
       expect(listenerMock).toHaveBeenCalledTimes(1);
       expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'ready', controller } satisfies RouterEvent);
@@ -72,7 +68,6 @@ describe('RouteController', () => {
 
       expect(controller.promise).toBeNull();
       expect(controller.route.component).toBe(Outlet);
-      expect(controller['_context']).toBeUndefined();
       expect(controller['_state']).toStrictEqual({ status: 'error', error } satisfies RouteState);
       expect(listenerMock).toHaveBeenCalledTimes(1);
       expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'error', controller, error } satisfies RouterEvent);
@@ -84,7 +79,6 @@ describe('RouteController', () => {
       const promise = controller['_load'](dataLoaderMock);
 
       expect(controller.promise).not.toBeNull();
-      expect(controller['_context']).toBeUndefined();
       expect(controller['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
       expect(listenerMock).toHaveBeenCalledTimes(1);
       expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'loading', controller } satisfies RouterEvent);
@@ -93,7 +87,6 @@ describe('RouteController', () => {
 
       expect(controller.promise).toBeNull();
       expect(controller.route.component).toBe(Outlet);
-      expect(controller['_context']).toStrictEqual({ xxx: 111 });
       expect(controller['_state']).toStrictEqual({ status: 'ready', data: 'zzz' } satisfies RouteState);
       expect(listenerMock).toHaveBeenCalledTimes(2);
       expect(listenerMock).toHaveBeenNthCalledWith(2, { type: 'ready', controller } satisfies RouterEvent);
@@ -110,7 +103,6 @@ describe('RouteController', () => {
 
       expect(controller.promise).not.toBeNull();
       expect(controller.route.component).toBeUndefined();
-      expect(controller['_context']).toBeUndefined();
       expect(controller['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
       expect(listenerMock).toHaveBeenCalledTimes(1);
       expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'loading', controller } satisfies RouterEvent);
@@ -119,7 +111,6 @@ describe('RouteController', () => {
 
       expect(controller.promise).toBeNull();
       expect(controller.route.component).toBe(Component);
-      expect(controller['_context']).toStrictEqual({ xxx: 111 });
       expect(controller['_state']).toStrictEqual({ status: 'ready', data: undefined } satisfies RouteState);
       expect(listenerMock).toHaveBeenCalledTimes(2);
       expect(listenerMock).toHaveBeenNthCalledWith(2, { type: 'ready', controller } satisfies RouterEvent);
@@ -137,7 +128,6 @@ describe('RouteController', () => {
 
       expect(controller.promise).not.toBeNull();
       expect(controller.route.component).toBeUndefined();
-      expect(controller['_context']).toBeUndefined();
       expect(controller['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
       expect(listenerMock).toHaveBeenCalledTimes(1);
       expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'loading', controller } satisfies RouterEvent);
@@ -146,7 +136,6 @@ describe('RouteController', () => {
 
       expect(controller.promise).toBeNull();
       expect(controller.route.component).toBe(Component);
-      expect(controller['_context']).toStrictEqual({ xxx: 111 });
       expect(controller['_state']).toStrictEqual({ status: 'ready', data: 'zzz' } satisfies RouteState);
       expect(listenerMock).toHaveBeenCalledTimes(2);
       expect(listenerMock).toHaveBeenNthCalledWith(2, { type: 'ready', controller } satisfies RouterEvent);
@@ -159,7 +148,6 @@ describe('RouteController', () => {
       const promise = controller['_load'](dataLoaderMock);
 
       expect(controller.promise).not.toBeNull();
-      expect(controller['_context']).toBeUndefined();
       expect(controller['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
       expect(listenerMock).toHaveBeenCalledTimes(1);
       expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'loading', controller } satisfies RouterEvent);
@@ -167,7 +155,6 @@ describe('RouteController', () => {
       await expect(promise).rejects.toBe(error);
 
       expect(controller.promise).toBeNull();
-      expect(controller['_context']).toBeUndefined();
       expect(controller['_state']).toStrictEqual({ status: 'error', error } satisfies RouteState);
       expect(listenerMock).toHaveBeenCalledTimes(2);
       expect(listenerMock).toHaveBeenNthCalledWith(2, { type: 'error', controller, error } satisfies RouterEvent);
@@ -181,7 +168,6 @@ describe('RouteController', () => {
       const promise = controller['_load'](dataLoaderMock);
 
       expect(controller.promise).not.toBeNull();
-      expect(controller['_context']).toStrictEqual({ xxx: 111 });
       expect(controller['_state']).toStrictEqual({ status: 'ready', data: 'ttt' } satisfies RouteState);
       expect(listenerMock).toHaveBeenCalledTimes(2);
       expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'ready', controller } satisfies RouterEvent);
@@ -208,7 +194,6 @@ describe('RouteController', () => {
       const promise = controller['_load'](dataLoaderMock);
 
       expect(controller.promise).not.toBeNull();
-      expect(controller['_context']).toStrictEqual({ xxx: 111 });
       expect(controller['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
       expect(listenerMock).toHaveBeenCalledTimes(2);
       expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'ready', controller } satisfies RouterEvent);
@@ -234,7 +219,6 @@ describe('RouteController', () => {
       const promise = controller['_load'](dataLoaderMock);
 
       expect(controller.promise).not.toBeNull();
-      expect(controller['_context']).toBeUndefined();
       expect(controller['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
       expect(listenerMock).toHaveBeenCalledTimes(2);
       expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'error', controller, error } satisfies RouterEvent);
@@ -256,7 +240,6 @@ describe('RouteController', () => {
       const promise2 = controller['_load'](() => 'ttt');
 
       expect(controller.promise).toBeNull();
-      expect(controller['_context']).toStrictEqual({ xxx: 111 });
       expect(controller['_state']).toStrictEqual({ status: 'ready', data: 'ttt' } satisfies RouteState);
       expect(listenerMock).toHaveBeenCalledTimes(3);
       expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'loading', controller } satisfies RouterEvent);
@@ -486,87 +469,6 @@ describe('RouteController', () => {
   });
 });
 
-describe('handleBoundaryError', () => {
-  const Component = () => null;
-
-  let listenerMock: Mock;
-  let route: Route;
-  let router: Router;
-  let controller: RouteController;
-
-  beforeEach(() => {
-    listenerMock = vi.fn();
-
-    route = createRoute('/aaa');
-    router = new Router({ routes: [route] });
-    controller = new RouteController(router, route, {});
-
-    router.subscribe(listenerMock);
-  });
-
-  test('sets error', () => {
-    const error = new Error('Expected');
-
-    route.errorComponent = Component;
-    controller['_renderedState'] = { status: 'loading' };
-
-    handleBoundaryError(controller, error);
-
-    expect(controller['_state']).toStrictEqual({ status: 'error', error } satisfies RouteState);
-    expect(listenerMock).toHaveBeenCalledTimes(1);
-    expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'error', controller, error } satisfies RouterEvent);
-  });
-
-  test('ignores if called multiple times with the same error', () => {
-    const error = new Error('Expected');
-
-    route.errorComponent = Component;
-    controller['_renderedState'] = { status: 'loading' };
-
-    handleBoundaryError(controller, error);
-    handleBoundaryError(controller, error);
-    handleBoundaryError(controller, error);
-
-    expect(controller['_state']).toStrictEqual({ status: 'error', error } satisfies RouteState);
-    expect(listenerMock).toHaveBeenCalledTimes(1);
-    expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'error', controller, error } satisfies RouterEvent);
-  });
-
-  test('overwrites previous error', () => {
-    const error1 = new Error('Expected1');
-    const error2 = new Error('Expected2');
-
-    route.errorComponent = Component;
-    controller['_renderedState'] = { status: 'loading' };
-
-    handleBoundaryError(controller, error1);
-    handleBoundaryError(controller, error2);
-
-    expect(controller['_state']).toStrictEqual({ status: 'error', error: error2 } satisfies RouteState);
-    expect(listenerMock).toHaveBeenCalledTimes(2);
-    expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'error', controller, error: error1 } satisfies RouterEvent);
-    expect(listenerMock).toHaveBeenNthCalledWith(2, { type: 'error', controller, error: error2 } satisfies RouterEvent);
-  });
-
-  test("throws if there's no errorComponent", () => {
-    const error = new Error('Expected');
-
-    controller['_renderedState'] = { status: 'loading' };
-
-    expect(() => handleBoundaryError(controller, error)).toThrow(error);
-  });
-
-  test('throws if state is unchanged', () => {
-    route.errorComponent = Component;
-
-    const error = new Error('Expected');
-
-    controller['_renderedState'] = { status: 'error', error };
-
-    expect(() => handleBoundaryError(controller, error)).toThrow(error);
-  });
-});
-
 describe('reconcileControllers', () => {
   test('returns null for empty matches', () => {
     const router = new Router({ routes: [] });
@@ -587,10 +489,7 @@ describe('reconcileControllers', () => {
     const controller2 = reconcileControllers(router, controller1, [{ route, params: { yyy: 222 } }])!;
 
     expect(controller2).not.toBe(controller1);
-    expect(controller2['_context']).toBe(controller1['_context']);
     expect(controller2['_state']).toBe(controller1['_state']);
-    expect(controller2['_error']).toBe(controller1['_error']);
-    expect(controller2['_renderedState']).toBe(controller1['_renderedState']);
     expect(controller2['_fallbackController']).toBeNull();
   });
 
@@ -607,11 +506,8 @@ describe('reconcileControllers', () => {
     const controller2 = reconcileControllers(router, controller1, [{ route, params: { yyy: 222 } }])!;
 
     expect(controller2).not.toBe(controller1);
-    expect(controller2['_context']).toBe(controller1['_context']);
     expect(controller2['_state']).not.toBe(controller1['_state']);
     expect(controller2['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
-    expect(controller2['_error']).toBeUndefined();
-    expect(controller2['_renderedState']).toBe(controller1['_renderedState']);
     expect(controller2['_fallbackController']).toBeNull();
   });
 
@@ -628,11 +524,8 @@ describe('reconcileControllers', () => {
     const controller2 = reconcileControllers(router, controller1, [{ route, params: { yyy: 222 } }])!;
 
     expect(controller2).not.toBe(controller1);
-    expect(controller2['_context']).toBe(controller1['_context']);
     expect(controller2['_state']).not.toBe(controller1['_state']);
     expect(controller2['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
-    expect(controller2['_error']).toBe(controller1['_error']);
-    expect(controller2['_renderedState']).toBe(controller1['_renderedState']);
     expect(controller2['_fallbackController']).toBeNull();
   });
 
@@ -647,10 +540,7 @@ describe('reconcileControllers', () => {
     const controller2 = reconcileControllers(router, controller1, [{ route, params: { zzz: 333 } }])!;
 
     expect(controller2).not.toBe(controller1);
-    expect(controller2['_context']).toBe(controller1['_context']);
     expect(controller2['_state']).toBe(controller1['_state']);
-    expect(controller2['_error']).toBe(controller1['_error']);
-    expect(controller2['_renderedState']).toBe(controller1['_renderedState']);
     expect(controller2['_fallbackController']).toBeNull();
   });
 
@@ -665,15 +555,12 @@ describe('reconcileControllers', () => {
     const controller2 = reconcileControllers(router, controller1, [{ route, params: { yyy: 333 } }])!;
 
     expect(controller2).not.toBe(controller1);
-    expect(controller2['_context']).toBe(controller1['_context']);
     expect(controller2['_state']).not.toBe(controller1['_state']);
     expect(controller2['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
-    expect(controller2['_error']).toBe(controller1['_error']);
-    expect(controller2['_renderedState']).toBe(controller1['_renderedState']);
     expect(controller2['_fallbackController']).toBe(controller1);
   });
 
-  test('uses the evicted controller as a fallback if context has changed', () => {
+  test('uses the evicted controller as-is if a context has changed', () => {
     const route = createRoute({ dataLoader: () => 'zzz' });
 
     const router = new Router({ routes: [], context: 'ppp' });
@@ -686,13 +573,8 @@ describe('reconcileControllers', () => {
     const controller2 = reconcileControllers(router, controller1, [{ route, params: { yyy: 222 } }])!;
 
     expect(controller2).not.toBe(controller1);
-    expect(controller2['_context']).not.toBe(controller1['_context']);
-    expect(controller2['_context']).toBeUndefined();
-    expect(controller2['_state']).not.toBe(controller1['_state']);
-    expect(controller2['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
-    expect(controller2['_error']).toBe(controller1['_error']);
-    expect(controller2['_renderedState']).toBe(controller1['_renderedState']);
-    expect(controller2['_fallbackController']).toBe(controller1);
+    expect(controller2['_state']).toBe(controller1['_state']);
+    expect(controller2['_fallbackController']).toBeNull();
   });
 
   test('does not use the evicted controller as a fallback if its state is not ready and params have changed', () => {
@@ -708,11 +590,8 @@ describe('reconcileControllers', () => {
     const controller2 = reconcileControllers(router, controller1, [{ route, params: { yyy: 333 } }])!;
 
     expect(controller2).not.toBe(controller1);
-    expect(controller2['_context']).toBe(controller1['_context']);
     expect(controller2['_state']).not.toBe(controller1['_state']);
     expect(controller2['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
-    expect(controller2['_error']).toBeUndefined();
-    expect(controller2['_renderedState']).toBe(controller1['_renderedState']);
     expect(controller2['_fallbackController']).toBeNull();
   });
 
@@ -730,11 +609,8 @@ describe('reconcileControllers', () => {
     const controller2 = reconcileControllers(router, controller1, [{ route, params: { yyy: 333 } }])!;
 
     expect(controller2).not.toBe(controller1);
-    expect(controller2['_context']).toBe(controller1['_context']);
     expect(controller2['_state']).not.toBe(controller1['_state']);
     expect(controller2['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
-    expect(controller2['_error']).toBeUndefined();
-    expect(controller2['_renderedState']).toBe(controller1['_renderedState']);
     expect(controller2['_fallbackController']).toBeNull();
   });
 

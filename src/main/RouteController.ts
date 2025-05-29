@@ -39,24 +39,9 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
   protected _fallbackController: RouteController | null = null;
 
   /**
-   * A router context that was provided to a {@link route} {@link RouteOptions.dataLoader data loader}.
-   */
-  protected _context: Context | undefined = undefined;
-
-  /**
    * The current state of the managed route. The state is reflected by an {@link Outlet}.
    */
   protected _state: RouteState<Data> = { status: 'loading' };
-
-  /**
-   * The last error that was set via {@link setError}, or `undefined` if controller has non-error-related state.
-   */
-  protected _error: any = undefined;
-
-  /**
-   * The last state rendered in an {@link Outlet}, or `undefined` if controller wasn't rendered.
-   */
-  protected _renderedState: RouteState<Data> | undefined = undefined;
 
   /**
    * Creates a new {@link RouteController} instance.
@@ -140,7 +125,6 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
     prevPromise?.abort(AbortError('The route loading was aborted'));
 
     this._fallbackController = null;
-    this._error = error;
 
     if (error === NOT_FOUND) {
       this._state = { status: 'not_found' };
@@ -201,7 +185,6 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
 
     const pubSub = router['_pubSub'];
 
-    const nextContext = router.context;
     const prevState = this._state;
     const prevPromise = this.promise;
 
@@ -243,7 +226,6 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
         signal.removeEventListener('abort', handleAbort);
 
         this._fallbackController = null;
-        this._context = nextContext;
         this._state = { status: 'ready', data };
         pubSub.publish({ type: 'ready', controller: this });
 
@@ -263,7 +245,6 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
           this.promise = null;
 
           this._fallbackController = null;
-          this._context = nextContext;
           this._state = { status: 'ready', data };
           pubSub.publish({ type: 'ready', controller: this });
 
@@ -303,21 +284,20 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
     }
 
     this.promise = promise;
-    this._error = undefined;
     pubSub.publish({ type: 'loading', controller: this });
 
     return promise;
   }
 }
 
-export function getRenderedController(controller: RouteController): RouteController;
+export function getActiveController(controller: RouteController): RouteController;
 
-export function getRenderedController(controller: RouteController | null): RouteController | null;
+export function getActiveController(controller: RouteController | null): RouteController | null;
 
 /**
  * Returns the controller that should be rendered by an outlet.
  */
-export function getRenderedController(controller: RouteController | null): RouteController | null {
+export function getActiveController(controller: RouteController | null): RouteController | null {
   return controller === null ? null : controller['_fallbackController'] || controller;
 }
 
@@ -339,40 +319,6 @@ export function getLoadingAppearance(c: RouteController): LoadingAppearance {
 
 export function getRenderingDisposition(c: RouteController): RenderingDisposition {
   return c.route.renderingDisposition || c.router.renderingDisposition || 'server';
-}
-
-/**
- * Called when an {@link Outlet} that renders a `controller` has caught an `error` during rendering.
- */
-export function handleBoundaryError(controller: RouteController, error: unknown): void {
-  controller = getRenderedController(controller);
-
-  if (controller['_error'] !== error) {
-    // Prevent excessive error events
-    controller.setError(error);
-  }
-
-  if (controller['_renderedState'] === undefined) {
-    // Not rendered yet
-    return;
-  }
-
-  const prevStatus = controller['_renderedState'].status;
-  const nextStatus = controller.status;
-
-  if (
-    // Cannot render the same state after it has caused an error
-    nextStatus === prevStatus ||
-    // Cannot redirect from a loadingComponent because redirect renders a loadingComponent itself
-    (nextStatus === 'redirect' && prevStatus === 'loading') ||
-    // Rendering would cause an error because there's no component to render
-    (nextStatus === 'not_found' && getNotFoundComponent(controller) === undefined) ||
-    (nextStatus === 'redirect' && getLoadingComponent(controller) === undefined) ||
-    (nextStatus === 'error' && getErrorComponent(controller) === undefined)
-  ) {
-    // Rethrow an error that cannot be rendered, so an enclosing error boundary can catch it
-    throw error;
-  }
 }
 
 /**
@@ -403,10 +349,7 @@ export function reconcileControllers(
       }
 
       evictedController = null;
-    } else if (
-      controller.route.dataLoader !== undefined &&
-      (evictedController['_context'] !== router.context || !isDeepEqual(evictedController.params, params))
-    ) {
+    } else if (controller.route.dataLoader !== undefined && !isDeepEqual(evictedController.params, params)) {
       // Params or a router context have changed, so data must be reloaded
 
       if (evictedController.status === 'ready' && loadingAppearance !== 'loading') {
@@ -421,10 +364,7 @@ export function reconcileControllers(
       if (evictedController.status === 'ready') {
         // The route component and data are already loaded, so reuse the state of the evicted controller
 
-        controller['_context'] = router.context;
         controller['_state'] = evictedController['_state'];
-        controller['_error'] = evictedController['_error'];
-        controller['_renderedState'] = evictedController['_renderedState'];
       }
 
       evictedController = evictedController.childController;

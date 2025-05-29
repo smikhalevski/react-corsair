@@ -13,7 +13,7 @@ import {
 } from './types.js';
 import { AbortError, getTargetController, noop, toLocation } from './utils.js';
 import {
-  getRenderedController,
+  getActiveController,
   getRenderingDisposition,
   reconcileControllers,
   RouteController,
@@ -88,9 +88,10 @@ export class Router<Context = any> {
   location: Location | null = null;
 
   /**
-   * A map from an intercepted route to a number of registered interceptors.
+   * An array of intercepted routes. Route can present multiple times in this array if {@link _registerInterceptedRoute}
+   * was called multiple times with the same route.
    */
-  protected _interceptorRegistry = new Map<Route, number>();
+  protected _interceptedRoutes: Route[] = [];
 
   /**
    * Manages router subscribers.
@@ -144,15 +145,15 @@ export class Router<Context = any> {
       !options.isInterceptionBypassed &&
       this.rootController !== null &&
       routeMatches.length !== 0 &&
-      this._interceptorRegistry.has(routeMatches[routeMatches.length - 1].route);
+      this._interceptedRoutes.indexOf(routeMatches[routeMatches.length - 1].route) !== -1;
 
     if (isIntercepted) {
-      prevController = getRenderedController(this.interceptedController);
+      prevController = getActiveController(this.interceptedController);
       nextController = reconcileControllers(this, prevController, routeMatches);
 
       this.interceptedController = nextController;
     } else {
-      prevController = getRenderedController(this.rootController);
+      prevController = getActiveController(this.rootController);
       nextController = reconcileControllers(this, prevController, routeMatches);
 
       this.rootController = nextController;
@@ -249,30 +250,28 @@ export class Router<Context = any> {
    * @returns A callback that unregisters route interception.
    */
   protected _registerInterceptedRoute(route: Route<any, any, any, Context>): () => void {
-    const registry = this._interceptorRegistry;
+    const interceptedRoutes = this._interceptedRoutes;
 
-    registry.set(route, (registry.get(route) || 0) + 1);
+    interceptedRoutes.push(route);
 
-    let isUnregistered = false;
+    let isRegistered = true;
 
     return () => {
-      if (isUnregistered) {
-        // Can use unregister callback only once
+      if (!isRegistered) {
+        // Can unregister only once
         return;
       }
 
-      isUnregistered = true;
+      isRegistered = false;
 
-      const interceptorCount = registry.get(route);
+      const index = interceptedRoutes.indexOf(route);
 
-      if (interceptorCount !== 1) {
-        registry.set(route, interceptorCount! - 1);
-        return;
-      }
+      interceptedRoutes.splice(index, 1);
 
-      registry.delete(route);
-
-      if (getTargetController(this.interceptedController)?.route === route) {
+      if (
+        interceptedRoutes.indexOf(route, index) === -1 &&
+        getTargetController(this.interceptedController)?.route === route
+      ) {
         this.cancelInterception();
       }
     };

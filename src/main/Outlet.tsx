@@ -1,59 +1,53 @@
 import React, {
-  Component,
   ComponentType,
   createContext,
+  ExoticComponent,
+  memo,
   ReactElement,
   ReactNode,
   Suspense,
   useContext,
   useSyncExternalStore,
 } from 'react';
-import { Router } from './Router.js';
-import { RouteControllerProvider } from './useRoute.js';
 import {
-  getRenderedController,
+  getActiveController,
   getErrorComponent,
   getLoadingComponent,
   getNotFoundComponent,
-  handleBoundaryError,
   RouteController,
 } from './RouteController.js';
+import { Router } from './Router.js';
+import { ErrorBoundary } from './ErrorBoundary.js';
+import { RouteControllerProvider } from './useRoute.js';
 
-const OutletContentContext = createContext<RouteController | Router | null>(null);
+const RouteContentContext = createContext<RouteController | Router | null>(null);
 
-OutletContentContext.displayName = 'OutletContentContext';
+RouteContentContext.displayName = 'RouteContentContext';
 
-export const OutletContentProvider = OutletContentContext.Provider;
+export const RouteContentProvider = RouteContentContext.Provider;
 
 /**
  * Renders a controller {@link RouterProvider provided by an enclosing router}.
  *
  * @group Routing
  */
-export function Outlet(): ReactElement | null {
-  const content = useContext(OutletContentContext);
+export const Outlet: ExoticComponent = memo(_Outlet, propsAreEqual);
+
+function _Outlet(): ReactNode {
+  const content = useContext(RouteContentContext);
 
   if (content instanceof RouteController) {
-    return <RouteOutlet controller={content} />;
+    return renderController(content);
   }
 
   if (content === null || content.notFoundComponent === undefined) {
     return null;
   }
 
-  return (
-    <RouteControllerProvider value={null}>
-      <OutletContentProvider value={null}>
-        <OutletMemo component={content.notFoundComponent} />
-      </OutletContentProvider>
-    </RouteControllerProvider>
-  );
+  return renderMemo(content.notFoundComponent);
 }
 
-/**
- * @internal
- */
-Outlet.displayName = 'Outlet';
+_Outlet.displayName = 'Outlet';
 
 /**
  * Props of the {@link RouteOutlet} component.
@@ -79,112 +73,91 @@ export interface RouteOutletProps {
  * @see {@link useInlineRoute}
  * @group Routing
  */
-export function RouteOutlet(props: RouteOutletProps): ReactElement {
+export const RouteOutlet: ExoticComponent<RouteOutletProps> = memo(
+  _RouteOutlet,
+  (a, b) => a.controller === b.controller
+);
+
+function _RouteOutlet(props: RouteOutletProps): ReactElement {
   const { controller } = props;
 
-  if (!(controller instanceof RouteController)) {
-    throw new Error('Expected a route controller');
+  if (controller instanceof RouteController) {
+    return renderController(controller);
   }
 
+  throw new Error('Expected a route controller');
+}
+
+_RouteOutlet.displayName = 'RouteOutlet';
+
+function renderController(controller: RouteController): ReactElement {
   useSyncExternalStore(controller.router.subscribe, () => controller['_state']);
 
-  return <OutletErrorBoundary controller={controller} />;
+  const activeController = getActiveController(controller);
+  const loadingComponent = getLoadingComponent(controller);
+
+  const children = <RouteContent controller={controller} />;
+
+  const loadingFallback: ReactElement | false =
+    // The _fallbackController is rendered as a Suspense fallback only during initial loading of this controller
+    (activeController !== controller && <RouteContent controller={activeController} />) ||
+    // Otherwise, the loadingComponent is rendered if a promise is thrown during rendering
+    (loadingComponent !== undefined && (
+      <RouteControllerProvider value={controller}>
+        <RouteContentProvider value={null}>{renderMemo(loadingComponent)}</RouteContentProvider>
+      </RouteControllerProvider>
+    ));
+
+  const handleError = (error: unknown, errorBoundary: ErrorBoundary): void => {
+    handleBoundaryError(controller, error);
+    errorBoundary.reset();
+  };
+
+  return (
+    <ErrorBoundary
+      fallback={null}
+      onError={handleError}
+    >
+      {loadingFallback === false ? children : <Suspense fallback={loadingFallback}>{children}</Suspense>}
+    </ErrorBoundary>
+  );
 }
 
 /**
- * @internal
+ * Called when an {@link _Outlet} that renders a `controller` has caught an `error` during rendering.
  */
-RouteOutlet.displayName = 'RouteOutlet';
+export function handleBoundaryError(controller: RouteController, error: unknown): void {
+  const prevStatus = controller.status;
 
-interface OutletErrorBoundaryProps {
-  controller: RouteController;
-}
+  controller.setError(error);
 
-interface OutletErrorBoundaryState {
-  controller: RouteController;
-  hasError: boolean;
-  error: unknown;
-}
+  const nextStatus = controller.status;
 
-class OutletErrorBoundary extends Component<OutletErrorBoundaryProps, OutletErrorBoundaryState> {
-  static displayName = 'OutletErrorBoundary';
-
-  constructor(props: OutletErrorBoundaryProps) {
-    super(props);
-
-    this.state = {
-      controller: props.controller,
-      hasError: false,
-      error: null,
-    };
-  }
-
-  static getDerivedStateFromError(error: unknown): Partial<OutletErrorBoundaryState> | null {
-    return { hasError: true, error };
-  }
-
-  static getDerivedStateFromProps(
-    nextProps: Readonly<OutletErrorBoundaryProps>,
-    prevState: OutletErrorBoundaryState
-  ): Partial<OutletErrorBoundaryState> | null {
-    if (nextProps.controller !== prevState.controller) {
-      return {
-        controller: nextProps.controller,
-        hasError: false,
-        error: null,
-      };
-    }
-
-    if (!prevState.hasError) {
-      return null;
-    }
-
-    handleBoundaryError(nextProps.controller, prevState.error);
-
-    return { hasError: false, error: null };
-  }
-
-  render(): ReactNode {
-    const { controller } = this.state;
-
-    const renderedController = getRenderedController(controller);
-    const loadingComponent = getLoadingComponent(controller);
-
-    const fallback =
-      // The fallback controller is rendered only during initial component and data loading
-      (renderedController !== controller && <OutletContent controller={renderedController} />) ||
-      ((controller.status === 'ready' || controller.status === 'loading') && loadingComponent !== undefined && (
-        <RouteControllerProvider value={controller}>
-          <OutletContentProvider value={null}>
-            <OutletMemo component={loadingComponent} />
-          </OutletContentProvider>
-        </RouteControllerProvider>
-      ));
-
-    if (fallback === false) {
-      return <OutletContent controller={controller} />;
-    }
-
-    return (
-      <Suspense fallback={fallback}>
-        <OutletContent controller={controller} />
-      </Suspense>
-    );
+  if (
+    // Cannot render the same state after it has caused an error
+    nextStatus === prevStatus ||
+    // Cannot redirect from a loadingComponent because redirect renders a loadingComponent itself
+    (nextStatus === 'redirect' && prevStatus === 'loading') ||
+    // Rendering would cause an error because there's no component to render
+    (nextStatus === 'not_found' && getNotFoundComponent(controller) === undefined) ||
+    (nextStatus === 'redirect' && getLoadingComponent(controller) === undefined) ||
+    (nextStatus === 'error' && getErrorComponent(controller) === undefined)
+  ) {
+    // Rethrow an error that cannot be rendered, so an enclosing error boundary can catch it
+    throw error;
   }
 }
 
-interface OutletContentProps {
+interface RouteContentProps {
   controller: RouteController;
 }
 
 /**
  * Renders a controller in accordance with its status.
  */
-function OutletContent(props: OutletContentProps): ReactNode {
+function RouteContent(props: RouteContentProps): ReactNode {
   const { controller } = props;
   const { route } = controller;
-
-  controller['_renderedState'] = controller['_state'];
 
   let component;
   let childController = null;
@@ -193,10 +166,6 @@ function OutletContent(props: OutletContentProps): ReactNode {
     case 'ready':
       component = route.component;
       childController = controller.childController;
-
-      if (component === undefined) {
-        throw new Error("Route component wasn't loaded");
-      }
       break;
 
     case 'error':
@@ -216,39 +185,35 @@ function OutletContent(props: OutletContentProps): ReactNode {
       throw controller.promise || new Error('Cannot suspend route controller');
 
     default:
-      throw new Error('Unexpected route status');
+      throw new Error('Route controller has unknown status: ' + controller.status);
   }
 
   if (component === undefined) {
-    throw controller['_error'];
+    throw new Error('No component to render: ' + controller.status);
   }
 
   return (
     <RouteControllerProvider value={controller}>
-      <OutletContentProvider value={childController}>
-        <OutletMemo component={component} />
-      </OutletContentProvider>
+      <RouteContentProvider value={childController}>{renderMemo(component)}</RouteContentProvider>
     </RouteControllerProvider>
   );
 }
 
-OutletContent.displayName = 'OutletContent';
+RouteContent.displayName = 'RouteContent';
 
-interface OutletMemoProps {
-  component: ComponentType;
+const componentCache = new WeakMap<ComponentType, ComponentType>();
+
+function propsAreEqual(_a: object, _b: object): boolean {
+  return true;
 }
 
-/**
- * Renders a component and prevents its re-rendering.
- */
-class OutletMemo extends Component<OutletMemoProps, any> {
-  static displayName = 'OutletMemo';
+export function renderMemo(component: ComponentType): ReactElement {
+  let Component = componentCache.get(component);
 
-  shouldComponentUpdate(nextProps: Readonly<OutletMemoProps>): boolean {
-    return this.props.component !== nextProps.component;
+  if (Component === undefined) {
+    Component = memo(component, propsAreEqual);
+    componentCache.set(component, Component);
   }
 
-  render(): ReactNode {
-    return <this.props.component />;
-  }
+  return <Component />;
 }

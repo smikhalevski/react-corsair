@@ -23,7 +23,7 @@
     "./src/main/ssr/index.ts",
     "./src/main/ssr/node/index.ts"
   ],
-  "intentionallyNotExported": ["Voidable", "PARAMS", "CONTEXT"],
+  "intentionallyNotExported": ["Voidable", "CombineParams", "CONTEXT"],
   "kindSortOrder": ["Function", "Class", "Variable", "TypeAlias"],
   "groupOrder": ["Routing", "Prefetching", "Server-Side Rendering"],
   "externalSymbolLinkMappings": {

@@ -15,11 +15,7 @@ describe('RouterProvider', () => {
     const route = createRoute('/aaa', () => 'AAA');
     const router = new Router({ routes: [route] });
 
-    const result = render(
-      <StrictMode>
-        <RouterProvider value={router} />
-      </StrictMode>
-    );
+    const result = render(<RouterProvider value={router} />, { wrapper: StrictMode });
 
     expect(result.container.innerHTML).toBe('');
 

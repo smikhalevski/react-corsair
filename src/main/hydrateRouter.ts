@@ -4,8 +4,6 @@ import { getRenderingDisposition, RouteController } from './RouteController.js';
 import { AbortError, noop, toLocation } from './utils.js';
 import { matchRoutes } from './matchRoutes.js';
 import { AbortablePromise } from 'parallel-universe';
-import { Redirect } from './Redirect.js';
-import { NOT_FOUND } from './notFound.js';
 
 /**
  * Options provided to {@link hydrateRouter}.
@@ -114,24 +112,14 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
 }
 
 function setControllerState(controller: RouteController, state: RouteState): void {
-  switch (state.status) {
-    case 'loading':
-      return;
-
-    case 'redirect':
-      controller['_error'] = new Redirect(state.to);
-      break;
-
-    case 'not_found':
-      controller['_error'] = NOT_FOUND;
-      break;
-
-    case 'error':
-      controller['_error'] = state.error;
-      break;
+  if (state.status === 'loading') {
+    return;
   }
 
-  controller['_state'] = state;
-  controller.promise?.abort(AbortError('The route was hydrated'));
+  const prevPromise = controller.promise;
+
   controller.promise = null;
+  controller['_state'] = state;
+
+  prevPromise?.abort(AbortError('The route was hydrated'));
 }

@@ -462,7 +462,7 @@ export interface ErrorEvent {
   /**
    * A controller from which an event originates.
    */
-  controller: RouteController;
+  controller: RouteController | null;
 
   /**
    * An error that was thrown.
@@ -501,7 +501,7 @@ export interface RedirectEvent {
   /**
    * A controller from which an event originates.
    */
-  controller: RouteController;
+  controller: RouteController | null;
 
   /**
    * A location or a URL to which a redirect should be made.

@@ -6,7 +6,7 @@ import { expect, test, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { createRoute, DataLoaderOptions, Router, RouterProvider, usePrefetch } from '../main/index.js';
 import { noop } from '../main/utils.js';
-import React, { FC, PropsWithChildren, StrictMode } from 'react';
+import React, { StrictMode } from 'react';
 
 console.error = noop;
 
@@ -51,14 +51,12 @@ test('restart loading only if location is changed', () => {
 
   const router = new Router({ routes: [routeAaa, routeBbb] });
 
-  const wrapper: FC<PropsWithChildren> = props => (
-    <StrictMode>
-      <RouterProvider value={router}>{props.children}</RouterProvider>
-    </StrictMode>
-  );
-
   const hook = renderHook(props => usePrefetch(props.to), {
-    wrapper,
+    wrapper: props => (
+      <StrictMode>
+        <RouterProvider value={router}>{props.children}</RouterProvider>
+      </StrictMode>
+    ),
     initialProps: { to: routeAaa },
   });
 

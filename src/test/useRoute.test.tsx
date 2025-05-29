@@ -27,11 +27,7 @@ test('returns the current route controller', () => {
 
   router.navigate(routeBbb);
 
-  render(
-    <StrictMode>
-      <RouterProvider value={router} />
-    </StrictMode>
-  );
+  render(<RouterProvider value={router} />, { wrapper: StrictMode });
 
   expect(hookTrap).toHaveBeenCalledTimes(2);
   expect(hookTrap).toHaveBeenNthCalledWith(1, router.rootController!.childController);
@@ -51,11 +47,7 @@ test('returns the route controller of the provided route if it is the same as th
 
   router.navigate(routeBbb);
 
-  render(
-    <StrictMode>
-      <RouterProvider value={router} />
-    </StrictMode>
-  );
+  render(<RouterProvider value={router} />, { wrapper: StrictMode });
 
   expect(hookTrap).toHaveBeenCalledTimes(2);
   expect(hookTrap).toHaveBeenNthCalledWith(1, router.rootController!.childController);
@@ -75,11 +67,7 @@ test('returns the route controller of the provided route if it is the parent rou
 
   router.navigate(routeBbb);
 
-  render(
-    <StrictMode>
-      <RouterProvider value={router} />
-    </StrictMode>
-  );
+  render(<RouterProvider value={router} />, { wrapper: StrictMode });
 
   expect(hookTrap).toHaveBeenCalledTimes(2);
   expect(hookTrap).toHaveBeenNthCalledWith(1, router.rootController);
@@ -100,13 +88,9 @@ test('throws if the provided route is a child', () => {
 
   router.navigate(routeBbb);
 
-  expect(() =>
-    render(
-      <StrictMode>
-        <RouterProvider value={router} />
-      </StrictMode>
-    )
-  ).toThrow(new Error('Cannot be used outside of a route'));
+  expect(() => render(<RouterProvider value={router} />, { wrapper: StrictMode })).toThrow(
+    new Error('Cannot be used outside of a route')
+  );
 });
 
 test('throws if the provided route is not rendered', () => {
@@ -123,13 +107,9 @@ test('throws if the provided route is not rendered', () => {
 
   router.navigate(routeAaa);
 
-  expect(() =>
-    render(
-      <StrictMode>
-        <RouterProvider value={router} />
-      </StrictMode>
-    )
-  ).toThrow(new Error('Cannot be used outside of a route'));
+  expect(() => render(<RouterProvider value={router} />, { wrapper: StrictMode })).toThrow(
+    new Error('Cannot be used outside of a route')
+  );
 });
 
 test('re-renders if controller state is changed', () => {
@@ -144,11 +124,7 @@ test('re-renders if controller state is changed', () => {
 
   router.navigate(route);
 
-  render(
-    <StrictMode>
-      <RouterProvider value={router} />
-    </StrictMode>
-  );
+  render(<RouterProvider value={router} />, { wrapper: StrictMode });
 
   expect(hookTrap).toHaveBeenCalledTimes(2);
 

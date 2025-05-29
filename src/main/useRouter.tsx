@@ -1,5 +1,5 @@
 import React, { createContext, ReactElement, ReactNode, useContext, useSyncExternalStore } from 'react';
-import { Outlet, OutletContentProvider } from './Outlet.js';
+import { Outlet, RouteContentProvider } from './Outlet.js';
 import { Router } from './Router.js';
 import { RouteControllerProvider } from './useRoute.js';
 import { RouteController } from './RouteController.js';
@@ -61,7 +61,7 @@ export function RouterProvider(props: RouterProviderProps): ReactElement {
     <RouterContext.Provider value={value}>
       <RouteControllerProvider value={null}>
         <InterceptedRouteControllerProvider value={value.interceptedController}>
-          <OutletContentProvider value={value.rootController || value}>{children}</OutletContentProvider>
+          <RouteContentProvider value={value.rootController || value}>{children}</RouteContentProvider>
         </InterceptedRouteControllerProvider>
       </RouteControllerProvider>
     </RouterContext.Provider>

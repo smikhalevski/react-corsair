@@ -4,6 +4,7 @@
 
 import { beforeEach, expect, test } from 'vitest';
 import { createRoute, hydrateRouter, Router, RouteState } from '../main/index.js';
+import { AbortError } from '../main/utils.js';
 
 beforeEach(() => {
   window.__REACT_CORSAIR_SSR_STATE__ = undefined;
@@ -38,7 +39,7 @@ test('hydrates a post-populated root controller', async () => {
   expect(router.rootController!['_state']).toStrictEqual({ status: 'ready', data: 'xxx' });
   expect(router.rootController!.promise).toBeNull();
 
-  await expect(promise0).rejects.toStrictEqual(new DOMException('The route was hydrated', 'AbortError'));
+  await expect(promise0).rejects.toStrictEqual(AbortError('The route was hydrated'));
 });
 
 test('hydrates a post-populated nested controller', async () => {
@@ -73,7 +74,7 @@ test('hydrates a post-populated nested controller', async () => {
   expect(router.rootController!.childController!['_state']).toStrictEqual({ status: 'ready', data: 'xxx' });
   expect(router.rootController!.childController!.promise).toBeNull();
 
-  await expect(promise1).rejects.toStrictEqual(new DOMException('The route was hydrated', 'AbortError'));
+  await expect(promise1).rejects.toStrictEqual(AbortError('The route was hydrated'));
 });
 
 test('hydrates a pre-populated root controller with OK state', () => {

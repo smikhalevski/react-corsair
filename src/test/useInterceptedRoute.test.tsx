@@ -21,11 +21,7 @@ test('returns the intercepted controller of the provided route or null', () => {
 
   router.navigate(routeAaa);
 
-  render(
-    <StrictMode>
-      <RouterProvider value={router} />
-    </StrictMode>
-  );
+  render(<RouterProvider value={router} />, { wrapper: StrictMode });
 
   expect(hookTrap).toHaveBeenCalledTimes(2);
   expect(hookTrap).toHaveBeenNthCalledWith(1, null);

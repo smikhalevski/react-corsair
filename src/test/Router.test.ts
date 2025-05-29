@@ -278,16 +278,16 @@ describe('_registerInterceptedRoute', () => {
     const unregister0 = router['_registerInterceptedRoute'](route);
     const unregister1 = router['_registerInterceptedRoute'](route);
 
-    expect(router['_interceptorRegistry'].get(route)).toBe(2);
+    expect(router['_interceptedRoutes']).toEqual([route, route]);
 
     unregister0();
-    expect(router['_interceptorRegistry'].get(route)).toBe(1);
+    expect(router['_interceptedRoutes']).toEqual([route]);
 
     unregister0();
-    expect(router['_interceptorRegistry'].get(route)).toBe(1);
+    expect(router['_interceptedRoutes']).toEqual([route]);
 
     unregister1();
-    expect(router['_interceptorRegistry'].get(route)).toBeUndefined();
+    expect(router['_interceptedRoutes']).toEqual([]);
   });
 
   test('cancels interception if all interceptors were unregistered', () => {
