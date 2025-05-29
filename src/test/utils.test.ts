@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import { toLocation } from '../main/utils.js';
-import { Location } from '../main/index.js';
+import { isEqualLocation, toLocation } from '../main/utils.js';
+import { Location, To } from '../main/index.js';
 
 describe('toLocation', () => {
   test('returns a location', () => {
@@ -46,5 +46,30 @@ describe('toLocation', () => {
       hash: '',
       state: 'aaa',
     } satisfies Location);
+  });
+});
+
+describe('isEqualLocation', () => {
+  test('returns true if locations are equal', () => {
+    expect(isEqualLocation(undefined, undefined)).toBe(false);
+    expect(isEqualLocation(undefined, {})).toBe(false);
+    expect(isEqualLocation({}, undefined)).toBe(false);
+    expect(isEqualLocation({}, {})).toBe(true);
+    expect(isEqualLocation({ pathname: '/' }, {})).toBe(true);
+    expect(isEqualLocation({ pathname: '/' }, { pathname: '/' })).toBe(true);
+    expect(isEqualLocation({ pathname: '/aaa' }, { pathname: '/bbb' })).toBe(false);
+    expect(isEqualLocation({ searchParams: {} }, {})).toBe(true);
+    expect(isEqualLocation({ searchParams: { aaa: 111 } }, { searchParams: { aaa: 111 } })).toBe(true);
+    expect(isEqualLocation({ state: {} }, {})).toBe(false);
+    expect(isEqualLocation({ state: { aaa: 111 } }, { state: { aaa: 111 } })).toBe(true);
+  });
+
+  test('returns true if location providers are equal', () => {
+    const location: Location = { pathname: '', searchParams: {}, hash: '', state: undefined };
+    const to: To = { getLocation: () => location };
+
+    expect(isEqualLocation(to, to)).toBe(true);
+    expect(isEqualLocation(to, { getLocation: () => location })).toBe(true);
+    expect(isEqualLocation(to, { getLocation: () => ({ ...location, pathname: '/aaa' }) })).toBe(false);
   });
 });

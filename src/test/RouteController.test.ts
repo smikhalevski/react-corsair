@@ -428,7 +428,7 @@ describe('RouteController', () => {
     });
 
     test("throws if state if there's no data", () => {
-      expect(() => controller.data).toThrow(new Error("The route data isn't ready"));
+      expect(() => controller.data).toThrow(new Error('The route data is unavailable: loading'));
     });
   });
 

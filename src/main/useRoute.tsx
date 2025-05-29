@@ -1,13 +1,13 @@
-import { createContext, useContext, useSyncExternalStore } from 'react';
+import { createContext, useCallback, useContext, useSyncExternalStore } from 'react';
 import { RouteController } from './RouteController.js';
 import { Route } from './Route.js';
 import { Dict } from './types.js';
 
-const RouteControllerContext = createContext<RouteController | null>(null);
+const RouteContext = createContext<RouteController | null>(null);
 
-RouteControllerContext.displayName = 'RouteControllerContext';
+RouteContext.displayName = 'RouteContext';
 
-export const RouteControllerProvider = RouteControllerContext.Provider;
+export const RouteProvider = RouteContext.Provider;
 
 /**
  * Returns the route controller provided by the enclosing {@link Outlet}.
@@ -30,7 +30,7 @@ export function useRoute<Params extends Dict, Data, Context>(
 ): RouteController<Params, Data, Context>;
 
 export function useRoute(route?: Route) {
-  let controller = useContext(RouteControllerContext);
+  let controller = useContext(RouteContext);
 
   // Controller lookup
   while (route !== undefined && controller !== null && controller.route !== route) {
@@ -41,7 +41,9 @@ export function useRoute(route?: Route) {
     throw new Error('Cannot be used outside of a route');
   }
 
-  useSyncExternalStore(controller.router.subscribe, () => controller['_state']);
+  const subscribe = useCallback((listener: () => void) => controller.router.subscribe(listener), [controller]);
+
+  useSyncExternalStore(subscribe, () => controller['_state']);
 
   return controller;
 }

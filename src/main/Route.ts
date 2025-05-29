@@ -10,10 +10,8 @@ import {
   ParamsAdapter,
   RenderingDisposition,
   RouteOptions,
-  To,
 } from './types.js';
-import { Outlet } from './Outlet.js';
-import isDeepEqual from 'fast-deep-equal/es6/index.js';
+import { Outlet } from './outlet/Outlet.js';
 
 type Prettify<T> = { [K in keyof T]: T[K] } & {};
 
@@ -237,8 +235,4 @@ export class Route<ParentRoute extends Route | null = any, Params extends Dict =
       state,
     };
   }
-}
-
-export function isEqualLocation(a: To | undefined, b: To | undefined): boolean {
-  return a instanceof Route && b instanceof Route ? a === b : isDeepEqual(a, b);
 }

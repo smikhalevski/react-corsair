@@ -49,7 +49,7 @@ npm install --save-prod react-corsair
 
 # Routing
 
-URLs don't matter because they are almost never part of the application domain logic. React Corsair is a router that
+_URLs don't matter_, they are almost never part of the application domain logic. React Corsair is a router that
 abstracts URLs away from your application domain.
 
 Use [`Route`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.createRoute.html) objects instead of
@@ -67,7 +67,7 @@ function HelloPage() {
 ```
 
 [Create a route](https://smikhalevski.github.io/react-corsair/functions/react_corsair.createRoute.html) that maps
-a URL pathname to a page component:
+a URL pathname to a page component. Usually, a route declaration this is the only place where you would meet a pathname:
 
 ```ts
 import { createRoute } from 'react-corsair';
@@ -167,6 +167,8 @@ function AnotherPage() {
   return <button onClick={handleClick}>{'Go to hello'}</button>;
 }
 ```
+
+If you want the browser history to drive your navigation, see the [History](#history) section.
 
 ## Route params
 
@@ -294,7 +296,7 @@ createRoute({
 });
 ```
 
-Pathname patterns can include params that conform `:[A-Za-z$_][A-Za-z0-9$_]+`:
+Pathname patterns can include params. Pathname param names should conform `:[A-Za-z$_][A-Za-z0-9$_]+`:
 
 ```ts
 const userRoute = createRoute('/users/:userId');
@@ -487,7 +489,7 @@ export default function UserPage() {
 When router is navigated to the `userRoute`, a module that contains `<UserPage>` is loaded and rendered. The loaded
 component is cached, so next time the `userRoute` is matched, `<UserPage>` would be rendered instantly.
 
-A promise is thrown if the `lazyComponent` isn't loaded yet. You can wrap
+A promise is thrown if the `lazyComponent` isn't loaded yet. You can manually wrap
 [`<RouterProvider>`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.RouterProvider.html) in
 a custom `<Suspense>` boundary to catch it and render a fallback:
 
@@ -556,7 +558,7 @@ If there's a route that is already rendered then keep it on the screen until the
 </dl>
 
 If an error is thrown during `lazyComponent` loading, an [error boundary](#error-boundaries) is rendered and router
-would retry loading the component again later.
+would retry loading the component again during the next navigation.
 
 ## Data loading
 
@@ -569,44 +571,47 @@ function LoadingIndicator() {
   return 'Loading';
 }
 
-const userRoute = createRoute<{ userId: string }, User>({
-  pathname: '/users/:userId',
-  component: UserPage,
+const productRoute = createRoute<{ sku: string }, User>({
+  pathname: '/products/:sku',
+  component: ProductPage,
   loadingComponent: LoadingIndicator,
 
   dataLoader: async options => {
-    const response = await fetch('/api/users/' + options.params.userId);
+    const response = await fetch('/api/products/' + options.params.sku);
     
     return response.json();
-    // ⮕ Promise<User>
+    // ⮕ Promise<Product>
   }
 });
 ```
 
 [`dataLoader`](https://smikhalevski.github.io/react-corsair/classes/react_corsair.Route.html#dataLoader) is called every
-time router is navigated to `userRoute`. While data is being loaded, the `<LoadingIndicator>` is rendered instead of
-the `<UserPage>`.
+time the router is navigated to `productRoute`. While data is being loaded, the `<LoadingIndicator>` is rendered instead
+of the `<ProductPage>`.
 
 You can access the loaded data in your route component using
 the [`useRoute`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.useRoute.html) hook:
 
 ```ts
-function UserPage() {
-  const { data } = useRoute(userRoute);
-  // ⮕ User
+function ProductPage() {
+  const { data } = useRoute(productRoute);
+  // ⮕ Product
 }
 ```
 
 Data loader may require additional context:
 
 ```ts
-const userRoute = createRoute<{ userId: string }, User, { apiBase: string }>({
-  pathname: '/users/:userId',
-  component: UserPage,
+const productRoute = createRoute<{ sku: string }, Product, { apiBase: string }>({
+  pathname: '/products/:sku',
+  component: ProductPage,
   loadingComponent: LoadingIndicator,
 
   dataLoader: async options => {
-    const response = await fetch(options.context.apiBase + '/users/' + options.params.userId);
+    // 🟡 Access the router context in a data loader
+    const { apiBase } = options.router.context;
+
+    const response = await fetch(apiBase + '/products/' + options.params.sku);
 
     return response.json();
   }
@@ -617,7 +622,7 @@ A context value should be provided through a router:
 
 ```ts
 const router = new Router({
-  routes: [userRoute],
+  routes: [productRoute],
   context: {
     apiBase: 'https://superpuper.com'
   }
@@ -633,7 +638,7 @@ then an [`errorComponent`](https://smikhalevski.github.io/react-corsair/interfac
 is rendered as a fallback:
 
 ```ts
-function UserPage() {
+function ProductsPage() {
   throw new Error('Ooops!');
 }
 
@@ -641,9 +646,9 @@ function ErrorDetails() {
   return 'An error occurred';
 }
 
-const userRoute = createRoute({
-  pathname: '/user',
-  component: UserPage,
+const productsRoute = createRoute({
+  pathname: '/products',
+  component: ProductsPage,
   errorComponent: ErrorDetails
 });
 ```
@@ -654,36 +659,37 @@ You can access the error that triggered the error boundary within an error compo
 import { useRoute } from 'react-corsair';
 
 function ErrorDetails() {
-  const { error } = useRoute(userRoute);
+  const { error } = useRoute(productsRoute);
   
   return 'An error occurred: ' + error.message;
 }
 ```
 
-Some errors are recoverable and only require a route data to be reloaded:
+Some errors are recoverable and only require a route data or component
+to be [reloaded](https://smikhalevski.github.io/react-corsair/classes/react_corsair.RouteController.html#reload):
 
 ```tsx
 function ErrorDetails() {
-  const routeController = useRoute(userRoute);
+  const productsRouteController = useRoute(productsRoute);
   
   const handleClick = () => {
-    routeController.load();
+    productsRouteController.reload();
   };
   
   return <button onClick={handleClick}>{'Reload'}</button>;
 }
 ```
 
-Clicking on a "Reload" button would reload the route data and component (if needed).
+Clicking on a "Reload" button would reload the route data and component (if it wasn't successfully loaded before).
 
 You can trigger a route error from an event handler:
 
 ```tsx
-function UserPage() {
-  const routeController = useRoute(userRoute);
+function ProductsPage() {
+  const productsRouteController = useRoute(productsRoute);
   
   const handleClick = () => {
-    routeController.setError(new Error('Ooops!'));
+    productsRouteController.setError(new Error('Ooops!'));
   };
   
   return <button onClick={handleClick}>{'Show error'}</button>;
@@ -693,27 +699,28 @@ function UserPage() {
 ## Not found
 
 During route component rendering, you may detect that there's not enough data to render a route. Call
-the [`notFound`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.notFound.html) in such case:
+the [`notFound`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.notFound.html) during rendering in such case:
 
 ```ts
 import { notFound, useRoute } from 'react-corsair';
 
 function ProductPage() {
-  const { params } = useRoute(userRoute);
+  const { params } = useRoute(productRoute);
 
-  const user = getProductById(params.sku);
-  // ⮕ User | null
+  const product = getProductById(params.sku);
+  // ⮕ Product | null
   
-  if (user === null) {
-    // 🟡 Aborts further rendering
+  if (product === null) {
+    // 🟡 No product was found, abort further rendering
     notFound();
   }
 
-  return 'Hello, ' + user.firstName;
+  return 'The product title is ' + product.title;
 }
 ```
 
-`notFound` throws aborts further rendering and causes router to render
+`notFound` throws the [`NOT_FOUND`](https://smikhalevski.github.io/react-corsair/variables/react_corsair.NOT_FOUND.html)
+symbol and aborts further rendering of the route component. The `<Outlet>` catches `NOT_FOUND` and renders
 a [`notFoundComponent`](https://smikhalevski.github.io/react-corsair/interfaces/react_corsair.RouteOptions.html#notFoundComponent)
 as a fallback:
 
@@ -738,7 +745,7 @@ const productRoute = createRoute<{ sku: string }>({
   notFoundComponent: ProductNotFound,
   
   dataLoader: async () => {
-    // Try to load product here or call notFound
+    // 🟡 Try to load product here or call notFound
     notFound();
   }
 });
@@ -748,10 +755,11 @@ Force router to render `notFoundComponent` from an event handler:
 
 ```tsx
 function ProductPage() {
-  const routeController = useRoute(productRoute);
+  const productRouteController = useRoute(productRoute);
 
   const handleClick = () => {
-    routeController.notFound();
+    // 🟡 Force Outlet to render the notFoundComponent
+    productRouteController.notFound();
   };
   
   return <button onClick={handleClick}>{'Render not found'}</button> 
@@ -761,7 +769,7 @@ function ProductPage() {
 ## Redirects
 
 During route component rendering, you can trigger a redirect by calling
-[`redirect`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.redirect.html):
+[`redirect`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.redirect.html) during rendering:
 
 ```ts
 import { createRoute, redirect } from 'react-corsair';
@@ -784,18 +792,20 @@ to handle redirects:
 const router = new Router({ routes: [adminRoute] });
 
 router.subscribe(event => {
-  if (event.type !== 'redirect') {
-    return;
-  }
+  // Capture a redirect event
+  if (event.type === 'redirect') {
 
-  if (typeof event.to === 'string') {
-    window.location.href = event.to;
-    return;
+    if (typeof event.to === 'string') {
+      window.location.href = event.to;
+    } else {
+      // Navigate a router when redirected to a location 
+      router.navigate(event.to);
+    }
   }
-
-  router.navigate(event.to);
 });
 ```
+
+If you want the browser history to drive your redirects, see the [History](#history) section.
 
 ## Prefetching
 
@@ -861,7 +871,7 @@ import { Link } from 'react-corsair/history';
 const shopRoute = createRoute('/shop', ShopPage);
 
 function ShopPage() {
-  return <Link to={productRoute.getLocation(42)}>{'Go to product'}</Link>;
+  return <Link to={productRoute.getLocation({ sku: 42 })}>{'Go to product'}</Link>;
 }
 ```
 
@@ -906,21 +916,21 @@ hook to `<ShopPage>`:
 import { useInterceptedRoute } from 'react-corsair';
 
 function ShopPage() {
-  const productController = useInterceptedRoute(productRoute);
+  const productRouteController = useInterceptedRoute(productRoute);
   // ⮕ RouteController | null
   
   return (
     <>
-      <Link to={productRoute.getLocation(42)}>{'Go to product'}</Link>
+      <Link to={productRoute.getLocation({ sku: 42 })}>{'Go to product'}</Link>
 
-      {productController !== null && <RouteOutlet controller={productController}/>}
+      {productRouteController !== null && <RouteOutlet controller={productRouteController}/>}
     </>
   );
 }
 ```
 
 Now when user clicks on _Go to product_, the browser location changes to `/product/42` and `<ShopPage>` is re-rendered.
-`productController` would contain
+`productRouteController` would contain
 a [route controller](https://smikhalevski.github.io/react-corsair/classes/react_corsair.RouteController.html) for
 `productRoute`. This controller can be then rendered using
 the [`<RouteOutlet>`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.RouteOutlet.html).
@@ -947,9 +957,9 @@ Inline routes allow rendering a route that matches a location inside a component
 import { useInlineRoute, RouteOutlet } from 'react-corsair';
 
 function Product() {
-  const productController = useInlineRoute(productRoute.getLocation(42));
+  const productRouteController = useInlineRoute(productRoute.getLocation({ sku: 42 }));
   
-  return productController !== null && <RouteOutlet controller={productController}/>;
+  return productRouteController !== null && <RouteOutlet controller={productRouteController}/>;
 }
 ```
 
@@ -982,7 +992,7 @@ router.subscribe(event => {
 
 function App() {
   return (
-    // 5️⃣ Provide history to components
+    // 3️⃣ Provide history to components
     <HistoryProvider value={history}>
       <RouterProvider value={router}/>
     </HistoryProvider>
@@ -1023,8 +1033,8 @@ an in-memory history adapter, useful in testing and non-DOM environments like SS
 History provides two types of URL strings:
 
 - Local URLs can be used as arguments for
-[push](https://smikhalevski.github.io/react-corsair/interfaces/history.History.html#push) and
-[replace](https://smikhalevski.github.io/react-corsair/interfaces/history.History.html#replace) methods.
+[`push`](https://smikhalevski.github.io/react-corsair/interfaces/history.History.html#push) and
+[`replace`](https://smikhalevski.github.io/react-corsair/interfaces/history.History.html#replace) methods.
 
 - Absolute URLs reflect `window.location.href`. 
 
@@ -1123,7 +1133,7 @@ for navigation:
 ```tsx
 import { Link } from 'react-corsair/history';
 
-function FavouritesPage() {
+function ProductPage() {
   return (
     <Link to={productRoute.getLocation({ sku: 42 })}>
       {'Go to a product 42'}
@@ -1132,7 +1142,8 @@ function FavouritesPage() {
 }
 ```
 
-Links can automatically [prefetch](#prefetching) a route component and [related data](#data-loading):
+Links can automatically [prefetch](#prefetching) a route component and [related data](#data-loading) as soon as they
+are rendered:
 
 ```tsx
 <Link
@@ -1149,17 +1160,22 @@ Navigation blocking is a way to prevent navigation from happening. This is typic
 there are unsaved changes. Usually, in such situation, a prompt or a custom UI should be shown to the user to confirm
 the navigation.
 
-Show a browser confirmation popup to the user:
+Use the [`useHistoryBlocker`](https://smikhalevski.github.io/react-corsair/functions/history.useHistoryBlocker.html)
+hook to intercept the navigation attempt and show a browser confirmation popup to the user:
 
 ```tsx
+const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
 useHistoryBlocker(() => {
+  // 🟡 Return true to cancel navigation or false to proceed
   return hasUnsavedChanges && !confirm('Discard unsaved changes?')
 });
 ```
 
+A blocker function provided to the `useHistoryBlocker` hook receives a navigation transaction.
 With [`proceed`](https://smikhalevski.github.io/react-corsair/interfaces/history.HistoryTransaction.html#proceed) and
-[`cancel`](https://smikhalevski.github.io/react-corsair/interfaces/history.HistoryTransaction.html#cancel) you can
-handle a navigation transaction in an asynchronous manner: 
+[`cancel`](https://smikhalevski.github.io/react-corsair/interfaces/history.HistoryTransaction.html#cancel) methods you
+can handle a navigation transaction in an asynchronous manner: 
 
 ```tsx
 useHistoryBlocker(transaction => {
@@ -1183,7 +1199,7 @@ const transaction = useHistoryBlocker(() => hasUnsavedChanges);
 // or
 // const transaction = useHistoryBlocker(hasUnsavedChanges);
 
-transaction && (
+transaction !== null && (
   <dialog open={true}>
     <p>{'Discard unsaved changes?'}</p>
 
@@ -1230,8 +1246,8 @@ hydrateRoot(
 ```
 
 > [!IMPORTANT]\
-> The location passed to `hydrateRouter` and set of routes passed to the `Router` must be the same as ones used during
-> the server-side rendering. Otherwise, hydration would have undefined behavior. 
+> The location passed to `hydrateRouter` and set of routes passed to the `Router` on the client-side must be the same
+> as ones used during the server-side rendering. Otherwise, hydration behavior is undefined. 
 
 [`hydrateRouter`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.hydrateRouter.html)
 must be called only once, and only one router on the client side can receive the dehydrated state from the server.
@@ -1241,8 +1257,8 @@ go, or [stream the contents](#streaming-ssr).
 
 ## Rendering disposition
 
-By default, during when SSR is used all routes are rendered both on the server side and on the client side. You can
-prevent server-side rendering for a route by specifying
+By default, when SSR is used, all routes are rendered both on the server side and on the client side. You can prevent
+server-side rendering for a route by specifying
 the [`renderingDisposition`](https://smikhalevski.github.io/react-corsair/interfaces/react_corsair.RouteOptions.html#renderingDisposition)
 option:
 

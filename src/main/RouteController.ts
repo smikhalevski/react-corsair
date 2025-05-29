@@ -1,5 +1,13 @@
 import { Router } from './Router.js';
-import { DataLoaderOptions, Dict, LoadingAppearance, RenderingDisposition, RouteState, To } from './types.js';
+import {
+  DataLoaderOptions,
+  Dict,
+  LoadingAppearance,
+  RenderingDisposition,
+  RouterEvent,
+  RouteState,
+  To,
+} from './types.js';
 import { Route } from './Route.js';
 import { ComponentType } from 'react';
 import { NOT_FOUND } from './notFound.js';
@@ -80,13 +88,13 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
   }
 
   /**
-   * Returns the successfully loaded route data, or throws an error if data wasn't loaded.
+   * Returns the loaded route data, or throws an error if the route isn't {@link status ready}.
    */
   get data(): Data {
     if (this._state.status === 'ready') {
       return this._state.data;
     }
-    throw new Error("The route data isn't ready");
+    throw new Error('The route data is unavailable: ' + this.status);
   }
 
   /**
@@ -119,7 +127,6 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
    */
   setError(error: any): void {
     const prevPromise = this.promise;
-    const pubSub = this.router['_pubSub'];
 
     this.promise = null;
     prevPromise?.abort(AbortError('The route loading was aborted'));
@@ -128,22 +135,22 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
 
     if (error === NOT_FOUND) {
       this._state = { status: 'not_found' };
-      pubSub.publish({ type: 'not_found', controller: this });
+      this._publish({ type: 'not_found', controller: this });
       return;
     }
 
     if (error instanceof Redirect) {
       this._state = { status: 'redirect', to: error.to };
-      pubSub.publish({ type: 'redirect', controller: this, to: error.to });
+      this._publish({ type: 'redirect', controller: this, to: error.to });
       return;
     }
 
     this._state = { status: 'error', error };
-    pubSub.publish({ type: 'error', controller: this, error });
+    this._publish({ type: 'error', controller: this, error });
   }
 
   /**
-   * Sets the provided `data` and loads route component if needed and then notifies {@link router} subscribers.
+   * Sets the provided data and loads the route component if it's not loaded yet.
    *
    * @param data The route data.
    */
@@ -154,14 +161,12 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
   }
 
   /**
-   * Reloads the data using {@link RouteOptions.dataLoader dataLoader}.
+   * Reloads the data using {@link RouteOptions.dataLoader dataLoader} and component if it's not loaded yet.
    *
    * **Note:** If there's no data loader then {@link data} is set to `undefined`.
    */
   reload(): AbortablePromise<Data> {
-    return this._load(options => {
-      return this.route.dataLoader !== undefined ? this.route.dataLoader(options) : undefined!;
-    });
+    return this._load(options => this.route.dataLoader?.(options) as Data);
   }
 
   /**
@@ -174,7 +179,14 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
   }
 
   /**
-   * Loads route data for this controller and loads the route component if not loaded yet.
+   * Publishes a router event.
+   */
+  protected _publish(event: RouterEvent): void {
+    this.router['_pubSub'].publish(event);
+  }
+
+  /**
+   * Loads the route data for this controller and loads the component if it's not loaded yet.
    *
    * Aborts pending {@link promise} if any.
    */
@@ -183,8 +195,6 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
   ): AbortablePromise<Data> {
     const { router, route, params } = this;
 
-    const pubSub = router['_pubSub'];
-
     const prevState = this._state;
     const prevPromise = this.promise;
 
@@ -192,12 +202,12 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
     prevPromise?.abort(AbortError('The route loading was aborted'));
 
     const promise = new AbortablePromise<Data>((resolve, reject, signal) => {
-      const handleAbort = () => {
-        if (this.promise !== promise || ((this.promise = null), this._state.status !== 'loading')) {
-          // Loading was superseded or background loading was aborted
-          pubSub.publish({ type: 'aborted', controller: this });
-        } else {
+      const handleAbort = (): void => {
+        if (this.promise === promise && ((this.promise = null), this._state.status === 'loading')) {
           this.setError(signal.reason);
+        } else {
+          // Loading was superseded or background loading was aborted
+          this._publish({ type: 'aborted', controller: this });
         }
       };
 
@@ -227,7 +237,7 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
 
         this._fallbackController = null;
         this._state = { status: 'ready', data };
-        pubSub.publish({ type: 'ready', controller: this });
+        this._publish({ type: 'ready', controller: this });
 
         resolve(data);
         return;
@@ -246,7 +256,7 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
 
           this._fallbackController = null;
           this._state = { status: 'ready', data };
-          pubSub.publish({ type: 'ready', controller: this });
+          this._publish({ type: 'ready', controller: this });
 
           resolve(data);
         },
@@ -272,7 +282,7 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
       return promise;
     }
 
-    // Component and data are being actively loaded
+    // Component and data are being loaded asynchronously
     if (
       // Should always show loadingComponent
       getLoadingAppearance(this) === 'always' ||
@@ -284,7 +294,7 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
     }
 
     this.promise = promise;
-    pubSub.publish({ type: 'loading', controller: this });
+    this._publish({ type: 'loading', controller: this });
 
     return promise;
   }

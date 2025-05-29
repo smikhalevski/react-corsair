@@ -2,18 +2,19 @@ import { To } from './types.js';
 import { reconcileControllers, RouteController } from './RouteController.js';
 import { useRouter } from './useRouter.js';
 import { useEffect, useRef, useState } from 'react';
-import { getTargetController } from './utils.js';
-import { isEqualLocation } from './Route.js';
+import { getDeepestController, isEqualLocation } from './utils.js';
 
 /**
- * Returns the controller of the route matched by the location.
+ * Returns the controller of the route that is matched inline.
  *
  * @example
+ * // Matches fooRoute using the router passed to the enclosing RouteProvider
  * const fooController = useInlineRoute(fooRoute);
  *
  * fooController !== null && <RouteOutlet controller={fooController} />
  *
  * @param to The location to render.
+ * @returns The controller of the matched route, or `null` if no route matched the provided location.
  * @see {@link RouteOutlet}
  * @group Routing
  */
@@ -42,5 +43,5 @@ export function useInlineRoute(to: To): RouteController | null {
     });
   }, [router, to]);
 
-  return getTargetController(controller);
+  return getDeepestController(controller);
 }
