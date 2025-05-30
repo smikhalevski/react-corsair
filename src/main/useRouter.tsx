@@ -57,14 +57,17 @@ export function RouterProvider(props: RouterProviderProps): ReactElement {
 
   const subscribe = useCallback((listener: () => void) => router.subscribe(listener), [router]);
 
-  useSyncExternalStore(subscribe, () => router.rootController);
-  useSyncExternalStore(subscribe, () => router.interceptedController);
+  const getRootController = () => router.rootController;
+  const getInterceptedController = () => router.interceptedController;
+
+  const rootController = useSyncExternalStore(subscribe, getRootController, getRootController);
+  const interceptedController = useSyncExternalStore(subscribe, getInterceptedController, getInterceptedController);
 
   return (
     <RouterContext.Provider value={router}>
       <RouteProvider value={null}>
-        <InterceptedRouteProvider value={router.interceptedController}>
-          <OutletProvider value={router.rootController || NOT_FOUND}>{children}</OutletProvider>
+        <InterceptedRouteProvider value={interceptedController}>
+          <OutletProvider value={rootController || NOT_FOUND}>{children}</OutletProvider>
         </InterceptedRouteProvider>
       </RouteProvider>
     </RouterContext.Provider>

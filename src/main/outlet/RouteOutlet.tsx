@@ -5,12 +5,13 @@ import {
   getNotFoundComponent,
   RouteController,
 } from '../RouteController.js';
-import React, { ExoticComponent, memo, ReactElement, Suspense, useCallback, useSyncExternalStore } from 'react';
+import React, { ExoticComponent, memo, ReactElement, Suspense } from 'react';
 import { RouteContent } from './RouteContent.js';
 import { RouteProvider } from '../useRoute.js';
 import { createMemoElement } from './utils.js';
 import { ErrorBoundary } from '../ErrorBoundary.js';
 import { OutletProvider } from './Outlet.js';
+import { useRouteSubscription } from '../useRouteSubscription.js';
 
 /**
  * Props of the {@link RouteOutlet} component.
@@ -48,9 +49,7 @@ function _RouteOutlet(props: RouteOutletProps): ReactElement {
     throw new Error('Expected a route controller');
   }
 
-  const subscribe = useCallback((listener: () => void) => controller.router.subscribe(listener), [controller]);
-
-  useSyncExternalStore(subscribe, () => controller['_state']);
+  useRouteSubscription(controller);
 
   const activeController = getActiveController(controller);
   const loadingComponent = getLoadingComponent(controller);
