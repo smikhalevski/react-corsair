@@ -238,9 +238,9 @@ export class Router<Context = any> {
    * @param listener A listener to subscribe.
    * @returns A callback that unsubscribe a listener.
    */
-  subscribe = (listener: (event: RouterEvent) => void): (() => void) => {
+  subscribe(listener: (event: RouterEvent) => void): () => void {
     return this._pubSub.subscribe(listener);
-  };
+  }
 
   /**
    * Registers a `route` interceptor, so when the `route` is {@link navigate navigated to} it populates
