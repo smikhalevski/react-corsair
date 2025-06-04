@@ -1,6 +1,6 @@
 {
   "name": "react-corsair",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Because routes are better then URLs.",
   "main": "./index.js",
   "module": "./index.mjs",
