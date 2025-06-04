@@ -1,10 +1,4 @@
-import {
-  getActiveController,
-  getErrorComponent,
-  getLoadingComponent,
-  getNotFoundComponent,
-  RouteController,
-} from '../RouteController.js';
+import { getActiveController, getLoadingComponent, RouteController } from '../RouteController.js';
 import React, { ExoticComponent, memo, ReactElement, Suspense } from 'react';
 import { RouteContent } from './RouteContent.js';
 import { RouteProvider } from '../useRoute.js';
@@ -12,6 +6,7 @@ import { createMemoElement } from './utils.js';
 import { ErrorBoundary } from '../ErrorBoundary.js';
 import { OutletProvider } from './Outlet.js';
 import { useRouteSubscription } from '../useRouteSubscription.js';
+import { isEqualError } from '../utils.js';
 
 /**
  * Props of the {@link RouteOutlet} component.
@@ -67,7 +62,21 @@ function _RouteOutlet(props: RouteOutletProps): ReactElement {
     ));
 
   const handleError = (error: unknown, errorBoundary: ErrorBoundary): void => {
-    handleRouteError(controller, error);
+    if (isEqualError(controller['_error'], error)) {
+      // The error was thrown by a data loader, and re-thrown during rendering because there's no corresponding component
+      throw error;
+    }
+
+    const prevStatus = controller.status;
+
+    controller.setError(error);
+
+    if (controller.status === prevStatus) {
+      // Cannot render the same status after it has caused an error
+      throw error;
+    }
+
+    // Reset the boundary so the controller is rendered again with the updated state
     errorBoundary.reset();
   };
 
@@ -82,28 +91,3 @@ function _RouteOutlet(props: RouteOutletProps): ReactElement {
 }
 
 _RouteOutlet.displayName = 'RouteOutlet';
-
-/**
- * Called when an {@link Outlet} that renders a `controller` has caught an `error` during rendering.
- */
-export function handleRouteError(controller: RouteController, error: unknown): void {
-  const prevStatus = controller.status;
-
-  controller.setError(error);
-
-  const nextStatus = controller.status;
-
-  if (
-    // Cannot render the same state after it has caused an error
-    nextStatus === prevStatus ||
-    // Cannot redirect from a loadingComponent because redirect renders a loadingComponent itself
-    (nextStatus === 'redirect' && prevStatus === 'loading') ||
-    // Rendering would cause an error because there's no component to render
-    (nextStatus === 'not_found' && getNotFoundComponent(controller) === undefined) ||
-    (nextStatus === 'redirect' && getLoadingComponent(controller) === undefined) ||
-    (nextStatus === 'error' && getErrorComponent(controller) === undefined)
-  ) {
-    // Rethrow an error that cannot be rendered, so an enclosing error boundary can catch it
-    throw error;
-  }
-}

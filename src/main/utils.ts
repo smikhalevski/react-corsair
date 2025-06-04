@@ -1,6 +1,7 @@
+import isDeepEqual from 'fast-deep-equal/es6/index.js';
 import { Location, To } from './types.js';
 import { RouteController } from './RouteController.js';
-import isDeepEqual from 'fast-deep-equal/es6/index.js';
+import { Redirect } from './Redirect.js';
 
 export function noop() {}
 
@@ -16,6 +17,10 @@ export function toLocation(to: To): Location {
 
 export function isEqualLocation(a: To | undefined, b: To | undefined): boolean {
   return a !== undefined && b !== undefined && isDeepEqual(toLocation(a), toLocation(b));
+}
+
+export function isEqualError(a: unknown, b: unknown): boolean {
+  return a === b || (a instanceof Redirect && b instanceof Redirect && isDeepEqual(a.to, b.to));
 }
 
 export function AbortError(message: string): Error {

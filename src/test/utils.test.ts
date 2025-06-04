@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import { isEqualLocation, toLocation } from '../main/utils.js';
-import { Location, To } from '../main/index.js';
+import { isEqualError, isEqualLocation, toLocation } from '../main/utils.js';
+import { Location, NOT_FOUND, Redirect, To } from '../main/index.js';
 
 describe('toLocation', () => {
   test('returns a location', () => {
@@ -71,5 +71,17 @@ describe('isEqualLocation', () => {
     expect(isEqualLocation(to, to)).toBe(true);
     expect(isEqualLocation(to, { getLocation: () => location })).toBe(true);
     expect(isEqualLocation(to, { getLocation: () => ({ ...location, pathname: '/aaa' }) })).toBe(false);
+  });
+});
+
+describe('isEqualError', () => {
+  test('returns true if errors are equal', () => {
+    expect(isEqualError(NOT_FOUND, NOT_FOUND)).toBe(true);
+
+    expect(isEqualError(new Error('aaa'), new Error('aaa'))).toBe(false);
+
+    expect(isEqualError(new Redirect('aaa'), new Redirect('aaa'))).toBe(true);
+    expect(isEqualError(new Redirect({ pathname: '/xxx' }), new Redirect({ pathname: '/xxx' }))).toBe(true);
+    expect(isEqualError(new Redirect({ pathname: '/xxx' }), new Redirect({ pathname: '/yyy' }))).toBe(false);
   });
 });

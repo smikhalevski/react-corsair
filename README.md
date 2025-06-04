@@ -744,7 +744,7 @@ const productRoute = createRoute<{ sku: string }>({
   component: ProductPage,
   notFoundComponent: ProductNotFound,
   
-  dataLoader: async () => {
+  dataLoader: () => {
     // 🟡 Try to load product here or call notFound
     notFound();
   }
@@ -768,40 +768,66 @@ function ProductPage() {
 
 ## Redirects
 
-During route component rendering, you can trigger a redirect by calling
-[`redirect`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.redirect.html) during rendering:
+Trigger redirect during [data loading](#data-loading) or during rendering.
+
+Call [`redirect`](https://smikhalevski.github.io/react-corsair/functions/react_corsair.redirect.html) during rendering:
 
 ```ts
 import { createRoute, redirect } from 'react-corsair';
 
 function AdminPage() {
-  redirect(loginRoute);
+  if (!isAdmin) {
+    redirect(loginRoute);
+  }
 }
 
 const adminRoute = createRoute('/admin', AdminPage);
 ```
 
-When `redirect` is called during rendering, router would render a
-[`loadingComponent`](https://smikhalevski.github.io/react-corsair/interfaces/react_corsair.RouteOptions.html#loadingComponent).
+Or call `redirect` from a data loader:
+
+```ts
+function AdminPage() {
+  // isAdmin is true during rendering
+}
+
+const adminRoute = createRoute({
+  pathname: '/admin',
+  component: AdminPage,
+  
+  // 🟡 A redirect is thrown before rendering begins
+  dataLoader: () => {
+    if (!isAdmin) {
+      redirect(loginRoute);
+    }
+  }
+});
+```
+
+Router would render a
+[`loadingComponent`](https://smikhalevski.github.io/react-corsair/interfaces/react_corsair.RouteOptions.html#loadingComponent) when `redirect` is called during a data loading or during rendering.
 
 `redirect` accepts routes, [locations](https://smikhalevski.github.io/react-corsair/interfaces/react_corsair.Location.html),
-and URL strings as an argument. Rect Corsair doesn't have a default behavior for redirects. Use a router event listener
-to handle redirects:
+and URL strings as an argument.
+
+Rect Corsair doesn't have a default behavior for redirects. Use a router event listener to handle redirects:
 
 ```ts
 const router = new Router({ routes: [adminRoute] });
 
 router.subscribe(event => {
-  // Capture a redirect event
-  if (event.type === 'redirect') {
-
-    if (typeof event.to === 'string') {
-      window.location.href = event.to;
-    } else {
-      // Navigate a router when redirected to a location 
-      router.navigate(event.to);
-    }
+  if (event.type !== 'redirect') {
+    // We don't care about non-redirect events in this example
+    return;
   }
+
+  if (typeof event.to === 'string') {
+    window.location.href = event.to;
+    return;
+  }
+
+  // Navigate a router when redirected to a location 
+  router.navigate(event.to);
 });
 ```
 

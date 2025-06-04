@@ -1,3 +1,4 @@
+import isDeepEqual from 'fast-deep-equal/es6/index.js';
 import { Router } from './Router.js';
 import {
   DataLoaderOptions,
@@ -15,7 +16,6 @@ import { Redirect } from './Redirect.js';
 import { AbortablePromise } from 'parallel-universe';
 import { AbortError, isPromiseLike, noop } from './utils.js';
 import { RouteMatch } from './matchRoutes.js';
-import isDeepEqual from 'fast-deep-equal/es6/index.js';
 
 /**
  * Manages state of a route rendered in an {@link Outlet}.
@@ -50,6 +50,11 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
    * The current state of the managed route. The state is reflected by an {@link Outlet}.
    */
   protected _state: RouteState<Data> = { status: 'loading' };
+
+  /**
+   * The latest error set by {@link setError}, or `undefined` if there's no error.
+   */
+  protected _error: unknown = undefined;
 
   /**
    * Creates a new {@link RouteController} instance.
@@ -131,6 +136,7 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
     this.promise = null;
     prevPromise?.abort(AbortError('The route loading was aborted'));
 
+    this._error = error;
     this._fallbackController = null;
 
     if (error === NOT_FOUND) {
@@ -200,6 +206,8 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
 
     this.promise = null;
     prevPromise?.abort(AbortError('The route loading was aborted'));
+
+    this._error = undefined;
 
     const promise = new AbortablePromise<Data>((resolve, reject, signal) => {
       const handleAbort = (): void => {

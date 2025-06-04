@@ -16,38 +16,54 @@ export interface RouteContentProps {
 export function RouteContent(props: RouteContentProps): ReactNode {
   const { controller } = props;
   const { route } = controller;
+  const state = controller['_state'];
+  const error = controller['_error'];
 
   let component;
   let childController = null;
 
-  switch (controller.status) {
+  switch (state.status) {
     case 'ready':
       component = route.component;
       childController = controller.childController;
+
+      if (component === undefined) {
+        throw new Error('Route is ready but has no component to render');
+      }
       break;
 
     case 'error':
       component = getErrorComponent(controller);
+
+      if (component === undefined) {
+        // Propagate to the parent route
+        throw error;
+      }
       break;
 
     case 'not_found':
       component = getNotFoundComponent(controller);
+
+      if (component === undefined) {
+        // Propagate to the parent route
+        throw error;
+      }
       break;
 
     case 'redirect':
       component = getLoadingComponent(controller);
+
+      if (component === undefined) {
+        // Propagate to the parent route
+        throw error;
+      }
       break;
 
     case 'loading':
-      // Ensure the controller was reloaded after instantiation
       throw controller.promise || new Error('Cannot suspend route controller');
 
     default:
-      throw new Error('Route controller has unknown status: ' + controller.status);
-  }
-
-  if (component === undefined) {
-    throw new Error('No component to render: ' + controller.status);
+      throw new Error('Route controller has unexpected status: ' + controller.status);
   }
 
   return (

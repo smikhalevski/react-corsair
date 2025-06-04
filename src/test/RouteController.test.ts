@@ -301,6 +301,7 @@ describe('RouteController', () => {
       controller.setError(error);
 
       expect(controller['_state']).toStrictEqual({ status: 'error', error } satisfies RouteState);
+      expect(controller['_error']).toBe(error);
       expect(listenerMock).toHaveBeenCalledTimes(1);
       expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'error', controller, error } satisfies RouterEvent);
     });
@@ -325,6 +326,7 @@ describe('RouteController', () => {
       controller.setData('zzz');
 
       expect(controller['_state']).toStrictEqual({ status: 'ready', data: 'zzz' } satisfies RouteState);
+      expect(controller['_error']).toBeUndefined();
       expect(listenerMock).toHaveBeenCalledTimes(1);
       expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'ready', controller } satisfies RouterEvent);
     });
@@ -334,6 +336,7 @@ describe('RouteController', () => {
 
       expect(controller.promise).not.toBeNull();
       expect(controller['_state']).toStrictEqual({ status: 'loading' } satisfies RouteState);
+      expect(controller['_error']).toBeUndefined();
       expect(listenerMock).toHaveBeenCalledTimes(1);
       expect(listenerMock).toHaveBeenNthCalledWith(1, { type: 'loading', controller } satisfies RouterEvent);
 
@@ -341,6 +344,7 @@ describe('RouteController', () => {
 
       expect(controller.promise).toBeNull();
       expect(controller['_state']).toStrictEqual({ status: 'ready', data: 'zzz' } satisfies RouteState);
+      expect(controller['_error']).toBeUndefined();
       expect(listenerMock).toHaveBeenCalledTimes(2);
       expect(listenerMock).toHaveBeenNthCalledWith(2, { type: 'ready', controller } satisfies RouterEvent);
     });
@@ -375,6 +379,7 @@ describe('RouteController', () => {
       controller.abort('xxx');
 
       expect(controller['_state']).toStrictEqual({ status: 'error', error: 'xxx' } satisfies RouteState);
+      expect(controller['_error']).toBe('xxx');
       expect(controller.promise).toBeNull();
       await expect(promise).rejects.toStrictEqual('xxx');
 
@@ -399,6 +404,7 @@ describe('RouteController', () => {
 
       expect(promise).not.toBeNull();
       expect(controller['_state']).toStrictEqual({ status: 'ready', data: 'aaa' } satisfies RouteState);
+      expect(controller['_error']).toBeUndefined();
       expect(controller.promise).toBeNull();
 
       expect(listenerMock).toHaveBeenCalledTimes(3);
