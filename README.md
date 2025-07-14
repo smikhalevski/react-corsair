@@ -6,10 +6,24 @@
   </picture></a>
 </p>
 
+<!--OVERVIEW-->
+Type-safe router that abstracts URLs away.
+
+- TypeScript first: type-safe path and query parameters;
+- [Code splitting](#code-splitting), [data loading](#data-loading) and [prefetching](#prefetching) out-of-the box;
+- [Route interception](#route-interception) and [inline routes](#inline-routes);
+- Expressive and concise API with strict typings;
+- Supports SSR, partial pre-rendering and Suspense;
+- Optional history integration;
+- [Just 9 kB gzipped](https://pkg-size.dev/react-corsair);
+- Check out the [Cookbook](#cookbook) for real-life examples!
+
 ```sh
 npm install --save-prod react-corsair
 ```
+<!--/OVERVIEW-->
 
+<!--TOC-->
 🔥&ensp;[**Live example**](https://codesandbox.io/p/sandbox/react-corsair-example-mzjzcm)
 
 🧭&ensp;[**Routing**](#routing)
@@ -46,7 +60,9 @@ npm install --save-prod react-corsair
 🍪&ensp;**Cookbook**
 
 - [Route masking](#route-masking)
+<!--/TOC-->
 
+<!--ARTICLE-->
 # Routing
 
 _URLs don't matter_, they are almost never part of the application domain logic. React Corsair is a router that
@@ -1589,6 +1605,7 @@ router.subscribe(event => {
   }
 });
 ```
+<!--/ARTICLE-->
 
 <hr/>
 
