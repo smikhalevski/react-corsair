@@ -27,7 +27,7 @@ export function AbortError(message: string): Error {
   return typeof DOMException !== 'undefined' ? new DOMException(message, 'AbortError') : Error(message);
 }
 
-export function getDeepestController(controller: RouteController | null): RouteController | null {
+export function getLeafController(controller: RouteController | null): RouteController | null {
   while (controller !== null && controller.childController !== null) {
     controller = controller.childController;
   }

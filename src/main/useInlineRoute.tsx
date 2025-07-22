@@ -2,7 +2,7 @@ import { To } from './types.js';
 import { reconcileControllers, RouteController } from './RouteController.js';
 import { useRouter } from './useRouter.js';
 import { useEffect, useRef, useState } from 'react';
-import { getDeepestController, isEqualLocation } from './utils.js';
+import { getLeafController, isEqualLocation } from './utils.js';
 
 /**
  * Returns the controller of the route that is matched inline.
@@ -43,5 +43,5 @@ export function useInlineRoute(to: To): RouteController | null {
     });
   }, [router, to]);
 
-  return getDeepestController(controller);
+  return getLeafController(controller);
 }
