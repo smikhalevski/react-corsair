@@ -1609,19 +1609,11 @@ const adminRoute = createRoute('/admin', AdminPage);
 
 const loginPage = createRoute('/login', LoginPage);
 
-// A set of routes that require user to be logged in
+// A set of routes that require a user to be logged in
 const privateRoutes = new Set([adminRoute]);
 
-// User status provided by your application
-const isLoggedIn = false;
-
 router.subscribe(event => {
-  if (
-    !isLoggedIn &&
-    event.type === 'navigate' &&
-    event.controller !== null &&
-    privateRoutes.has(event.controller.route)
-  ) {
+  if (event.type === 'navigate' && !isUserLoggedIn() && privateRoutes.has(event.controller.route)) {
     router.navigate(loginPage);
   }
 });
