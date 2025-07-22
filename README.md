@@ -63,6 +63,7 @@ npm install --save-prod react-corsair
 <span class="toc-icon">🍪&ensp;</span>**Cookbook**
 
 - [Route masking](#route-masking)
+- [Forbidden error](#forbidden-error)
 
 <!--/TOC-->
 
@@ -1625,6 +1626,53 @@ router.subscribe(event => {
   }
 });
 ```
+
+## Forbidden error
+
+To render an error-specific UI for a HTTP 403 Forbidden status, create an special error class and a helper function:
+
+```ts
+class ForbiddenError extends Error {}
+
+function forbidden(): never {
+  throw new ForbiddenError();
+}
+```
+
+Create a route that throws a `ForbiddenError`:
+
+```ts
+function AdminPanel() {
+  if (!isAdmin()) {
+    // 🟡 Not an admin!
+    forbidden();
+  }
+
+  // Render admin panel here
+}
+
+const adminRoute = createRoute('/admin', AdminPanel);
+```
+
+Handle `ForbiddenError` in an `errorComponent` of either a route or a router:
+
+```ts
+const router = new Router({
+  routes: [adminRoute],
+
+  errorComponent: () => {
+    const { error } = useRoute();
+
+    if (error instanceof ForbiddenError) {
+      return 'Forbidden';
+    }
+
+    return 'An error occurred';
+  },
+});
+```
+
+You can use `forbidden()` in a [data loader](#data-loading) or during rendering of a route component.
 
 <!--/ARTICLE-->
 
