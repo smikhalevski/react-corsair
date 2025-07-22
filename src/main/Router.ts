@@ -11,7 +11,7 @@ import {
   RouterOptions,
   To,
 } from './types.js';
-import { AbortError, getDeepestController, noop, toLocation } from './utils.js';
+import { AbortError, getLeafController, noop, toLocation } from './utils.js';
 import {
   getActiveController,
   getRenderingDisposition,
@@ -284,7 +284,7 @@ export class Router<Context = any> {
 
       if (
         interceptedRoutes.indexOf(route, index) === -1 &&
-        getDeepestController(this.interceptedController)?.route === route
+        getLeafController(this.interceptedController)?.route === route
       ) {
         this.cancelInterception();
       }
