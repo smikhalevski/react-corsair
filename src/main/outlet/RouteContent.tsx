@@ -4,7 +4,7 @@ import { RouteProvider } from '../useRoute.js';
 import { createMemoElement } from './utils.js';
 import { OutletProvider } from './Outlet.js';
 
-export interface RouteContentProps {
+interface RouteContentProps {
   controller: RouteController;
 }
 
@@ -34,29 +34,14 @@ export function RouteContent(props: RouteContentProps): ReactNode {
 
     case 'error':
       component = getErrorComponent(controller);
-
-      if (component === undefined) {
-        // Propagate to the parent route
-        throw error;
-      }
       break;
 
     case 'not_found':
       component = getNotFoundComponent(controller);
-
-      if (component === undefined) {
-        // Propagate to the parent route
-        throw error;
-      }
       break;
 
     case 'redirect':
       component = getLoadingComponent(controller);
-
-      if (component === undefined) {
-        // Propagate to the parent route
-        throw error;
-      }
       break;
 
     case 'loading':
@@ -64,6 +49,11 @@ export function RouteContent(props: RouteContentProps): ReactNode {
 
     default:
       throw new Error('Route controller has unexpected status: ' + controller.status);
+  }
+
+  if (component === undefined) {
+    // Propagate an error to a parent route
+    throw error;
   }
 
   return (

@@ -18,6 +18,7 @@ import {
   reconcileControllers,
   RouteController,
 } from './RouteController.js';
+import { NotFoundRouteController } from './NotFoundRouteController.js';
 
 /**
  * A router that matches routes by a location.
@@ -68,12 +69,11 @@ export class Router<Context = any> {
   renderingDisposition: RenderingDisposition | undefined;
 
   /**
-   * A root controller rendered in a router {@link react-corsair!Outlet Outlet}, or `null` if there's no matching route
-   * or if {@link navigate navigation} didn't occur yet.
+   * A root controller rendered in the topmost {@link react-corsair!Outlet Outlet}.
    *
    * @see {@link navigate}
    */
-  rootController: RouteController<any, any, Context> | null = null;
+  rootController: RouteController<any, any, Context> = new NotFoundRouteController(this, '');
 
   /**
    * A controller of the intercepted route, or `null` if there's no intercepted route.
@@ -85,7 +85,7 @@ export class Router<Context = any> {
   /**
    * The location of the latest router {@link navigate navigation}.
    */
-  location: Location | null = null;
+  location: Location = { pathname: '', searchParams: {}, hash: '', state: undefined };
 
   /**
    * An array of intercepted routes. Route can present multiple times in this array if {@link _registerInterceptedRoute}
@@ -136,14 +136,13 @@ export class Router<Context = any> {
 
     this.location = location;
 
-    let prevController;
-    let nextController;
+    let prevController: RouteController | null;
+    let nextController: RouteController | null;
 
     // Check that the matched route is intercepted
     const isIntercepted =
       !this.isSSR &&
       !options.isInterceptionBypassed &&
-      this.rootController !== null &&
       routeMatches.length !== 0 &&
       this._interceptedRoutes.indexOf(routeMatches[routeMatches.length - 1].route) !== -1;
 
@@ -154,7 +153,9 @@ export class Router<Context = any> {
       this.interceptedController = nextController;
     } else {
       prevController = getActiveController(this.rootController);
-      nextController = reconcileControllers(this, prevController, routeMatches);
+      nextController =
+        reconcileControllers(this, prevController, routeMatches) ||
+        new NotFoundRouteController(this, location.pathname);
 
       this.rootController = nextController;
       this.interceptedController = null;
@@ -221,13 +222,13 @@ export class Router<Context = any> {
     this.rootController = this.interceptedController;
     this.interceptedController = null;
 
-    prevRootController!.abort(AbortError('Route interception was cancelled'));
+    prevRootController.abort(AbortError('Route interception was cancelled'));
 
     this._pubSub.publish({
       type: 'navigate',
       controller: this.rootController,
       router: this,
-      location: this.location!,
+      location: this.location,
       isIntercepted: false,
     });
   }

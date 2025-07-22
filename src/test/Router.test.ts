@@ -5,6 +5,7 @@
 import { describe, expect, test, vi } from 'vitest';
 import { createRoute, DataLoaderOptions, Route, Router, RouterEvent } from '../main/index.js';
 import { AbortablePromise, delay } from 'parallel-universe';
+import { NotFoundRouteController } from '../main/NotFoundRouteController.js';
 
 test('creates a new router instance', () => {
   const routes: Route[] = [];
@@ -23,7 +24,7 @@ test('creates a new router instance', () => {
 
   expect(router.routes).toBe(routes);
   expect(router.context).toBe(context);
-  expect(router.rootController).toBeNull();
+  expect(router.rootController).toBeInstanceOf(NotFoundRouteController);
   expect(router.errorComponent).toBe(errorComponent);
   expect(router.loadingComponent).toBe(loadingComponent);
   expect(router.notFoundComponent).toBe(notFoundComponent);

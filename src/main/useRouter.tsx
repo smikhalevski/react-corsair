@@ -3,7 +3,6 @@ import { Outlet, OutletProvider } from './outlet/Outlet.js';
 import { Router } from './Router.js';
 import { RouteProvider } from './useRoute.js';
 import { RouteController } from './RouteController.js';
-import { NOT_FOUND } from './notFound.js';
 
 const RouterContext = createContext<Router | null>(null);
 
@@ -67,7 +66,7 @@ export function RouterProvider(props: RouterProviderProps): ReactElement {
     <RouterContext.Provider value={router}>
       <RouteProvider value={null}>
         <InterceptedRouteProvider value={interceptedController}>
-          <OutletProvider value={rootController || NOT_FOUND}>{children}</OutletProvider>
+          <OutletProvider value={rootController}>{children}</OutletProvider>
         </InterceptedRouteProvider>
       </RouteProvider>
     </RouterContext.Provider>

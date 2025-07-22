@@ -3,7 +3,7 @@ import { Location, To } from './types.js';
 import { RouteController } from './RouteController.js';
 import { Redirect } from './Redirect.js';
 
-export function noop() {}
+export function noop(): void {}
 
 export function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
   return value !== null && typeof value === 'object' && 'then' in value;
