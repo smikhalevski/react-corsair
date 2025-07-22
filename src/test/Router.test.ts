@@ -43,39 +43,43 @@ describe('navigate', () => {
 
     router.navigate(routeAaa);
 
-    expect(router.rootController!.route).toBe(routeAaa);
+    const controllerAaa = router.rootController;
+
+    expect(router.rootController.route).toBe(routeAaa);
     expect(listenerMock).toHaveBeenCalledTimes(2);
 
     expect(listenerMock).toHaveBeenNthCalledWith(1, {
       type: 'navigate',
+      prevController: expect.any(NotFoundRouteController),
+      prevLocation: { pathname: '', searchParams: {}, hash: '', state: undefined },
       controller: router.rootController,
-      router,
       location: { pathname: '/aaa', searchParams: {}, hash: '', state: undefined },
       isIntercepted: false,
     } satisfies RouterEvent);
 
     expect(listenerMock).toHaveBeenNthCalledWith(2, {
       type: 'ready',
-      controller: router.rootController!,
+      controller: router.rootController,
     } satisfies RouterEvent);
 
     router.navigate(routeBbb.getLocation({ xxx: 111 }));
 
-    expect(router.rootController!.route).toBe(routeBbb);
+    expect(router.rootController.route).toBe(routeBbb);
 
     expect(listenerMock).toHaveBeenCalledTimes(4);
 
     expect(listenerMock).toHaveBeenNthCalledWith(3, {
       type: 'navigate',
+      prevController: controllerAaa,
+      prevLocation: { pathname: '/aaa', searchParams: {}, hash: '', state: undefined },
       controller: router.rootController,
-      router,
       location: { pathname: '/bbb', searchParams: { xxx: 111 }, hash: '', state: undefined },
       isIntercepted: false,
     } satisfies RouterEvent);
 
     expect(listenerMock).toHaveBeenNthCalledWith(4, {
       type: 'ready',
-      controller: router.rootController!,
+      controller: router.rootController,
     } satisfies RouterEvent);
   });
 
@@ -114,15 +118,15 @@ describe('navigate', () => {
     const router = new Router({ routes: [routeAaa, routeBbb] });
 
     router.subscribe(event => {
-      if (event.type === 'navigate' && event.controller!.route === routeAaa) {
-        event.router.navigate(routeBbb);
+      if (event.type === 'navigate' && event.controller.route === routeAaa) {
+        event.controller.router.navigate(routeBbb);
       }
     });
 
     router.navigate(routeAaa);
 
     expect(dataLoaderMock).not.toHaveBeenCalled();
-    expect(router.rootController!.route).toBe(routeBbb);
+    expect(router.rootController.route).toBe(routeBbb);
   });
 
   test('intercepts a route', () => {
@@ -139,35 +143,37 @@ describe('navigate', () => {
 
     router.navigate(routeAaa);
 
-    expect(router.rootController!.route).toBe(routeAaa);
+    expect(router.rootController.route).toBe(routeAaa);
     expect(router.interceptedController).toBeNull();
 
     expect(listenerMock).toHaveBeenCalledTimes(2);
 
     expect(listenerMock).toHaveBeenNthCalledWith(1, {
       type: 'navigate',
+      prevController: expect.any(NotFoundRouteController),
+      prevLocation: { pathname: '', searchParams: {}, hash: '', state: undefined },
       controller: router.rootController,
-      router,
       location: { pathname: '/aaa', searchParams: {}, hash: '', state: undefined },
       isIntercepted: false,
     } satisfies RouterEvent);
 
     expect(listenerMock).toHaveBeenNthCalledWith(2, {
       type: 'ready',
-      controller: router.rootController!,
+      controller: router.rootController,
     } satisfies RouterEvent);
 
     router.navigate(routeBbb);
 
-    expect(router.rootController!.route).toBe(routeAaa);
+    expect(router.rootController.route).toBe(routeAaa);
     expect(router.interceptedController!.route).toBe(routeBbb);
 
     expect(listenerMock).toHaveBeenCalledTimes(4);
 
     expect(listenerMock).toHaveBeenNthCalledWith(3, {
       type: 'navigate',
-      controller: router.interceptedController,
-      router,
+      prevController: null,
+      prevLocation: { pathname: '/aaa', searchParams: {}, hash: '', state: undefined },
+      controller: router.interceptedController!,
       location: { pathname: '/bbb', searchParams: {}, hash: '', state: undefined },
       isIntercepted: true,
     } satisfies RouterEvent);
@@ -191,24 +197,28 @@ describe('navigate', () => {
     router['_registerInterceptedRoute'](routeBbb);
 
     router.navigate(routeAaa);
+
+    const controllerAaa = router.rootController;
+
     router.navigate(routeBbb, { isInterceptionBypassed: true });
 
-    expect(router.rootController!.route).toBe(routeBbb);
+    expect(router.rootController.route).toBe(routeBbb);
     expect(router.interceptedController).toBeNull();
 
     expect(listenerMock).toHaveBeenCalledTimes(4);
 
     expect(listenerMock).toHaveBeenNthCalledWith(3, {
       type: 'navigate',
+      prevController: controllerAaa,
+      prevLocation: { pathname: '/aaa', searchParams: {}, hash: '', state: undefined },
       controller: router.rootController,
-      router,
       location: { pathname: '/bbb', searchParams: {}, hash: '', state: undefined },
       isIntercepted: false,
     } satisfies RouterEvent);
 
     expect(listenerMock).toHaveBeenNthCalledWith(4, {
       type: 'ready',
-      controller: router.rootController!,
+      controller: router.rootController,
     } satisfies RouterEvent);
   });
 });
@@ -302,12 +312,12 @@ describe('_registerInterceptedRoute', () => {
     router.navigate(routeAaa);
     router.navigate(routeBbb);
 
-    expect(router.rootController!.route).toBe(routeAaa);
+    expect(router.rootController.route).toBe(routeAaa);
     expect(router.interceptedController!.route).toBe(routeBbb);
 
     unregister();
 
-    expect(router.rootController!.route).toBe(routeBbb);
+    expect(router.rootController.route).toBe(routeBbb);
     expect(router.interceptedController).toBeNull();
   });
 });
@@ -326,7 +336,7 @@ describe('cancelInterception', () => {
 
     router.cancelInterception();
 
-    expect(router.rootController!.route).toBe(routeBbb);
+    expect(router.rootController.route).toBe(routeBbb);
     expect(router.interceptedController).toBeNull();
   });
 
@@ -339,7 +349,7 @@ describe('cancelInterception', () => {
 
     router.cancelInterception();
 
-    expect(router.rootController!.route).toBe(route);
+    expect(router.rootController.route).toBe(route);
     expect(router.interceptedController).toBeNull();
   });
 
