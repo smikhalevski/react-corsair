@@ -34,8 +34,10 @@ export function useRoute(route?: Route) {
   let controller = useContext(RouteContext);
 
   // Controller lookup
-  while (route !== undefined && controller !== null && controller.route !== route) {
-    controller = controller.parentController;
+  if (route !== undefined) {
+    while (controller !== null && controller.route !== route) {
+      controller = controller.parentController;
+    }
   }
 
   if (controller === null) {
