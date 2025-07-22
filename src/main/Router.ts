@@ -131,13 +131,14 @@ export class Router<Context = any> {
    * @param options Navigate options.
    */
   navigate(to: To, options: NavigateOptions = {}): void {
+    const prevLocation = this.location;
     const location = toLocation(to);
     const routeMatches = matchRoutes(location.pathname, location.searchParams, this.routes);
 
     this.location = location;
 
     let prevController: RouteController | null;
-    let nextController: RouteController | null;
+    let nextController: RouteController;
 
     // Check that the matched route is intercepted
     const isIntercepted =
@@ -148,7 +149,7 @@ export class Router<Context = any> {
 
     if (isIntercepted) {
       prevController = getActiveController(this.interceptedController);
-      nextController = reconcileControllers(this, prevController, routeMatches);
+      nextController = reconcileControllers(this, prevController, routeMatches)!;
 
       this.interceptedController = nextController;
     } else {
@@ -161,7 +162,14 @@ export class Router<Context = any> {
       this.interceptedController = null;
     }
 
-    this._pubSub.publish({ type: 'navigate', controller: nextController, router: this, location, isIntercepted });
+    this._pubSub.publish({
+      type: 'navigate',
+      prevController,
+      prevLocation,
+      controller: nextController,
+      location,
+      isIntercepted,
+    });
 
     if (this.rootController !== nextController && this.interceptedController !== nextController) {
       // Navigation was superseded
@@ -169,7 +177,11 @@ export class Router<Context = any> {
     }
 
     // Lookup a controller that requires loading
-    for (let controller = nextController; controller !== null; controller = controller.childController) {
+    for (
+      let controller: RouteController | null = nextController;
+      controller !== null;
+      controller = controller.childController
+    ) {
       if (controller.status === 'loading' && (!this.isSSR || getRenderingDisposition(controller) === 'server')) {
         controller.reload();
       }
@@ -217,17 +229,18 @@ export class Router<Context = any> {
       return;
     }
 
-    const prevRootController = this.rootController;
+    const prevController = this.rootController;
 
     this.rootController = this.interceptedController;
     this.interceptedController = null;
 
-    prevRootController.abort(AbortError('Route interception was cancelled'));
+    prevController.abort(AbortError('Route interception was cancelled'));
 
     this._pubSub.publish({
       type: 'navigate',
+      prevController,
+      prevLocation: this.location,
       controller: this.rootController,
-      router: this,
       location: this.location,
       isIntercepted: false,
     });

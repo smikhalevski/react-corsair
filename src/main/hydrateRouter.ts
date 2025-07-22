@@ -52,6 +52,8 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
     },
   };
 
+  const prevController = router.rootController;
+  const prevLocation = router.location;
   const location = toLocation(to);
 
   const routeMatches = matchRoutes(location.pathname, location.searchParams, router.routes);
@@ -74,6 +76,7 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
 
   const rootController = controllers[0];
 
+  router.location = location;
   router.rootController = rootController;
 
   // Abort and cleanup hydration if navigation occurs
@@ -84,7 +87,14 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
     }
   });
 
-  router['_pubSub'].publish({ type: 'navigate', controller: rootController, router, location, isIntercepted: false });
+  router['_pubSub'].publish({
+    type: 'navigate',
+    prevController,
+    prevLocation,
+    controller: rootController,
+    location,
+    isIntercepted: false,
+  });
 
   if (router.rootController !== rootController) {
     // Hydrated navigation was superseded

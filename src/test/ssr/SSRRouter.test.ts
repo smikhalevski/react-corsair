@@ -75,7 +75,7 @@ describe('nextHydrationScript', () => {
     router.navigate(routeBbb);
     router.nextHydrationScript();
 
-    router.rootController!.childController!.setData('xxx');
+    router.rootController.childController!.setData('xxx');
 
     expect(router.nextHydrationScript()).toBe(
       'var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();s.set(1,"{\\"status\\":\\"ready\\",\\"data\\":\\"xxx\\"}");var e=document.currentScript;e&&e.parentNode.removeChild(e);'
@@ -101,7 +101,7 @@ describe('nextHydrationScript', () => {
     const router = new SSRRouter({ routes: [route] });
 
     router.navigate(route);
-    router.rootController!.setData('<script src="https://xxx.yyy"></script>');
+    router.rootController.setData('<script src="https://xxx.yyy"></script>');
 
     expect(router.nextHydrationScript()).toBe(
       'var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();s.set(0,"{\\"status\\":\\"ready\\",\\"data\\":\\"\\u003Cscript src=\\\\\\"https://xxx.yyy\\\\\\">\\u003C/script>\\"}");var e=document.currentScript;e&&e.parentNode.removeChild(e);'
@@ -158,11 +158,11 @@ describe('hasChanges', () => {
 
     router.navigate(route);
 
-    expect(router.rootController!['_state'].status).toBe('loading');
+    expect(router.rootController['_state'].status).toBe('loading');
 
     await expect(router.hasChanges()).resolves.toBe(true);
 
-    expect(router.rootController!['_state'].status).toBe('ready');
+    expect(router.rootController['_state'].status).toBe('ready');
   });
 
   describe('abort', () => {
@@ -176,12 +176,12 @@ describe('hasChanges', () => {
 
       router.navigate(route);
 
-      const promise = router.rootController!.promise;
+      const promise = router.rootController.promise;
 
       router.abort('xxx');
 
-      expect(router.rootController!['_state']).toStrictEqual({ status: 'error', error: 'xxx' } satisfies RouteState);
-      expect(router.rootController!.promise).toBeNull();
+      expect(router.rootController['_state']).toStrictEqual({ status: 'error', error: 'xxx' } satisfies RouteState);
+      expect(router.rootController.promise).toBeNull();
       await expect(promise).rejects.toBe('xxx');
     });
   });
