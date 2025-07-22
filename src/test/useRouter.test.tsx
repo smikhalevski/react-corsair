@@ -12,16 +12,19 @@ console.error = noop;
 
 describe('RouterProvider', () => {
   test('re-renders on navigation', () => {
-    const route = createRoute('/aaa', () => 'AAA');
-    const router = new Router({ routes: [route] });
+    const routeAaa = createRoute('/aaa', () => 'AAA');
+    const routeBbb = createRoute('/bbb', () => 'BBB');
+    const router = new Router({ routes: [routeAaa, routeBbb] });
+
+    router.navigate(routeAaa);
 
     const result = render(<RouterProvider value={router} />, { wrapper: StrictMode });
 
-    expect(result.container.innerHTML).toBe('');
-
-    act(() => router.navigate(route));
-
     expect(result.container.innerHTML).toBe('AAA');
+
+    act(() => router.navigate(routeBbb));
+
+    expect(result.container.innerHTML).toBe('BBB');
   });
 });
 

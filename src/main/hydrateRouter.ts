@@ -5,6 +5,8 @@ import { AbortError, noop, toLocation } from './utils.js';
 import { matchRoutes } from './matchRoutes.js';
 import { AbortablePromise } from 'parallel-universe';
 import { NotFoundRouteController } from './NotFoundRouteController.js';
+import { NotFoundError } from './notFound.js';
+import { Redirect } from './Redirect.js';
 
 /**
  * Options provided to {@link hydrateRouter}.
@@ -122,6 +124,17 @@ function setControllerState(controller: RouteController, state: RouteState): voi
 
   controller.promise = null;
   controller['_state'] = state;
+  controller['_error'] = undefined;
+
+  if (state.status === 'not_found') {
+    controller['_error'] = new NotFoundError();
+  }
+  if (state.status === 'redirect') {
+    controller['_error'] = new Redirect(state.to);
+  }
+  if (state.status === 'error') {
+    controller['_error'] = state.error;
+  }
 
   prevPromise?.abort(AbortError('The route was hydrated'));
 }

@@ -36,10 +36,12 @@ describe('navigate', () => {
 });
 
 describe('nextHydrationScript', () => {
-  test('returns an empty string if there no changes in state', () => {
+  test('returns not found hydration script', () => {
     const router = new SSRRouter({ routes: [] });
 
-    expect(router.nextHydrationScript()).toBe('');
+    expect(router.nextHydrationScript()).toBe(
+      'var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();s.set(0,"{\\"status\\":\\"not_found\\"}");var e=document.currentScript;e&&e.parentNode.removeChild(e);'
+    );
   });
 
   test('returns the hydration script for a single route', async () => {
@@ -108,10 +110,12 @@ describe('nextHydrationScript', () => {
 });
 
 describe('nextHydrationChunk', () => {
-  test('returns an empty string if there no changes in state', () => {
+  test('returns not found hydration script', () => {
     const router = new SSRRouter({ routes: [] });
 
-    expect(router.nextHydrationChunk()).toBe('');
+    expect(router.nextHydrationChunk()).toBe(
+      '<script>var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();s.set(0,"{\\"status\\":\\"not_found\\"}");var e=document.currentScript;e&&e.parentNode.removeChild(e);</script>'
+    );
   });
 
   test('returns the hydration script for a single route', async () => {
@@ -138,10 +142,10 @@ describe('nextHydrationChunk', () => {
 });
 
 describe('hasChanges', () => {
-  test('returns false if there are no pending routes', async () => {
+  test('returns true for not found route', async () => {
     const router = new SSRRouter({ routes: [] });
 
-    await expect(router.hasChanges()).resolves.toBe(false);
+    await expect(router.hasChanges()).resolves.toBe(true);
   });
 
   test('waits for pending executors to finish', async () => {
