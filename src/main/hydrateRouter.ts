@@ -4,6 +4,7 @@ import { getRenderingDisposition, RouteController } from './RouteController.js';
 import { AbortError, noop, toLocation } from './utils.js';
 import { matchRoutes } from './matchRoutes.js';
 import { AbortablePromise } from 'parallel-universe';
+import { NotFoundRouteController } from './NotFoundRouteController.js';
 
 /**
  * Options provided to {@link hydrateRouter}.
@@ -65,7 +66,8 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
     }
   }
 
-  const rootController = controllers.length !== 0 ? controllers[0] : null;
+  const rootController =
+    controllers.length !== 0 ? controllers[0] : new NotFoundRouteController(router, location.pathname);
 
   router.rootController = rootController;
 

@@ -5,7 +5,7 @@
  * @see {@link notFound}
  * @group Routing
  */
-export const NOT_FOUND = Symbol('Not found');
+export const NOT_FOUND = Symbol.for('ReactCorsair.notFound');
 
 /**
  * Throws an error that causes an enclosing {@link Outlet} to render a
