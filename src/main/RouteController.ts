@@ -11,7 +11,7 @@ import {
 } from './types.js';
 import { Route } from './Route.js';
 import { ComponentType } from 'react';
-import { NOT_FOUND } from './notFound.js';
+import { NotFoundError } from './notFound.js';
 import { Redirect } from './Redirect.js';
 import { AbortablePromise } from 'parallel-universe';
 import { AbortError, isPromiseLike, noop } from './utils.js';
@@ -113,7 +113,7 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
    * Causes an enclosing {@link Outlet} to render a {@link RouteOptions.notFoundComponent notFoundComponent}.
    */
   notFound(): void {
-    this.setError(NOT_FOUND);
+    this.setError(new NotFoundError());
   }
 
   /**
@@ -139,7 +139,7 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
     this._error = error;
     this._fallbackController = null;
 
-    if (error === NOT_FOUND) {
+    if (error instanceof NotFoundError) {
       this._state = { status: 'not_found' };
       this._publish({ type: 'not_found', controller: this });
       return;

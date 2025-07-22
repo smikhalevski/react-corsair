@@ -15,7 +15,7 @@ export { RouteOutlet, type RouteOutletProps } from './outlet/RouteOutlet.js';
 export { createRoute } from './createRoute.js';
 export { hydrateRouter, type HydrateRouterOptions } from './hydrateRouter.js';
 export { type RouteMatch } from './matchRoutes.js';
-export { notFound, NOT_FOUND } from './notFound.js';
+export { notFound, NotFoundError } from './notFound.js';
 export { PathnameTemplate, type PathnameMatch } from './PathnameTemplate.js';
 export { redirect, Redirect } from './Redirect.js';
 export { Route } from './Route.js';

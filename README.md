@@ -735,8 +735,8 @@ function ProductPage() {
 }
 ```
 
-`notFound` throws the [`NOT_FOUND`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/variables/react-corsair.NOT_FOUND.html)
-symbol and aborts further rendering of the route component. The `<Outlet>` catches `NOT_FOUND` and renders
+`notFound` throws the [`NotFoundError`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/classes/react-corsair.NotFoundError.html)
+symbol and aborts further rendering of the route component. The `<Outlet>` catches `NotFoundError` and renders
 a [`notFoundComponent`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/react-corsair.RouteOptions.html#notfoundcomponent)
 as a fallback:
 
