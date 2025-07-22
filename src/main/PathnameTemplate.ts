@@ -329,10 +329,14 @@ function escapeRegExp(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function encodePathname(str: string): string {
-  return str.replace(/[:*?]/g, encodeURIComponent);
+export function encodePathname(str: string): string {
+  return str.replace(/[:*?]/g, encodeChar);
 }
 
 function encodePathnameComponent(str: string): string {
-  return str.replace(/[:*?/]/g, encodeURIComponent);
+  return str.replace(/[:*?/]/g, encodeChar);
+}
+
+function encodeChar(str: string): string {
+  return '%' + str.charCodeAt(0).toString(16);
 }

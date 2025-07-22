@@ -103,7 +103,7 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
   }
 
   /**
-   * Returns the error that was thrown during component or data loading, or `undefined` if there was no error.
+   * Returns the error that was thrown during component or data loading, or `undefined` if {@link status} isn't "error".
    */
   get error(): any {
     return this._state.status === 'error' ? this._state.error : undefined;
