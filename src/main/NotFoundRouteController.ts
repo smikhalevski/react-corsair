@@ -1,8 +1,8 @@
+import { AbortablePromise } from 'parallel-universe';
 import { Route } from './Route.js';
 import { RouteController } from './RouteController.js';
 import { Router } from './Router.js';
 import { DataLoaderOptions } from './types.js';
-import { AbortablePromise } from 'parallel-universe';
 import { NotFoundError } from './notFound.js';
 import { encodePathname } from './PathnameTemplate.js';
 
@@ -37,11 +37,7 @@ export class NotFoundRouteController extends RouteController<{}, void> {
  */
 class NotFoundRoute extends Route {
   constructor(pathname: string) {
-    super(null, {
-      pathname: encodePathname(pathname),
-      isCaseSensitive: true,
-      component: NotFound,
-    });
+    super(null, { pathname: encodePathname(pathname), isCaseSensitive: true, component: NotFound });
   }
 }
 
