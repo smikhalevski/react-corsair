@@ -68,8 +68,11 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
     }
   }
 
-  const rootController =
-    controllers.length !== 0 ? controllers[0] : new NotFoundRouteController(router, location.pathname);
+  if (controllers.length === 0) {
+    controllers.push(new NotFoundRouteController(router, location.pathname));
+  }
+
+  const rootController = controllers[0];
 
   router.rootController = rootController;
 
@@ -105,7 +108,7 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
     // Server-rendering is in progress, defer hydration
     if (controller.status === 'loading') {
       // Start loading the route component ahead of time
-      void controller.route.loadComponent();
+      controller.route.loadComponent();
 
       controller.promise = new AbortablePromise(noop);
       controller.promise.catch(noop);
