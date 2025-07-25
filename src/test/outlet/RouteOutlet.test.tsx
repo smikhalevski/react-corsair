@@ -92,7 +92,7 @@ test('renders the nested route component in the nested Outlet', () => {
 test('renders route errorComponent if an error is thrown during rendering', () => {
   const listenerMock = vi.fn();
 
-  const error = new Error('Expected');
+  const error = new Error('expected');
 
   const route = createRoute({
     pathname: '/aaa',
@@ -142,7 +142,7 @@ test('renders route errorComponent if an error is thrown during rendering', () =
 });
 
 test('renders router errorComponent if an error is thrown during rendering', () => {
-  const error = new Error('Expected');
+  const error = new Error('expected');
 
   const route = createRoute({
     pathname: '/aaa',
@@ -172,7 +172,7 @@ test('renders router errorComponent if an error is thrown during rendering', () 
 test('error bubbles to the closest route with an errorComponent if an error is thrown during rendering ', () => {
   const listenerMock = vi.fn();
 
-  const error = new Error('Expected');
+  const error = new Error('expected');
 
   const routeAaa = createRoute({
     pathname: '/aaa',
@@ -241,7 +241,7 @@ test('error bubbles to the closest route with an errorComponent if an error is t
 test('error bubbles to the closest route with an errorComponent if an error is thrown from a data loader', () => {
   const listenerMock = vi.fn();
 
-  const error = new Error('Expected');
+  const error = new Error('expected');
 
   const routeAaa = createRoute({
     pathname: '/aaa',
@@ -304,7 +304,7 @@ test('error bubbles to the closest route with an errorComponent if an error is t
 });
 
 test('rendering throws an error if no errorComponent exists', () => {
-  const error = new Error('Expected');
+  const error = new Error('expected');
 
   const route = createRoute({
     pathname: '/aaa',
@@ -324,7 +324,7 @@ test('rendering throws an error if no errorComponent exists', () => {
 
 test('renders an errorComponent if an error is thrown from loadingComponent', () => {
   const listenerMock = vi.fn();
-  const error = new Error('Expected');
+  const error = new Error('expected');
 
   const route = createRoute({
     pathname: '/aaa',
@@ -377,7 +377,7 @@ test('renders an errorComponent if an error is thrown from loadingComponent', ()
 test('renders an errorComponent if an error is thrown from notFoundComponent', () => {
   const listenerMock = vi.fn();
 
-  const error = new Error('Expected');
+  const error = new Error('expected');
 
   const route = createRoute({
     pathname: '/aaa',
@@ -433,7 +433,7 @@ test('renders an errorComponent if an error is thrown from notFoundComponent', (
 test('redirect can be thrown from errorComponent', () => {
   const listenerMock = vi.fn();
 
-  const error = new Error('Expected');
+  const error = new Error('expected');
 
   const route = createRoute({
     pathname: '/aaa',

@@ -58,7 +58,7 @@ describe('RouteController', () => {
     });
 
     test('synchronously sets error', () => {
-      const error = new Error('Expected');
+      const error = new Error('expected');
 
       const dataLoaderMock = vi.fn(_options => {
         throw error;
@@ -142,7 +142,7 @@ describe('RouteController', () => {
     });
 
     test('asynchronously sets error', async () => {
-      const error = new Error('Expected');
+      const error = new Error('expected');
       const dataLoaderMock = vi.fn(_options => Promise.reject(error));
 
       const promise = controller['_load'](dataLoaderMock);
@@ -209,7 +209,7 @@ describe('RouteController', () => {
     });
 
     test('replaces current non-ready state with loading', async () => {
-      const error = new Error('Expected');
+      const error = new Error('expected');
       const dataLoaderMock = vi.fn(_options => Promise.resolve('zzz'));
 
       controller['_load'](() => {
@@ -295,7 +295,7 @@ describe('RouteController', () => {
   });
 
   describe('setError', () => {
-    const error = new Error('Expected');
+    const error = new Error('expected');
 
     test('sets state and notifies router', () => {
       controller.setError(error);
@@ -440,7 +440,7 @@ describe('RouteController', () => {
 
   describe('error', () => {
     test('returns the current error', () => {
-      const error = new Error('Expected');
+      const error = new Error('expected');
 
       expect(controller.error).toBeUndefined();
 
@@ -506,7 +506,7 @@ describe('reconcileControllers', () => {
 
     const controller1 = new RouteController(router, route, { yyy: 222 });
     controller1['_load'](() => {
-      throw new Error('Expected');
+      throw new Error('expected');
     });
 
     const controller2 = reconcileControllers(router, controller1, [{ route, params: { yyy: 222 } }])!;
@@ -590,7 +590,7 @@ describe('reconcileControllers', () => {
 
     const controller1 = new RouteController(router, route, { yyy: 222 });
     controller1['_load'](() => {
-      throw new Error('Expected');
+      throw new Error('expected');
     });
 
     const controller2 = reconcileControllers(router, controller1, [{ route, params: { yyy: 333 } }])!;

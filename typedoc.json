@@ -23,16 +23,19 @@
     "./src/main/ssr/index.ts",
     "./src/main/ssr/node/index.ts"
   ],
-  "intentionallyNotExported": ["Voidable", "CombineParams", "CONTEXT"],
+  "intentionallyNotExported": ["Dict", "CombineParams", "Voidable", "CONTEXT"],
   "kindSortOrder": ["Function", "Class", "Variable", "TypeAlias"],
   "groupOrder": ["Routing", "Prefetching", "Server-Side Rendering"],
   "externalSymbolLinkMappings": {
+    "parallel-universe": {
+      "AbortablePromise": "https://smikhalevski.github.io/parallel-universe/classes/AbortablePromise.html"
+    },
     "react": {
       "ComponentType": "https://react.dev/reference/react/createElement",
       "Suspense": "https://react.dev/reference/react/Suspense"
     },
-    "parallel-universe": {
-      "AbortablePromise": "https://smikhalevski.github.io/parallel-universe/classes/AbortablePromise.html"
+    "react-corsair": {
+      "StandardSchemaV1": "https://github.com/standard-schema/standard-schema#readme"
     }
   },
   "plugin": ["typedoc-plugin-mdn-links"]
