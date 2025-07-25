@@ -24,20 +24,20 @@ test('hydrates a post-populated root controller', async () => {
   hydrateRouter(router, { pathname: '/aaa' });
 
   expect(router.rootController).not.toBeNull();
-  expect(router.rootController!.route).toBe(route0);
-  expect(router.rootController!['_state'].status).toBe('loading');
-  expect(router.rootController!.parentController).toBeNull();
-  expect(router.rootController!.childController).toBeNull();
+  expect(router.rootController.route).toBe(route0);
+  expect(router.rootController['_state'].status).toBe('loading');
+  expect(router.rootController.parentController).toBeNull();
+  expect(router.rootController.childController).toBeNull();
 
-  const promise0 = router.rootController!.promise;
+  const promise0 = router.rootController.promise;
 
   expect(promise0).not.toBeNull();
 
   window.__REACT_CORSAIR_SSR_STATE__!.set(0, JSON.stringify({ status: 'ready', data: 'xxx' } satisfies RouteState));
 
-  expect(router.rootController!['_state'].status).toBe('ready');
-  expect(router.rootController!['_state']).toStrictEqual({ status: 'ready', data: 'xxx' });
-  expect(router.rootController!.promise).toBeNull();
+  expect(router.rootController['_state'].status).toBe('ready');
+  expect(router.rootController['_state']).toStrictEqual({ status: 'ready', data: 'xxx' });
+  expect(router.rootController.promise).toBeNull();
 
   await expect(promise0).rejects.toStrictEqual(AbortError('The route was hydrated'));
 });
@@ -51,28 +51,28 @@ test('hydrates a post-populated nested controller', async () => {
   hydrateRouter(router, { pathname: '/aaa/bbb' });
 
   expect(router.rootController).not.toBeNull();
-  expect(router.rootController!.route).toBe(route0);
-  expect(router.rootController!['_state'].status).toBe('loading');
-  expect(router.rootController!.parentController).toBeNull();
-  expect(router.rootController!.childController).not.toBeNull();
-  expect(router.rootController!.promise).not.toBeNull();
+  expect(router.rootController.route).toBe(route0);
+  expect(router.rootController['_state'].status).toBe('loading');
+  expect(router.rootController.parentController).toBeNull();
+  expect(router.rootController.childController).not.toBeNull();
+  expect(router.rootController.promise).not.toBeNull();
 
-  expect(router.rootController!.childController!.route).toBe(route1);
-  expect(router.rootController!.childController!['_state'].status).toBe('loading');
-  expect(router.rootController!.childController!.parentController).toBe(router.rootController);
-  expect(router.rootController!.childController!.childController).toBeNull();
+  expect(router.rootController.childController!.route).toBe(route1);
+  expect(router.rootController.childController!['_state'].status).toBe('loading');
+  expect(router.rootController.childController!.parentController).toBe(router.rootController);
+  expect(router.rootController.childController!.childController).toBeNull();
 
-  const promise1 = router.rootController!.childController!.promise;
+  const promise1 = router.rootController.childController!.promise;
 
   expect(promise1).not.toBeNull();
 
   window.__REACT_CORSAIR_SSR_STATE__!.set(1, JSON.stringify({ status: 'ready', data: 'xxx' } satisfies RouteState));
 
-  expect(router.rootController!['_state'].status).toBe('loading');
+  expect(router.rootController['_state'].status).toBe('loading');
 
-  expect(router.rootController!.childController!['_state'].status).toBe('ready');
-  expect(router.rootController!.childController!['_state']).toStrictEqual({ status: 'ready', data: 'xxx' });
-  expect(router.rootController!.childController!.promise).toBeNull();
+  expect(router.rootController.childController!['_state'].status).toBe('ready');
+  expect(router.rootController.childController!['_state']).toStrictEqual({ status: 'ready', data: 'xxx' });
+  expect(router.rootController.childController!.promise).toBeNull();
 
   await expect(promise1).rejects.toStrictEqual(AbortError('The route was hydrated'));
 });
@@ -89,11 +89,11 @@ test('hydrates a pre-populated root controller with OK state', () => {
   hydrateRouter(router, { pathname: '/aaa' });
 
   expect(router.rootController).not.toBeNull();
-  expect(router.rootController!.route).toBe(route0);
-  expect(router.rootController!['_state']).toStrictEqual({ status: 'ready', data: 'xxx' });
-  expect(router.rootController!.parentController).toBeNull();
-  expect(router.rootController!.childController).toBeNull();
-  expect(router.rootController!.promise).toBeNull();
+  expect(router.rootController.route).toBe(route0);
+  expect(router.rootController['_state']).toStrictEqual({ status: 'ready', data: 'xxx' });
+  expect(router.rootController.parentController).toBeNull();
+  expect(router.rootController.childController).toBeNull();
+  expect(router.rootController.promise).toBeNull();
 });
 
 test('hydrates a pre-populated root controller with loading state', () => {
@@ -106,11 +106,11 @@ test('hydrates a pre-populated root controller with loading state', () => {
   hydrateRouter(router, { pathname: '/aaa' });
 
   expect(router.rootController).not.toBeNull();
-  expect(router.rootController!.route).toBe(route0);
-  expect(router.rootController!['_state']).toStrictEqual({ status: 'loading' });
-  expect(router.rootController!.parentController).toBeNull();
-  expect(router.rootController!.childController).toBeNull();
-  expect(router.rootController!.promise).not.toBeNull();
+  expect(router.rootController.route).toBe(route0);
+  expect(router.rootController['_state']).toStrictEqual({ status: 'loading' });
+  expect(router.rootController.parentController).toBeNull();
+  expect(router.rootController.childController).toBeNull();
+  expect(router.rootController.promise).not.toBeNull();
 });
 
 test('hydrates a pre-populated nested controller', () => {
@@ -126,17 +126,17 @@ test('hydrates a pre-populated nested controller', () => {
   hydrateRouter(router, { pathname: '/aaa/bbb' });
 
   expect(router.rootController).not.toBeNull();
-  expect(router.rootController!.route).toBe(route0);
-  expect(router.rootController!['_state'].status).toStrictEqual('loading');
-  expect(router.rootController!.parentController).toBeNull();
-  expect(router.rootController!.childController).not.toBeNull();
-  expect(router.rootController!.promise).not.toBeNull();
+  expect(router.rootController.route).toBe(route0);
+  expect(router.rootController['_state'].status).toStrictEqual('loading');
+  expect(router.rootController.parentController).toBeNull();
+  expect(router.rootController.childController).not.toBeNull();
+  expect(router.rootController.promise).not.toBeNull();
 
-  expect(router.rootController!.childController!.route).toBe(route1);
-  expect(router.rootController!.childController!.parentController).toBe(router.rootController);
-  expect(router.rootController!.childController!.childController).toBeNull();
-  expect(router.rootController!.childController!['_state']).toStrictEqual({ status: 'ready', data: 'xxx' });
-  expect(router.rootController!.childController!.promise).toBeNull();
+  expect(router.rootController.childController!.route).toBe(route1);
+  expect(router.rootController.childController!.parentController).toBe(router.rootController);
+  expect(router.rootController.childController!.childController).toBeNull();
+  expect(router.rootController.childController!['_state']).toStrictEqual({ status: 'ready', data: 'xxx' });
+  expect(router.rootController.childController!.promise).toBeNull();
 });
 
 test('hydration is superseded by navigation', () => {
@@ -157,11 +157,11 @@ test('hydration is superseded by navigation', () => {
   hydrateRouter(router, { pathname: '/aaa' });
 
   expect(router.rootController).not.toBeNull();
-  expect(router.rootController!.route).toBe(route1);
-  expect(router.rootController!['_state'].status).toStrictEqual('ready');
-  expect(router.rootController!.parentController).toBeNull();
-  expect(router.rootController!.childController).toBeNull();
-  expect(router.rootController!.promise).toBeNull();
+  expect(router.rootController.route).toBe(route1);
+  expect(router.rootController['_state'].status).toStrictEqual('ready');
+  expect(router.rootController.parentController).toBeNull();
+  expect(router.rootController.childController).toBeNull();
+  expect(router.rootController.promise).toBeNull();
 });
 
 test('throws if hydration is started twice for the same router', () => {

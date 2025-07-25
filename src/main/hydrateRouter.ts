@@ -4,6 +4,9 @@ import { getRenderingDisposition, RouteController } from './RouteController.js';
 import { AbortError, noop, toLocation } from './utils.js';
 import { matchRoutes } from './matchRoutes.js';
 import { AbortablePromise } from 'parallel-universe';
+import { NotFoundRouteController } from './NotFoundRouteController.js';
+import { NotFoundError } from './notFound.js';
+import { Redirect } from './Redirect.js';
 
 /**
  * Options provided to {@link hydrateRouter}.
@@ -49,6 +52,8 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
     },
   };
 
+  const prevController = router.rootController;
+  const prevLocation = router.location;
   const location = toLocation(to);
 
   const routeMatches = matchRoutes(location.pathname, location.searchParams, router.routes);
@@ -65,8 +70,13 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
     }
   }
 
-  const rootController = controllers.length !== 0 ? controllers[0] : null;
+  if (controllers.length === 0) {
+    controllers.push(new NotFoundRouteController(router, location.pathname));
+  }
 
+  const rootController = controllers[0];
+
+  router.location = location;
   router.rootController = rootController;
 
   // Abort and cleanup hydration if navigation occurs
@@ -77,7 +87,14 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
     }
   });
 
-  router['_pubSub'].publish({ type: 'navigate', controller: rootController, router, location, isIntercepted: false });
+  router['_pubSub'].publish({
+    type: 'navigate',
+    prevController,
+    prevLocation,
+    controller: rootController,
+    location,
+    isIntercepted: false,
+  });
 
   if (router.rootController !== rootController) {
     // Hydrated navigation was superseded
@@ -101,7 +118,7 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
     // Server-rendering is in progress, defer hydration
     if (controller.status === 'loading') {
       // Start loading the route component ahead of time
-      void controller.route.loadComponent();
+      controller.route.loadComponent();
 
       controller.promise = new AbortablePromise(noop);
       controller.promise.catch(noop);
@@ -120,6 +137,17 @@ function setControllerState(controller: RouteController, state: RouteState): voi
 
   controller.promise = null;
   controller['_state'] = state;
+  controller['_error'] = undefined;
+
+  if (state.status === 'not_found') {
+    controller['_error'] = new NotFoundError();
+  }
+  if (state.status === 'redirect') {
+    controller['_error'] = new Redirect(state.to);
+  }
+  if (state.status === 'error') {
+    controller['_error'] = state.error;
+  }
 
   prevPromise?.abort(AbortError('The route was hydrated'));
 }

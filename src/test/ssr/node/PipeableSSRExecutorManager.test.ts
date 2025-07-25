@@ -19,7 +19,7 @@ describe('PipeableSSRRouter', () => {
     const router = new PipeableSSRRouter(outputStream, { routes: [route] });
 
     router.navigate(route);
-    router.rootController!.setData('zzz');
+    router.rootController.setData('zzz');
 
     router.stream.write('aaa</script>');
 
@@ -47,7 +47,7 @@ describe('PipeableSSRRouter', () => {
     const router = new PipeableSSRRouter(outputStream, { routes: [route] });
 
     router.navigate(route);
-    router.rootController!.setData('zzz');
+    router.rootController.setData('zzz');
 
     router.stream.write('aaa</script>');
     router.stream.write('bbb');

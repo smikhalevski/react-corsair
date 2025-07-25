@@ -72,12 +72,20 @@ export class SSRRouter<Context = any> extends Router<Context> {
   hasChanges(): Promise<boolean> {
     const promises = [];
 
-    for (let controller = this.rootController; controller !== null; controller = controller.childController) {
+    for (
+      let controller: RouteController | null = this.rootController;
+      controller !== null;
+      controller = controller.childController
+    ) {
       promises.push(controller.promise);
     }
 
     return Promise.all(promises).then(() => {
-      for (let controller = this.rootController; controller !== null; controller = controller.childController) {
+      for (
+        let controller: RouteController | null = this.rootController;
+        controller !== null;
+        controller = controller.childController
+      ) {
         if (this._hydratedStates.get(controller) !== controller['_state']) {
           return true;
         }
@@ -108,7 +116,7 @@ export class SSRRouter<Context = any> extends Router<Context> {
     let script = '';
 
     for (
-      let controller = this.rootController, index = 0;
+      let controller: RouteController | null = this.rootController, index = 0;
       controller !== null;
       controller = controller.childController, index++
     ) {
@@ -144,7 +152,11 @@ export class SSRRouter<Context = any> extends Router<Context> {
    * @param reason The abort reason that is used for rejection of the loading promise.
    */
   abort(reason?: unknown): void {
-    for (let controller = this.rootController; controller !== null; controller = controller.childController) {
+    for (
+      let controller: RouteController | null = this.rootController;
+      controller !== null;
+      controller = controller.childController
+    ) {
       controller.abort(reason);
     }
   }
