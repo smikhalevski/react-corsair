@@ -12,6 +12,38 @@ test('throws if both component and lazyComponent are provided', () => {
   ).toThrow(new Error('Route must have either a component or a lazyComponent'));
 });
 
+test('parses params with Standard Schema params adapter', () => {
+  const route = createRoute({
+    paramsAdapter: {
+      ['~standard']: {
+        validate(_params) {
+          return { value: { bbb: 222 } };
+        },
+        vendor: 'test',
+        version: 1,
+      },
+    },
+  });
+
+  expect(route.paramsAdapter!.fromRawParams!({ aaa: 111 }, {})).toEqual({ bbb: 222 });
+});
+
+test('throws error if Standard Schema params adapter returns issues', () => {
+  const route = createRoute({
+    paramsAdapter: {
+      ['~standard']: {
+        validate(_params) {
+          return { issues: [] };
+        },
+        vendor: 'test',
+        version: 1,
+      },
+    },
+  });
+
+  expect(route.paramsAdapter!.fromRawParams!({ aaa: 111 }, {})).toBeNull();
+});
+
 describe('loadComponent', () => {
   test('returns an Outlet if there is no component', async () => {
     const route = createRoute();
@@ -238,8 +270,7 @@ describe('getLocation', () => {
     const route = createRoute({
       pathname: 'aaa/:xxx',
       paramsAdapter: {
-        parse: params => params,
-        toSearchParams: _prams => ({ vvv: 111 }),
+        toSearchParams: _params => ({ vvv: 111 }),
       },
     });
 
@@ -255,8 +286,7 @@ describe('getLocation', () => {
     const aaaRoute = createRoute({
       pathname: 'aaa',
       paramsAdapter: {
-        parse: params => params,
-        toSearchParams: _prams => ({ vvv: 111 }),
+        toSearchParams: _params => ({ vvv: 111 }),
       },
     });
 
@@ -275,7 +305,6 @@ describe('getLocation', () => {
 
   test('adds search params via adapter', () => {
     const paramsAdapter: ParamsAdapter<any> = {
-      parse: params => params,
       toSearchParams: vi.fn(_params => ({ ccc: 'yyy' })),
     };
 

@@ -80,8 +80,8 @@ test('uses params adapter to parse params', () => {
   ]);
 
   expect(aaaParamsAdapterMock).toHaveBeenCalledTimes(1);
-  expect(aaaParamsAdapterMock).toHaveBeenNthCalledWith(1, { lll: '222', ttt: '111', xxx: 'ppp' });
+  expect(aaaParamsAdapterMock).toHaveBeenNthCalledWith(1, { lll: '222', ttt: '111' }, { xxx: 'ppp' });
 
   expect(bbbParamsAdapterMock).toHaveBeenCalledTimes(1);
-  expect(bbbParamsAdapterMock).toHaveBeenNthCalledWith(1, { lll: '222', ttt: '111', xxx: 'ppp', yyy: 'qqq' });
+  expect(bbbParamsAdapterMock).toHaveBeenNthCalledWith(1, { lll: '222', ttt: '111' }, { xxx: 'ppp', yyy: 'qqq' });
 });

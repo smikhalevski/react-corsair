@@ -65,19 +65,32 @@ export interface LocationOptions {
 }
 
 /**
+ * An adapter that can validate and transform params extracted from the {@link Location.pathname} and
+ * {@link Location.searchParams}.
+ *
+ * @template Params Route params.
+ * @group Routing
+ */
+export type ParamsAdapterLike<Params extends Dict> =
+  | ParamsAdapter<Params>
+  | StandardSchemaV1<any, Params>
+  | ((searchParams: Dict, pathnameParams: Dict) => Params | null);
+
+/**
  * An adapter that can validate and transform route params.
  *
  * @template Params Route params.
  * @group Routing
  */
-export interface ParamsAdapter<Params> {
+export interface ParamsAdapter<Params extends Dict> {
   /**
-   * Validates and transforms params extracted from a {@link Location.pathname} and {@link Location.searchParams}.
+   * Converts params extracted from a {@link Location.pathname} and {@link Location.searchParams} to route params.
    *
-   * @param params A dictionary that contains both pathname and search params.
-   * @returns Route params.
+   * @param searchParams Params from {@link Location.searchParams}.
+   * @param pathnameParams Params from a {@link Location.pathname}.
+   * @returns Route params, or `null` if params are invalid.
    */
-  parse(params: Dict): Params;
+  fromRawParams?(searchParams: Dict, pathnameParams: Dict): Params | null;
 
   /**
    * Converts route params to {@link Location.pathname} params.
@@ -174,18 +187,6 @@ export interface ComponentModule {
 }
 
 /**
- * An adapter that can validate and transform params extracted from the {@link Location.pathname} and
- * {@link Location.searchParams}.
- *
- * @template Params Route params.
- * @group Routing
- */
-export type ParamsAdapterLike<Params> =
-  | ParamsAdapter<Params>
-  | ParamsAdapter<Params>['parse']
-  | StandardSchemaV1<any, Params>;
-
-/**
  * Options of a {@link Route}.
  *
  * @template Params Route params.
@@ -247,14 +248,14 @@ export interface RouteOptions<Params extends Dict, Data, Context> {
    * An adapter that can validate and transform params extracted from the {@link Location.pathname} and
    * {@link Location.searchParams}.
    *
-   * Params are available in route all components via {@link useRoute useRoute().params}.
+   * Params are available in route components via {@link useRoute useRoute().params}.
    */
   paramsAdapter?: ParamsAdapterLike<Params>;
 
   /**
    * A callback that loads data required to render a route.
    *
-   * Loaded data is available in route {@link component} via {@link useRoute useRoute().data}.
+   * Loaded data is available in route components via {@link useRoute useRoute().data}.
    *
    * @param options Loader options.
    */

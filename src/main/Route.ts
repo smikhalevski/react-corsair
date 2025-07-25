@@ -238,28 +238,24 @@ export class Route<ParentRoute extends Route | null = any, Params extends Dict =
   }
 }
 
-function toParamsAdapter<Params>(paramsAdapter: ParamsAdapterLike<Params>): ParamsAdapter<Params> {
-  if ('parse' in paramsAdapter) {
+function toParamsAdapter<Params extends Dict>(paramsAdapter: ParamsAdapterLike<Params>): ParamsAdapter<Params> {
+  if (typeof paramsAdapter === 'function') {
+    return { fromRawParams: paramsAdapter };
+  }
+
+  if (!('~standard' in paramsAdapter)) {
     return paramsAdapter;
   }
 
-  if (typeof paramsAdapter === 'function') {
-    return { parse: paramsAdapter };
-  }
-
   return {
-    parse(params) {
-      const result = paramsAdapter['~standard'].validate(params);
+    fromRawParams(searchParams, pathnameParams) {
+      const result = paramsAdapter['~standard'].validate({ ...searchParams, ...pathnameParams });
 
       if (result instanceof Promise) {
         throw new Error('Params adapter must be synchronous');
       }
 
-      if (result.issues === undefined) {
-        return result.value;
-      }
-
-      throw new Error('Params validation has failed');
+      return result.issues === undefined ? result.value : null;
     },
   };
 }
