@@ -10,13 +10,13 @@
 
 Type-safe router that abstracts URLs away.
 
-- TypeScript first: type-safe path and query parameters;
-- [Code splitting](#code-splitting), [data loading](#data-loading) and [prefetching](#prefetching) out-of-the box;
-- [Route interception](#route-interception) and [inline routes](#inline-routes);
-- Expressive and concise API with strict typings;
-- Supports SSR, partial pre-rendering and Suspense;
-- Optional history integration;
-- [Just 9&#8239;kB gzipped&#8239;<sup>↗</sup>](https://pkg-size.dev/react-corsair);
+- TypeScript first: type-safe path and query parameters.
+- [Code splitting](#code-splitting), [data loading](#data-loading) and [prefetching](#prefetching) out-of-the box.
+- [Route interception](#route-interception) and [inline routes](#inline-routes).
+- Expressive and concise API with strict typings.
+- Supports SSR, partial pre-rendering and Suspense.
+- Optional history integration.
+- [Just 9&#8239;kB gzipped&#8239;<sup>↗</sup>](https://pkg-size.dev/react-corsair).
 - Check out the [Cookbook](#cookbook) for real-life examples!
 
 ```sh
