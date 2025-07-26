@@ -2,6 +2,7 @@ import { ComponentType } from 'react';
 import { Route } from './Route.js';
 import { Router } from './Router.js';
 import { RouteController } from './RouteController.js';
+import { StandardSchemaV1 } from './vendor/standard-schema.js';
 
 /**
  * @group Other
@@ -64,19 +65,32 @@ export interface LocationOptions {
 }
 
 /**
+ * An adapter that can validate and transform params extracted from the {@link Location.pathname} and
+ * {@link Location.searchParams}.
+ *
+ * @template Params Route params.
+ * @group Routing
+ */
+export type ParamsAdapterLike<Params extends Dict> =
+  | ParamsAdapter<Params>
+  | StandardSchemaV1<any, Params>
+  | ((searchParams: Dict, pathnameParams: Dict) => Params | null);
+
+/**
  * An adapter that can validate and transform route params.
  *
  * @template Params Route params.
  * @group Routing
  */
-export interface ParamsAdapter<Params> {
+export interface ParamsAdapter<Params extends Dict> {
   /**
-   * Validates and transforms params extracted from a {@link Location.pathname} and {@link Location.searchParams}.
+   * Converts params extracted from a {@link Location.pathname} and {@link Location.searchParams} to route params.
    *
-   * @param params A dictionary that contains both pathname and search params.
-   * @returns Route params.
+   * @param searchParams Params from {@link Location.searchParams}.
+   * @param pathnameParams Params from a {@link Location.pathname}.
+   * @returns Route params, or `null` if params are invalid.
    */
-  parse(params: Dict): Params;
+  fromRawParams?(searchParams: Dict, pathnameParams: Dict): Params | null;
 
   /**
    * Converts route params to {@link Location.pathname} params.
@@ -234,14 +248,14 @@ export interface RouteOptions<Params extends Dict, Data, Context> {
    * An adapter that can validate and transform params extracted from the {@link Location.pathname} and
    * {@link Location.searchParams}.
    *
-   * Params are available in route all components via {@link useRoute useRoute().params}.
+   * Params are available in route components via {@link useRoute useRoute().params}.
    */
-  paramsAdapter?: ParamsAdapter<Params> | ParamsAdapter<Params>['parse'];
+  paramsAdapter?: ParamsAdapterLike<Params>;
 
   /**
    * A callback that loads data required to render a route.
    *
-   * Loaded data is available in route {@link component} via {@link useRoute useRoute().data}.
+   * Loaded data is available in route components via {@link useRoute useRoute().data}.
    *
    * @param options Loader options.
    */
@@ -375,7 +389,7 @@ export interface NavigateOptions {
 /**
  * An event published by a {@link Router} after a {@link Router.navigate navigation} occurs.
  *
- * @group Routing
+ * @group Router Events
  */
 export interface NavigateEvent {
   /**
@@ -409,7 +423,7 @@ export interface NavigateEvent {
 /**
  * An event published by a {@link Router} when a route component or its data are being loaded.
  *
- * @group Routing
+ * @group Router Events
  */
 export interface LoadingEvent {
   /**
@@ -426,7 +440,7 @@ export interface LoadingEvent {
 /**
  * An event published by a {@link Router} when a route loading was aborted.
  *
- * @group Routing
+ * @group Router Events
  */
 export interface AbortedEvent {
   /**
@@ -443,7 +457,7 @@ export interface AbortedEvent {
 /**
  * An event published by a {@link Router} when a route component and its data are successfully loaded.
  *
- * @group Routing
+ * @group Router Events
  */
 export interface ReadyEvent {
   /**
@@ -460,7 +474,7 @@ export interface ReadyEvent {
 /**
  * An event published by a {@link Router} when an error was thrown by a component or by a data loader.
  *
- * @group Routing
+ * @group Router Events
  */
 export interface ErrorEvent {
   /**
@@ -482,7 +496,7 @@ export interface ErrorEvent {
 /**
  * An event published by a {@link Router} when a {@link notFound} was called from a component or a data loader.
  *
- * @group Routing
+ * @group Router Events
  */
 export interface NotFoundEvent {
   /**
@@ -499,7 +513,7 @@ export interface NotFoundEvent {
 /**
  * An event published by a {@link Router} when a {@link redirect} was called from a component or a data loader.
  *
- * @group Routing
+ * @group Router Events
  */
 export interface RedirectEvent {
   /**
@@ -521,7 +535,7 @@ export interface RedirectEvent {
 /**
  * An event published by a {@link Router}.
  *
- * @group Routing
+ * @group Router Events
  */
 export type RouterEvent =
   | NavigateEvent
@@ -535,7 +549,7 @@ export type RouterEvent =
 /**
  * The state of a route that is being actively loaded.
  *
- * @group Routing
+ * @group Route State
  */
 export interface LoadingState {
   /**
@@ -548,7 +562,7 @@ export interface LoadingState {
  * The state of a route for which the component and data were loaded.
  *
  * @template Data Data loaded by a route.
- * @group Routing
+ * @group Route State
  */
 export interface ReadyState<Data> {
   /**
@@ -565,7 +579,7 @@ export interface ReadyState<Data> {
 /**
  * The state of a route which has thrown an error during rendering or from a data loader.
  *
- * @group Routing
+ * @group Route State
  */
 export interface ErrorState {
   /**
@@ -582,7 +596,7 @@ export interface ErrorState {
 /**
  * The state of a route that was marked as not found.
  *
- * @group Routing
+ * @group Route State
  */
 export interface NotFoundState {
   /**
@@ -594,7 +608,7 @@ export interface NotFoundState {
 /**
  * The state of a route that has requested a redirect.
  *
- * @group Routing
+ * @group Route State
  */
 export interface RedirectState {
   /**
@@ -612,6 +626,6 @@ export interface RedirectState {
  * State used by a {@link RouteController}.
  *
  * @template Data Data loaded by a route.
- * @group Routing
+ * @group Route State
  */
 export type RouteState<Data = any> = LoadingState | ReadyState<Data> | ErrorState | NotFoundState | RedirectState;

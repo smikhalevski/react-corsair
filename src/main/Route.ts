@@ -8,6 +8,7 @@ import {
   Location,
   LocationOptions,
   ParamsAdapter,
+  ParamsAdapterLike,
   RenderingDisposition,
   RouteOptions,
 } from './types.js';
@@ -130,7 +131,7 @@ export class Route<ParentRoute extends Route | null = any, Params extends Dict =
 
     this.parentRoute = parentRoute;
     this.pathnameTemplate = new PathnameTemplate(options.pathname || '/', options.isCaseSensitive);
-    this.paramsAdapter = typeof paramsAdapter === 'function' ? { parse: paramsAdapter } : paramsAdapter;
+    this.paramsAdapter = paramsAdapter === undefined ? undefined : toParamsAdapter(paramsAdapter);
     this.dataLoader = options.dataLoader;
     this.errorComponent = options.errorComponent;
     this.loadingComponent = options.loadingComponent;
@@ -235,4 +236,26 @@ export class Route<ParentRoute extends Route | null = any, Params extends Dict =
       state,
     };
   }
+}
+
+function toParamsAdapter<Params extends Dict>(paramsAdapter: ParamsAdapterLike<Params>): ParamsAdapter<Params> {
+  if (typeof paramsAdapter === 'function') {
+    return { fromRawParams: paramsAdapter };
+  }
+
+  if (!('~standard' in paramsAdapter)) {
+    return paramsAdapter;
+  }
+
+  return {
+    fromRawParams(searchParams, pathnameParams) {
+      const result = paramsAdapter['~standard'].validate({ ...searchParams, ...pathnameParams });
+
+      if (result instanceof Promise) {
+        throw new Error('Params adapter must be synchronous');
+      }
+
+      return result.issues === undefined ? result.value : null;
+    },
+  };
 }

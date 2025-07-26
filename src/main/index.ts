@@ -26,5 +26,31 @@ export { useInterceptedRoute } from './useInterceptedRoute.js';
 export { usePrefetch, Prefetch, type PrefetchProps } from './usePrefetch.js';
 export { useRoute } from './useRoute.js';
 export { useRouter, RouterProvider, type RouterProviderProps } from './useRouter.js';
-
-export type * from './types.js';
+export type {
+  AbortedEvent,
+  ComponentModule,
+  DataLoaderOptions,
+  ErrorEvent,
+  ErrorState,
+  LoadingAppearance,
+  LoadingEvent,
+  LoadingState,
+  Location,
+  LocationOptions,
+  NavigateEvent,
+  NavigateOptions,
+  NotFoundEvent,
+  NotFoundState,
+  ParamsAdapter,
+  ParamsAdapterLike,
+  ReadyEvent,
+  ReadyState,
+  RedirectEvent,
+  RedirectState,
+  RenderingDisposition,
+  RouteOptions,
+  RouteState,
+  RouterEvent,
+  RouterOptions,
+  To,
+} from './types.js';

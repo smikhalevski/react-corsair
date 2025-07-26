@@ -38,11 +38,14 @@ export function matchRoutes(pathname: string, searchParams: Dict, routes: readon
       continue;
     }
 
-    try {
-      return getRouteMatches(route, searchParams, cache);
-    } catch {
+    const routeMatches = getRouteMatches(route, searchParams, cache);
+
+    if (routeMatches === null) {
       // Cannot match params, proceed to the next route
+      continue;
     }
+
+    return routeMatches;
   }
 
   return [];
@@ -71,18 +74,34 @@ function matchPathname(pathname: string, route: Route, cache: Map<Route, Pathnam
   return match;
 }
 
-function getRouteMatches(route: Route, searchParams: Dict, cache: Map<Route, PathnameMatch | null>): RouteMatch[] {
+function getRouteMatches(
+  route: Route,
+  searchParams: Dict,
+  cache: Map<Route, PathnameMatch | null>
+): RouteMatch[] | null {
   const { parentRoute, paramsAdapter } = route;
-
-  const match = cache.get(route)!;
 
   const routeMatches = parentRoute === null ? [] : getRouteMatches(parentRoute, searchParams, cache);
 
+  if (routeMatches === null) {
+    // Parent route is not matched
+    return null;
+  }
+
+  const match = cache.get(route)!;
+
   const pathnameParams = parentRoute === null ? match.params : { ...match.params, ...cache.get(parentRoute)!.params };
 
-  const params = { ...searchParams, ...pathnameParams };
+  const params =
+    paramsAdapter === undefined || paramsAdapter.fromRawParams === undefined
+      ? { ...searchParams, ...pathnameParams }
+      : paramsAdapter.fromRawParams(searchParams, pathnameParams);
 
-  routeMatches.push({ route, params: paramsAdapter === undefined ? params : paramsAdapter.parse(params) });
+  if (params === null) {
+    return null;
+  }
+
+  routeMatches.push({ route, params });
 
   return routeMatches;
 }
