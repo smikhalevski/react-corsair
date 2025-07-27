@@ -11,7 +11,7 @@ import { noop } from '../../main/utils.js';
 console.error = noop;
 
 test('renders null if no route matched and router does not have notFoundComponent', () => {
-  const router = new Router({ routes: [] });
+  const router = new Router({ routes: [], notFoundComponent: () => null });
 
   const result = render(
     <RouterProvider value={router}>

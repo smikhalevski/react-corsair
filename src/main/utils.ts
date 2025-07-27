@@ -3,7 +3,7 @@ import { Location, To } from './types.js';
 import { RouteController } from './RouteController.js';
 import { Redirect } from './Redirect.js';
 
-export function noop() {}
+export function noop(): void {}
 
 export function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
   return value !== null && typeof value === 'object' && 'then' in value;
@@ -27,7 +27,7 @@ export function AbortError(message: string): Error {
   return typeof DOMException !== 'undefined' ? new DOMException(message, 'AbortError') : Error(message);
 }
 
-export function getDeepestController(controller: RouteController | null): RouteController | null {
+export function getLeafController(controller: RouteController | null): RouteController | null {
   while (controller !== null && controller.childController !== null) {
     controller = controller.childController;
   }

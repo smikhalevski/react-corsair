@@ -3,7 +3,7 @@ import { Route } from './Route.js';
 import { RouteController } from './RouteController.js';
 import { useContext, useEffect } from 'react';
 import { InterceptedRouteContext, useRouter } from './useRouter.js';
-import { getDeepestController } from './utils.js';
+import { getLeafController } from './utils.js';
 
 /**
  * Returns the controller of the `route` that was intercepted during navigation, or `null` if such route wasn't
@@ -29,7 +29,7 @@ export function useInterceptedRoute<Params extends Dict, Data, Context>(
   route: Route<any, Params, Data, Context>
 ): RouteController<Params, Data, Context> | null {
   const router = useRouter();
-  const controller = getDeepestController(useContext(InterceptedRouteContext));
+  const controller = getLeafController(useContext(InterceptedRouteContext));
 
   useEffect(() => router['_registerInterceptedRoute'](route), [router, route]);
 

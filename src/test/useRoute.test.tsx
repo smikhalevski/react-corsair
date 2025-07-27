@@ -30,8 +30,8 @@ test('returns the current route controller', () => {
   render(<RouterProvider value={router} />, { wrapper: StrictMode });
 
   expect(hookTrap).toHaveBeenCalledTimes(2);
-  expect(hookTrap).toHaveBeenNthCalledWith(1, router.rootController!.childController);
-  expect(hookTrap).toHaveBeenNthCalledWith(2, router.rootController!.childController);
+  expect(hookTrap).toHaveBeenNthCalledWith(1, router.rootController.childController);
+  expect(hookTrap).toHaveBeenNthCalledWith(2, router.rootController.childController);
 });
 
 test('returns the route controller of the provided route if it is the same as the current route', () => {
@@ -50,8 +50,8 @@ test('returns the route controller of the provided route if it is the same as th
   render(<RouterProvider value={router} />, { wrapper: StrictMode });
 
   expect(hookTrap).toHaveBeenCalledTimes(2);
-  expect(hookTrap).toHaveBeenNthCalledWith(1, router.rootController!.childController);
-  expect(hookTrap).toHaveBeenNthCalledWith(2, router.rootController!.childController);
+  expect(hookTrap).toHaveBeenNthCalledWith(1, router.rootController.childController);
+  expect(hookTrap).toHaveBeenNthCalledWith(2, router.rootController.childController);
 });
 
 test('returns the route controller of the provided route if it is the parent route', () => {
@@ -128,7 +128,7 @@ test('re-renders if controller state is changed', () => {
 
   expect(hookTrap).toHaveBeenCalledTimes(2);
 
-  act(() => router.rootController!.setData('zzz'));
+  act(() => router.rootController.setData('zzz'));
 
   expect(hookTrap).toHaveBeenCalledTimes(4);
 });

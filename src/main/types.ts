@@ -398,14 +398,20 @@ export interface NavigateEvent {
   type: 'navigate';
 
   /**
-   * The root controller to which router was navigated, or `null` if no matching route was found.
+   * The controller from which router was navigated to another {@link controller}. This can be `null` if a route
+   * navigation was {@link isIntercepted intercepted} but there is no rendered intercepted route.
    */
-  controller: RouteController | null;
+  prevController: RouteController | null;
 
   /**
-   * A router from which an event originates.
+   * A location from which a router was navigated to a {@link location}.
    */
-  router: Router;
+  prevLocation: Location;
+
+  /**
+   * The controller to which router was navigated.
+   */
+  controller: RouteController;
 
   /**
    * A location to which a router was navigated.
@@ -485,7 +491,7 @@ export interface ErrorEvent {
   /**
    * A controller from which an event originates.
    */
-  controller: RouteController | null;
+  controller: RouteController;
 
   /**
    * An error that was thrown.
@@ -524,7 +530,7 @@ export interface RedirectEvent {
   /**
    * A controller from which an event originates.
    */
-  controller: RouteController | null;
+  controller: RouteController;
 
   /**
    * A location or a URL to which a redirect should be made.

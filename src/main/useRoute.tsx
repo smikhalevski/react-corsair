@@ -18,7 +18,8 @@ export const RouteProvider = RouteContext.Provider;
 export function useRoute(): RouteController;
 
 /**
- * Returns the controller of the `route` if it was matched by the router.
+ * Returns the controller of the `route` if it was matched by the router, or throws an error if there's no such
+ * controller.
  *
  * @param route The route to look up.
  * @template Params Route params.
@@ -34,8 +35,10 @@ export function useRoute(route?: Route) {
   let controller = useContext(RouteContext);
 
   // Controller lookup
-  while (route !== undefined && controller !== null && controller.route !== route) {
-    controller = controller.parentController;
+  if (route !== undefined) {
+    while (controller !== null && controller.route !== route) {
+      controller = controller.parentController;
+    }
   }
 
   if (controller === null) {
