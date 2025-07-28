@@ -73,6 +73,36 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
   ) {}
 
   /**
+   * Returns the stage at which the controller is currently rendered:
+   *
+   * <dl>
+   * <dt>"foreground"</dt>
+   * <dd>The route is visible to the user.</dd>
+   * <dt>"background"</dt>
+   * <dd>The route is being loaded while a fallback is visible to the user.</dd>
+   * <dt>"fallback"</dt>
+   * <dd>The route is visible to the user but would be replaced by a route that is being loaded in the background.</dd>
+   * <dt>"discarded"</dt>
+   * <dd>The route was replaced by another route and isn't visible to the user anymore.</dd>
+   * </dl>
+   */
+  get renderingStage(): 'foreground' | 'background' | 'fallback' | 'discarded' {
+    for (
+      let controller: RouteController | null = this.router.rootController;
+      controller !== null;
+      controller = controller.childController
+    ) {
+      if (controller === this) {
+        return controller._fallbackController === null ? 'foreground' : 'background';
+      }
+      if (controller._fallbackController === this) {
+        return 'fallback';
+      }
+    }
+    return 'discarded';
+  }
+
+  /**
    * Returns the current status of the controller:
    *
    * <dl>
@@ -82,13 +112,13 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
    * <dd>The route component and data were successfully loaded.</dd>
    * <dt>"error"</dt>
    * <dd>The route has thrown an error during rendering or from a data loader.</dd>
-   * <dt>"notFound"</dt>
+   * <dt>"not_found"</dt>
    * <dd>The route was marked as not found.</dd>
    * <dt>"redirect"</dt>
    * <dd>The route has requested a redirect.</dd>
    * </dl>
    */
-  get status() {
+  get status(): 'loading' | 'error' | 'not_found' | 'redirect' | 'ready' {
     return this._state.status;
   }
 
@@ -344,7 +374,7 @@ export function getRenderingDisposition(c: RouteController): RenderingDispositio
  *
  * @param router A router that matched routes.
  * @param evictedController The currently rendered controller that can be used as a fallback for a new controller.
- * @param routeMatches An array of matches routes and params.
+ * @param routeMatches An array of matched routes and params.
  */
 export function reconcileControllers(
   router: Router,

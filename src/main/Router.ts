@@ -208,8 +208,11 @@ export class Router<Context = any> {
         if (route.component === undefined) {
           promises.push(route.loadComponent());
         }
+        if (route.dataLoader === undefined) {
+          continue;
+        }
         try {
-          promises.push(route.dataLoader?.({ route, router: this, params, signal, isPrefetch: true }));
+          promises.push(route.dataLoader({ route, router: this, params, signal, isPrefetch: true }));
         } catch {}
       }
 
