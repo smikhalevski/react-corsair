@@ -19,19 +19,20 @@ Type-safe router that abstracts URLs away.
 - [Just 9&#8239;kB gzipped&#8239;<sup>↗</sup>](https://pkg-size.dev/react-corsair)
 - Check out the [Cookbook](#cookbook) for real-life examples!
 
+<!--/OVERVIEW-->
+
+<br>
+
 ```sh
 npm install --save-prod react-corsair
 ```
-
-<!--/OVERVIEW-->
 
 <br>
 
 <!--TOC-->
 
-<span class="toc-icon">&emsp;&ensp;</span>[API docs&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/)
-
-<span class="toc-icon">&emsp;&ensp;</span>[Live example&#8239;<sup>↗</sup>](https://codesandbox.io/p/sandbox/react-corsair-example-mzjzcm)
+- [API docs&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/)
+- [Live example&#8239;<sup>↗</sup>](https://codesandbox.io/p/sandbox/react-corsair-example-mzjzcm)
 
 <span class="toc-icon">🧭&ensp;</span>[**Routing**](#routing)
 
