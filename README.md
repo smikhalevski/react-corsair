@@ -16,18 +16,23 @@ Type-safe router that abstracts URLs away.
 - Expressive and concise API with strict typings.
 - Supports SSR, partial pre-rendering and Suspense.
 - Optional history integration.
-- [Just 9&#8239;kB gzipped&#8239;<sup>↗</sup>](https://pkg-size.dev/react-corsair).
+- [Just 9&#8239;kB gzipped&#8239;<sup>↗</sup>](https://pkg-size.dev/react-corsair)
 - Check out the [Cookbook](#cookbook) for real-life examples!
+
+<!--/OVERVIEW-->
+
+<br>
 
 ```sh
 npm install --save-prod react-corsair
 ```
 
-<!--/OVERVIEW-->
+<br>
 
 <!--TOC-->
 
-<span class="toc-icon">🔥&ensp;</span>[**Live example**&#8239;<sup>↗</sup>](https://codesandbox.io/p/sandbox/react-corsair-example-mzjzcm)
+- [API docs&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/)
+- [Live example&#8239;<sup>↗</sup>](https://codesandbox.io/p/sandbox/react-corsair-example-mzjzcm)
 
 <span class="toc-icon">🧭&ensp;</span>[**Routing**](#routing)
 
@@ -1635,10 +1640,7 @@ Create a route that throws a `ForbiddenError`:
 
 ```ts
 function AdminPanel() {
-  if (!isAdmin()) {
-    // 🟡 Not an admin!
-    forbidden();
-  }
+  isAdmin() || forbidden();
 
   // Render admin panel here
 }
