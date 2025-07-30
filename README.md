@@ -16,7 +16,7 @@ Type-safe router that abstracts URLs away.
 - Expressive and concise API with strict typings.
 - Supports SSR, partial pre-rendering and Suspense.
 - Optional history integration.
-- [Just 9&#8239;kB gzipped&#8239;<sup>↗</sup>](https://pkg-size.dev/react-corsair)
+- [Just 9&#8239;kB gzipped.&#8239;<sup>↗</sup>](https://pkg-size.dev/react-corsair)
 - Check out the [Cookbook](#cookbook) for real-life examples!
 
 <!--/OVERVIEW-->
