@@ -1,4 +1,4 @@
-import { RouterOptions, RouteState } from '../types.js';
+import { RouterOptions, RouteState, Serializer } from '../types.js';
 import { Router } from '../Router.js';
 import { RouteController } from '../RouteController.js';
 
@@ -12,10 +12,9 @@ export interface SSRRouterOptions<Context> extends RouterOptions<Context> {
   /**
    * Stringifies a route state before it is sent to the client.
    *
-   * @param state The route state to stringify.
-   * @default JSON.stringify
+   * @default JSON
    */
-  stateStringifier?: (state: RouteState) => string;
+  serializer?: Serializer;
 
   /**
    * A nonce string to allow hydration scripts under a
@@ -39,7 +38,7 @@ export class SSRRouter<Context = any> extends Router<Context> {
   /**
    * Stringifies the state of the controller before sending it to the client.
    */
-  protected _stateStringifier;
+  protected _serializer;
 
   readonly isSSR: boolean = true;
 
@@ -56,11 +55,11 @@ export class SSRRouter<Context = any> extends Router<Context> {
    * @template Context A context provided to {@link react-corsair!RouteOptions.dataLoader route data loaders}.
    */
   constructor(options: SSRRouterOptions<Context>) {
-    const { stateStringifier = JSON.stringify } = options;
+    const { serializer = JSON } = options;
 
     super(options);
 
-    this._stateStringifier = stateStringifier;
+    this._serializer = serializer;
 
     this.nonce = options.nonce;
   }
@@ -130,12 +129,9 @@ export class SSRRouter<Context = any> extends Router<Context> {
         script = 'var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();';
       }
 
-      script +=
-        's.set(' +
-        index +
-        ',' +
-        JSON.stringify(this._stateStringifier(controller['_state'])).replace(/</g, '\\u003C') +
-        ');';
+      const json = JSON.stringify(this._serializer.stringify(controller['_state'])).replace(/</g, '\\u003C');
+
+      script += 's.set(' + index + ',' + json + ');';
     }
 
     if (script !== '') {

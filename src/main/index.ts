@@ -52,5 +52,6 @@ export type {
   RouteState,
   RouterEvent,
   RouterOptions,
+  Serializer,
   To,
 } from './types.js';

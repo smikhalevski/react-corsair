@@ -1,4 +1,4 @@
-import { RouteState, To } from './types.js';
+import { RouteState, Serializer, To } from './types.js';
 import { Router } from './Router.js';
 import { getRenderingDisposition, RouteController } from './RouteController.js';
 import { AbortError, noop, toLocation } from './utils.js';
@@ -16,10 +16,8 @@ import { Redirect } from './Redirect.js';
 export interface HydrateRouterOptions {
   /**
    * Parses the route state that was captured during SSR.
-   *
-   * @param stateStr The state to parse.
    */
-  stateParser?: (stateStr: string) => RouteState;
+  serializer?: Serializer;
 }
 
 /**
@@ -37,7 +35,7 @@ export interface HydrateRouterOptions {
  * @group Server-Side Rendering
  */
 export function hydrateRouter<T extends Router>(router: T, to: To, options: HydrateRouterOptions = {}): T {
-  const { stateParser = JSON.parse } = options;
+  const { serializer = JSON } = options;
 
   const ssrState =
     typeof window.__REACT_CORSAIR_SSR_STATE__ !== 'undefined' ? window.__REACT_CORSAIR_SSR_STATE__ : undefined;
@@ -47,8 +45,8 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
   }
 
   window.__REACT_CORSAIR_SSR_STATE__ = {
-    set(index, stateStr) {
-      setControllerState(controllers[index], stateParser(stateStr));
+    set(index, json) {
+      setControllerState(controllers[index], serializer.parse(json));
     },
   };
 
@@ -112,7 +110,7 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
 
     // Hydrated state is already available
     if (ssrState !== undefined && ssrState.has(i)) {
-      setControllerState(controller, stateParser(ssrState.get(i)));
+      setControllerState(controller, serializer.parse(ssrState.get(i)));
     }
 
     // Server-rendering is in progress, defer hydration

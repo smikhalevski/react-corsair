@@ -82,18 +82,21 @@ describe('nextHydrationScript', () => {
     );
   });
 
-  test('respects stateStringifier option', () => {
-    const stateStringifierMock = vi.fn(JSON.stringify);
+  test('uses custom serializer', () => {
+    const serializerMock = {
+      parse: vi.fn(JSON.parse),
+      stringify: vi.fn(JSON.stringify),
+    };
 
     const route = createRoute('/aaa');
-    const router = new SSRRouter({ routes: [route], stateStringifier: stateStringifierMock });
+    const router = new SSRRouter({ routes: [route], serializer: serializerMock });
 
     router.navigate(route);
 
     router.nextHydrationScript();
 
-    expect(stateStringifierMock).toHaveBeenCalledTimes(1);
-    expect(stateStringifierMock).toHaveBeenNthCalledWith(1, { status: 'ready', data: undefined });
+    expect(serializerMock.stringify).toHaveBeenCalledTimes(1);
+    expect(serializerMock.stringify).toHaveBeenNthCalledWith(1, { status: 'ready', data: undefined });
   });
 
   test('escapes XSS-prone strings', () => {
