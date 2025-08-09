@@ -65,8 +65,7 @@ export class SSRRouter<Context = any> extends Router<Context> {
   }
 
   /**
-   * Resolves with `true` if there were pending controllers and their state has changed after they became
-   * non-pending. Otherwise, resolves with `false`.
+   * Resolves with `true` if the {@link nextHydrationSourceCode} is non-empty.
    */
   hasChanges(): Promise<boolean> {
     const promises = [];
@@ -95,10 +94,10 @@ export class SSRRouter<Context = any> extends Router<Context> {
 
   /**
    * Returns an inline `<script>` tag with source that hydrates the client with the state accumulated during SSR,
-   * or an empty string if there are no state changes since the last time {@link nextHydrationScript} was called.
+   * or an empty string if there are no state changes since the last time {@link nextHydrationChunk} was called.
    */
   nextHydrationChunk(): string {
-    const source = this.nextHydrationScript();
+    const source = this.nextHydrationSourceCode();
 
     if (source === '') {
       return source;
@@ -109,10 +108,10 @@ export class SSRRouter<Context = any> extends Router<Context> {
 
   /**
    * Returns a script source that hydrates the client with the state accumulated during SSR, or an empty string if there
-   * are no state changes since the last time {@link nextHydrationScript} was called.
+   * are no state changes since the last time {@link nextHydrationSourceCode} was called.
    */
-  nextHydrationScript(): string {
-    let script = '';
+  nextHydrationSourceCode(): string {
+    let source = '';
 
     for (
       let controller: RouteController | null = this.rootController, index = 0;
@@ -125,20 +124,20 @@ export class SSRRouter<Context = any> extends Router<Context> {
 
       this._hydratedStates.set(controller, controller['_state']);
 
-      if (script === '') {
-        script = 'var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();';
+      if (source === '') {
+        source = 'var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();';
       }
 
       const json = JSON.stringify(this._serializer.stringify(controller['_state'])).replace(/</g, '\\u003C');
 
-      script += 's.set(' + index + ',' + json + ');';
+      source += 's.set(' + index + ',' + json + ');';
     }
 
-    if (script !== '') {
-      script += 'var e=document.currentScript;e&&e.parentNode.removeChild(e);';
+    if (source !== '') {
+      source += 'var e=document.currentScript;e&&e.parentNode.removeChild(e);';
     }
 
-    return script;
+    return source;
   }
 
   /**

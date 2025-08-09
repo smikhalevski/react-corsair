@@ -1366,28 +1366,23 @@ import { SSRRouter } from 'react-corsair/ssr';
 const server = createServer(async (request, response) => {
   // 1️⃣ Create a new history and a new router for each request
   const history = createMemoryHistory([request.url]);
-
   const router = new SSRRouter({ routes: [helloRoute] });
 
   // 2️⃣ Navigate router to a requested location
   router.navigate(history.location);
 
-  let html;
-
   // 3️⃣ Re-render until there are no more changes
-  while (await router.hasChanges()) {
+  let html;
+  do {
     html = renderToString(
       <HistoryProvider value={history}>
         <RouterProvider value={router} />
       </HistoryProvider>
     );
-  }
+  } while (await router.hasChanges());
 
-  // 4️⃣ Attach dehydrated route states
-  html += router.nextHydrationChunk();
-
-  // 5️⃣ Send the rendered HTML to the client
-  response.end(html);
+  // 4️⃣ Respond with the rendered HTML and the hydration script
+  response.end(html + router.nextHydrationChunk());
 });
 
 server.listen(8080);
@@ -1430,7 +1425,6 @@ import { NodeSSRRouter } from 'react-corsair/ssr/node';
 const server = createServer((request, response) => {
   // 1️⃣ Create a new history and a new router for each request
   const history = createMemoryHistory([request.url]);
-
   const router = new NodeSSRRouter(response, { routes: [helloRoute] });
 
   // 2️⃣ Navigate router to a requested location
@@ -1471,7 +1465,6 @@ import { WebSSRRouter } from 'react-corsair/ssr';
 async function handler(request) {
   // 1️⃣ Create a new history and a new router for each request
   const history = createMemoryHistory([request.url]);
-
   const router = new WebSSRRouter({ routes: [helloRoute] });
 
   // 2️⃣ Navigate router to a requested location
