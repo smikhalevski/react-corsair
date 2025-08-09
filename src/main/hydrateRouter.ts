@@ -1,7 +1,7 @@
-import { RouteState, To } from './types.js';
+import { RouteState, Serializer, To } from './types.js';
 import { Router } from './Router.js';
 import { getRenderingDisposition, RouteController } from './RouteController.js';
-import { AbortError, noop, toLocation } from './utils.js';
+import { noop, toLocation } from './utils.js';
 import { matchRoutes } from './matchRoutes.js';
 import { AbortablePromise } from 'parallel-universe';
 import { NotFoundRouteController } from './NotFoundRouteController.js';
@@ -16,10 +16,8 @@ import { Redirect } from './Redirect.js';
 export interface HydrateRouterOptions {
   /**
    * Parses the route state that was captured during SSR.
-   *
-   * @param stateStr The state to parse.
    */
-  stateParser?: (stateStr: string) => RouteState;
+  serializer?: Serializer;
 }
 
 /**
@@ -37,7 +35,7 @@ export interface HydrateRouterOptions {
  * @group Server-Side Rendering
  */
 export function hydrateRouter<T extends Router>(router: T, to: To, options: HydrateRouterOptions = {}): T {
-  const { stateParser = JSON.parse } = options;
+  const { serializer = JSON } = options;
 
   const ssrState =
     typeof window.__REACT_CORSAIR_SSR_STATE__ !== 'undefined' ? window.__REACT_CORSAIR_SSR_STATE__ : undefined;
@@ -47,8 +45,8 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
   }
 
   window.__REACT_CORSAIR_SSR_STATE__ = {
-    set(index, stateStr) {
-      setControllerState(controllers[index], stateParser(stateStr));
+    set(index, json) {
+      setControllerState(controllers[index], serializer.parse(json));
     },
   };
 
@@ -110,18 +108,16 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
       continue;
     }
 
+    // Start loading the route component ahead of time
+    controller.route.loadComponent();
+
+    // Wait until controller state is available
+    controller.promise = new AbortablePromise(noop);
+    controller.promise.catch(noop);
+
     // Hydrated state is already available
     if (ssrState !== undefined && ssrState.has(i)) {
-      setControllerState(controller, stateParser(ssrState.get(i)));
-    }
-
-    // Server-rendering is in progress, defer hydration
-    if (controller.status === 'loading') {
-      // Start loading the route component ahead of time
-      controller.route.loadComponent();
-
-      controller.promise = new AbortablePromise(noop);
-      controller.promise.catch(noop);
+      setControllerState(controller, serializer.parse(ssrState.get(i)));
     }
   }
 
@@ -129,25 +125,22 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
 }
 
 function setControllerState(controller: RouteController, state: RouteState): void {
-  if (state.status === 'loading') {
-    return;
+  switch (state.status) {
+    case 'loading':
+      break;
+    case 'not_found':
+      controller.setError(new NotFoundError());
+      break;
+    case 'redirect':
+      controller.setError(new Redirect(state.to));
+      break;
+    case 'error':
+      controller.setError(state.error);
+      break;
+    case 'ready':
+      controller.setData(state.data);
+      break;
+    default:
+      throw new Error('Unexpected controller state');
   }
-
-  const prevPromise = controller.promise;
-
-  controller.promise = null;
-  controller['_state'] = state;
-  controller['_error'] = undefined;
-
-  if (state.status === 'not_found') {
-    controller['_error'] = new NotFoundError();
-  }
-  if (state.status === 'redirect') {
-    controller['_error'] = new Redirect(state.to);
-  }
-  if (state.status === 'error') {
-    controller['_error'] = state.error;
-  }
-
-  prevPromise?.abort(AbortError('The route was hydrated'));
 }

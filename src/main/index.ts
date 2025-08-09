@@ -3,8 +3,9 @@
  *
  * ```ts
  * import { createRoute } from 'react-corsair';
+ * import FooPage from './FooPage.js';
  *
- * const fooRoute = createRoute('/foo', () => import('./Foo.js'));
+ * const fooRoute = createRoute('/foo', FooPage);
  * ```
  *
  * @module react-corsair
@@ -52,5 +53,6 @@ export type {
   RouteState,
   RouterEvent,
   RouterOptions,
+  Serializer,
   To,
 } from './types.js';

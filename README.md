@@ -16,7 +16,7 @@ Type-safe router that abstracts URLs away.
 - Expressive and concise API with strict typings.
 - Supports SSR, partial pre-rendering and Suspense.
 - Optional history integration.
-- [Just 9&#8239;kB gzipped&#8239;<sup>↗</sup>](https://pkg-size.dev/react-corsair)
+- [Just 9&#8239;kB gzipped.&#8239;<sup>↗</sup>](https://pkg-size.dev/react-corsair)
 - Check out the [Cookbook](#cookbook) for real-life examples!
 
 <!--/OVERVIEW-->
@@ -1366,28 +1366,23 @@ import { SSRRouter } from 'react-corsair/ssr';
 const server = createServer(async (request, response) => {
   // 1️⃣ Create a new history and a new router for each request
   const history = createMemoryHistory([request.url]);
-
   const router = new SSRRouter({ routes: [helloRoute] });
 
   // 2️⃣ Navigate router to a requested location
   router.navigate(history.location);
 
-  let html;
-
   // 3️⃣ Re-render until there are no more changes
-  while (await router.hasChanges()) {
+  let html;
+  do {
     html = renderToString(
       <HistoryProvider value={history}>
         <RouterProvider value={router} />
       </HistoryProvider>
     );
-  }
+  } while (await router.hasChanges());
 
-  // 4️⃣ Attach dehydrated route states
-  html += router.nextHydrationChunk();
-
-  // 5️⃣ Send the rendered HTML to the client
-  response.end(html);
+  // 4️⃣ Respond with the rendered HTML and the hydration script
+  response.end(html + router.nextHydrationChunk());
 });
 
 server.listen(8080);
@@ -1418,20 +1413,19 @@ API to inject its hydration chunks into a streaming process. The API is differen
 [Readable Web Streams&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream).
 
 In NodeJS environment
-use [`PipeableSSRRouter`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/classes/ssr_node.PipeableSSRRouter.html)
+use [`NodeSSRRouter`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/classes/ssr_node.NodeSSRRouter.html)
 
 ```tsx
 import { createServer } from 'http';
 import { renderToPipeableStream } from 'react-dom/server';
 import { RouterProvider } from 'react-corsair';
 import { createMemoryHistory, HistoryProvider } from 'react-corsair/history';
-import { PipeableSSRRouter } from 'react-corsair/ssr/node';
+import { NodeSSRRouter } from 'react-corsair/ssr/node';
 
 const server = createServer((request, response) => {
   // 1️⃣ Create a new history and a new router for each request
   const history = createMemoryHistory([request.url]);
-
-  const router = new PipeableSSRRouter(response, { routes: [helloRoute] });
+  const router = new NodeSSRRouter(response, { routes: [helloRoute] });
 
   // 2️⃣ Navigate router to a requested location
   router.navigate(history.location);
@@ -1459,20 +1453,19 @@ Router hydration chunks are streamed to the client along with chunks rendered by
 ### Readable web streams support
 
 To enable streaming in a modern environment,
-use [`ReadableSSRRouter`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/classes/ssr.ReadableSSRRouter.html)
+use [`WebSSRRouter`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/classes/ssr.WebSSRRouter.html)
 
 ```tsx
 import { createServer } from 'http';
 import { renderToPipeableStream } from 'react-dom/server';
 import { RouterProvider } from 'react-corsair';
 import { createMemoryHistory, HistoryProvider } from 'react-corsair/history';
-import { ReadableSSRRouter } from 'react-corsair/ssr';
+import { WebSSRRouter } from 'react-corsair/ssr';
 
 async function handler(request) {
   // 1️⃣ Create a new history and a new router for each request
   const history = createMemoryHistory([request.url]);
-
-  const router = new ReadableSSRRouter({ routes: [helloRoute] });
+  const router = new WebSSRRouter({ routes: [helloRoute] });
 
   // 2️⃣ Navigate router to a requested location
   router.navigate(history.location);
@@ -1498,12 +1491,28 @@ Router hydration chunks are streamed to the client along with chunks rendered by
 ## State serialization
 
 By default, route state is serialized using
-[`JSON.stringify`&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify)
+[`JSON`&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify)
 which has quite a few limitations. If your route [loads data](#data-loading) that may contain circular references,
 or non-serializable data like `BigInt`, use a custom state serialization.
 
-On the client, pass
-a [`stateParser`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/react-corsair.HydrateRouterOptions.html#stateparser)
+On the server, pass
+a [`serializer`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/ssr.SSRRouterOptions.html#serializer)
+option to [`SSRRouter`](#render-to-string),
+[`NodeSSRRouter`](#streaming-ssr),
+or [`WebSSRRouter`](#readable-web-streams-support), depending on your setup:
+
+```ts
+import { WebSSRRouter } from 'react-corsair/ssr';
+import JSONMarshal from 'json-marshal';
+
+const router = new WebSSRRouter({
+  routes: [helloRoute],
+  serializer: JSONMarshal,
+});
+```
+
+On the client, pass _the same_
+[`serializer`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/react-corsair.HydrateRouterOptions.html#serializer)
 option to `hydrateRouter`:
 
 ```tsx
@@ -1518,8 +1527,8 @@ const history = createBrowserHistory();
 const router = new Router({ routes: [helloRoute] });
 
 hydrateRouter(router, history.location, {
-  // 🟡 Pass a custom state parser
-  stateParser: JSONMarshal.parse,
+  // 🟡 Pass a custom serializer
+  serializer: JSONMarshal,
 });
 
 hydrateRoot(
@@ -1528,22 +1537,6 @@ hydrateRoot(
     <RouterProvider value={router} />
   </HistoryProvider>
 );
-```
-
-On the server, pass
-a [`stateStringifier`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/ssr.SSRRouterOptions.html#statestringifier)
-option to [`SSRRouter`](#render-to-string),
-[`PipeableSSRRouter`](#streaming-ssr),
-or [`ReadableSSRRouter`](#readable-web-streams-support), depending on your setup:
-
-```ts
-import { ReadableSSRRouter } from 'react-corsair/ssr';
-import JSONMarshal from 'json-marshal';
-
-const router = new ReadableSSRRouter({
-  routes: [helloRoute],
-  stateStringifier: JSONMarshal.stringify,
-});
 ```
 
 > [!TIP]\
