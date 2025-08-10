@@ -1,7 +1,7 @@
 import { RouteState, Serializer, To } from './types.js';
 import { Router } from './Router.js';
 import { getRenderingDisposition, RouteController } from './RouteController.js';
-import { noop, toLocation } from './utils.js';
+import { AbortError, noop, toLocation } from './utils.js';
 import { matchRoutes } from './matchRoutes.js';
 import { AbortablePromise } from 'parallel-universe';
 import { NotFoundRouteController } from './NotFoundRouteController.js';
@@ -108,7 +108,7 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
       continue;
     }
 
-    // Start loading the route component ahead of time
+    // Start route component loading ahead of time
     controller.route.loadComponent();
 
     // Wait until controller state is available
@@ -124,23 +124,48 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
   return router;
 }
 
+/**
+ * Silently sets the controller state.
+ */
 function setControllerState(controller: RouteController, state: RouteState): void {
+  if (state.status === 'loading') {
+    return;
+  }
+
+  const prevPromise = controller.promise;
+
+  controller.promise = null;
+  prevPromise?.abort(AbortError('The route was hydrated'));
+
+  controller['_state'] = state;
+
   switch (state.status) {
-    case 'loading':
-      break;
     case 'not_found':
-      controller.setError(new NotFoundError());
+      controller['_error'] = new NotFoundError();
       break;
     case 'redirect':
-      controller.setError(new Redirect(state.to));
+      controller['_error'] = new Redirect(state.to);
       break;
     case 'error':
-      controller.setError(state.error);
+      controller['_error'] = state.error;
       break;
     case 'ready':
-      controller.setData(state.data);
+      controller['_error'] = undefined;
+
+      if (controller.route.component === undefined) {
+        controller['_state'] = { status: 'loading' };
+
+        controller.promise = new AbortablePromise((resolve, _reject, signal) => {
+          controller.route.loadComponent().then(() => {
+            if (!signal.aborted) {
+              controller['_state'] = state;
+              resolve(state.data);
+            }
+          });
+        });
+
+        controller.promise.catch(noop);
+      }
       break;
-    default:
-      throw new Error('Unexpected controller state');
   }
 }

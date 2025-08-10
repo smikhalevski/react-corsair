@@ -188,7 +188,7 @@ export class Router<Context = any> {
     }
 
     // Abort loading of the replaced controller
-    prevController?.abort(AbortError('Router navigation occurred'));
+    prevController?.abort(AbortError('The router navigation occurred'));
   }
 
   /**
@@ -219,6 +219,7 @@ export class Router<Context = any> {
       Promise.allSettled(promises).then(() => resolve());
     });
 
+    // Prevent unhandled promise rejections
     promise.catch(noop);
 
     return promise;
@@ -237,7 +238,7 @@ export class Router<Context = any> {
     this.rootController = this.interceptedController;
     this.interceptedController = null;
 
-    prevController.abort(AbortError('Route interception was cancelled'));
+    prevController.abort(AbortError('The route interception was cancelled'));
 
     this._pubSub.publish({
       type: 'navigate',

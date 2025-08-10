@@ -210,7 +210,7 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
    *
    * @param reason The abort reason that is used for rejection of the loading promise.
    */
-  abort(reason: unknown = AbortError('Route loading was aborted')): void {
+  abort(reason: unknown = AbortError('The route loading was aborted')): void {
     this.promise?.abort(reason);
   }
 
