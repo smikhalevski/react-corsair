@@ -34,7 +34,7 @@ export interface HydrateRouterOptions {
  * @template T The hydrated router.
  * @group Server-Side Rendering
  */
-export function hydrateRouter<T extends Router>(router: T, to: To, options: HydrateRouterOptions = {}): T {
+export function hydrateRouter(router: Router, to: To, options: HydrateRouterOptions = {}): void {
   const { serializer = JSON } = options;
 
   const ssrState =
@@ -96,7 +96,7 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
 
   if (router.rootController !== rootController) {
     // Hydrated navigation was superseded
-    return router;
+    return;
   }
 
   for (let i = 0; i < controllers.length; ++i) {
@@ -120,8 +120,6 @@ export function hydrateRouter<T extends Router>(router: T, to: To, options: Hydr
       setControllerState(controller, serializer.parse(ssrState.get(i)));
     }
   }
-
-  return router;
 }
 
 /**

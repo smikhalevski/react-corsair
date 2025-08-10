@@ -1439,7 +1439,7 @@ const server = createServer((request, response) => {
 
       onShellReady() {
         // 3️⃣ Pipe the rendering output to the router's stream
-        stream.pipe(router.stream);
+        stream.pipe(router.stream).pipe(response);
       },
     }
   );
@@ -1480,7 +1480,7 @@ async function handler(request) {
   );
 
   // 3️⃣ Pipe the response through the router
-  return new Response(stream.pipeThrough(router), {
+  return new Response(stream.pipeThrough(router).pipeTo(response), {
     headers: { 'content-type': 'text/html' },
   });
 }

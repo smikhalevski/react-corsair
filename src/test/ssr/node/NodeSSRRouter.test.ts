@@ -19,7 +19,7 @@ test('sends hydration chunk after the content chunk', async () => {
   router.navigate(route);
   router.rootController.setData('zzz');
 
-  router.stream.pipe(writable);
+  router.hydrationStream.pipe(writable);
   writable.write('aaa</script>');
 
   expect(writeMock).toHaveBeenCalledTimes(2);
@@ -47,7 +47,7 @@ test('does not send hydration chunk if nothing has changed', async () => {
   router.rootController.setData('zzz');
 
   writable.write('aaa</script>');
-  router.stream.pipe(writable);
+  router.hydrationStream.pipe(writable);
   writable.write('bbb');
   writable.write('ccc</script>');
 

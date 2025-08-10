@@ -65,7 +65,7 @@ export class SSRRouter<Context = any> extends Router<Context> {
   }
 
   /**
-   * Resolves with `true` if the {@link nextHydrationSourceCode} is non-empty.
+   * Resolves with `true` if the {@link nextHydrationChunk} is non-empty.
    */
   hasChanges(): Promise<boolean> {
     const promises = [];
