@@ -35,11 +35,11 @@ describe('navigate', () => {
   });
 });
 
-describe('nextHydrationSourceCode', () => {
+describe('nextHydrationScriptSource', () => {
   test('returns not found hydration script', () => {
     const router = new SSRRouter({ routes: [] });
 
-    expect(router.nextHydrationSourceCode()).toBe(
+    expect(router.nextHydrationScriptSource()).toBe(
       'var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();s.set(0,"{\\"status\\":\\"not_found\\"}");var e=document.currentScript;e&&e.parentNode.removeChild(e);'
     );
   });
@@ -50,7 +50,7 @@ describe('nextHydrationSourceCode', () => {
 
     router.navigate(route);
 
-    expect(router.nextHydrationSourceCode()).toBe(
+    expect(router.nextHydrationScriptSource()).toBe(
       'var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();s.set(0,"{\\"status\\":\\"ready\\"}");var e=document.currentScript;e&&e.parentNode.removeChild(e);'
     );
   });
@@ -62,7 +62,7 @@ describe('nextHydrationSourceCode', () => {
 
     router.navigate(routeBbb);
 
-    expect(router.nextHydrationSourceCode()).toBe(
+    expect(router.nextHydrationScriptSource()).toBe(
       'var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();s.set(0,"{\\"status\\":\\"ready\\"}");s.set(1,"{\\"status\\":\\"ready\\"}");var e=document.currentScript;e&&e.parentNode.removeChild(e);'
     );
   });
@@ -73,11 +73,11 @@ describe('nextHydrationSourceCode', () => {
     const router = new SSRRouter({ routes: [routeBbb] });
 
     router.navigate(routeBbb);
-    router.nextHydrationSourceCode();
+    router.nextHydrationScriptSource();
 
     router.rootController.childController!.setData('xxx');
 
-    expect(router.nextHydrationSourceCode()).toBe(
+    expect(router.nextHydrationScriptSource()).toBe(
       'var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();s.set(1,"{\\"status\\":\\"ready\\",\\"data\\":\\"xxx\\"}");var e=document.currentScript;e&&e.parentNode.removeChild(e);'
     );
   });
@@ -93,7 +93,7 @@ describe('nextHydrationSourceCode', () => {
 
     router.navigate(route);
 
-    router.nextHydrationSourceCode();
+    router.nextHydrationScriptSource();
 
     expect(serializerMock.stringify).toHaveBeenCalledTimes(1);
     expect(serializerMock.stringify).toHaveBeenNthCalledWith(1, { status: 'ready', data: undefined });
@@ -106,7 +106,7 @@ describe('nextHydrationSourceCode', () => {
     router.navigate(route);
     router.rootController.setData('<script src="https://xxx.yyy"></script>');
 
-    expect(router.nextHydrationSourceCode()).toBe(
+    expect(router.nextHydrationScriptSource()).toBe(
       'var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();s.set(0,"{\\"status\\":\\"ready\\",\\"data\\":\\"\\u003Cscript src=\\\\\\"https://xxx.yyy\\\\\\">\\u003C/script>\\"}");var e=document.currentScript;e&&e.parentNode.removeChild(e);'
     );
   });

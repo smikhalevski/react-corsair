@@ -1,13 +1,11 @@
 /**
- * Tooling for SSR implementation that supports router hydration on the client.
+ * Server-side rendering support for router.
  *
  * ```ts
- * import { createHydrationStream } from 'react-corsair/ssr';
+ * import { SSRRouter } from 'react-corsair/ssr';
  * ```
  *
  * @module ssr
  */
 
 export { SSRRouter, type SSRRouterOptions } from './SSRRouter.js';
-export { createHydrationStream } from './createHydrationStream.js';
-export { injectHydrationChunk } from './injectHydrationChunk.js';

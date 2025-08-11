@@ -97,7 +97,7 @@ export class SSRRouter<Context = any> extends Router<Context> {
    * or an empty string if there are no state changes since the last time {@link nextHydrationChunk} was called.
    */
   nextHydrationChunk(): string {
-    const source = this.nextHydrationSourceCode();
+    const source = this.nextHydrationScriptSource();
 
     if (source === '') {
       return source;
@@ -108,9 +108,9 @@ export class SSRRouter<Context = any> extends Router<Context> {
 
   /**
    * Returns a script source that hydrates the client with the state accumulated during SSR, or an empty string if there
-   * are no state changes since the last time {@link nextHydrationSourceCode} was called.
+   * are no state changes since the last time {@link nextHydrationScriptSource} was called.
    */
-  nextHydrationSourceCode(): string {
+  nextHydrationScriptSource(): string {
     let source = '';
 
     for (
