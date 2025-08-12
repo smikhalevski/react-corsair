@@ -11,7 +11,7 @@ import {
   RouterOptions,
   To,
 } from './types.js';
-import { AbortError, getLeafController, noop, toLocation } from './utils.js';
+import { AbortError, getLeafController, preventUnhandledRejection, toLocation } from './utils.js';
 import {
   getActiveController,
   getRenderingDisposition,
@@ -200,29 +200,26 @@ export class Router<Context = any> {
    * @returns A promise that can be aborted to discard prefetching.
    */
   prefetch(to: To): AbortablePromise<void> {
-    const promise = new AbortablePromise<void>((resolve, _reject, signal) => {
-      const location = toLocation(to);
-      const promises = [];
+    return preventUnhandledRejection(
+      new AbortablePromise<void>((resolve, _reject, signal) => {
+        const location = toLocation(to);
+        const promises = [];
 
-      for (const { route, params } of this.match(location)) {
-        if (route.component === undefined) {
-          promises.push(route.loadComponent());
+        for (const { route, params } of this.match(location)) {
+          if (route.component === undefined) {
+            promises.push(route.loadComponent());
+          }
+          if (route.dataLoader === undefined) {
+            continue;
+          }
+          try {
+            promises.push(route.dataLoader({ route, router: this, params, signal, isPrefetch: true }));
+          } catch {}
         }
-        if (route.dataLoader === undefined) {
-          continue;
-        }
-        try {
-          promises.push(route.dataLoader({ route, router: this, params, signal, isPrefetch: true }));
-        } catch {}
-      }
 
-      Promise.allSettled(promises).then(() => resolve());
-    });
-
-    // Prevent unhandled promise rejections
-    promise.catch(noop);
-
-    return promise;
+        Promise.allSettled(promises).then(() => resolve());
+      })
+    );
   }
 
   /**

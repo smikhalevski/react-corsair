@@ -1,12 +1,13 @@
-import { RouteState, Serializer, To } from './types.js';
+import { RouterEvent, RouteState, Serializer, To } from './types.js';
 import { Router } from './Router.js';
 import { getRenderingDisposition, RouteController } from './RouteController.js';
-import { AbortError, noop, toLocation } from './utils.js';
+import { noop, preventUnhandledRejection, toLocation } from './utils.js';
 import { matchRoutes } from './matchRoutes.js';
-import { AbortablePromise } from 'parallel-universe';
 import { NotFoundRouteController } from './NotFoundRouteController.js';
 import { NotFoundError } from './notFound.js';
 import { Redirect } from './Redirect.js';
+import { Route } from './Route.js';
+import { AbortablePromise } from 'parallel-universe';
 
 /**
  * Options provided to {@link hydrateRouter}.
@@ -46,7 +47,7 @@ export function hydrateRouter(router: Router, to: To, options: HydrateRouterOpti
 
   window.__REACT_CORSAIR_SSR_STATE__ = {
     set(index, json) {
-      setControllerState(controllers[index], serializer.parse(json));
+      setHydratedState(controllers[index], serializer.parse(json));
     },
   };
 
@@ -59,7 +60,7 @@ export function hydrateRouter(router: Router, to: To, options: HydrateRouterOpti
   const controllers: RouteController[] = [];
 
   for (const routeMatch of routeMatches) {
-    const controller = new RouteController(router, routeMatch.route, routeMatch.params);
+    const controller = new HydratedRouteController(router, routeMatch.route, routeMatch.params);
     const i = controllers.push(controller) - 1;
 
     if (i !== 0) {
@@ -108,62 +109,100 @@ export function hydrateRouter(router: Router, to: To, options: HydrateRouterOpti
       continue;
     }
 
-    // Start route component loading ahead of time
-    controller.route.loadComponent();
-
-    // Wait until controller state is available
-    controller.promise = new AbortablePromise(noop);
-    controller.promise.catch(noop);
-
     // Hydrated state is already available
     if (ssrState !== undefined && ssrState.has(i)) {
-      setControllerState(controller, serializer.parse(ssrState.get(i)));
+      setHydratedState(controller, serializer.parse(ssrState.get(i)));
     }
   }
 }
 
+function setHydratedState(controller: RouteController, state: RouteState): void {
+  if (controller instanceof HydratedRouteController) {
+    controller._setHydratedState(state);
+  }
+}
+
 /**
- * Silently sets the controller state.
+ * A special-case controller that doesn't publish events during router hydration because React re-renders Suspense
+ * boundaries on its own during document hydration.
  */
-function setControllerState(controller: RouteController, state: RouteState): void {
-  if (state.status === 'loading') {
-    return;
+class HydratedRouteController extends RouteController {
+  /**
+   * - "on" Hydrated state is set to the controller, but no events are emitted.
+   * - "lax" Hydrated state is set to the controller, and events are emitted. This only matters if route controller
+   * state changes multiple times during SSR.
+   * - "off" Hydrated state is ignored.
+   */
+  private _hydrationStatus: 'on' | 'lax' | 'off' = getRenderingDisposition(this) === 'server' ? 'on' : 'off';
+
+  constructor(router: Router, route: Route, params: any) {
+    super(router, route, params);
+
+    // This promise is aborted after hydration chunk arrives
+    this.promise = preventUnhandledRejection(new AbortablePromise(noop));
+
+    // Start route component loading ahead of time
+    route.loadComponent();
   }
 
-  const prevPromise = controller.promise;
+  setError(error: any): void {
+    this._hydrationStatus = 'off';
+    super.setError(error);
+  }
 
-  controller.promise = null;
-  prevPromise?.abort(AbortError('The route was hydrated'));
+  setData(data: any): void {
+    this._hydrationStatus = 'off';
+    super.setData(data);
+  }
 
-  controller['_state'] = state;
+  _setHydratedState(state: RouteState): void {
+    if (this._hydrationStatus === 'off') {
+      // Cannot proceed with hydration because user has interacted with the router
+      return;
+    }
 
-  switch (state.status) {
-    case 'not_found':
-      controller['_error'] = new NotFoundError();
-      break;
-    case 'redirect':
-      controller['_error'] = new Redirect(state.to);
-      break;
-    case 'error':
-      controller['_error'] = state.error;
-      break;
-    case 'ready':
-      controller['_error'] = undefined;
+    switch (state.status) {
+      case 'loading':
+        // Loading SSR events are ignored
+        return;
 
-      if (controller.route.component === undefined) {
-        controller['_state'] = { status: 'loading' };
+      case 'not_found':
+        super.setError(new NotFoundError());
+        break;
 
-        controller.promise = new AbortablePromise((resolve, _reject, signal) => {
-          controller.route.loadComponent().then(() => {
-            if (!signal.aborted) {
-              controller['_state'] = state;
-              resolve(state.data);
-            }
-          });
-        });
+      case 'redirect':
+        super.setError(new Redirect(state.to));
+        break;
 
-        controller.promise.catch(noop);
+      case 'error':
+        super.setError(state.error);
+        break;
+
+      case 'ready':
+        super.setData(state.data);
+        break;
+    }
+
+    if (this.promise === null) {
+      this._hydrationStatus = 'lax';
+      return;
+    }
+
+    // lazyComponent is being loaded
+    this.promise.then(() => {
+      if (this._hydrationStatus === 'on') {
+        this._hydrationStatus = 'lax';
       }
-      break;
+    });
+  }
+
+  _publish(event: RouterEvent): void {
+    if (this._hydrationStatus === 'on') {
+      // Events published during router hydration are discarded because
+      // React re-renders Suspense boundaries on its own during document hydration
+      return;
+    }
+
+    super._publish(event);
   }
 }
