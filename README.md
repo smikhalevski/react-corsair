@@ -6,6 +6,8 @@
   </picture></a>
 </p>
 
+<!--ARTICLE-->
+
 <!--OVERVIEW-->
 
 Type-safe router that abstracts URLs away.
@@ -28,6 +30,8 @@ npm install --save-prod react-corsair
 ```
 
 <br>
+
+<!--/ARTICLE-->
 
 <!--TOC-->
 
@@ -1320,10 +1324,10 @@ hydrateRoot(
 > as ones used during the server-side rendering. Otherwise, hydration behavior is undefined.
 
 [`hydrateRouter`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/react-corsair.hydrateRouter.html)
-must be called only once, and only one router on the client side can receive the dehydrated state from the server.
+must be called only once on the client-side with the router that would receive the dehydrated state from the server.
 
-On the server, you can either render your app contents [as a string](#render-to-string) and send it to the client in one
-go, or [stream the contents](#streaming-ssr).
+On the server-side, you can either render your app contents [as a string](#render-to-string) and send it to the client
+in one go, or [stream the contents](#streaming-ssr).
 
 ## Rendering disposition
 
@@ -1357,7 +1361,7 @@ Use [`SSRRouter`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-cors
 your app as an HTML string:
 
 ```tsx
-import { createServer } from 'http';
+import { createServer } from 'node:http';
 import { renderToString } from 'react-dom/server';
 import { RouterProvider } from 'react-corsair';
 import { createMemoryHistory, HistoryProvider } from 'react-corsair/history';
@@ -1381,17 +1385,14 @@ const server = createServer(async (request, response) => {
     );
   } while (await router.hasChanges());
 
-  // 4️⃣ Respond with the rendered HTML and the hydration script
-  response.end(html + router.nextHydrationChunk());
+  // 3️⃣ Inject the hydration script
+  html = html.replace('</body>', router.nextHydrationChunk() + '</body>');
+
+  response.setHeader('Content-Type', 'text/html');
+  response.end(html);
 });
 
 server.listen(8080);
-```
-
-You may also need to attach the chunk with your application code:
-
-```ts
-html += '<script src="/client.js" async></script>';
 ```
 
 A new router and a new history must be created for each request, so the results that are stored in router are served in
@@ -1408,64 +1409,21 @@ is invoked on the client side.
 
 ## Streaming SSR
 
-React can stream parts of your app while it is being rendered. React Corsair provides
-API to inject its hydration chunks into a streaming process. The API is different for NodeJS streams and
-[Readable Web Streams&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream).
-
-In NodeJS environment
-use [`NodeSSRRouter`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/classes/ssr_node.NodeSSRRouter.html)
+React can stream parts of your app while it is being rendered. You can inject React Corsair hydration chunks into the
+React stream.
 
 ```tsx
-import { createServer } from 'http';
-import { renderToPipeableStream } from 'react-dom/server';
+import { createServer } from 'node:http';
+import { Writable } from 'node:stream';
+import { renderToReadableStream } from 'react-dom/server';
 import { RouterProvider } from 'react-corsair';
 import { createMemoryHistory, HistoryProvider } from 'react-corsair/history';
-import { NodeSSRRouter } from 'react-corsair/ssr/node';
+import { SSRRouter } from 'react-corsair/ssr';
 
-const server = createServer((request, response) => {
+const server = createServer(async (request, response) => {
   // 1️⃣ Create a new history and a new router for each request
   const history = createMemoryHistory([request.url]);
-  const router = new NodeSSRRouter(response, { routes: [helloRoute] });
-
-  // 2️⃣ Navigate router to a requested location
-  router.navigate(history.location);
-
-  const stream = renderToPipeableStream(
-    <HistoryProvider value={history}>
-      <RouterProvider value={router} />
-    </HistoryProvider>,
-    {
-      bootstrapScripts: ['/client.js'],
-
-      onShellReady() {
-        // 3️⃣ Pipe the rendering output to the router's stream
-        stream.pipe(router.stream).pipe(response);
-      },
-    }
-  );
-});
-
-server.listen(8080);
-```
-
-Router hydration chunks are streamed to the client along with chunks rendered by React.
-
-### Readable web streams support
-
-To enable streaming in a modern environment,
-use [`WebSSRRouter`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/classes/ssr.WebSSRRouter.html)
-
-```tsx
-import { createServer } from 'http';
-import { renderToPipeableStream } from 'react-dom/server';
-import { RouterProvider } from 'react-corsair';
-import { createMemoryHistory, HistoryProvider } from 'react-corsair/history';
-import { WebSSRRouter } from 'react-corsair/ssr';
-
-async function handler(request) {
-  // 1️⃣ Create a new history and a new router for each request
-  const history = createMemoryHistory([request.url]);
-  const router = new WebSSRRouter({ routes: [helloRoute] });
+  const router = new SSRRouter(response, { routes: [helloRoute] });
 
   // 2️⃣ Navigate router to a requested location
   router.navigate(history.location);
@@ -1473,20 +1431,28 @@ async function handler(request) {
   const stream = await renderToReadableStream(
     <HistoryProvider value={history}>
       <RouterProvider value={router} />
-    </HistoryProvider>,
-    {
-      bootstrapScripts: ['/client.js'],
-    }
+    </HistoryProvider>
   );
 
-  // 3️⃣ Pipe the response through the router
-  return new Response(stream.pipeThrough(router).pipeTo(response), {
-    headers: { 'content-type': 'text/html' },
+  const hydrator = new TransformStream({
+    transform(chunk, controller) {
+      controller.enqueue(chunk);
+      controller.enqueue(router.nextHydrationChunk());
+    },
   });
-}
+
+  response.setHeader('Content-Type', 'text/html');
+
+  // 2️⃣ Inject the hydration chunks into the react stream
+  await stream.pipeThrough(hydrator).pipeTo(Writable.toWeb(response));
+
+  response.end();
+});
+
+server.listen(8080);
 ```
 
-Router hydration chunks are streamed to the client along with chunks rendered by React.
+`hydrator` injects React Executor hydration chunks into the React stream.
 
 ## State serialization
 
@@ -1497,15 +1463,13 @@ or non-serializable data like `BigInt`, use a custom state serialization.
 
 On the server, pass
 a [`serializer`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/ssr.SSRRouterOptions.html#serializer)
-option to [`SSRRouter`](#render-to-string),
-[`NodeSSRRouter`](#streaming-ssr),
-or [`WebSSRRouter`](#readable-web-streams-support), depending on your setup:
+option to [`SSRRouter`](#render-to-string):
 
 ```ts
-import { WebSSRRouter } from 'react-corsair/ssr';
+import { SSRRouter } from 'react-corsair/ssr';
 import JSONMarshal from 'json-marshal';
 
-const router = new WebSSRRouter({
+const router = new SSRRouter({
   routes: [helloRoute],
   serializer: JSONMarshal,
 });
