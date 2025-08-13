@@ -34,3 +34,8 @@ export function getLeafController(controller: RouteController | null): RouteCont
 
   return controller;
 }
+
+export function preventUnhandledRejection<T extends PromiseLike<any>>(promise: T): T {
+  promise.then(noop, noop);
+  return promise;
+}

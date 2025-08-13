@@ -23,10 +23,16 @@ type CombineParams<ParentRoute extends Route | null, Params extends Dict> = Pare
   : Params;
 
 declare const PARAMS: unique symbol;
+declare const DATA: unique symbol;
 declare const CONTEXT: unique symbol;
 
 export type PARAMS = typeof PARAMS;
+export type DATA = typeof DATA;
 export type CONTEXT = typeof CONTEXT;
+
+export type InferParams<R extends Route> = R[PARAMS];
+export type InferData<R extends Route> = R[DATA];
+export type InferContext<R extends Route> = R[CONTEXT];
 
 /**
  * A route that can be rendered by a router.
@@ -49,6 +55,13 @@ export class Route<ParentRoute extends Route | null = any, Params extends Dict =
 
   /**
    * The type of the route context.
+   *
+   * @internal
+   */
+  declare readonly [DATA]: Data;
+
+  /**
+   * The type of the data loaded by a route.
    *
    * @internal
    */
@@ -182,7 +195,7 @@ export class Route<ParentRoute extends Route | null = any, Params extends Dict =
    * @param params Route params.
    * @param options Location options.
    */
-  getLocation(params: Voidable<this[PARAMS]>, options: LocationOptions = {}): Location {
+  getLocation(params: Voidable<InferParams<this>>, options: LocationOptions = {}): Location {
     const { hash = '', state } = options;
 
     let pathname = '';

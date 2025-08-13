@@ -5,9 +5,9 @@ declare global {
        * Updates state of an individual controller during SSR.
        *
        * @param index The index of the updated controller, where 0 is the {@link Router.rootController}.
-       * @param stateStr The serialized route state.
+       * @param json The serialized route state.
        */
-      set(index: number, stateStr: string): void;
+      set(index: number, json: string): void;
     };
   }
 }
