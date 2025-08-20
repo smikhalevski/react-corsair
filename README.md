@@ -298,7 +298,7 @@ productRoute.getLocation({ sku: 42, color: 'red' });
 ```
 
 > [!TIP]\
-> Read more about [Doubter&#8239;<sup>↗</sup>](https://github.com/smikhalevski/doubter#readme), the runtime validation
+> Read more about [Doubter&#8239;<sup>↗</sup>](https://megastack.dev/doubter), the runtime validation
 > and transformation library.
 
 ## Pathname templates

@@ -36,7 +36,7 @@
   "bugs": {
     "url": "https://github.com/smikhalevski/react-corsair/issues"
   },
-  "homepage": "https://github.com/smikhalevski/react-corsair#readme",
+  "homepage": "https://megastack.dev/react-corsair",
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
