@@ -17,7 +17,7 @@
     "build": "tsc --project tsconfig.build.json && cp package.json README.md LICENSE.txt lib/ && cd lib && npm pkg delete scripts devDependencies",
     "clean": "rimraf lib docs coverage",
     "test": "vitest run",
-    "test:definitions": "tsd --typings lib/index.d.ts --files src/main/ssr/global.d.ts --files 'src/test/**/*.test-d.ts'",
+    "test:definitions": "tsd --typings lib/index.d.ts --files src/main/global.d.ts --files 'src/test/**/*.test-d.ts'",
     "perf": "toofast",
     "docs": "typedoc"
   },
@@ -36,7 +36,7 @@
   "bugs": {
     "url": "https://github.com/smikhalevski/react-corsair/issues"
   },
-  "homepage": "https://github.com/smikhalevski/react-corsair#readme",
+  "homepage": "https://megastack.dev/react-corsair",
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",

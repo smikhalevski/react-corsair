@@ -1,7 +1,6 @@
 import { createContext, useContext } from 'react';
 import { RouteController } from './RouteController.js';
-import { Route } from './Route.js';
-import { Dict } from './types.js';
+import { InferContext, InferData, InferParams, Route } from './Route.js';
 import { useRouteSubscription } from './useRouteSubscription.js';
 
 const RouteContext = createContext<RouteController | null>(null);
@@ -27,9 +26,7 @@ export function useRoute(): RouteController;
  * @template Context A router context.
  * @group Routing
  */
-export function useRoute<Params extends Dict, Data, Context>(
-  route: Route<any, Params, Data, Context>
-): RouteController<Params, Data, Context>;
+export function useRoute<R extends Route>(route: R): RouteController<InferParams<R>, InferData<R>, InferContext<R>>;
 
 export function useRoute(route?: Route) {
   let controller = useContext(RouteContext);

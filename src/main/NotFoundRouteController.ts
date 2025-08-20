@@ -42,5 +42,7 @@ class NotFoundRoute extends Route {
 }
 
 function NotFound(): never {
+  // Sanity check: notFoundComponent must always be rendered when controller.status is "not_found".
+  // This error indicates a bug in React Corsair.
   throw new Error('The component of a NotFoundRoute must not be rendered');
 }

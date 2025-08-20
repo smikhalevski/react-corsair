@@ -28,7 +28,7 @@ export function RouteContent(props: RouteContentProps): ReactNode {
       childController = controller.childController;
 
       if (component === undefined) {
-        throw new Error('Route is ready but has no component to render');
+        throw new Error('The route is ready but has no component to render');
       }
       break;
 
@@ -48,7 +48,7 @@ export function RouteContent(props: RouteContentProps): ReactNode {
       throw controller.promise || new Error('Cannot suspend route controller');
 
     default:
-      throw new Error('Route controller has unexpected status: ' + controller.status);
+      throw new Error('The route controller has unexpected status: ' + controller.status);
   }
 
   if (component === undefined) {

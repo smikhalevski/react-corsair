@@ -14,7 +14,7 @@ import { ComponentType } from 'react';
 import { NotFoundError } from './notFound.js';
 import { Redirect } from './Redirect.js';
 import { AbortablePromise } from 'parallel-universe';
-import { AbortError, isPromiseLike, noop } from './utils.js';
+import { AbortError, isPromiseLike, preventUnhandledRejection } from './utils.js';
 import { RouteMatch } from './matchRoutes.js';
 
 /**
@@ -210,7 +210,7 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
    *
    * @param reason The abort reason that is used for rejection of the loading promise.
    */
-  abort(reason: unknown = AbortError('Route loading was aborted')): void {
+  abort(reason: unknown = AbortError('The route loading was aborted')): void {
     this.promise?.abort(reason);
   }
 
@@ -312,8 +312,7 @@ export class RouteController<Params extends Dict = any, Data = any, Context = an
       );
     });
 
-    // Prevent unhandled promise rejections
-    promise.catch(noop);
+    preventUnhandledRejection(promise);
 
     if (prevState !== this._state) {
       // Component and data were loaded synchronously
