@@ -1,8 +1,8 @@
-import React, { forwardRef, HTMLAttributes, MouseEventHandler, Ref, useEffect, useMemo, useRef, useState } from 'react';
+import React, { forwardRef, HTMLAttributes, MouseEventHandler, Ref, useMemo, useRef } from 'react';
 import { To } from '../types.js';
-import { toLocation } from '../utils.js';
+import { noop, toLocation } from '../utils.js';
 import { useHistory } from './useHistory.js';
-import { Prefetch } from '../usePrefetch.js';
+import { createHoverTrigger, createIntersectionTrigger, PrefetchTrigger, usePrefetch } from '../usePrefetch.js';
 
 /**
  * Props of the {@link Link} component.
@@ -20,7 +20,7 @@ export interface LinkProps extends Omit<HTMLAttributes<HTMLAnchorElement>, 'href
    *
    * @default "off"
    */
-  prefetch?: 'render' | 'hover' | 'visible' | 'off';
+  prefetch?: 'instant' | 'hover' | 'visible' | 'off';
 
   /**
    * If `true` then link replaces the current history entry, otherwise link pushes an entry.
@@ -37,18 +37,23 @@ export interface LinkProps extends Omit<HTMLAttributes<HTMLAnchorElement>, 'href
  * @group History
  */
 export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, externalRef) => {
-  const { to, prefetch, isReplace, onClick, onMouseEnter, children, ...anchorProps } = props;
-
-  const [isPrefetched, setPrefetched] = useState(prefetch === 'render');
+  const { to, prefetch = 'off', isReplace, onClick, children, ...anchorProps } = props;
 
   const history = useHistory();
   const internalRef = useRef<HTMLAnchorElement>(null);
 
-  const ref = useMemo<Ref<HTMLAnchorElement>>(() => {
-    if (prefetch !== 'visible') {
-      return externalRef;
-    }
+  const prefetchTrigger = (useRef<PrefetchTrigger | undefined>(undefined).current ||=
+    prefetch === 'instant'
+      ? undefined
+      : prefetch === 'hover'
+        ? createHoverTrigger(internalRef)
+        : prefetch === 'visible'
+          ? createIntersectionTrigger(internalRef)
+          : noop);
 
+  usePrefetch(typeof to === 'string' ? history.parseURL(to) : to, prefetchTrigger);
+
+  const ref = useMemo<Ref<HTMLAnchorElement>>(() => {
     if (externalRef === null) {
       return internalRef;
     }
@@ -63,13 +68,7 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, externalRef
     return element => {
       internalRef.current = externalRef.current = element;
     };
-  }, [prefetch, externalRef]);
-
-  useEffect(() => {
-    if (internalRef.current !== null) {
-      return observePrefetch(internalRef.current, setPrefetched);
-    }
-  }, [prefetch]);
+  }, [externalRef]);
 
   const handleClick: MouseEventHandler<HTMLAnchorElement> = event => {
     if (typeof onClick === 'function') {
@@ -96,29 +95,13 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, externalRef
     event.preventDefault();
   };
 
-  const handleMouseEnter: MouseEventHandler<HTMLAnchorElement> = event => {
-    if (typeof onMouseEnter === 'function') {
-      onMouseEnter(event);
-    }
-
-    if (event.isDefaultPrevented()) {
-      return;
-    }
-
-    if (prefetch === 'hover') {
-      setPrefetched(true);
-    }
-  };
-
   return (
     <a
       {...anchorProps}
       ref={ref}
       href={typeof to === 'string' ? to : history.toURL(toLocation(to))}
       onClick={handleClick}
-      onMouseEnter={handleMouseEnter}
     >
-      {isPrefetched && <Prefetch to={typeof to === 'string' ? history.parseURL(to) : to} />}
       {children}
     </a>
   );
@@ -128,34 +111,3 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, externalRef
  * @internal
  */
 Link.displayName = 'Link';
-
-let elements = new WeakMap<Element, (isPrefetched: boolean) => void>();
-let observer: IntersectionObserver;
-
-function observePrefetch(element: HTMLAnchorElement, setPrefetched: (isPrefetched: boolean) => void): () => void {
-  if (observer === undefined) {
-    const observerCallback: IntersectionObserverCallback = entries => {
-      for (let i = 0; i < entries.length; ++i) {
-        const element = entries[i].target;
-        const setPrefetched = elements.get(element);
-
-        if (setPrefetched === undefined || !entries[i].isIntersecting) {
-          continue;
-        }
-
-        elements.delete(element);
-        setPrefetched(true);
-      }
-    };
-
-    observer = new IntersectionObserver(observerCallback, { threshold: 0 });
-  }
-
-  elements.set(element, setPrefetched);
-  observer.observe(element);
-
-  return () => {
-    elements.delete(element);
-    observer.unobserve(element);
-  };
-}
