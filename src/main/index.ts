@@ -19,7 +19,7 @@ export { type RouteMatch } from './matchRoutes.js';
 export { notFound, NotFoundError } from './notFound.js';
 export { PathnameTemplate, type PathnameMatch } from './PathnameTemplate.js';
 export { redirect, Redirect } from './Redirect.js';
-export { Route } from './Route.js';
+export { Route, LazyComponentError } from './Route.js';
 export { RouteController } from './RouteController.js';
 export { Router } from './Router.js';
 export { useInlineRoute } from './useInlineRoute.js';

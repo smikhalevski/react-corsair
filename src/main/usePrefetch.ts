@@ -3,6 +3,8 @@ import { To } from './types.js';
 import { useRouter } from './useRouter.js';
 import { isEqualLocation } from './utils.js';
 
+export interface PrefetchOptions {}
+
 /**
  * Prefetches components and data of routes matched by a location after a component has mounted.
  *
@@ -16,7 +18,7 @@ import { isEqualLocation } from './utils.js';
  * @group Prefetching
  */
 export function usePrefetch(to: To): void {
-  const toRef = useRef<To>();
+  const toRef = useRef<To>(undefined);
   const router = useRouter();
 
   useEffect(() => {

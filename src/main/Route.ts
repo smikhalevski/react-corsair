@@ -180,11 +180,11 @@ export class Route<ParentRoute extends Route | null = any, Params extends Dict =
           }
 
           promise = undefined;
-          throw new TypeError('Module loaded by a lazyComponent must default-export a component');
+          throw new LazyComponentError('Module loaded by a lazyComponent must default-export a component');
         },
         error => {
           promise = undefined;
-          throw error;
+          throw new LazyComponentError('Cannot load a lazyComponent module', error);
         }
       ));
   }
@@ -272,3 +272,27 @@ function toParamsAdapter<Params extends Dict>(paramsAdapter: ParamsAdapterLike<P
     },
   };
 }
+
+/**
+ * An error that is thrown when a {@link RouteOptions.lazyComponent lazyComponent} cannot be loaded.
+ *
+ * @group Routing
+ */
+export class LazyComponentError extends Error {
+  /**
+   * Creates a new {@link LazyComponentError} instance.
+   *
+   * @param message The error message.
+   * @param cause The cause of a loading error.
+   */
+  constructor(message: string, cause?: unknown) {
+    super(message, { cause });
+
+    this.cause = cause;
+  }
+}
+
+/**
+ * @internal
+ */
+LazyComponentError.prototype.name = 'LazyComponentError';
