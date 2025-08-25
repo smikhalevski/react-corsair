@@ -92,7 +92,7 @@ export class PathnameTemplate {
 
     if (_segments.length !== 1) {
       for (let i = 0, j = 1, value; i < _segments.length; ++i) {
-        if (!contains(_flags[i], FLAG_PARAM)) {
+        if (!hasFlag(_flags[i], FLAG_PARAM)) {
           continue;
         }
 
@@ -127,14 +127,14 @@ export class PathnameTemplate {
       segment = _segments[i];
       flags = _flags[i];
 
-      if (!contains(flags, FLAG_PARAM)) {
+      if (!hasFlag(flags, FLAG_PARAM)) {
         pathname += '/' + segment;
         continue;
       }
 
       if (
         (params === undefined || (value = params[segment]) === undefined || value === null || value === '') &&
-        contains(flags, FLAG_OPTIONAL)
+        hasFlag(flags, FLAG_OPTIONAL)
       ) {
         continue;
       }
@@ -147,7 +147,7 @@ export class PathnameTemplate {
         throw new Error('Param must be a non-empty string or a number: ' + segment);
       }
 
-      pathname += '/' + (contains(flags, FLAG_WILDCARD) ? encodePathname(value) : encodePathnameComponent(value));
+      pathname += '/' + (hasFlag(flags, FLAG_WILDCARD) ? encodePathname(value) : encodePathnameComponent(value));
     }
 
     return pathname === '' ? '/' : pathname;
@@ -304,24 +304,24 @@ export function createPatternRegExp(template: Template, isCaseSensitive = false)
     const segment = segments[i];
     const flags = template.flags[i];
 
-    if (!contains(flags, FLAG_PARAM)) {
+    if (!hasFlag(flags, FLAG_PARAM)) {
       const segmentPattern = segment.length === 0 ? '/' : '/' + escapeRegExp(segment);
 
-      pattern += contains(flags, FLAG_OPTIONAL) ? '(?:' + segmentPattern + ')?' : segmentPattern;
+      pattern += hasFlag(flags, FLAG_OPTIONAL) ? '(?:' + segmentPattern + ')?' : segmentPattern;
       continue;
     }
 
-    if (contains(flags, FLAG_WILDCARD)) {
-      pattern += contains(flags, FLAG_OPTIONAL) ? '(?:/(.+))?' : '/(.+)';
+    if (hasFlag(flags, FLAG_WILDCARD)) {
+      pattern += hasFlag(flags, FLAG_OPTIONAL) ? '(?:/(.+))?' : '/(.+)';
     } else {
-      pattern += contains(flags, FLAG_OPTIONAL) ? '(?:/([^/]+))?' : '/([^/]+)';
+      pattern += hasFlag(flags, FLAG_OPTIONAL) ? '(?:/([^/]+))?' : '/([^/]+)';
     }
   }
 
   return new RegExp(pattern.endsWith('/') ? pattern : pattern + '(?=/|$)', isCaseSensitive ? '' : 'i');
 }
 
-function contains(flags: number, flag: number): boolean {
+function hasFlag(flags: number, flag: number): boolean {
   return (flags & flag) === flag;
 }
 
