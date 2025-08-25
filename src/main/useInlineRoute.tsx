@@ -20,7 +20,7 @@ import { getLeafController, isEqualLocation } from './utils.js';
  */
 export function useInlineRoute(to: To): RouteController | null {
   const router = useRouter();
-  const toRef = useRef<To>();
+  const toRef = useRef<To>(undefined);
   const [controller, setController] = useState<RouteController | null>(null);
 
   useEffect(() => {

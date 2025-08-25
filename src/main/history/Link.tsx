@@ -1,8 +1,8 @@
-import React, { forwardRef, HTMLAttributes, MouseEventHandler } from 'react';
+import React, { forwardRef, HTMLAttributes, MouseEventHandler, Ref, useMemo, useRef } from 'react';
 import { To } from '../types.js';
-import { toLocation } from '../utils.js';
+import { noop, toLocation } from '../utils.js';
 import { useHistory } from './useHistory.js';
-import { Prefetch } from '../usePrefetch.js';
+import { createHoverTrigger, createIntersectionTrigger, PrefetchTrigger, usePrefetch } from '../usePrefetch.js';
 
 /**
  * Props of the {@link Link} component.
@@ -18,9 +18,9 @@ export interface LinkProps extends Omit<HTMLAttributes<HTMLAnchorElement>, 'href
   /**
    * If `true` then link prefetches a route {@link to location} and its data.
    *
-   * @default false
+   * @default "off"
    */
-  isPrefetched?: boolean;
+  prefetch?: 'instant' | 'hover' | 'visible' | 'off';
 
   /**
    * If `true` then link replaces the current history entry, otherwise link pushes an entry.
@@ -36,10 +36,39 @@ export interface LinkProps extends Omit<HTMLAttributes<HTMLAnchorElement>, 'href
  *
  * @group History
  */
-export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
-  const { to, isPrefetched, isReplace, onClick, children, ...anchorProps } = props;
+export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, externalRef) => {
+  const { to, prefetch = 'off', isReplace, onClick, children, ...anchorProps } = props;
 
   const history = useHistory();
+  const internalRef = useRef<HTMLAnchorElement>(null);
+
+  const prefetchTrigger = (useRef<PrefetchTrigger | undefined>(undefined).current ||=
+    prefetch === 'instant'
+      ? undefined
+      : prefetch === 'hover'
+        ? createHoverTrigger(internalRef)
+        : prefetch === 'visible'
+          ? createIntersectionTrigger(internalRef)
+          : noop);
+
+  usePrefetch(to, prefetchTrigger);
+
+  const ref = useMemo<Ref<HTMLAnchorElement>>(() => {
+    if (externalRef === null) {
+      return internalRef;
+    }
+
+    if (typeof externalRef === 'function') {
+      return element => {
+        internalRef.current = element;
+        externalRef(element);
+      };
+    }
+
+    return element => {
+      internalRef.current = externalRef.current = element;
+    };
+  }, [externalRef]);
 
   const handleClick: MouseEventHandler<HTMLAnchorElement> = event => {
     if (typeof onClick === 'function') {
@@ -73,7 +102,6 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
       href={history.toAbsoluteURL(toLocation(to))}
       onClick={handleClick}
     >
-      {isPrefetched && <Prefetch to={to} />}
       {children}
     </a>
   );
