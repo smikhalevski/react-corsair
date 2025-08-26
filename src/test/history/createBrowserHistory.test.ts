@@ -5,6 +5,7 @@
 import { beforeEach, expect, test, vi } from 'vitest';
 import { createBrowserHistory, jsonSearchParamsSerializer } from '../..//main/history/index.js';
 import { Location } from '../../main/index.js';
+import { noop } from '../../main/utils.js';
 
 beforeEach(() => {
   window.history.pushState(null, '', '/');
@@ -188,4 +189,24 @@ test('creates a history-local URL', async () => {
       hash: '',
     })
   ).toBe('/aaa?xxx=111');
+});
+
+test('canGoBack returns true only for not-first entry', async () => {
+  const history = createBrowserHistory();
+
+  history.subscribe(noop);
+
+  expect(history.canGoBack).toBe(false);
+
+  history.push('/aaa');
+
+  expect(history.canGoBack).toBe(true);
+
+  const popstatePromise = new Promise<void>(resolve => history.subscribe(resolve));
+
+  history.back();
+
+  await popstatePromise;
+
+  expect(history.canGoBack).toBe(false);
 });

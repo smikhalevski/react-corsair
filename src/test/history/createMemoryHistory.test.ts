@@ -291,3 +291,17 @@ test('unregisters a blocker', async () => {
     state: undefined,
   } satisfies Location);
 });
+
+test('canGoBack returns true only for not-first entry', async () => {
+  const history = createMemoryHistory([{}]);
+
+  expect(history.canGoBack).toBe(false);
+
+  history.push('/aaa');
+
+  expect(history.canGoBack).toBe(true);
+
+  history.back();
+
+  expect(history.canGoBack).toBe(false);
+});
