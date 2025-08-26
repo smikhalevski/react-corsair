@@ -4,9 +4,7 @@ import { isUnloadBlocked, navigateOrBlock, parseLocation, parseOrCastLocation, s
 import { Location } from '../types.js';
 import { noop } from '../utils.js';
 
-const NO_INDEX = -1;
-
-interface HistoryEntry {
+interface SessionHistoryEntry {
   index: number;
   location: Location;
 }
@@ -14,12 +12,12 @@ interface HistoryEntry {
 /**
  * The state that is stored in `window.history.state`.
  */
-interface HistoryState {
+interface SessionHistoryState {
   index: number;
   state: unknown;
 }
 
-export interface SessionHistoryOptions {
+interface SessionHistoryOptions {
   /**
    * Serializes/parses a URL search string.
    */
@@ -48,12 +46,12 @@ export function createSessionHistory(options: SessionHistoryOptions): History {
   /**
    * Returns an entry that reflects the current state of the session history.
    */
-  const getCurrentEntry = (): HistoryEntry => {
+  const getCurrentEntry = (): SessionHistoryEntry => {
     const location = parseLocation(getURL(), searchParamsSerializer);
-    const historyState: HistoryState | null = window.history.state;
+    const historyState: SessionHistoryState | null = window.history.state;
 
     if (historyState === null) {
-      return { index: NO_INDEX, location };
+      return { index: -1, location };
     }
 
     location.state = historyState.state;
@@ -108,11 +106,11 @@ export function createSessionHistory(options: SessionHistoryOptions): History {
   let cancel = noop;
   let entry = getCurrentEntry();
 
-  if (entry.index === NO_INDEX) {
+  if (entry.index === -1) {
+    // The current entry wasn't persisted to the session history yet
     entry.index = 0;
 
-    // Ensure the history state is ordinal
-    window.history.replaceState({ index: 0, state: entry.location.state } satisfies HistoryState, '');
+    window.history.replaceState({ index: 0, state: entry.location.state } satisfies SessionHistoryState, '');
   }
 
   return {
@@ -140,9 +138,11 @@ export function createSessionHistory(options: SessionHistoryOptions): History {
       cancel();
 
       cancel = navigateOrBlock('push', blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
-        const url = toAbsoluteURL(stringifyLocation(location, searchParamsSerializer));
-
-        window.history.pushState({ index: entry.index + 1, state: location.state } satisfies HistoryState, '', url);
+        window.history.pushState(
+          { index: entry.index + 1, state: location.state } satisfies SessionHistoryState,
+          '',
+          toAbsoluteURL(stringifyLocation(location, searchParamsSerializer))
+        );
 
         applyPopstate = noop;
         entry = getCurrentEntry();
@@ -154,9 +154,11 @@ export function createSessionHistory(options: SessionHistoryOptions): History {
       cancel();
 
       cancel = navigateOrBlock('replace', blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
-        const url = toAbsoluteURL(stringifyLocation(location, searchParamsSerializer));
-
-        window.history.replaceState({ index: entry.index, state: location.state } satisfies HistoryState, '', url);
+        window.history.replaceState(
+          { index: entry.index, state: location.state } satisfies SessionHistoryState,
+          '',
+          toAbsoluteURL(stringifyLocation(location, searchParamsSerializer))
+        );
 
         applyPopstate = noop;
         entry = getCurrentEntry();
