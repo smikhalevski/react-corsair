@@ -1,5 +1,5 @@
 import { PubSub } from 'parallel-universe';
-import { History, HistoryBlocker, SearchParamsSerializer } from './types.js';
+import { BrowserHistory, HistoryBlocker, SearchParamsSerializer } from './types.js';
 import { isUnloadBlocked, navigateOrBlock, parseLocation, parseOrCastLocation, stringifyLocation } from './utils.js';
 import { Location } from '../types.js';
 import { noop } from '../utils.js';
@@ -37,7 +37,7 @@ interface SessionHistoryOptions {
 /**
  * Creates the DOM history adapter that reads and writes location to a browser's session history.
  */
-export function createSessionHistory(options: SessionHistoryOptions): History {
+export function createSessionHistory(options: SessionHistoryOptions): BrowserHistory {
   const { searchParamsSerializer, getURL, toAbsoluteURL } = options;
 
   const pubSub = new PubSub();
@@ -179,19 +179,7 @@ export function createSessionHistory(options: SessionHistoryOptions): History {
     },
 
     subscribe(listener) {
-      if (pubSub.listenerCount === 0) {
-        window.addEventListener('popstate', handlePopstate);
-      }
-
-      const unsubscribe = pubSub.subscribe(listener);
-
-      return () => {
-        unsubscribe();
-
-        if (pubSub.listenerCount === 0) {
-          window.removeEventListener('popstate', handlePopstate);
-        }
-      };
+      return pubSub.subscribe(listener);
     },
 
     block(blocker) {
@@ -210,6 +198,12 @@ export function createSessionHistory(options: SessionHistoryOptions): History {
           window.removeEventListener('beforeunload', handleBeforeUnload);
         }
       };
+    },
+
+    start() {
+      window.addEventListener('popstate', handlePopstate);
+
+      return () => window.removeEventListener('popstate', handlePopstate);
     },
   };
 }

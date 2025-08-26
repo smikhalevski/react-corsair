@@ -19,6 +19,7 @@ export { useHistory, HistoryProvider } from './useHistory.js';
 export { useHistoryBlocker } from './useHistoryBlocker.js';
 export { parseLocation, stringifyLocation } from './utils.js';
 export {
+  type BrowserHistory,
   type HistoryOptions,
   type History,
   type HistoryBlocker,

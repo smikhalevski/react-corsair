@@ -100,6 +100,20 @@ export interface History {
 }
 
 /**
+ * A browser history abstraction.
+ *
+ * @group History
+ */
+export interface BrowserHistory extends History {
+  /**
+   * Adds required DOM listeners.
+   *
+   * @returns A callback that removes DOM listeners.
+   */
+  start(): () => void;
+}
+
+/**
  * The transaction type:
  *
  * <dl>

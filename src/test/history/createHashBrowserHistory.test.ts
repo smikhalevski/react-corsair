@@ -2,19 +2,27 @@
  * @vitest-environment jsdom
  */
 
-import { beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { delay } from 'parallel-universe';
-import { createHashBrowserHistory, jsonSearchParamsSerializer } from '../..//main/history/index.js';
+import { BrowserHistory, createHashBrowserHistory, jsonSearchParamsSerializer } from '../..//main/history/index.js';
 import { Location } from '../../main/index.js';
 
+let history: BrowserHistory | undefined;
+
 beforeEach(() => {
+  history = undefined;
   window.history.pushState(null, '', '/');
+});
+
+afterEach(() => {
+  history?.start()();
 });
 
 test('pushes location', async () => {
   const aaaLocation: Location = { pathname: '/aaa', searchParams: {}, hash: '', state: undefined };
 
-  const history = createHashBrowserHistory();
+  history = createHashBrowserHistory();
+  history.start();
 
   expect(history.location).toStrictEqual({
     pathname: '/',
@@ -33,7 +41,10 @@ test('replaces location', async () => {
   const bbbLocation: Location = { pathname: '/bbb', searchParams: {}, hash: '', state: undefined };
   const cccLocation: Location = { pathname: '/ccc', searchParams: {}, hash: '', state: undefined };
 
-  const history = createHashBrowserHistory();
+  history = createHashBrowserHistory();
+  history.start();
+
+  expect(history.location).toStrictEqual({ pathname: '/', searchParams: {}, hash: '', state: undefined });
 
   history.replace(bbbLocation);
 
@@ -58,7 +69,8 @@ test('calls listener on push', () => {
   const aaaLocation: Location = { pathname: '/aaa', searchParams: {}, hash: '', state: undefined };
   const listenerMock = vi.fn();
 
-  const history = createHashBrowserHistory();
+  history = createHashBrowserHistory();
+  history.start();
 
   history.subscribe(listenerMock);
   history.push(aaaLocation);
@@ -70,7 +82,8 @@ test('calls listener on replace', () => {
   const aaaLocation: Location = { pathname: '/aaa', searchParams: {}, hash: '', state: undefined };
   const listenerMock = vi.fn();
 
-  const history = createHashBrowserHistory();
+  history = createHashBrowserHistory();
+  history.start();
 
   history.subscribe(listenerMock);
   history.replace(aaaLocation);
@@ -83,7 +96,8 @@ test('calls listener on back', () => {
   const bbbLocation: Location = { pathname: '/bbb', searchParams: {}, hash: '', state: undefined };
   const listenerMock = vi.fn();
 
-  const history = createHashBrowserHistory();
+  history = createHashBrowserHistory();
+  history.start();
 
   history.subscribe(listenerMock);
   history.push(aaaLocation);
@@ -100,7 +114,8 @@ test('parses query params', async () => {
   const aaaLocation: Location = { pathname: '/aaa', searchParams: { xxx: 111 }, hash: '', state: undefined };
   const bbbLocation: Location = { pathname: '/bbb', searchParams: { yyy: [111, 222] }, hash: '', state: undefined };
 
-  const history = createHashBrowserHistory();
+  history = createHashBrowserHistory();
+  history.start();
 
   history.push(aaaLocation);
 
@@ -131,7 +146,8 @@ test('parses query params with a custom adapter', async () => {
 
   const aaaLocation = { pathname: '/aaa', searchParams: { xxx: 111 }, hash: '' };
 
-  const history = createHashBrowserHistory();
+  history = createHashBrowserHistory();
+  history.start();
 
   history.push(aaaLocation);
 

@@ -2,13 +2,19 @@
  * @vitest-environment jsdom
  */
 
-import { beforeEach, expect, test, vi } from 'vitest';
-import { createBrowserHistory, jsonSearchParamsSerializer } from '../..//main/history/index.js';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { BrowserHistory, createBrowserHistory, jsonSearchParamsSerializer } from '../..//main/history/index.js';
 import { Location } from '../../main/index.js';
-import { noop } from '../../main/utils.js';
+
+let history: BrowserHistory | undefined;
 
 beforeEach(() => {
+  history = undefined;
   window.history.pushState(null, '', '/');
+});
+
+afterEach(() => {
+  history?.start()();
 });
 
 test('removes base from location', async () => {
@@ -34,7 +40,8 @@ test('removes base from location', async () => {
 test('pushes location', async () => {
   const aaaLocation: Location = { pathname: '/aaa', searchParams: {}, hash: '', state: undefined };
 
-  const history = createBrowserHistory();
+  history = createBrowserHistory();
+  history.start();
 
   // expect(history.location).toStrictEqual({ pathname: '/', searchParams: {}, hash: '', state: undefined });
 
@@ -54,7 +61,8 @@ test('replaces location', async () => {
   const bbbLocation: Location = { pathname: '/bbb', searchParams: {}, hash: '', state: undefined };
   const cccLocation: Location = { pathname: '/ccc', searchParams: {}, hash: '', state: undefined };
 
-  const history = createBrowserHistory();
+  history = createBrowserHistory();
+  history.start();
 
   history.replace(bbbLocation);
 
@@ -73,7 +81,8 @@ test('calls listener on push', () => {
   const aaaLocation = { pathname: '/aaa', searchParams: {}, hash: '' };
   const listenerMock = vi.fn();
 
-  const history = createBrowserHistory();
+  history = createBrowserHistory();
+  history.start();
 
   history.subscribe(listenerMock);
   history.push(aaaLocation);
@@ -85,7 +94,8 @@ test('calls listener on replace', () => {
   const aaaLocation = { pathname: '/aaa', searchParams: {}, hash: '' };
   const listenerMock = vi.fn();
 
-  const history = createBrowserHistory();
+  history = createBrowserHistory();
+  history.start();
 
   history.subscribe(listenerMock);
   history.replace(aaaLocation);
@@ -98,7 +108,8 @@ test('calls listener on back', () => {
   const bbbLocation = { pathname: '/bbb', searchParams: {}, hash: '' };
   const listenerMock = vi.fn();
 
-  const history = createBrowserHistory();
+  history = createBrowserHistory();
+  history.start();
 
   history.subscribe(listenerMock);
   history.push(aaaLocation);
@@ -115,7 +126,8 @@ test('parses query params', async () => {
   const aaaLocation = { pathname: '/aaa', searchParams: { xxx: 111 }, hash: '' };
   const bbbLocation = { pathname: '/bbb', searchParams: { yyy: [111, 222] }, hash: '' };
 
-  const history = createBrowserHistory();
+  history = createBrowserHistory();
+  history.start();
 
   history.push(aaaLocation);
 
@@ -141,7 +153,8 @@ test('parses query params with a custom adapter', async () => {
 
   const aaaLocation = { pathname: '/aaa', searchParams: { xxx: 111 }, hash: '' };
 
-  const history = createBrowserHistory();
+  history = createBrowserHistory();
+  history.start();
 
   history.push(aaaLocation);
 
@@ -174,7 +187,8 @@ test('creates an absolute URL with a default base', async () => {
 });
 
 test('returns the current history-local URL', async () => {
-  const history = createBrowserHistory();
+  history = createBrowserHistory();
+  history.start();
 
   history.push({ pathname: '/aaa', searchParams: { xxx: '111' } });
 
@@ -192,9 +206,8 @@ test('creates a history-local URL', async () => {
 });
 
 test('canGoBack returns true only for not-first entry', async () => {
-  const history = createBrowserHistory();
-
-  history.subscribe(noop);
+  history = createBrowserHistory();
+  history.start();
 
   expect(history.canGoBack).toBe(false);
 
@@ -202,7 +215,7 @@ test('canGoBack returns true only for not-first entry', async () => {
 
   expect(history.canGoBack).toBe(true);
 
-  const popstatePromise = new Promise<void>(resolve => history.subscribe(resolve));
+  const popstatePromise = new Promise<void>(resolve => history!.subscribe(resolve));
 
   history.back();
 

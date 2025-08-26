@@ -1044,6 +1044,8 @@ import { createBrowserHistory, HistoryProvider } from 'react-corsair/history';
 
 const history = createBrowserHistory();
 
+history.start();
+
 const router = new Router({ routes: [helloRoute] });
 
 // 1️⃣ Trigger router navigation if history location changes
@@ -1093,7 +1095,7 @@ There are three types of history adapters that you can leverage:
   is a DOM-specific history adapter that uses HTML5 history API.
 
 - [`createHashBrowserHistory`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/history.createHashBrowserHistory.html)
-  is a DOM-specific history adapter that uses HTML5 history API but stores location in
+  is a DOM-specific history adapter that uses HTML5 history API and stores location in
   a [URL hash&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/API/URL/hash). This is useful if
   your server doesn't support history fallback, or if you're shipping an HTML file.
 

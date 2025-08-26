@@ -1,4 +1,4 @@
-import { History, HistoryOptions } from './types.js';
+import { BrowserHistory, HistoryOptions } from './types.js';
 import { concatPathname, debasePathname } from './utils.js';
 import { createSessionHistory } from './createSessionHistory.js';
 import { jsonSearchParamsSerializer } from './jsonSearchParamsSerializer.js';
@@ -9,7 +9,7 @@ import { jsonSearchParamsSerializer } from './jsonSearchParamsSerializer.js';
  * @param options History options.
  * @group History
  */
-export function createBrowserHistory(options: HistoryOptions = {}): History {
+export function createBrowserHistory(options: HistoryOptions = {}): BrowserHistory {
   const { basePathname, searchParamsSerializer = jsonSearchParamsSerializer } = options;
 
   return createSessionHistory({
