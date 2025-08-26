@@ -635,3 +635,22 @@ export interface RedirectState {
  * @group Route State
  */
 export type RouteState<Data = any> = LoadingState | ReadyState<Data> | ErrorState | NotFoundState | RedirectState;
+
+/**
+ * Parses and serializes values.
+ */
+export interface Serializer {
+  /**
+   * Parses serialized value.
+   *
+   * @param text The serialized value.
+   */
+  parse(text: string): any;
+
+  /**
+   * Serializes value as a string.
+   *
+   * @param value The value to serialize.
+   */
+  stringify(value: any): string;
+}

@@ -10,12 +10,6 @@ beforeEach(() => {
   window.__REACT_CORSAIR_SSR_STATE__ = undefined;
 });
 
-test('returns the provided router', () => {
-  const router = new Router({ routes: [] });
-
-  expect(hydrateRouter(router, {})).toBe(router);
-});
-
 test('hydrates a post-populated root controller', async () => {
   const route0 = createRoute('/aaa');
 

@@ -35,11 +35,11 @@ describe('navigate', () => {
   });
 });
 
-describe('nextHydrationScript', () => {
+describe('nextHydrationScriptSource', () => {
   test('returns not found hydration script', () => {
     const router = new SSRRouter({ routes: [] });
 
-    expect(router.nextHydrationScript()).toBe(
+    expect(router.nextHydrationScriptSource()).toBe(
       'var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();s.set(0,"{\\"status\\":\\"not_found\\"}");var e=document.currentScript;e&&e.parentNode.removeChild(e);'
     );
   });
@@ -50,7 +50,7 @@ describe('nextHydrationScript', () => {
 
     router.navigate(route);
 
-    expect(router.nextHydrationScript()).toBe(
+    expect(router.nextHydrationScriptSource()).toBe(
       'var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();s.set(0,"{\\"status\\":\\"ready\\"}");var e=document.currentScript;e&&e.parentNode.removeChild(e);'
     );
   });
@@ -62,7 +62,7 @@ describe('nextHydrationScript', () => {
 
     router.navigate(routeBbb);
 
-    expect(router.nextHydrationScript()).toBe(
+    expect(router.nextHydrationScriptSource()).toBe(
       'var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();s.set(0,"{\\"status\\":\\"ready\\"}");s.set(1,"{\\"status\\":\\"ready\\"}");var e=document.currentScript;e&&e.parentNode.removeChild(e);'
     );
   });
@@ -73,27 +73,30 @@ describe('nextHydrationScript', () => {
     const router = new SSRRouter({ routes: [routeBbb] });
 
     router.navigate(routeBbb);
-    router.nextHydrationScript();
+    router.nextHydrationScriptSource();
 
     router.rootController.childController!.setData('xxx');
 
-    expect(router.nextHydrationScript()).toBe(
+    expect(router.nextHydrationScriptSource()).toBe(
       'var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();s.set(1,"{\\"status\\":\\"ready\\",\\"data\\":\\"xxx\\"}");var e=document.currentScript;e&&e.parentNode.removeChild(e);'
     );
   });
 
-  test('respects stateStringifier option', () => {
-    const stateStringifierMock = vi.fn(JSON.stringify);
+  test('uses custom serializer', () => {
+    const serializerMock = {
+      parse: vi.fn(JSON.parse),
+      stringify: vi.fn(JSON.stringify),
+    };
 
     const route = createRoute('/aaa');
-    const router = new SSRRouter({ routes: [route], stateStringifier: stateStringifierMock });
+    const router = new SSRRouter({ routes: [route], serializer: serializerMock });
 
     router.navigate(route);
 
-    router.nextHydrationScript();
+    router.nextHydrationScriptSource();
 
-    expect(stateStringifierMock).toHaveBeenCalledTimes(1);
-    expect(stateStringifierMock).toHaveBeenNthCalledWith(1, { status: 'ready', data: undefined });
+    expect(serializerMock.stringify).toHaveBeenCalledTimes(1);
+    expect(serializerMock.stringify).toHaveBeenNthCalledWith(1, { status: 'ready', data: undefined });
   });
 
   test('escapes XSS-prone strings', () => {
@@ -103,7 +106,7 @@ describe('nextHydrationScript', () => {
     router.navigate(route);
     router.rootController.setData('<script src="https://xxx.yyy"></script>');
 
-    expect(router.nextHydrationScript()).toBe(
+    expect(router.nextHydrationScriptSource()).toBe(
       'var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();s.set(0,"{\\"status\\":\\"ready\\",\\"data\\":\\"\\u003Cscript src=\\\\\\"https://xxx.yyy\\\\\\">\\u003C/script>\\"}");var e=document.currentScript;e&&e.parentNode.removeChild(e);'
     );
   });

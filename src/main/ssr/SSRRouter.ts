@@ -1,4 +1,4 @@
-import { RouterOptions, RouteState } from '../types.js';
+import { RouterOptions, RouteState, Serializer } from '../types.js';
 import { Router } from '../Router.js';
 import { RouteController } from '../RouteController.js';
 
@@ -12,10 +12,9 @@ export interface SSRRouterOptions<Context> extends RouterOptions<Context> {
   /**
    * Stringifies a route state before it is sent to the client.
    *
-   * @param state The route state to stringify.
-   * @default JSON.stringify
+   * @default JSON
    */
-  stateStringifier?: (state: RouteState) => string;
+  serializer?: Serializer;
 
   /**
    * A nonce string to allow hydration scripts under a
@@ -39,7 +38,7 @@ export class SSRRouter<Context = any> extends Router<Context> {
   /**
    * Stringifies the state of the controller before sending it to the client.
    */
-  protected _stateStringifier;
+  protected _serializer;
 
   readonly isSSR: boolean = true;
 
@@ -56,18 +55,17 @@ export class SSRRouter<Context = any> extends Router<Context> {
    * @template Context A context provided to {@link react-corsair!RouteOptions.dataLoader route data loaders}.
    */
   constructor(options: SSRRouterOptions<Context>) {
-    const { stateStringifier = JSON.stringify } = options;
+    const { serializer = JSON } = options;
 
     super(options);
 
-    this._stateStringifier = stateStringifier;
+    this._serializer = serializer;
 
     this.nonce = options.nonce;
   }
 
   /**
-   * Resolves with `true` if there were pending controllers and their state has changed after they became
-   * non-pending. Otherwise, resolves with `false`.
+   * Resolves with `true` if the {@link nextHydrationChunk} is non-empty.
    */
   hasChanges(): Promise<boolean> {
     const promises = [];
@@ -96,10 +94,10 @@ export class SSRRouter<Context = any> extends Router<Context> {
 
   /**
    * Returns an inline `<script>` tag with source that hydrates the client with the state accumulated during SSR,
-   * or an empty string if there are no state changes since the last time {@link nextHydrationScript} was called.
+   * or an empty string if there are no state changes since the last time {@link nextHydrationChunk} was called.
    */
   nextHydrationChunk(): string {
-    const source = this.nextHydrationScript();
+    const source = this.nextHydrationScriptSource();
 
     if (source === '') {
       return source;
@@ -110,10 +108,10 @@ export class SSRRouter<Context = any> extends Router<Context> {
 
   /**
    * Returns a script source that hydrates the client with the state accumulated during SSR, or an empty string if there
-   * are no state changes since the last time {@link nextHydrationScript} was called.
+   * are no state changes since the last time {@link nextHydrationScriptSource} was called.
    */
-  nextHydrationScript(): string {
-    let script = '';
+  nextHydrationScriptSource(): string {
+    let source = '';
 
     for (
       let controller: RouteController | null = this.rootController, index = 0;
@@ -126,23 +124,20 @@ export class SSRRouter<Context = any> extends Router<Context> {
 
       this._hydratedStates.set(controller, controller['_state']);
 
-      if (script === '') {
-        script = 'var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();';
+      if (source === '') {
+        source = 'var s=window.__REACT_CORSAIR_SSR_STATE__=window.__REACT_CORSAIR_SSR_STATE__||new Map();';
       }
 
-      script +=
-        's.set(' +
-        index +
-        ',' +
-        JSON.stringify(this._stateStringifier(controller['_state'])).replace(/</g, '\\u003C') +
-        ');';
+      const json = JSON.stringify(this._serializer.stringify(controller['_state'])).replace(/</g, '\\u003C');
+
+      source += 's.set(' + index + ',' + json + ');';
     }
 
-    if (script !== '') {
-      script += 'var e=document.currentScript;e&&e.parentNode.removeChild(e);';
+    if (source !== '') {
+      source += 'var e=document.currentScript;e&&e.parentNode.removeChild(e);';
     }
 
-    return script;
+    return source;
   }
 
   /**

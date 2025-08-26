@@ -13,6 +13,18 @@ OutletContext.displayName = 'OutletContext';
 export const OutletProvider = OutletContext.Provider;
 
 /**
+ * Props of the {@link Outlet} component.
+ *
+ * @group Routing
+ */
+export interface OutletProps {
+  /**
+   * Children that are rendered if there's no route to render in an outlet.
+   */
+  fallback?: ReactNode;
+}
+
+/**
  * Renders a route {@link RouterProvider provided by an enclosing router}.
  *
  * ```tsx
@@ -23,16 +35,12 @@ export const OutletProvider = OutletContext.Provider;
  *
  * @group Routing
  */
-export const Outlet: ExoticComponent = memo(_Outlet, returnTrue);
+export const Outlet: ExoticComponent<OutletProps> = memo(_Outlet, returnTrue);
 
-function _Outlet(): ReactNode {
+function _Outlet(props: OutletProps): ReactNode {
   const controller = useContext(OutletContext);
 
-  if (controller === null) {
-    throw new Error('Cannot be used outside of a RouterProvider');
-  }
-
-  return <RouteOutlet controller={controller} />;
+  return controller === null ? props.fallback : <RouteOutlet controller={controller} />;
 }
 
 _Outlet.displayName = 'Outlet';

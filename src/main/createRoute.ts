@@ -1,5 +1,5 @@
 import { ComponentType } from 'react';
-import { CONTEXT, Route } from './Route.js';
+import { InferContext, Route } from './Route.js';
 import { Dict, RouteOptions } from './types.js';
 
 /**
@@ -35,8 +35,8 @@ export function createRoute<Params extends Dict = {}, Data = void, Context = any
  */
 export function createRoute<ParentRoute extends Route, Params extends Dict = {}, Data = void>(
   parentRoute: ParentRoute,
-  options?: RouteOptions<Params, Data, ParentRoute[CONTEXT]>
-): Route<ParentRoute, Params, Data, ParentRoute[CONTEXT]>;
+  options?: RouteOptions<Params, Data, InferContext<ParentRoute>>
+): Route<ParentRoute, Params, Data, InferContext<ParentRoute>>;
 
 /**
  * Creates a route that is rendered in an {@link Outlet} of a {@link Router}.
@@ -80,7 +80,7 @@ export function createRoute<ParentRoute extends Route, Params extends Dict = {}>
   parentRoute: ParentRoute,
   pathname: string,
   component?: ComponentType
-): Route<ParentRoute, Params, void, ParentRoute[CONTEXT]>;
+): Route<ParentRoute, Params, void, InferContext<ParentRoute>>;
 
 export function createRoute(arg1: any, arg2?: any, component?: ComponentType): Route {
   return new Route(
