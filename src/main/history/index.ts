@@ -11,7 +11,7 @@
  */
 
 export { createBrowserHistory } from './createBrowserHistory.js';
-export { createHashHistory } from './createHashHistory.js';
+export { createHashBrowserHistory } from './createHashBrowserHistory.js';
 export { createMemoryHistory } from './createMemoryHistory.js';
 export { jsonSearchParamsSerializer } from './jsonSearchParamsSerializer.js';
 export { Link, type LinkProps } from './Link.js';

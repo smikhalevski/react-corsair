@@ -14,8 +14,13 @@ export function createBrowserHistory(options: HistoryOptions = {}): History {
 
   return createSessionHistory({
     searchParamsSerializer,
-    getURL: () =>
-      debasePathname(basePathname, window.location.pathname) + window.location.search + window.location.hash,
-    toAbsoluteURL: url => concatPathname(basePathname, url),
+
+    getURL() {
+      return debasePathname(basePathname, window.location.pathname) + window.location.search + window.location.hash;
+    },
+
+    toAbsoluteURL(url) {
+      return concatPathname(basePathname, url);
+    },
   });
 }

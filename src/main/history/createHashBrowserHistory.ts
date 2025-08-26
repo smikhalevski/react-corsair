@@ -9,12 +9,18 @@ import { jsonSearchParamsSerializer } from './jsonSearchParamsSerializer.js';
  * @param options History options.
  * @group History
  */
-export function createHashHistory(options: HistoryOptions = {}): History {
+export function createHashBrowserHistory(options: HistoryOptions = {}): History {
   const { basePathname, searchParamsSerializer = jsonSearchParamsSerializer } = options;
 
   return createSessionHistory({
     searchParamsSerializer,
-    getURL: () => decodeURIComponent(window.location.hash.substring(1)),
-    toAbsoluteURL: url => concatPathname(basePathname, '#' + url),
+
+    getURL() {
+      return decodeURIComponent(window.location.hash.substring(1));
+    },
+
+    toAbsoluteURL(url) {
+      return concatPathname(basePathname, '#' + url);
+    },
   });
 }

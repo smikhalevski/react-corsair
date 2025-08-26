@@ -1090,11 +1090,12 @@ history.replace(productRoute.getLocation({ sku: 42 }));
 There are three types of history adapters that you can leverage:
 
 - [`createBrowserHistory`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/history.createBrowserHistory.html)
-  is a DOM-specific history adapter, useful in web browsers that support the HTML5 history API.
+  is a DOM-specific history adapter that uses HTML5 history API.
 
-- [`createHashHistory`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/history.createHashHistory.html)
-  is a DOM-specific history adapter that stores location in
-  a [URL hash&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/API/URL/hash).
+- [`createHashBrowserHistory`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/history.createHashBrowserHistory.html)
+  is a DOM-specific history adapter that uses HTML5 history API but stores location in
+  a [URL hash&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/API/URL/hash). This is useful if
+  your server doesn't support history fallback, or if you're shipping an HTML file.
 
 - [`createMemoryHistory`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/history.createMemoryHistory.html)
   is an in-memory history adapter, useful in testing and non-DOM environments like SSR.
@@ -1125,7 +1126,7 @@ But absolute URLs are produced differently:
 createBrowserHistory().toAbsoluteURL(helloRoute);
 // ⮕ '/hello'
 
-createHashHistory().toAbsoluteURL(helloRoute);
+createHashBrowserHistory().toAbsoluteURL(helloRoute);
 // ⮕ '#/hello'
 
 createMemoryHistory(['/']).toAbsoluteURL(helloRoute);
@@ -1139,7 +1140,7 @@ can be prepended to an absolute URL:
 createBrowserHistory({ basePathname: '/wow' }).toAbsoluteURL(helloRoute);
 // ⮕ '/wow/hello'
 
-createHashHistory({ basePathname: '/wow' }).toAbsoluteURL(helloRoute);
+createHashBrowserHistory({ basePathname: '/wow' }).toAbsoluteURL(helloRoute);
 // ⮕ '/wow#/hello'
 ```
 
