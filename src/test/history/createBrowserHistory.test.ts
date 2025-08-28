@@ -17,7 +17,7 @@ afterEach(() => {
   history?.start()();
 });
 
-test('removes base from location', async () => {
+test('removes base from location', () => {
   window.history.pushState(null, '', '/aaa/bbb');
 
   expect(window.location.href).toBe('http://localhost:3000/aaa/bbb');
@@ -37,7 +37,7 @@ test('removes base from location', async () => {
   } satisfies Location);
 });
 
-test('pushes location', async () => {
+test('pushes location', () => {
   const aaaLocation: Location = { pathname: '/aaa', searchParams: {}, hash: '', state: undefined };
 
   history = createBrowserHistory();
@@ -56,7 +56,7 @@ test('pushes location', async () => {
   expect(history.location).not.toBe(aaaLocation.pathname);
 });
 
-test('replaces location', async () => {
+test('replaces location', () => {
   const aaaLocation: Location = { pathname: '/aaa', searchParams: {}, hash: '', state: undefined };
   const bbbLocation: Location = { pathname: '/bbb', searchParams: {}, hash: '', state: undefined };
   const cccLocation: Location = { pathname: '/ccc', searchParams: {}, hash: '', state: undefined };
@@ -122,7 +122,7 @@ test('calls listener on back', () => {
   expect(listenerMock).toHaveBeenCalledTimes(2);
 });
 
-test('parses query params', async () => {
+test('parses query params', () => {
   const aaaLocation = { pathname: '/aaa', searchParams: { xxx: 111 }, hash: '' };
   const bbbLocation = { pathname: '/bbb', searchParams: { yyy: [111, 222] }, hash: '' };
 
@@ -147,7 +147,7 @@ test('parses query params', async () => {
   expect(window.location.href).toBe('http://localhost:3000/bbb?yyy=[111,222]');
 });
 
-test('parses query params with a custom adapter', async () => {
+test('parses query params with a custom serializer', () => {
   vi.spyOn(jsonSearchParamsSerializer, 'parse');
   vi.spyOn(jsonSearchParamsSerializer, 'stringify');
 
@@ -170,15 +170,13 @@ test('parses query params with a custom adapter', async () => {
   expect(jsonSearchParamsSerializer.parse).toHaveBeenNthCalledWith(2, 'xxx=111');
 });
 
-test('creates an absolute URL', async () => {
-  expect(createBrowserHistory().toAbsoluteURL({ pathname: '/aaa', searchParams: { xxx: 111 }, hash: '' })).toBe(
-    '/aaa?xxx=111'
-  );
+test('creates an absolute URL', () => {
+  expect(createBrowserHistory().toURL({ pathname: '/aaa', searchParams: { xxx: 111 }, hash: '' })).toBe('/aaa?xxx=111');
 });
 
-test('creates an absolute URL with a default base', async () => {
+test('creates an absolute URL with a default base', () => {
   expect(
-    createBrowserHistory({ basePathname: '/' }).toAbsoluteURL({
+    createBrowserHistory({ basePathname: '/' }).toURL({
       pathname: '/aaa',
       searchParams: { xxx: 111 },
       hash: '',
@@ -186,7 +184,7 @@ test('creates an absolute URL with a default base', async () => {
   ).toBe('/aaa?xxx=111');
 });
 
-test('returns the current history-local URL', async () => {
+test('returns the current URL', () => {
   history = createBrowserHistory();
   history.start();
 
@@ -195,7 +193,7 @@ test('returns the current history-local URL', async () => {
   expect(history.url).toBe('/aaa?xxx=111');
 });
 
-test('creates a history-local URL', async () => {
+test('creates a URL', () => {
   expect(
     createBrowserHistory({ basePathname: '/' }).toURL({
       pathname: '/aaa',

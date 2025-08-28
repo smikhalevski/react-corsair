@@ -12,18 +12,16 @@
 
 export { createBrowserHistory } from './createBrowserHistory.js';
 export { createHashBrowserHistory } from './createHashBrowserHistory.js';
-export { createMemoryHistory } from './createMemoryHistory.js';
+export { createMemoryHistory, type MemoryHistoryOptions } from './createMemoryHistory.js';
 export { jsonSearchParamsSerializer } from './jsonSearchParamsSerializer.js';
 export { Link, type LinkProps } from './Link.js';
 export { useHistory, HistoryProvider } from './useHistory.js';
 export { useHistoryBlocker } from './useHistoryBlocker.js';
-export { parseLocation, stringifyLocation } from './utils.js';
-export {
-  type BrowserHistory,
-  type HistoryOptions,
-  type History,
-  type HistoryBlocker,
-  type HistoryTransactionType,
-  type HistoryTransaction,
-  type SearchParamsSerializer,
+export type {
+  BrowserHistory,
+  HistoryOptions,
+  History,
+  HistoryBlocker,
+  HistoryTransactionType,
+  HistoryTransaction,
 } from './types.js';

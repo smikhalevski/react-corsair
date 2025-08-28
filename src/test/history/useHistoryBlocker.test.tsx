@@ -14,7 +14,7 @@ import {
 import { Location } from '../../main/index.js';
 
 test('returns history transaction', () => {
-  const history = createMemoryHistory(['/zzz']);
+  const history = createMemoryHistory({ initialEntries: ['/zzz'] });
 
   const hook = renderHook(() => useHistoryBlocker(), {
     wrapper: props => (
@@ -49,7 +49,7 @@ test('returns history transaction', () => {
 });
 
 test('proceeds the history transaction', () => {
-  const history = createMemoryHistory(['/zzz']);
+  const history = createMemoryHistory({ initialEntries: ['/zzz'] });
 
   const hook = renderHook(() => useHistoryBlocker(), {
     wrapper: props => (
@@ -74,7 +74,7 @@ test('proceeds the history transaction', () => {
 });
 
 test('cancels the history transaction', () => {
-  const history = createMemoryHistory(['/zzz']);
+  const history = createMemoryHistory({ initialEntries: ['/zzz'] });
 
   const hook = renderHook(() => useHistoryBlocker(), {
     wrapper: props => (
@@ -101,7 +101,7 @@ test('cancels the history transaction', () => {
 test('returns history transaction if blocker function returns undefined', () => {
   const blockerMock = vi.fn(() => undefined);
 
-  const history = createMemoryHistory(['/zzz']);
+  const history = createMemoryHistory({ initialEntries: ['/zzz'] });
 
   const hook = renderHook(() => useHistoryBlocker(blockerMock), {
     wrapper: props => (
@@ -143,7 +143,7 @@ test('returns history transaction if blocker function returns undefined', () => 
 test('proceeds the history transaction if blocker function returns false', () => {
   const blockerMock = vi.fn(() => false);
 
-  const history = createMemoryHistory(['/zzz']);
+  const history = createMemoryHistory({ initialEntries: ['/zzz'] });
 
   const hook = renderHook(() => useHistoryBlocker(blockerMock), {
     wrapper: props => (
@@ -181,7 +181,7 @@ test('proceeds the history transaction if blocker function returns false', () =>
 test('cancels the history transaction if blocker function returns true', () => {
   const blockerMock = vi.fn(() => true);
 
-  const history = createMemoryHistory(['/zzz']);
+  const history = createMemoryHistory({ initialEntries: ['/zzz'] });
 
   const hook = renderHook(() => useHistoryBlocker(blockerMock), {
     wrapper: props => (
@@ -217,7 +217,7 @@ test('cancels the history transaction if blocker function returns true', () => {
 });
 
 test('proceeds the history transaction if blocker is false', () => {
-  const history = createMemoryHistory(['/zzz']);
+  const history = createMemoryHistory({ initialEntries: ['/zzz'] });
 
   const hook = renderHook(() => useHistoryBlocker(false), {
     wrapper: props => (
@@ -240,7 +240,7 @@ test('proceeds the history transaction if blocker is false', () => {
 });
 
 test('cancels the history transaction if blocker is true', () => {
-  const history = createMemoryHistory(['/zzz']);
+  const history = createMemoryHistory({ initialEntries: ['/zzz'] });
 
   const hook = renderHook(() => useHistoryBlocker(true), {
     wrapper: props => (

@@ -3,17 +3,29 @@ import { createMemoryHistory, HistoryTransaction } from '../..//main/history/ind
 import { createRoute, Location } from '../../main/index.js';
 
 test('throws if there is no initial entry', () => {
-  expect(() => createMemoryHistory([])).toThrow(new Error('Expected at least one initial entry'));
+  expect(() => createMemoryHistory({ initialEntries: [] })).toThrow(new Error('Expected at least one initial entry'));
 });
 
 test('parses initial entries', () => {
-  expect(createMemoryHistory(['/aaa?xxx=yyy']).location).toStrictEqual({
+  expect(createMemoryHistory({ initialEntries: ['/aaa?xxx=yyy'] }).location).toStrictEqual({
     pathname: '/aaa',
     searchParams: { xxx: 'yyy' },
     hash: '',
     state: undefined,
   } satisfies Location);
-  expect(createMemoryHistory([createRoute({ pathname: '/aaa' })]).location).toStrictEqual({
+
+  expect(
+    createMemoryHistory({
+      initialEntries: ['/aaa?xxx=yyy'],
+    }).location
+  ).toStrictEqual({
+    pathname: '/aaa',
+    searchParams: { xxx: 'yyy' },
+    hash: '',
+    state: undefined,
+  } satisfies Location);
+
+  expect(createMemoryHistory({ initialEntries: [createRoute({ pathname: '/aaa' })] }).location).toStrictEqual({
     pathname: '/aaa',
     searchParams: {},
     hash: '',
@@ -21,12 +33,22 @@ test('parses initial entries', () => {
   } satisfies Location);
 });
 
+test('throws if base pathname is invalid', () => {
+  expect(
+    () =>
+      createMemoryHistory({
+        basePathname: '/bbb',
+        initialEntries: ['/aaa?xxx=yyy'],
+      }).location
+  ).toThrow(new Error("Pathname doesn't match the required base: /bbb"));
+});
+
 test('pushes location', () => {
   const aaaLocation: Location = { pathname: '/aaa', searchParams: {}, hash: '', state: undefined };
   const bbbLocation: Location = { pathname: '/bbb', searchParams: {}, hash: '', state: undefined };
   const cccLocation: Location = { pathname: '/ccc', searchParams: {}, hash: '', state: undefined };
 
-  const history = createMemoryHistory([aaaLocation]);
+  const history = createMemoryHistory({ initialEntries: [aaaLocation] });
 
   expect(history.location).toStrictEqual(aaaLocation);
 
@@ -52,7 +74,7 @@ test('replaces location', () => {
   const bbbLocation: Location = { pathname: '/bbb', searchParams: {}, hash: '', state: undefined };
   const cccLocation: Location = { pathname: '/ccc', searchParams: {}, hash: '', state: undefined };
 
-  const history = createMemoryHistory([aaaLocation]);
+  const history = createMemoryHistory({ initialEntries: [aaaLocation] });
 
   history.replace(bbbLocation);
 
@@ -80,7 +102,7 @@ test('calls listener on push', () => {
   const bbbLocation: Location = { pathname: '/bbb', searchParams: {}, hash: '', state: undefined };
   const listenerMock = vi.fn();
 
-  const history = createMemoryHistory([aaaLocation]);
+  const history = createMemoryHistory({ initialEntries: [aaaLocation] });
 
   history.subscribe(listenerMock);
   history.push(bbbLocation);
@@ -93,7 +115,7 @@ test('calls listener on replace', () => {
   const bbbLocation: Location = { pathname: '/bbb', searchParams: {}, hash: '', state: undefined };
   const listenerMock = vi.fn();
 
-  const history = createMemoryHistory([aaaLocation]);
+  const history = createMemoryHistory({ initialEntries: [aaaLocation] });
 
   history.subscribe(listenerMock);
   history.replace(bbbLocation);
@@ -104,14 +126,13 @@ test('calls listener on replace', () => {
 test('calls listener on back', () => {
   const listenerMock = vi.fn();
 
-  const history = createMemoryHistory(
-    [
+  const history = createMemoryHistory({
+    initialEntries: [
       { pathname: '/aaa', searchParams: {}, hash: '' },
       { pathname: '/bbb', searchParams: {}, hash: '' },
       { pathname: '/ccc', searchParams: {}, hash: '' },
     ],
-    {}
-  );
+  });
 
   history.subscribe(listenerMock);
   history.back();
@@ -121,25 +142,32 @@ test('calls listener on back', () => {
   expect(listenerMock).toHaveBeenCalledTimes(2);
 });
 
-test('creates an absolute URL', async () => {
-  expect(createMemoryHistory([{}]).toAbsoluteURL({ pathname: '/aaa', searchParams: { xxx: 111 }, hash: '' })).toBe(
-    '/aaa?xxx=111'
-  );
+test('creates an absolute URL', () => {
+  expect(
+    createMemoryHistory({ basePathname: '/bbb', initialEntries: [{}] }).toURL({
+      pathname: '/aaa',
+      searchParams: { xxx: 111 },
+      hash: '',
+    })
+  ).toBe('/bbb/aaa?xxx=111');
 });
 
-test('creates an absolute URL with a default base', async () => {
+test('creates an absolute URL with a base pathname', () => {
   expect(
-    createMemoryHistory([{}], { basePathname: 'http://bbb.ccc' }).toAbsoluteURL({
+    createMemoryHistory({
+      initialEntries: [{}],
+      basePathname: 'bbb',
+    }).toURL({
       pathname: '/aaa',
       searchParams: { xxx: 111 },
     })
-  ).toBe('http://bbb.ccc/aaa?xxx=111');
+  ).toBe('bbb/aaa?xxx=111');
 });
 
 test('does not block the navigation', () => {
   const blockerMock = vi.fn(_tx => false);
 
-  const history = createMemoryHistory([{}]);
+  const history = createMemoryHistory({ initialEntries: [{}] });
 
   history.block(blockerMock);
 
@@ -170,10 +198,10 @@ test('does not block the navigation', () => {
   } satisfies Location);
 });
 
-test('blocks the navigation', async () => {
+test('blocks the navigation', () => {
   const blockerMock = vi.fn(() => true);
 
-  const history = createMemoryHistory([{}]);
+  const history = createMemoryHistory({ initialEntries: [{}] });
 
   history.block(blockerMock);
 
@@ -189,8 +217,8 @@ test('blocks the navigation', async () => {
   } satisfies Location);
 });
 
-test('proceeds with the navigation after blocking', async () => {
-  const history = createMemoryHistory([{}]);
+test('proceeds with the navigation after blocking', () => {
+  const history = createMemoryHistory({ initialEntries: [{}] });
 
   let proceed;
 
@@ -220,8 +248,8 @@ test('proceeds with the navigation after blocking', async () => {
   } satisfies Location);
 });
 
-test('proceeds with the navigation during blocking', async () => {
-  const history = createMemoryHistory([{}]);
+test('proceeds with the navigation during blocking', () => {
+  const history = createMemoryHistory({ initialEntries: [{}] });
 
   history.block(tx => {
     tx.proceed();
@@ -240,11 +268,11 @@ test('proceeds with the navigation during blocking', async () => {
   } satisfies Location);
 });
 
-test('calls all blockers', async () => {
+test('calls all blockers', () => {
   const blockerMock1 = vi.fn(() => false);
   const blockerMock2 = vi.fn(() => false);
 
-  const history = createMemoryHistory([{}]);
+  const history = createMemoryHistory({ initialEntries: [{}] });
 
   history.block(blockerMock1);
   history.block(blockerMock2);
@@ -255,11 +283,11 @@ test('calls all blockers', async () => {
   expect(blockerMock2).toHaveBeenCalledTimes(1);
 });
 
-test('does not call the next blocker if true is returned', async () => {
+test('does not call the next blocker if true is returned', () => {
   const blockerMock1 = vi.fn(() => true);
   const blockerMock2 = vi.fn();
 
-  const history = createMemoryHistory([{}]);
+  const history = createMemoryHistory({ initialEntries: [{}] });
 
   history.block(blockerMock1);
   history.block(blockerMock2);
@@ -270,10 +298,10 @@ test('does not call the next blocker if true is returned', async () => {
   expect(blockerMock2).not.toHaveBeenCalled();
 });
 
-test('unregisters a blocker', async () => {
+test('unregisters a blocker', () => {
   const blockerMock = vi.fn(() => true);
 
-  const history = createMemoryHistory([{}]);
+  const history = createMemoryHistory({ initialEntries: [{}] });
 
   const unregister = history.block(blockerMock);
 
@@ -292,8 +320,8 @@ test('unregisters a blocker', async () => {
   } satisfies Location);
 });
 
-test('canGoBack returns true only for not-first entry', async () => {
-  const history = createMemoryHistory([{}]);
+test('canGoBack returns true only for not-first entry', () => {
+  const history = createMemoryHistory({ initialEntries: [{}] });
 
   expect(history.canGoBack).toBe(false);
 

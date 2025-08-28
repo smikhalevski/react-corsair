@@ -1,84 +1,92 @@
 import { PubSub } from 'parallel-universe';
 import { To } from '../types.js';
 import { History, HistoryBlocker, HistoryOptions } from './types.js';
-import { concatPathname, debasePathname, navigateOrBlock, parseOrCastLocation, stringifyLocation } from './utils.js';
-import { jsonSearchParamsSerializer } from './jsonSearchParamsSerializer.js';
-import { noop } from '../utils.js';
+import { createLocationSerializer, navigateOrBlock, parseOrCastLocation } from './utils.js';
+import { noop, toLocation } from '../utils.js';
+
+/**
+ * Options of the {@link createMemoryHistory}.
+ *
+ * @group History
+ */
+export interface MemoryHistoryOptions extends HistoryOptions {
+  /**
+   * A non-empty array of initial history entries. If an entry is a string, it should start with
+   * the {@link HistoryOptions.basePathname basePathname}.
+   */
+  initialEntries: Array<To | string>;
+}
 
 /**
  * Creates the history adapter that reads and writes location to an in-memory stack.
  *
- * @param initialEntries A non-empty array of initial history entries. If an entry is a string, it should start with
- * a {@link HistoryOptions.basePathname}.
  * @param options History options.
  * @group History
  */
-export function createMemoryHistory(initialEntries: Array<To | string>, options: HistoryOptions = {}): History {
-  const { basePathname, searchParamsSerializer = jsonSearchParamsSerializer } = options;
+export function createMemoryHistory(options: MemoryHistoryOptions): History {
+  const { initialEntries } = options;
 
-  const entries = initialEntries.map(entry =>
-    parseOrCastLocation(typeof entry === 'string' ? debasePathname(basePathname, entry) : entry, searchParamsSerializer)
-  );
-
-  const blockers = new Set<HistoryBlocker>();
-  const pubSub = new PubSub();
-
-  let cancel = noop;
-  let cursor = entries.length - 1;
-
-  if (cursor === -1) {
+  if (initialEntries.length === 0) {
     throw new Error('Expected at least one initial entry');
   }
 
   const go = (delta: number): void => {
-    if (cursor + delta < 0 || cursor + delta >= entries.length) {
+    if (entryIndex + delta < 0 || entryIndex + delta >= entries.length) {
       return;
     }
 
-    cancel();
+    cancelNavigation();
 
-    cancel = navigateOrBlock('pop', blockers, entries[cursor + delta], () => {
-      cursor += delta;
+    cancelNavigation = navigateOrBlock('pop', blockers, entries[entryIndex + delta], () => {
+      entryIndex += delta;
       pubSub.publish();
     });
   };
 
+  const locationSerializer = createLocationSerializer(options);
+  const entries = initialEntries.map(entry => parseOrCastLocation(entry, locationSerializer));
+  const blockers = new Set<HistoryBlocker>();
+  const pubSub = new PubSub();
+
+  let cancelNavigation = noop;
+  let entryIndex = entries.length - 1;
+
   return {
     get url() {
-      return this.toURL(this.location);
+      return locationSerializer.stringify(this.location);
     },
 
     get location() {
-      return entries[cursor];
+      return entries[entryIndex];
     },
 
     get canGoBack() {
-      return cursor !== 0;
+      return entryIndex !== 0;
     },
 
     toURL(to) {
-      return stringifyLocation(to, searchParamsSerializer);
+      return locationSerializer.stringify(toLocation(to));
     },
 
-    toAbsoluteURL(to) {
-      return concatPathname(basePathname, typeof to === 'string' ? to : stringifyLocation(to, searchParamsSerializer));
+    parseURL(url) {
+      return locationSerializer.parse(url);
     },
 
     push(to) {
-      cancel();
+      cancelNavigation();
 
-      cancel = navigateOrBlock('push', blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
-        cursor++;
-        entries.splice(cursor, entries.length, location);
+      cancelNavigation = navigateOrBlock('push', blockers, parseOrCastLocation(to, locationSerializer), location => {
+        entryIndex++;
+        entries.splice(entryIndex, entries.length, location);
         pubSub.publish();
       });
     },
 
     replace(to) {
-      cancel();
+      cancelNavigation();
 
-      cancel = navigateOrBlock('replace', blockers, parseOrCastLocation(to, searchParamsSerializer), location => {
-        entries.splice(cursor, entries.length, location);
+      cancelNavigation = navigateOrBlock('replace', blockers, parseOrCastLocation(to, locationSerializer), location => {
+        entries.splice(entryIndex, entries.length, location);
         pubSub.publish();
       });
     },
