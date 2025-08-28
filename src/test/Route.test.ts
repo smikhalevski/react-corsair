@@ -227,6 +227,13 @@ describe('getLocation', () => {
       hash: 'xxx',
       state: undefined,
     } satisfies Location);
+
+    expect(createRoute('/aaa/:xxx*').getLocation({ xxx: 'bbb/ccc' })).toStrictEqual({
+      pathname: '/aaa/bbb/ccc',
+      searchParams: {},
+      hash: '',
+      state: undefined,
+    } satisfies Location);
   });
 
   test('interpolates pathname params', () => {

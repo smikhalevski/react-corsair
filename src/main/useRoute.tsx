@@ -39,7 +39,7 @@ export function useRoute(route?: Route) {
   }
 
   if (controller === null) {
-    throw new Error('Cannot be used outside of a route');
+    throw new Error('Cannot be used outside of an Outlet');
   }
 
   useRouteSubscription(controller);

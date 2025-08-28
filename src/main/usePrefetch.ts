@@ -1,9 +1,15 @@
 import { RefObject, useEffect, useRef } from 'react';
 import { To } from './types.js';
 import { useRouter } from './useRouter.js';
-import { isEqualLocation, noop } from './utils.js';
+import { isEqualLocation } from './utils.js';
 
-export type PrefetchTrigger = (callback: () => void) => (() => void) | void;
+/**
+ * A callback that triggers a location prefetch.
+ *
+ * @param prefetch A callback that start prefetch.
+ * @returns An optional callback that destroys prefetch trigger.
+ */
+export type PrefetchTrigger = (prefetch: () => void) => (() => void) | void;
 
 /**
  * Prefetches components and data of routes matched by a location after a component has mounted.
@@ -14,7 +20,7 @@ export type PrefetchTrigger = (callback: () => void) => (() => void) | void;
  * usePrefetch(productRoute.getLocation({ sku: 37 }));
  *
  * @param to A location or a route to prefetch.
- * @param prefetchTrigger
+ * @param prefetchTrigger A callback that triggers a location prefetch.
  * @see {@link Prefetch}
  * @group Prefetching
  */
@@ -22,18 +28,23 @@ export function usePrefetch(to: To, prefetchTrigger?: PrefetchTrigger): void {
   const toRef = useRef<To>(undefined);
   const router = useRouter();
 
+  if (!isEqualLocation(toRef.current, to)) {
+    toRef.current = to;
+  }
+
   useEffect(() => {
-    if (isEqualLocation(toRef.current, to)) {
+    if (prefetchTrigger === undefined) {
+      router.prefetch(to);
       return;
     }
-    toRef.current = to;
 
-    if (prefetchTrigger !== undefined) {
-      return prefetchTrigger(() => router.prefetch(to));
-    }
+    const destroyTrigger = prefetchTrigger(() => {
+      router.prefetch(to);
+      destroyTrigger?.();
+    });
 
-    router.prefetch(to);
-  }, [router, to]);
+    return destroyTrigger;
+  }, [router, toRef.current, prefetchTrigger]);
 }
 
 /**
@@ -47,6 +58,9 @@ export interface PrefetchProps {
    */
   to: To;
 
+  /**
+   * A callback that triggers a location prefetch.
+   */
   prefetchTrigger?: PrefetchTrigger;
 }
 
@@ -62,60 +76,58 @@ export function Prefetch(props: PrefetchProps): null {
   return null;
 }
 
-export function createHoverTrigger(ref: RefObject<Element | null>): PrefetchTrigger {
-  return callback => {
-    const hoverListener = (event: MouseEvent) => {
+/**
+ * Creates a trigger that start prefetching when an element is hovered.
+ *
+ * @param ref A ref to an element that must be hovered.
+ */
+export function createHoveredPrefetchTrigger(ref: RefObject<Element | null>): PrefetchTrigger {
+  return prefetch => {
+    const hoverListener: EventListener = event => {
       if (ref.current?.contains(event.target as Node)) {
-        unsubscribe();
-        callback();
+        prefetch();
       }
     };
 
-    const unsubscribe = () => window.removeEventListener('mouseenter', hoverListener);
+    document.addEventListener('mouseenter', hoverListener, { capture: true });
 
-    window.addEventListener('mouseenter', hoverListener);
-
-    return unsubscribe;
+    return () => document.removeEventListener('mouseenter', hoverListener, { capture: true });
   };
 }
 
-let callbacks = new WeakMap<Element, () => void>();
-let observer: IntersectionObserver;
+const prefetchElements = new WeakMap<Element, () => void>();
 
-export function createIntersectionTrigger(ref: RefObject<Element | null>): PrefetchTrigger {
-  return callback => {
+let prefetchObserver: IntersectionObserver;
+
+/**
+ * Creates a trigger that start prefetching when an element is at least 50% visible on screen.
+ *
+ * @param ref A ref to an element that must be visible.
+ */
+export function createVisiblePrefetchTrigger(ref: RefObject<Element | null>): PrefetchTrigger {
+  return prefetch => {
     const element = ref.current;
 
-    if (element === null) {
-      return noop;
+    if (element === null || element === undefined) {
+      return;
     }
 
-    if (observer === undefined) {
-      const observerCallback: IntersectionObserverCallback = entries => {
-        for (let i = 0; i < entries.length; ++i) {
-          const element = entries[i].target;
-          const callback = callbacks.get(element);
-
-          if (callback === undefined || !entries[i].isIntersecting) {
-            continue;
+    if (prefetchObserver === undefined) {
+      prefetchObserver = new IntersectionObserver(entries => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            prefetchElements.get(entry.target)!();
           }
-
-          unsubscribe();
-          callback();
         }
-      };
-
-      observer = new IntersectionObserver(observerCallback, { threshold: 0 });
+      });
     }
 
-    const unsubscribe = () => {
-      callbacks.delete(element);
-      observer.unobserve(element);
+    prefetchElements.set(element, prefetch);
+    prefetchObserver.observe(element);
+
+    return () => {
+      prefetchElements.delete(element);
+      prefetchObserver.unobserve(element);
     };
-
-    callbacks.set(element, callback);
-    observer.observe(element);
-
-    return unsubscribe;
   };
 }

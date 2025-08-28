@@ -2,7 +2,7 @@ import React, { forwardRef, HTMLAttributes, MouseEventHandler, Ref, useMemo, use
 import { To } from '../types.js';
 import { noop, toLocation } from '../utils.js';
 import { useHistory } from './useHistory.js';
-import { createHoverTrigger, createIntersectionTrigger, PrefetchTrigger, usePrefetch } from '../usePrefetch.js';
+import { createHoveredPrefetchTrigger, createVisiblePrefetchTrigger, usePrefetch } from '../usePrefetch.js';
 
 /**
  * Props of the {@link Link} component.
@@ -16,11 +16,22 @@ export interface LinkProps extends Omit<HTMLAttributes<HTMLAnchorElement>, 'href
   to: To | string;
 
   /**
-   * If `true` then link prefetches a route {@link to location} and its data.
+   * Defines when the link prefetches a route that corresponds to a {@link to location}.
    *
-   * @default "off"
+   * <dl>
+   * <dt>"never"</dt>
+   * <dd>The route isn't prefetched.</dd>
+   * <dt>"always"</dt>
+   * <dd>The route is prefetched after the link is rendered.</dd>
+   * <dt>"hovered"</dt>
+   * <dd>The route is prefetched when a user hovers a pointer over a DOM element.</dd>
+   * <dt>"visible"</dt>
+   * <dd>The route is prefetched when a DOM element enters the viewport.</dd>
+   * </dl>
+   *
+   * @default "never"
    */
-  prefetch?: 'instant' | 'hover' | 'visible' | 'off';
+  prefetch?: 'never' | 'always' | 'hovered' | 'visible';
 
   /**
    * If `true` then link replaces the current history entry, otherwise link pushes an entry.
@@ -37,38 +48,40 @@ export interface LinkProps extends Omit<HTMLAttributes<HTMLAnchorElement>, 'href
  * @group History
  */
 export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, externalRef) => {
-  const { to, prefetch = 'off', isReplace, onClick, children, ...anchorProps } = props;
+  const { to, prefetch = 'never', isReplace, onClick, children, ...otherProps } = props;
 
   const history = useHistory();
   const internalRef = useRef<HTMLAnchorElement>(null);
-
-  const prefetchTrigger = (useRef<PrefetchTrigger | undefined>(undefined).current ||=
-    prefetch === 'instant'
-      ? undefined
-      : prefetch === 'hover'
-        ? createHoverTrigger(internalRef)
-        : prefetch === 'visible'
-          ? createIntersectionTrigger(internalRef)
-          : noop);
-
-  usePrefetch(typeof to === 'string' ? history.parseURL(to) : to, prefetchTrigger);
 
   const ref = useMemo<Ref<HTMLAnchorElement>>(() => {
     if (externalRef === null) {
       return internalRef;
     }
 
-    if (typeof externalRef === 'function') {
-      return element => {
-        internalRef.current = element;
-        externalRef(element);
-      };
-    }
-
     return element => {
-      internalRef.current = externalRef.current = element;
+      internalRef.current = element;
+
+      if (typeof externalRef === 'function') {
+        externalRef(element);
+      } else {
+        externalRef.current = element;
+      }
     };
   }, [externalRef]);
+
+  const prefetchTrigger = useMemo(() => {
+    if (prefetch === 'hovered') {
+      return createHoveredPrefetchTrigger(internalRef);
+    }
+    if (prefetch === 'visible') {
+      return createVisiblePrefetchTrigger(internalRef);
+    }
+    if (prefetch === 'never') {
+      return noop;
+    }
+  }, [prefetch]);
+
+  usePrefetch(typeof to === 'string' ? history.parseURL(to) : to, prefetchTrigger);
 
   const handleClick: MouseEventHandler<HTMLAnchorElement> = event => {
     if (typeof onClick === 'function') {
@@ -97,7 +110,7 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, externalRef
 
   return (
     <a
-      {...anchorProps}
+      {...otherProps}
       ref={ref}
       href={typeof to === 'string' ? to : history.toURL(toLocation(to))}
       onClick={handleClick}

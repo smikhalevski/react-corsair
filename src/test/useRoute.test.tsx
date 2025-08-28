@@ -11,7 +11,7 @@ import React, { act, StrictMode } from 'react';
 console.error = noop;
 
 test('throws if used outside of RouterProvider', () => {
-  expect(() => renderHook(() => useRoute())).toThrow(new Error('Cannot be used outside of a route'));
+  expect(() => renderHook(() => useRoute())).toThrow(new Error('Cannot be used outside of an Outlet'));
 });
 
 test('returns the current route controller', () => {
@@ -89,7 +89,7 @@ test('throws if the provided route is a child', () => {
   router.navigate(routeBbb);
 
   expect(() => render(<RouterProvider value={router} />, { wrapper: StrictMode })).toThrow(
-    new Error('Cannot be used outside of a route')
+    new Error('Cannot be used outside of an Outlet')
   );
 });
 
@@ -108,7 +108,7 @@ test('throws if the provided route is not rendered', () => {
   router.navigate(routeAaa);
 
   expect(() => render(<RouterProvider value={router} />, { wrapper: StrictMode })).toThrow(
-    new Error('Cannot be used outside of a route')
+    new Error('Cannot be used outside of an Outlet')
   );
 });
 

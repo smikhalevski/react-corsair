@@ -1,5 +1,5 @@
 import { expect, test, vi } from 'vitest';
-import { createRoute } from '../main/index.js';
+import { createRoute, RouteMatch } from '../main/index.js';
 import { matchRoutes } from '../main/matchRoutes.js';
 
 const aaaRoute = createRoute('/aaa');
@@ -7,18 +7,28 @@ const bbbRoute = createRoute(aaaRoute, '/bbb');
 const cccRoute = createRoute(bbbRoute, '/ccc');
 
 test('matches routes', () => {
-  expect(matchRoutes('/aaa', {}, [aaaRoute])).toStrictEqual([{ route: aaaRoute, params: {} }]);
+  expect(matchRoutes('/aaa', {}, [aaaRoute])).toStrictEqual([{ route: aaaRoute, params: {} }] satisfies RouteMatch[]);
 
   expect(matchRoutes('/aaa/bbb', {}, [aaaRoute])).toStrictEqual([]);
 
-  expect(matchRoutes('/aaa', {}, [aaaRoute, bbbRoute])).toStrictEqual([{ route: aaaRoute, params: {} }]);
+  expect(matchRoutes('/aaa', {}, [aaaRoute, bbbRoute])).toStrictEqual([
+    { route: aaaRoute, params: {} },
+  ] satisfies RouteMatch[]);
 
   expect(matchRoutes('/aaa/bbb', {}, [aaaRoute, bbbRoute])).toStrictEqual([
     { route: aaaRoute, params: {} },
     { route: bbbRoute, params: {} },
-  ]);
+  ] satisfies RouteMatch[]);
 
   expect(matchRoutes('/bbb', {}, [bbbRoute, aaaRoute])).toStrictEqual([]);
+});
+
+test('matches wildcard routes', () => {
+  const route = createRoute('/aaa/:xxx*');
+
+  expect(matchRoutes('/aaa/bbb/ccc', {}, [route])).toStrictEqual([
+    { route, params: { xxx: 'bbb/ccc' } },
+  ] satisfies RouteMatch[]);
 });
 
 test('does not match intermediate routes', () => {
@@ -46,7 +56,7 @@ test('extracts pathname params from nested routes', () => {
   expect(matchRoutes('/aaa/ppp/bbb/qqq', {}, [bbbRoute])).toStrictEqual([
     { route: aaaRoute, params: { xxx: 'ppp' } },
     { route: bbbRoute, params: { xxx: 'ppp', yyy: 'qqq' } },
-  ]);
+  ] satisfies RouteMatch[]);
 });
 
 test('merges pathname params and search params', () => {
@@ -56,7 +66,7 @@ test('merges pathname params and search params', () => {
   expect(matchRoutes('/aaa/ppp/bbb/qqq', { ttt: '111', lll: '222' }, [bbbRoute])).toStrictEqual([
     { route: aaaRoute, params: { lll: '222', ttt: '111', xxx: 'ppp' } },
     { route: bbbRoute, params: { lll: '222', ttt: '111', xxx: 'ppp', yyy: 'qqq' } },
-  ]);
+  ] satisfies RouteMatch[]);
 });
 
 test('pathname params have precedence over search params', () => {
@@ -64,7 +74,7 @@ test('pathname params have precedence over search params', () => {
 
   expect(matchRoutes('/aaa/111', { xxx: 222 }, [aaaRoute])).toStrictEqual([
     { route: aaaRoute, params: { xxx: '111' } },
-  ]);
+  ] satisfies RouteMatch[]);
 });
 
 test('uses params adapter to parse params', () => {
@@ -77,7 +87,7 @@ test('uses params adapter to parse params', () => {
   expect(matchRoutes('/aaa/ppp/bbb/qqq', { ttt: '111', lll: '222' }, [bbbRoute])).toStrictEqual([
     { route: aaaRoute, params: { vvv: 111 } },
     { route: bbbRoute, params: { zzz: 222 } },
-  ]);
+  ] satisfies RouteMatch[]);
 
   expect(aaaParamsAdapterMock).toHaveBeenCalledTimes(1);
   expect(aaaParamsAdapterMock).toHaveBeenNthCalledWith(1, { lll: '222', ttt: '111' }, { xxx: 'ppp' });

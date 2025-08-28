@@ -1108,7 +1108,7 @@ There are three types of history adapters that you can leverage:
 History converts locations to URLs and vice-versa:
 
 ```ts
-const helloRoute = createRoute<{ name?: string }>('/hello', ProductPage);
+const helloRoute = createRoute<{ name?: string }>('/hello');
 
 const history = createBrowserHistory();
 

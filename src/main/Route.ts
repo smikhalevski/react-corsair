@@ -205,13 +205,14 @@ export class Route<ParentRoute extends Route | null = any, Params extends Dict =
     for (let route: Route | null = this; route !== null; route = route.parentRoute) {
       const { paramsAdapter } = route;
 
-      const pathnameChunk = route.pathnameTemplate.toPathname(
+      const pathnameSegment = route.pathnameTemplate.toPathname(
         paramsAdapter === undefined || paramsAdapter.toPathnameParams === undefined
           ? params
           : paramsAdapter.toPathnameParams(params)
       );
 
-      pathname = pathnameChunk + (pathnameChunk.endsWith('/') ? pathname.substring(1) : pathname);
+      pathname =
+        pathnameSegment + (pathname === '/' ? '' : pathnameSegment.endsWith('/') ? pathname.substring(1) : pathname);
 
       if (paramsAdapter === undefined || paramsAdapter.toSearchParams === undefined) {
         hasLooseParams = true;
