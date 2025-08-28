@@ -57,6 +57,7 @@ npm install --save-prod react-corsair
 <span class="toc-icon">🔗&ensp;</span>[**History**](#history)
 
 - [Route URLs](#route-urls)
+- [Absolute and relative URLs](#absolute-and-relative-urls)
 - [Search strings](#search-strings)
 - [Links](#links)
 - [Navigation blocking](#navigation-blocking)
@@ -1151,6 +1152,45 @@ history.push(helloRoute);
 history.push(history.toURL(helloRoute));
 // same as
 history.push('/suuuper/hello');
+```
+
+## Absolute and relative URLs
+
+There's no relative navigation in React Corsair. This is reflected in the history behavior: history treats all URLs
+as absolute:
+
+```ts
+const history = createBrowserHistory();
+
+history.start();
+
+history.push('/hello');
+// same as
+history.push('hello');
+```
+
+Even pushing a hash isn't relative:
+
+```ts
+history.push('#ooops');
+// same as
+history.push('/#ooops');
+```
+
+This approach makes navigation predictable: what URL you see in the code, is exactly the same URL you would see in the
+browser location bar.
+
+Both location and URL navigation work the same way: always absolute. But you should prefer locations whenever possible:
+
+```ts
+// 🟢 Great
+history.push(helloRoute);
+
+// 🟢 OK
+history.push(history.toURL(helloRoute));
+
+// 🟡 Better avoid
+history.push('/hello');
 ```
 
 ## Search strings
