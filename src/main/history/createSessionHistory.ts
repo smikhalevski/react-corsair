@@ -124,6 +124,10 @@ export function createSessionHistory(options: SessionHistoryOptions): History {
       return entry.location;
     },
 
+    get canGoBack() {
+      return entry.index !== 0;
+    },
+
     toURL(to) {
       return stringifyLocation(to, searchParamsSerializer);
     },

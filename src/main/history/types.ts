@@ -17,6 +17,11 @@ export interface History {
   readonly location: Location;
 
   /**
+   * `true` if {@link back} would certainly move back one page in the history.
+   */
+  readonly canGoBack: boolean;
+
+  /**
    * Returns a history-local URL.
    *
    * This URL can be passed to {@link push} and {@link replace} as an argument.

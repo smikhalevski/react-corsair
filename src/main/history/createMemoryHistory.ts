@@ -52,6 +52,10 @@ export function createMemoryHistory(initialEntries: Array<To | string>, options:
       return entries[cursor];
     },
 
+    get canGoBack() {
+      return cursor !== 0;
+    },
+
     toURL(to) {
       return stringifyLocation(to, searchParamsSerializer);
     },
