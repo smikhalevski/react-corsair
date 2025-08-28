@@ -63,34 +63,32 @@ export function useHistoryBlocker(blocker?: boolean | HistoryBlocker): HistoryTr
 
   blockerRef.current = blocker;
 
-  useEffect(
-    () =>
-      history.block(blockedTransaction => {
-        let transaction: HistoryTransaction | null = {
-          ...blockedTransaction,
+  useEffect(() => {
+    return history.block(blockedTransaction => {
+      let transaction: HistoryTransaction | null = {
+        ...blockedTransaction,
 
-          proceed() {
-            transaction = null;
-            setTransaction(transaction);
-            blockedTransaction.proceed();
-          },
+        proceed() {
+          transaction = null;
+          setTransaction(transaction);
+          blockedTransaction.proceed();
+        },
 
-          cancel() {
-            transaction = null;
-            setTransaction(transaction);
-            blockedTransaction.cancel();
-          },
-        };
+        cancel() {
+          transaction = null;
+          setTransaction(transaction);
+          blockedTransaction.cancel();
+        },
+      };
 
-        const blocker = blockerRef.current;
-        const isBlocked = typeof blocker === 'function' ? blocker(transaction) : blocker;
+      const blocker = blockerRef.current;
+      const isBlocked = typeof blocker === 'function' ? blocker(transaction) : blocker;
 
-        setTransaction(isBlocked !== undefined || blockedTransaction.type === 'unload' ? null : transaction);
+      setTransaction(isBlocked !== undefined || blockedTransaction.type === 'unload' ? null : transaction);
 
-        return isBlocked;
-      }),
-    [history]
-  );
+      return isBlocked;
+    });
+  }, [history]);
 
   return transaction;
 }

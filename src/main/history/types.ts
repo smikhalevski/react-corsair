@@ -1,4 +1,4 @@
-import { Dict, Location, To } from '../types.js';
+import { Dict, Location, Serializer, To } from '../types.js';
 
 /**
  * A history abstraction.
@@ -7,12 +7,12 @@ import { Dict, Location, To } from '../types.js';
  */
 export interface History {
   /**
-   * A history-local URL that represents {@link location}.
+   * A URL that represents the current {@link location}.
    */
   readonly url: string;
 
   /**
-   * The current history location.
+   * The current location.
    */
   readonly location: Location;
 
@@ -22,32 +22,26 @@ export interface History {
   readonly canGoBack: boolean;
 
   /**
-   * Returns a history-local URL.
-   *
-   * This URL can be passed to {@link push} and {@link replace} as an argument.
+   * Converts a location to a URL string.
    */
   toURL(to: To): string;
 
   /**
-   * Creates an absolute URL for a given location. If history was initialized with
-   * a {@link HistoryOptions.basePathname basePathname} then it is prepended to the returned URL.
-   *
-   * **Note:** The returned URL is incompatible with {@link push} and {@link replace} methods.
-   *
-   * @param to A location or {@link toURL a history-local URL} to create an absolute URL for.
+   * Parses a URL string as a location.
    */
-  toAbsoluteURL(to: To | string): string;
+  parseURL(url: string): Location;
 
   /**
    * Adds an entry to the history stack.
    *
    * @example
    * const userRoute = createRoute('/users/:userId');
+   *
    * history.push(userRoute.getLocation({ userId: 42 }));
    * // or
    * history.push('/users/42');
    *
-   * @param to A location to navigate to or {@link toURL a history-local URL}.
+   * @param to A location or a {@link toURL URL} to navigate to.
    */
   push(to: To | string): void;
 
@@ -56,11 +50,12 @@ export interface History {
    *
    * @example
    * const userRoute = createRoute('/users/:userId');
+   *
    * history.replace(userRoute.getLocation({ userId: 42 }));
    * // or
    * history.replace('/users/42');
    *
-   * @param to A location to navigate to or {@link toURL a history-local URL}.
+   * @param to A location or a {@link toURL URL} to navigate to.
    */
   replace(to: To | string): void;
 
@@ -97,6 +92,20 @@ export interface History {
    * @returns A callback that removes blocker.
    */
   block(blocker: HistoryBlocker): () => void;
+}
+
+/**
+ * A browser history abstraction.
+ *
+ * @group History
+ */
+export interface BrowserHistory extends History {
+  /**
+   * Adds required DOM listeners.
+   *
+   * @returns A callback that removes DOM listeners.
+   */
+  start(): () => void;
 }
 
 /**
@@ -184,6 +193,8 @@ export type HistoryBlocker = (transaction: HistoryTransaction) => boolean | void
 export interface HistoryOptions {
   /**
    * A base pathname.
+   *
+   * @example "/hello"
    */
   basePathname?: string;
 
@@ -192,26 +203,5 @@ export interface HistoryOptions {
    *
    * @default {@link jsonSearchParamsSerializer}
    */
-  searchParamsSerializer?: SearchParamsSerializer;
-}
-
-/**
- * Extracts params from a URL search string and stringifies them back.
- *
- * @group History
- */
-export interface SearchParamsSerializer {
-  /**
-   * Extract params from a URL search string.
-   *
-   * @param search The URL search string to extract params from.
-   */
-  parse(search: string): Dict;
-
-  /**
-   * Stringifies params as a search string.
-   *
-   * @param params Params to stringify.
-   */
-  stringify(params: Dict): string;
+  searchParamsSerializer?: Serializer<Dict>;
 }

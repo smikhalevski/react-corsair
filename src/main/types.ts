@@ -639,18 +639,18 @@ export type RouteState<Data = any> = LoadingState | ReadyState<Data> | ErrorStat
 /**
  * Parses and serializes values.
  */
-export interface Serializer {
+export interface Serializer<T = any> {
   /**
    * Parses serialized value.
    *
    * @param text The serialized value.
    */
-  parse(text: string): any;
+  parse(text: string): T;
 
   /**
    * Serializes value as a string.
    *
    * @param value The value to serialize.
    */
-  stringify(value: any): string;
+  stringify(value: T): string;
 }

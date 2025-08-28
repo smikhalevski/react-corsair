@@ -13,7 +13,7 @@ export interface LinkProps extends Omit<HTMLAttributes<HTMLAnchorElement>, 'href
   /**
    * A location or route to navigate to when link is clicked.
    */
-  to: To;
+  to: To | string;
 
   /**
    * If `true` then link prefetches a route {@link to location} and its data.
@@ -57,23 +57,23 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
       return;
     }
 
-    event.preventDefault();
-
     if (isReplace) {
       history.replace(to);
     } else {
       history.push(to);
     }
+
+    event.preventDefault();
   };
 
   return (
     <a
       {...anchorProps}
       ref={ref}
-      href={history.toAbsoluteURL(toLocation(to))}
+      href={typeof to === 'string' ? to : history.toURL(toLocation(to))}
       onClick={handleClick}
     >
-      {isPrefetched && <Prefetch to={to} />}
+      {isPrefetched && <Prefetch to={typeof to === 'string' ? history.parseURL(to) : to} />}
       {children}
     </a>
   );

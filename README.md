@@ -56,7 +56,8 @@ npm install --save-prod react-corsair
 
 <span class="toc-icon">🔗&ensp;</span>[**History**](#history)
 
-- [Local and absolute URLs](#local-and-absolute-URLs)
+- [Route URLs](#route-urls)
+- [Absolute and relative URLs](#absolute-and-relative-urls)
 - [Search strings](#search-strings)
 - [Links](#links)
 - [Navigation blocking](#navigation-blocking)
@@ -1044,6 +1045,8 @@ import { createBrowserHistory, HistoryProvider } from 'react-corsair/history';
 
 const history = createBrowserHistory();
 
+history.start();
+
 const router = new Router({ routes: [helloRoute] });
 
 // 1️⃣ Trigger router navigation if history location changes
@@ -1090,62 +1093,109 @@ history.replace(productRoute.getLocation({ sku: 42 }));
 There are three types of history adapters that you can leverage:
 
 - [`createBrowserHistory`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/history.createBrowserHistory.html)
-  is a DOM-specific history adapter, useful in web browsers that support the HTML5 history API.
+  is a DOM-specific history adapter that uses HTML5 history API.
 
-- [`createHashHistory`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/history.createHashHistory.html)
-  is a DOM-specific history adapter that stores location in
-  a [URL hash&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/API/URL/hash).
+- [`createHashBrowserHistory`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/history.createHashBrowserHistory.html)
+  is a DOM-specific history adapter that uses HTML5 history API and stores location in
+  a [URL hash&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/API/URL/hash). This is useful if
+  your server doesn't support history fallback, or if you're shipping an HTML file.
 
 - [`createMemoryHistory`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/history.createMemoryHistory.html)
   is an in-memory history adapter, useful in testing and non-DOM environments like SSR.
 
-## Local and absolute URLs
+## Route URLs
 
-History provides two types of URL strings:
-
-- Local URLs can be used as arguments for
-  [`push`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/history.History.html#push) and
-  [`replace`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/history.History.html#replace)
-  methods.
-
-- Absolute URLs reflect `window.location.href`.
-
-All history adapters produce local URLs in the same way:
+History converts locations to URLs and vice-versa:
 
 ```ts
-const helloRoute = createRoute('/hello');
+const helloRoute = createRoute<{ name?: string }>('/hello', ProductPage);
 
-history.toURL(helloRoute);
-// ⮕ '/hello'
+const history = createBrowserHistory();
+
+const helloURL = history.toURL(helloRoute.getLocation({ name: 'Bob' }));
+// ⮕ '/hello?name=Bob'
+
+history.parseURL(helloURL);
+// ⮕ { pathname: '/hello', searchParams: { name: 'Bob' }, hash: '', state: undefined }
 ```
 
-But absolute URLs are produced differently:
+Use [`basePathname`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/history.HistoryOptions.html#basepathname)
+to set the base pathname for the entire history. URLs produced by history would share the base pathname:
 
 ```ts
-createBrowserHistory().toAbsoluteURL(helloRoute);
-// ⮕ '/hello'
+createBrowserHistory({ basePathname: '/suuuper' }).toURL(helloRoute);
+// ⮕ '/suuuper/hello'
 
-createHashHistory().toAbsoluteURL(helloRoute);
-// ⮕ '#/hello'
-
-createMemoryHistory(['/']).toAbsoluteURL(helloRoute);
-// ⮕ '/hello'
+createHashBrowserHistory({ basePathname: '/suuuper' }).toURL(helloRoute);
+// ⮕ '/suuuper#/hello'
 ```
 
-A [`basePathname`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/history.HistoryOptions.html#basepathname)
-can be prepended to an absolute URL:
+An error is thrown if a parsed URL doesn't match the base pathname:
 
 ```ts
-createBrowserHistory({ basePathname: '/wow' }).toAbsoluteURL(helloRoute);
-// ⮕ '/wow/hello'
+createBrowserHistory({ basePathname: '/suuuper' }).parseURL('/ooops');
+// ❌ Error: Pathname doesn't match the required base: /suuuper
+```
 
-createHashHistory({ basePathname: '/wow' }).toAbsoluteURL(helloRoute);
-// ⮕ '/wow#/hello'
+URLs can be passed to
+[`push`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/history.History.html#push) and
+[`replace`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/history.History.html#replace)
+methods:
+
+```ts
+const history = createBrowserHistory({ basePathname: '/suuuper' });
+
+history.start();
+
+history.push(helloRoute);
+// same as
+history.push(history.toURL(helloRoute));
+// same as
+history.push('/suuuper/hello');
+```
+
+## Absolute and relative URLs
+
+There's no relative navigation in React Corsair. This is reflected in the history behavior: history treats all URLs
+as absolute:
+
+```ts
+const history = createBrowserHistory();
+
+history.start();
+
+history.push('/hello');
+// same as
+history.push('hello');
+```
+
+Even pushing a hash isn't relative:
+
+```ts
+history.push('#ooops');
+// same as
+history.push('/#ooops');
+```
+
+This approach makes navigation predictable: what URL you see in the code, is exactly the same URL you would see in the
+browser location bar.
+
+Both location and URL navigation work the same way: always absolute. But you should prefer locations whenever possible:
+
+```ts
+// 🟢 Great
+history.push(helloRoute);
+
+// 🟢 OK
+history.push(history.toURL(helloRoute));
+
+// 🟡 Better avoid
+history.push('/hello');
 ```
 
 ## Search strings
 
-When history serializes a URL, it uses an adapter to stringify search params:
+When history serializes a URL, it uses an serializer to stringify search params:
 
 ```ts
 const helloRoute = createRoute<{ color: string }>('/hello');
@@ -1185,8 +1235,8 @@ history.toURL(
 `jsonSearchParamsSerializer` allows you to store complex data structures in a URL.
 
 You can create
-[a custom search params adapter&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/history.HistoryOptions.html#searchparamsserializer)
-and provide it to a history. Here's how to create a basic adapter that
+[a custom search params serializer&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/history.HistoryOptions.html#searchparamsserializer)
+and provide it to a history. Here's how to create a basic serializer that
 uses [`URLSearchParams`&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams):
 
 ```ts
@@ -1369,7 +1419,7 @@ import { SSRRouter } from 'react-corsair/ssr';
 
 const server = createServer(async (request, response) => {
   // 1️⃣ Create a new history and a new router for each request
-  const history = createMemoryHistory([request.url]);
+  const history = createMemoryHistory({ initialEntries: [request.url] });
   const router = new SSRRouter({ routes: [helloRoute] });
 
   // 2️⃣ Navigate router to a requested location
@@ -1422,7 +1472,7 @@ import { SSRRouter } from 'react-corsair/ssr';
 
 const server = createServer(async (request, response) => {
   // 1️⃣ Create a new history and a new router for each request
-  const history = createMemoryHistory([request.url]);
+  const history = createMemoryHistory({ initialEntries: [request.url] });
   const router = new SSRRouter(response, { routes: [helloRoute] });
 
   // 2️⃣ Navigate router to a requested location
