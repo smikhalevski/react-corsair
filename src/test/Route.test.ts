@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest';
-import { createRoute, Location, Outlet, ParamsAdapter } from '../main/index.js';
+import { LazyComponentError, createRoute, Location, Outlet, ParamsAdapter } from '../main/index.js';
 
 const Component = () => null;
 
@@ -58,7 +58,7 @@ describe('loadComponent', () => {
     });
 
     await expect(route.loadComponent()).rejects.toStrictEqual(
-      new TypeError('Module loaded by a lazyComponent must default-export a component')
+      new LazyComponentError('Module loaded by a lazyComponent must default-export a component')
     );
   });
 
@@ -82,7 +82,7 @@ describe('loadComponent', () => {
     });
 
     await expect(() => route.loadComponent()).rejects.toStrictEqual(
-      new TypeError('Module loaded by a lazyComponent must default-export a component')
+      new LazyComponentError('Module loaded by a lazyComponent must default-export a component')
     );
   });
 
@@ -91,7 +91,9 @@ describe('loadComponent', () => {
       lazyComponent: () => Promise.reject(111),
     });
 
-    await expect(() => route.loadComponent()).rejects.toBe(111);
+    await expect(() => route.loadComponent()).rejects.toEqual(
+      new LazyComponentError('Cannot load a lazyComponent module', 111)
+    );
   });
 
   test('does not load a lazyComponent twice', async () => {
@@ -119,7 +121,7 @@ describe('loadComponent', () => {
     });
 
     await expect(() => route.loadComponent()).rejects.toStrictEqual(
-      new TypeError('Module loaded by a lazyComponent must default-export a component')
+      new LazyComponentError('Module loaded by a lazyComponent must default-export a component')
     );
     await expect(route.loadComponent()).resolves.toStrictEqual(Component);
 
@@ -149,7 +151,9 @@ describe('loadComponent', () => {
       },
     });
 
-    await expect(route.loadComponent()).rejects.toStrictEqual(new Error('expected'));
+    await expect(route.loadComponent()).rejects.toStrictEqual(
+      new LazyComponentError('Cannot load a lazyComponent module', new Error('expected'))
+    );
   });
 });
 
@@ -221,6 +225,13 @@ describe('getLocation', () => {
       pathname: '/aaa',
       searchParams: {},
       hash: 'xxx',
+      state: undefined,
+    } satisfies Location);
+
+    expect(createRoute('/aaa/:xxx*').getLocation({ xxx: 'bbb/ccc' })).toStrictEqual({
+      pathname: '/aaa/bbb/ccc',
+      searchParams: {},
+      hash: '',
       state: undefined,
     } satisfies Location);
   });

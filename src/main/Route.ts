@@ -180,11 +180,11 @@ export class Route<ParentRoute extends Route | null = any, Params extends Dict =
           }
 
           promise = undefined;
-          throw new TypeError('Module loaded by a lazyComponent must default-export a component');
+          throw new LazyComponentError('Module loaded by a lazyComponent must default-export a component');
         },
         error => {
           promise = undefined;
-          throw error;
+          throw new LazyComponentError('Cannot load a lazyComponent module', error);
         }
       ));
   }
@@ -205,13 +205,14 @@ export class Route<ParentRoute extends Route | null = any, Params extends Dict =
     for (let route: Route | null = this; route !== null; route = route.parentRoute) {
       const { paramsAdapter } = route;
 
-      const pathnameChunk = route.pathnameTemplate.toPathname(
+      const pathnameSegment = route.pathnameTemplate.toPathname(
         paramsAdapter === undefined || paramsAdapter.toPathnameParams === undefined
           ? params
           : paramsAdapter.toPathnameParams(params)
       );
 
-      pathname = pathnameChunk + (pathnameChunk.endsWith('/') ? pathname.substring(1) : pathname);
+      pathname =
+        pathnameSegment + (pathname === '/' ? '' : pathnameSegment.endsWith('/') ? pathname.substring(1) : pathname);
 
       if (paramsAdapter === undefined || paramsAdapter.toSearchParams === undefined) {
         hasLooseParams = true;
@@ -272,3 +273,27 @@ function toParamsAdapter<Params extends Dict>(paramsAdapter: ParamsAdapterLike<P
     },
   };
 }
+
+/**
+ * An error that is thrown when a {@link RouteOptions.lazyComponent lazyComponent} cannot be loaded.
+ *
+ * @group Routing
+ */
+export class LazyComponentError extends Error {
+  /**
+   * Creates a new {@link LazyComponentError} instance.
+   *
+   * @param message The error message.
+   * @param cause The cause of a loading error.
+   */
+  constructor(message: string, cause?: unknown) {
+    super(message, { cause });
+
+    this.cause = cause;
+  }
+}
+
+/**
+ * @internal
+ */
+LazyComponentError.prototype.name = 'LazyComponentError';
