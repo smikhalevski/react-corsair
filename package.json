@@ -9,7 +9,6 @@
     ".": "./index.js",
     "./history": "./history/index.js",
     "./ssr": "./ssr/index.js",
-    "./ssr/node": "./ssr/node/index.js",
     "./package.json": "./package.json"
   },
   "sideEffects": false,
@@ -29,7 +28,12 @@
     "url",
     "path",
     "route",
-    "router"
+    "router",
+    "routing",
+    "navigation",
+    "location",
+    "history",
+    "link"
   ],
   "author": "Savva Mikhalevski <smikhalevski@gmail.com>",
   "license": "MIT",
@@ -41,13 +45,13 @@
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.3.0",
     "@types/node": "^24.3.0",
-    "@types/react": "^19.1.11",
+    "@types/react": "^19.1.12",
     "jsdom": "^26.1.0",
     "prettier": "^3.6.2",
     "rimraf": "^6.0.1",
     "tsd": "^0.33.0",
     "tslib": "^2.8.1",
-    "typedoc": "^0.28.10",
+    "typedoc": "^0.28.11",
     "typedoc-plugin-mdn-links": "^5.0.9",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
