@@ -100,7 +100,7 @@ const prefetchElements = new WeakMap<Element, () => void>();
 let prefetchObserver: IntersectionObserver;
 
 /**
- * Creates a trigger that start prefetching when an element is at least 50% visible on screen.
+ * Creates a trigger that start prefetching when an element is at least 50% visible on the screen.
  *
  * @param ref A ref to an element that must be visible.
  */

@@ -24,7 +24,14 @@ export { RouteController } from './RouteController.js';
 export { Router } from './Router.js';
 export { useInlineRoute } from './useInlineRoute.js';
 export { useInterceptedRoute } from './useInterceptedRoute.js';
-export { usePrefetch, Prefetch, type PrefetchProps } from './usePrefetch.js';
+export {
+  usePrefetch,
+  Prefetch,
+  createHoveredPrefetchTrigger,
+  createVisiblePrefetchTrigger,
+  type PrefetchProps,
+  type PrefetchTrigger,
+} from './usePrefetch.js';
 export { useRoute } from './useRoute.js';
 export { useRouter, RouterProvider, type RouterProviderProps } from './useRouter.js';
 export type {

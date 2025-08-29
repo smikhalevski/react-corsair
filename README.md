@@ -905,8 +905,59 @@ component for a more declarative route prefetching:
 <Prefetch to={productRoute} />
 ```
 
+Or [`usePrefetch`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/react-corsair.usePrefetch.html)
+hook:
+
+```tsx
+usePrefetch(productRoute);
+```
+
 React Corsair triggers required [data loaders](#data-loading) on every navigation, so you may need to implement caching
 for data loaders.
+
+By default, both `Prefetch` and `usePrefetch` start prefetching right after mount. Provide a prefetch trigger that would
+start prefetching when a condition is met:
+
+```tsx
+import { useRef, useMemo } from 'react';
+import { createHoveredPrefetchTrigger, usePrefetch } from 'react-corsair';
+
+const ref = useRef<Element | null>(null);
+
+const prefetchTrigger = useMemo(() => createHoveredPrefetchTrigger(ref), [ref]);
+
+usePrefetch(productRoute, prefetchTrigger);
+
+<button ref={ref}>{'Go to product'}</button>;
+```
+
+When button is hovered, `usePrefetch` would start prefetching `productRoute`.
+
+React Corsair provides two prefetch triggers:
+
+- [`createHoveredPrefetchTrigger`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/react-corsair.createHoveredPrefetchTrigger.html)
+  Creates a trigger that start prefetching when an element is hovered.
+
+- [`createVisiblePrefetchTrigger`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/react-corsair.createVisiblePrefetchTrigger.html)
+  Creates a trigger that start prefetching when an element is at least 50% visible on the screen.
+
+Create a custom prefetch trigger:
+
+```ts
+import { usePrefetch, PrefetchTrigger } from 'react-corsair';
+
+// Starts prefetching after mount with a 5 second delay
+const prefetchTrigger: PrefetchTrigger = useMemo(
+  () => prefetch => {
+    const timer = setTimeout(prefetch, 5000);
+
+    return () => clearTimeout(timer);
+  },
+  []
+);
+
+usePrefetch(productRoute, prefetchTrigger);
+```
 
 ## Route interception
 
