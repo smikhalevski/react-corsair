@@ -638,6 +638,8 @@ export type RouteState<Data = any> = LoadingState | ReadyState<Data> | ErrorStat
 
 /**
  * Parses and serializes values.
+ *
+ * @group Other
  */
 export interface Serializer<T = any> {
   /**

@@ -20,7 +20,7 @@
   "sortEntryPoints": false,
   "intentionallyNotExported": ["Dict", "CombineParams", "Voidable", "InferParams", "InferData", "InferContext"],
   "kindSortOrder": ["Function", "Class", "Variable", "TypeAlias"],
-  "groupOrder": ["Routing", "Prefetching", "Server-Side Rendering"],
+  "groupOrder": ["Routing", "Prefetching", "Server-Side Rendering", "Route State", "Router Events", "Other"],
   "externalSymbolLinkMappings": {
     "parallel-universe": {
       "AbortablePromise": "https://smikhalevski.github.io/parallel-universe/classes/AbortablePromise.html"

@@ -898,7 +898,7 @@ to create a prefetched location:
 router.prefetch(user.getLocation({ userId: 42 }));
 ```
 
-Use [`Prefetch`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/react-corsair.Prefetch.html)
+Use [`<Prefetch>`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/react-corsair.Prefetch.html)
 component for a more declarative route prefetching:
 
 ```tsx
@@ -915,7 +915,7 @@ usePrefetch(productRoute);
 React Corsair triggers required [data loaders](#data-loading) on every navigation, so you may need to implement caching
 for data loaders.
 
-By default, both `Prefetch` and `usePrefetch` start prefetching right after mount. Provide a prefetch trigger that would
+By default, both `<Prefetch>` and `usePrefetch` start prefetching right after mount. Provide a prefetch trigger that would
 start prefetching when a condition is met:
 
 ```tsx

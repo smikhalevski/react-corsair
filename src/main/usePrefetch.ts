@@ -8,6 +8,7 @@ import { isEqualLocation } from './utils.js';
  *
  * @param prefetch A callback that start prefetch.
  * @returns An optional callback that destroys prefetch trigger.
+ * @group Prefetching
  */
 export type PrefetchTrigger = (prefetch: () => void) => (() => void) | void;
 
@@ -80,6 +81,7 @@ export function Prefetch(props: PrefetchProps): null {
  * Creates a trigger that start prefetching when an element is hovered.
  *
  * @param ref A ref to an element that must be hovered.
+ * @group Prefetching
  */
 export function createHoveredPrefetchTrigger(ref: RefObject<Element | null>): PrefetchTrigger {
   return prefetch => {
@@ -103,6 +105,7 @@ let prefetchObserver: IntersectionObserver;
  * Creates a trigger that start prefetching when an element is at least 50% visible on the screen.
  *
  * @param ref A ref to an element that must be visible.
+ * @group Prefetching
  */
 export function createVisiblePrefetchTrigger(ref: RefObject<Element | null>): PrefetchTrigger {
   return prefetch => {
