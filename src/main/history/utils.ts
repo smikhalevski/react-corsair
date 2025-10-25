@@ -1,4 +1,4 @@
-import { Dict, Location, Serializer, To } from '../types.js';
+import { Location, Serializer, To } from '../types.js';
 import { noop, toLocation } from '../utils.js';
 import { HistoryBlocker, HistoryOptions, HistoryTransactionType } from './types.js';
 import { jsonSearchParamsSerializer } from './jsonSearchParamsSerializer.js';
@@ -102,7 +102,7 @@ export function concatPathname(basePathname: string, pathname: string): string {
  * @param searchParamsSerializer An serializer that parses a search string.
  * @group History
  */
-export function parseLocation(to: string, searchParamsSerializer: Serializer<Dict>): Location {
+export function parseLocation(to: string, searchParamsSerializer: Serializer<Record<string, any>>): Location {
   const hashIndex = to.indexOf('#');
 
   let searchIndex = to.indexOf('?');
@@ -129,7 +129,7 @@ export function parseLocation(to: string, searchParamsSerializer: Serializer<Dic
  * @param searchParamsSerializer An serializer that stringifies a search string.
  * @group History
  */
-export function stringifyLocation(location: Location, searchParamsSerializer: Serializer<Dict>): string {
+export function stringifyLocation(location: Location, searchParamsSerializer: Serializer<Record<string, any>>): string {
   const { pathname, searchParams, hash } = location;
 
   const search = searchParamsSerializer.stringify(searchParams);

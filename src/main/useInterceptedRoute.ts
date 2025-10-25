@@ -1,4 +1,3 @@
-import { Dict } from './types.js';
 import { Route } from './Route.js';
 import { RouteController } from './RouteController.js';
 import { useContext, useEffect } from 'react';
@@ -25,7 +24,7 @@ import { getLeafController } from './utils.js';
  * @see {@link RouteOutlet}
  * @group Routing
  */
-export function useInterceptedRoute<Params extends Dict, Data, Context>(
+export function useInterceptedRoute<Params extends Record<string, any>, Data, Context>(
   route: Route<any, Params, Data, Context>
 ): RouteController<Params, Data, Context> | null {
   const router = useRouter();

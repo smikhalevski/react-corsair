@@ -5,13 +5,6 @@ import { RouteController } from './RouteController.js';
 import { StandardSchemaV1 } from './vendor/standard-schema.js';
 
 /**
- * @group Other
- */
-export interface Dict {
-  [key: string]: any;
-}
-
-/**
  * A partial location or route that doesn't have any required params.
  *
  * @group Routing
@@ -32,7 +25,7 @@ export interface Location {
   /**
    * URL search params represented as an object.
    */
-  searchParams: Dict;
+  searchParams: Record<string, any>;
 
   /**
    * A decoded URL fragment identifier without a `#`.
@@ -71,10 +64,10 @@ export interface LocationOptions {
  * @template Params Route params.
  * @group Routing
  */
-export type ParamsAdapterLike<Params extends Dict> =
+export type ParamsAdapterLike<Params extends Record<string, any>> =
   | ParamsAdapter<Params>
   | StandardSchemaV1<any, Params>
-  | ((searchParams: Dict, pathnameParams: Dict) => Params | null);
+  | ((searchParams: Record<string, any>, pathnameParams: Record<string, any>) => Params | null);
 
 /**
  * An adapter that can validate and transform route params.
@@ -82,7 +75,7 @@ export type ParamsAdapterLike<Params extends Dict> =
  * @template Params Route params.
  * @group Routing
  */
-export interface ParamsAdapter<Params extends Dict> {
+export interface ParamsAdapter<Params extends Record<string, any>> {
   /**
    * Converts params extracted from a {@link Location.pathname} and {@link Location.searchParams} to route params.
    *
@@ -90,7 +83,7 @@ export interface ParamsAdapter<Params extends Dict> {
    * @param pathnameParams Params from a {@link Location.pathname}.
    * @returns Route params, or `null` if params are invalid.
    */
-  fromRawParams?(searchParams: Dict, pathnameParams: Dict): Params | null;
+  fromRawParams?(searchParams: Record<string, any>, pathnameParams: Record<string, any>): Params | null;
 
   /**
    * Converts route params to {@link Location.pathname} params.
@@ -98,7 +91,7 @@ export interface ParamsAdapter<Params extends Dict> {
    * @param params Route params.
    * @returns Params that should be substituted into a location pathname.
    */
-  toPathnameParams?(params: Params): Dict;
+  toPathnameParams?(params: Params): Record<string, any>;
 
   /**
    * Converts route params to {@link Location.searchParams}.
@@ -106,7 +99,7 @@ export interface ParamsAdapter<Params extends Dict> {
    * @param params Route params.
    * @returns A dictionary that is used as {@link Location.searchParams}.
    */
-  toSearchParams?(params: Params): Dict;
+  toSearchParams?(params: Params): Record<string, any>;
 }
 
 /**
@@ -147,7 +140,7 @@ export type RenderingDisposition = 'server' | 'client';
  * @template Context A router context.
  * @group Routing
  */
-export interface DataLoaderOptions<Params extends Dict, Context> {
+export interface DataLoaderOptions<Params extends Record<string, any>, Context> {
   /**
    * A router that triggered data loading.
    */
@@ -194,7 +187,7 @@ export interface ComponentModule {
  * @template Context A router context.
  * @group Routing
  */
-export interface RouteOptions<Params extends Dict, Data, Context> {
+export interface RouteOptions<Params extends Record<string, any>, Data, Context> {
   /**
    * A URL pathname pattern.
    *

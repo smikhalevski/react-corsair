@@ -1,14 +1,6 @@
 import isDeepEqual from 'fast-deep-equal/es6/index.js';
 import { Router } from './Router.js';
-import {
-  DataLoaderOptions,
-  Dict,
-  LoadingAppearance,
-  RenderingDisposition,
-  RouterEvent,
-  RouteState,
-  To,
-} from './types.js';
+import { DataLoaderOptions, LoadingAppearance, RenderingDisposition, RouterEvent, RouteState, To } from './types.js';
 import { Route } from './Route.js';
 import { ComponentType } from 'react';
 import { NotFoundError } from './notFound.js';
@@ -25,7 +17,7 @@ import { RouteMatch } from './matchRoutes.js';
  * @template Context A router context.
  * @group Routing
  */
-export class RouteController<Params extends Dict = any, Data = any, Context = any> {
+export class RouteController<Params extends Record<string, any> = any, Data = any, Context = any> {
   /**
    * A controller rendered in an enclosing {@link Outlet}.
    */

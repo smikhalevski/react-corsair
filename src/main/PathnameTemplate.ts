@@ -1,5 +1,3 @@
-import { Dict } from './types.js';
-
 /**
  * A result returned by {@link PathnameTemplate.match} on a successful pathname match.
  *
@@ -19,7 +17,7 @@ export interface PathnameMatch {
   /**
    * Params extracted from the pathname, or `undefined` if pathname doesn't have params.
    */
-  params: Dict;
+  params: Record<string, any>;
 }
 
 /**
@@ -88,7 +86,7 @@ export class PathnameTemplate {
       return null;
     }
 
-    const params: Dict = {};
+    const params: Record<string, any> = {};
 
     if (_segments.length !== 1) {
       for (let i = 0, j = 1, value; i < _segments.length; ++i) {
@@ -118,7 +116,7 @@ export class PathnameTemplate {
    * @param params Params to substitute into a template.
    * @returns A pathname string.
    */
-  toPathname(params?: Dict | void): string {
+  toPathname(params?: Record<string, any> | void): string {
     const { _segments, _flags } = this;
 
     let pathname = '';

@@ -1,6 +1,6 @@
 import { ComponentType } from 'react';
 import { InferContext, Route } from './Route.js';
-import { Dict, RouteOptions } from './types.js';
+import { RouteOptions } from './types.js';
 
 /**
  * Creates a route that is rendered in an {@link Outlet} of a {@link Router}.
@@ -14,7 +14,7 @@ import { Dict, RouteOptions } from './types.js';
  * @template Context A router context.
  * @group Routing
  */
-export function createRoute<Params extends Dict = {}, Data = void, Context = any>(
+export function createRoute<Params extends Record<string, any> = {}, Data = void, Context = any>(
   options?: RouteOptions<Params, Data, Context>
 ): Route<null, Params, Data, Context>;
 
@@ -33,7 +33,7 @@ export function createRoute<Params extends Dict = {}, Data = void, Context = any
  * @template Context A router context.
  * @group Routing
  */
-export function createRoute<ParentRoute extends Route, Params extends Dict = {}, Data = void>(
+export function createRoute<ParentRoute extends Route, Params extends Record<string, any> = {}, Data = void>(
   parentRoute: ParentRoute,
   options?: RouteOptions<Params, Data, InferContext<ParentRoute>>
 ): Route<ParentRoute, Params, Data, InferContext<ParentRoute>>;
@@ -53,7 +53,7 @@ export function createRoute<ParentRoute extends Route, Params extends Dict = {},
  * @template Params Route params.
  * @group Routing
  */
-export function createRoute<Params extends Dict = {}>(
+export function createRoute<Params extends Record<string, any> = {}>(
   pathname: string,
   component?: ComponentType
 ): Route<null, Params, void>;
@@ -76,7 +76,7 @@ export function createRoute<Params extends Dict = {}>(
  * @template Params Route params.
  * @group Routing
  */
-export function createRoute<ParentRoute extends Route, Params extends Dict = {}>(
+export function createRoute<ParentRoute extends Route, Params extends Record<string, any> = {}>(
   parentRoute: ParentRoute,
   pathname: string,
   component?: ComponentType

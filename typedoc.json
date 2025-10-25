@@ -18,7 +18,7 @@
   "tsconfig": "./tsconfig.build.json",
   "entryPoints": ["./src/main/index.ts", "./src/main/history/index.ts", "./src/main/ssr/index.ts"],
   "sortEntryPoints": false,
-  "intentionallyNotExported": ["Dict", "CombineParams", "Voidable", "InferParams", "InferData", "InferContext"],
+  "intentionallyNotExported": ["CombineParams", "Voidable", "InferParams", "InferData", "InferContext"],
   "kindSortOrder": ["Function", "Class", "Variable", "TypeAlias"],
   "groupOrder": ["Routing", "Prefetching", "Server-Side Rendering", "Route State", "Router Events", "Other"],
   "externalSymbolLinkMappings": {

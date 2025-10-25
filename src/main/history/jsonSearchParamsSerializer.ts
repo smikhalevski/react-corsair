@@ -1,13 +1,13 @@
-import { Dict, Serializer } from '../types.js';
+import { Serializer } from '../types.js';
 
 /**
  * An adapter that serializes search param values with {@link JSON}.
  *
  * @group History
  */
-export const jsonSearchParamsSerializer: Serializer<Dict> = {
+export const jsonSearchParamsSerializer: Serializer<Record<string, any>> = {
   parse(search) {
-    const params: Dict = {};
+    const params: Record<string, any> = {};
 
     let valueIndex = 0;
     let entryIndex = 0;

@@ -1,6 +1,5 @@
 import { PathnameMatch } from './PathnameTemplate.js';
 import { Route } from './Route.js';
-import { Dict } from './types.js';
 
 /**
  * The result of matching a route by a location.
@@ -16,7 +15,7 @@ export interface RouteMatch {
   /**
    * Parsed params extracted from a pathname and search params.
    */
-  params: Dict;
+  params: Record<string, any>;
 }
 
 /**
@@ -27,7 +26,11 @@ export interface RouteMatch {
  * @param routes Routes to match pathname against.
  * @returns An array of route matches, can be empty if there are no matching routes.
  */
-export function matchRoutes(pathname: string, searchParams: Dict, routes: readonly Route[]): RouteMatch[] {
+export function matchRoutes(
+  pathname: string,
+  searchParams: Record<string, any>,
+  routes: readonly Route[]
+): RouteMatch[] {
   const cache = new Map<Route, PathnameMatch | null>();
 
   for (const route of routes) {
@@ -76,7 +79,7 @@ function matchPathname(pathname: string, route: Route, cache: Map<Route, Pathnam
 
 function getRouteMatches(
   route: Route,
-  searchParams: Dict,
+  searchParams: Record<string, any>,
   cache: Map<Route, PathnameMatch | null>
 ): RouteMatch[] | null {
   const { parentRoute, paramsAdapter } = route;

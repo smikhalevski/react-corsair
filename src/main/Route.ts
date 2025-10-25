@@ -3,7 +3,6 @@ import { PathnameTemplate } from './PathnameTemplate.js';
 import {
   ComponentModule,
   DataLoaderOptions,
-  Dict,
   LoadingAppearance,
   Location,
   LocationOptions,
@@ -18,7 +17,7 @@ type Prettify<T> = { [K in keyof T]: T[K] } & {};
 
 type Voidable<T> = Partial<T> extends T ? T | void : T;
 
-type CombineParams<ParentRoute extends Route | null, Params extends Dict> = ParentRoute extends Route
+type CombineParams<ParentRoute extends Route | null, Params extends Record<string, any>> = ParentRoute extends Route
   ? Prettify<ParentRoute[PARAMS] & Params>
   : Params;
 
@@ -45,7 +44,12 @@ export type InferContext<R extends Route> = R[CONTEXT];
  * @template Context A router context.
  * @group Routing
  */
-export class Route<ParentRoute extends Route | null = any, Params extends Dict = any, Data = any, Context = any> {
+export class Route<
+  ParentRoute extends Route | null = any,
+  Params extends Record<string, any> = any,
+  Data = any,
+  Context = any,
+> {
   /**
    * The type of the route location params.
    *
@@ -199,7 +203,7 @@ export class Route<ParentRoute extends Route | null = any, Params extends Dict =
     const { hash = '', state } = options;
 
     let pathname = '';
-    let searchParams: Dict = {};
+    let searchParams: Record<string, any> = {};
     let hasLooseParams = false;
 
     for (let route: Route | null = this; route !== null; route = route.parentRoute) {
@@ -252,7 +256,9 @@ export class Route<ParentRoute extends Route | null = any, Params extends Dict =
   }
 }
 
-function toParamsAdapter<Params extends Dict>(paramsAdapter: ParamsAdapterLike<Params>): ParamsAdapter<Params> {
+function toParamsAdapter<Params extends Record<string, any>>(
+  paramsAdapter: ParamsAdapterLike<Params>
+): ParamsAdapter<Params> {
   if (typeof paramsAdapter === 'function') {
     return { fromRawParams: paramsAdapter };
   }

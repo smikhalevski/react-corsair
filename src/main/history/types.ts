@@ -1,4 +1,4 @@
-import { Dict, Location, Serializer, To } from '../types.js';
+import { Location, Serializer, To } from '../types.js';
 
 /**
  * A history abstraction.
@@ -203,5 +203,5 @@ export interface HistoryOptions {
    *
    * @default {@link jsonSearchParamsSerializer}
    */
-  searchParamsSerializer?: Serializer<Dict>;
+  searchParamsSerializer?: Serializer<Record<string, any>>;
 }
