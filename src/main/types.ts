@@ -638,9 +638,9 @@ export interface Serializer<T = any> {
   /**
    * Parses serialized value.
    *
-   * @param text The serialized value.
+   * @param str The serialized value.
    */
-  parse(text: string): T;
+  parse(str: string): T;
 
   /**
    * Serializes value as a string.

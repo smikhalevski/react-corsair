@@ -50,7 +50,7 @@ export function debasePathname(basePathname: string, pathname: string): string {
     return '';
   }
 
-  if (basePathname.charCodeAt(basePathname.length - 1) === 47 /* / */) {
+  if (basePathname.charCodeAt(basePathname.length - 1) === /* / */ 47) {
     basePathname = basePathname.slice(0, -1);
 
     if (pathname === basePathname) {
@@ -63,7 +63,7 @@ export function debasePathname(basePathname: string, pathname: string): string {
 
     if (
       pathname.startsWith(basePathname) &&
-      (charCode === 47 /* / */ || charCode === 63 /* ? */ || charCode === 35) /* # */
+      (charCode === /* / */ 47 || charCode === /* ? */ 63 || charCode === /* # */ 35)
     ) {
       return pathname.substring(basePathname.length);
     }
@@ -85,10 +85,10 @@ export function concatPathname(basePathname: string, pathname: string): string {
 
   const charCode = pathname.charCodeAt(0);
 
-  if (charCode === 63 /* ? */ || charCode === 35 /* # */) {
+  if (charCode === /* ? */ 63 || charCode === /* # */ 35) {
     return basePathname + pathname;
   }
-  if (basePathname.charCodeAt(basePathname.length - 1) === 47 /* / */) {
+  if (basePathname.charCodeAt(basePathname.length - 1) === /* / */ 47) {
     return (charCode === 47 ? basePathname.slice(0, -1) : basePathname) + pathname;
   }
 

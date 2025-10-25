@@ -30,14 +30,9 @@ export const jsonSearchParamsSerializer: Serializer<Record<string, any>> = {
         valueIndex = entryIndex;
       }
 
-      const key = decodeURIComponent(search.substring(i, valueIndex));
-      const value = decodeURIComponent(search.substring(valueIndex + 1, entryIndex));
-
-      try {
-        params[key] = JSON.parse(value);
-      } catch {
-        params[key] = value;
-      }
+      params[decodeURIComponent(search.substring(i, valueIndex))] = decodeJSON(
+        decodeURIComponent(search.substring(valueIndex + 1, entryIndex))
+      );
     }
 
     return params;
@@ -45,32 +40,17 @@ export const jsonSearchParamsSerializer: Serializer<Record<string, any>> = {
 
   stringify(params) {
     let search = '';
+    let paramIndex = 0;
 
     for (const key in params) {
       const value = params[key];
-      const json = JSON.stringify(value);
 
-      if (json === undefined) {
+      if (value === undefined) {
         continue;
       }
 
-      if (search.length !== 0) {
-        search += '&';
-      }
-
-      search += encodeSearchComponent(key) + '=';
-
-      if (
-        json.charCodeAt(0) === 34 &&
-        json !== '"true"' &&
-        json !== '"false"' &&
-        json !== '"null"' &&
-        json.slice(1, -1) === value
-      ) {
-        search += encodeSearchComponent(value);
-      } else {
-        search += encodeSearchComponent(json);
-      }
+      search +=
+        (paramIndex++ === 0 ? '' : '&') + encodeSearchComponent(key) + '=' + encodeSearchComponent(encodeJSON(value));
     }
 
     return search;
@@ -79,4 +59,40 @@ export const jsonSearchParamsSerializer: Serializer<Record<string, any>> = {
 
 function encodeSearchComponent(str: string): string {
   return str.replace(/[#%=&\s]/g, encodeURIComponent);
+}
+
+function decodeJSON(str: string): any {
+  const charCode = str.charCodeAt(0);
+
+  if (
+    str === 'null' ||
+    str === 'true' ||
+    str === 'false' ||
+    charCode === /* { */ 123 ||
+    charCode === /* [ */ 91 ||
+    charCode === /* " */ 34 ||
+    (charCode >= /* 0 */ 48 && charCode <= /* 9 */ 57)
+  ) {
+    try {
+      return JSON.parse(str);
+    } catch {}
+  }
+
+  return str;
+}
+
+function encodeJSON(value: any): string {
+  const json = JSON.stringify(value);
+
+  if (
+    json.charCodeAt(0) !== /* " */ 34 ||
+    json === '"null"' ||
+    json === '"true"' ||
+    json === '"false"' ||
+    json.slice(1, -1) !== value
+  ) {
+    return json;
+  }
+
+  return value;
 }

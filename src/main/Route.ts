@@ -250,7 +250,7 @@ export class Route<
     return {
       pathname,
       searchParams,
-      hash: hash.length === 0 || hash.charCodeAt(0) !== 35 ? hash : decodeURIComponent(hash.substring(1)),
+      hash: hash.length === 0 || hash.charCodeAt(0) !== /* # */ 35 ? hash : decodeURIComponent(hash.substring(1)),
       state,
     };
   }

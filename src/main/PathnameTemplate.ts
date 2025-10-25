@@ -105,7 +105,7 @@ export class PathnameTemplate {
     return {
       pathname: m === '' ? '/' : m,
       childPathname:
-        childPathname.length === 0 || childPathname.charCodeAt(0) !== 47 ? '/' + childPathname : childPathname,
+        childPathname.length === 0 || childPathname.charCodeAt(0) !== /* / */ 47 ? '/' + childPathname : childPathname,
       params,
     };
   }
@@ -202,7 +202,7 @@ export function parsePattern(pattern: string): Template {
 
   for (let i = 0; i < pattern.length; ) {
     switch (pattern.charCodeAt(i)) {
-      case 58 /* : */:
+      case /* : */ 58:
         if (tokenType !== TOKEN_SEPARATOR) {
           throw new SyntaxError('Unexpected param at ' + i);
         }
@@ -212,11 +212,11 @@ export function parsePattern(pattern: string): Template {
 
         while (
           ((charCode = pattern.charCodeAt(i)),
-          (i > paramIndex && charCode >= 48 && charCode <= 57) /* 0-9 */ ||
-            (charCode >= 65 && charCode <= 90) /* A-Z */ ||
-            (charCode >= 97 && charCode <= 122) /* a-z */ ||
-            charCode === 95 /* _ */ ||
-            charCode === 36) /* $ */
+          (i > paramIndex && charCode >= /* 0 */ 48 && charCode <= /* 9 */ 57) ||
+            (charCode >= /* A */ 65 && charCode <= /* Z */ 90) ||
+            (charCode >= /* a */ 97 && charCode <= /* z */ 122) ||
+            charCode === /* _ */ 95 ||
+            charCode === /* $ */ 36)
         ) {
           ++i;
         }
@@ -233,7 +233,7 @@ export function parsePattern(pattern: string): Template {
         tokenType = TOKEN_PARAM;
         break;
 
-      case 42 /* * */:
+      case /* * */ 42:
         if (tokenType !== TOKEN_PARAM) {
           throw new SyntaxError('Unexpected wildcard flag at ' + i);
         }
@@ -243,7 +243,7 @@ export function parsePattern(pattern: string): Template {
         ++i;
         break;
 
-      case 63 /* ? */:
+      case /* ? */ 63:
         if (tokenType === TOKEN_SEPARATOR || tokenType === TOKEN_SEGMENT) {
           segments.push(pattern.substring(segmentIndex, i));
           flags.push(FLAG_OPTIONAL);
@@ -261,7 +261,7 @@ export function parsePattern(pattern: string): Template {
 
         throw new SyntaxError('Unexpected optional flag at ' + i);
 
-      case 47 /* / */:
+      case /* / */ 47:
         if (i !== 0 && (tokenType === TOKEN_SEPARATOR || tokenType === TOKEN_SEGMENT)) {
           segments.push(pattern.substring(segmentIndex, i));
           flags.push(0);
