@@ -18,7 +18,7 @@ Type-safe router that abstracts URLs away.
 - Expressive and concise API with strict typings.
 - Supports SSR, partial pre-rendering and Suspense.
 - Optional history integration.
-- [Just 9&#8239;kB gzipped.&#8239;<sup>↗</sup>](https://pkg-size.dev/react-corsair)
+- [Just 9 kB gzipped.](https://pkg-size.dev/react-corsair)
 - Check out the [Cookbook](#cookbook) for real-life examples!
 
 <!--/OVERVIEW-->
@@ -35,8 +35,8 @@ npm install --save-prod react-corsair
 
 <!--TOC-->
 
-- [API docs&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/)
-- [Live example&#8239;<sup>↗</sup>](https://codesandbox.io/p/sandbox/react-corsair-example-mzjzcm)
+- [API docs](https://smikhalevski.github.io/react-corsair/)
+- [Live example](https://codesandbox.io/p/sandbox/react-corsair-example-mzjzcm)
 
 <span class="toc-icon">🧭&ensp;</span>[**Routing**](#routing)
 
@@ -84,8 +84,8 @@ npm install --save-prod react-corsair
 _URLs don't matter_, they are almost never part of the application domain logic. React Corsair is a router that
 abstracts URLs away from your application domain.
 
-Use [`Route`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/react-corsair.createRoute.html)
-objects instead of URLs to match locations, validate params, navigate between pages, prefetch data, infer types, etc.
+Use [`Route`](https://smikhalevski.github.io/react-corsair/functions/react-corsair.createRoute.html) objects instead
+of URLs to match locations, validate params, navigate between pages, prefetch data, infer types, etc.
 
 React Corsair can be used in any environment and doesn't require any browser-specific API to be available. While
 history integration is optional, it is [available out-of-the-box](#history) if you need it.
@@ -98,9 +98,8 @@ function HelloPage() {
 }
 ```
 
-[Create a route&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/react-corsair.createRoute.html)
-that maps a URL pathname to a page component. Usually, a route declaration this is the only place where you would meet
-a pathname:
+[Create a route](https://smikhalevski.github.io/react-corsair/functions/react-corsair.createRoute.html) that maps a URL
+pathname to a page component. Usually, a route declaration this is the only place where you would meet a pathname:
 
 ```ts
 import { createRoute } from 'react-corsair';
@@ -108,9 +107,8 @@ import { createRoute } from 'react-corsair';
 const helloRoute = createRoute('/hello', HelloPage);
 ```
 
-Now we need
-a [`Router`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/classes/react-corsair.Router.html) that
-would handle the navigation:
+Now we need a [`Router`](https://smikhalevski.github.io/react-corsair/classes/react-corsair.Router.html) that would
+handle the navigation:
 
 ```ts
 import { Router } from 'react-corsair';
@@ -119,13 +117,13 @@ const router = new Router({ routes: [helloRoute] });
 ```
 
 To let the router know what route to render, call
-[`navigate`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/classes/react-corsair.Router.html#navigate):
+[`navigate`](https://smikhalevski.github.io/react-corsair/classes/react-corsair.Router.html#navigate):
 
 ```ts
 router.navigate(helloRoute);
 ```
 
-Use [`<RouterProvider>`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/react-corsair.RouterProvider.html)
+Use [`<RouterProvider>`](https://smikhalevski.github.io/react-corsair/functions/react-corsair.RouterProvider.html)
 to render the router:
 
 ```tsx
@@ -153,9 +151,9 @@ const helloRoute = createRoute('/hello', HelloPage);
 ```
 
 In this example we used a shorthand signature of
-the [`createRoute`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/react-corsair.createRoute.html)
-function. You can also use
-a [route options object&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/react-corsair.RouteOptions.html):
+the [`createRoute`](https://smikhalevski.github.io/react-corsair/functions/react-corsair.createRoute.html) function.
+You can also use
+a [route options object](https://smikhalevski.github.io/react-corsair/interfaces/react-corsair.RouteOptions.html):
 
 ```ts
 const helloRoute = createRoute({
@@ -188,8 +186,7 @@ router.navigate({ pathname: '/hello' });
 ```
 
 To trigger navigation from inside a component, use the
-[`useRouter`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/react-corsair.useRouter.html)
-hook:
+[`useRouter`](https://smikhalevski.github.io/react-corsair/functions/react-corsair.useRouter.html) hook:
 
 ```tsx
 function AnotherPage() {
@@ -215,7 +212,7 @@ const productRoute = createRoute<{ sku: number }>('/products/:sku', ProductPage)
 
 Router cannot create a location for a parameterized route by itself, because it doesn't know the required param values.
 So here's where
-[`getLocation`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/classes/react-corsair.Route.html#getlocation)
+[`getLocation`](https://smikhalevski.github.io/react-corsair/classes/react-corsair.Route.html#getlocation)
 comes handy:
 
 ```ts
@@ -256,8 +253,7 @@ productRoute.getLocation({ sku: 42, color: 'red' });
 ```
 
 To access params from a component use the
-[`useRoute`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/react-corsair.useRoute.html)
-hook:
+[`useRoute`](https://smikhalevski.github.io/react-corsair/functions/react-corsair.useRoute.html) hook:
 
 ```tsx
 function ProductPage() {
@@ -279,7 +275,7 @@ const userRoute = createRoute({
 ```
 
 Note that we didn't specify parameter types explicitly this time: TypeScript can infer them from the
-[`paramsAdapter`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/react-corsair.RouteOptions.html#paramsadapter).
+[`paramsAdapter`](https://smikhalevski.github.io/react-corsair/interfaces/react-corsair.RouteOptions.html#paramsadapter).
 
 Use your favourite validation library to parse and validate params:
 
@@ -299,14 +295,13 @@ productRoute.getLocation({ sku: 42, color: 'red' });
 ```
 
 > [!TIP]\
-> Read more about [Doubter&#8239;<sup>↗</sup>](https://megastack.dev/doubter), the runtime validation
-> and transformation library.
+> Read more about [Doubter](https://megastack.dev/doubter), the runtime validation and transformation library.
 
 ## Pathname templates
 
 A pathname provided for a route is parsed as a pattern. Pathname patterns may contain named params and matching flags.
 Pathname patterns are compiled into
-a [`PathnameTemplate`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/classes/react-corsair.PathnameTemplate.html)
+a [`PathnameTemplate`](https://smikhalevski.github.io/react-corsair/classes/react-corsair.PathnameTemplate.html)
 when route is created. A template allows to both match a pathname, and build a pathname using a provided set of params.
 
 After a route is created, you can access a pathname pattern like this:
@@ -322,7 +317,7 @@ By default, a pathname pattern is case-insensitive. So the route in example abov
 `/PRODUCTS`.
 
 If you need a case-sensitive pattern, provide
-[`isCaseSensitive`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/react-corsair.RouteOptions.html#iscasesensitive)
+[`isCaseSensitive`](https://smikhalevski.github.io/react-corsair/interfaces/react-corsair.RouteOptions.html#iscasesensitive)
 route option:
 
 ```ts
@@ -388,7 +383,7 @@ createRoute('/:slug*?');
 ```
 
 To use `:` as a character in a pathname pattern, replace it with
-an [encoded&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent)
+an [encoded](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent)
 representation `%3A`:
 
 ```ts
@@ -398,9 +393,9 @@ createRoute('/foo%3Abar');
 ## Outlets
 
 Route components are rendered inside
-an [`<Outlet>`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/react-corsair.Outlet.html). If
-you don't provide children to
-[`<RouterProvider>`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/react-corsair.RouterProvider.html)
+an [`<Outlet>`](https://smikhalevski.github.io/react-corsair/functions/react-corsair.Outlet.html). If you don't provide
+children to
+[`<RouterProvider>`](https://smikhalevski.github.io/react-corsair/functions/react-corsair.RouterProvider.html)
 then it would implicitly render an `<Outlet>`:
 
 ```tsx
@@ -456,7 +451,7 @@ childRoute.getLocation();
 
 Routes are [rendered inside outlets](#outlets), so `ParentPage` should
 render
-an [`<Outlet>`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/react-corsair.Outlet.html) to
+an [`<Outlet>`](https://smikhalevski.github.io/react-corsair/functions/react-corsair.Outlet.html) to
 give place for a `ChildPage`:
 
 ```tsx
@@ -474,7 +469,7 @@ function ChildPage() {
 ```
 
 To allow router navigation to `childRoute` it should be listed among
-[`routes`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/react-corsair.RouterOptions.html#routes):
+[`routes`](https://smikhalevski.github.io/react-corsair/interfaces/react-corsair.RouterOptions.html#routes):
 
 ```ts
 const router = new Router({ routes: [childRoute] });
@@ -504,9 +499,9 @@ Now the rendering output would be:
 ## Code splitting
 
 To enable code splitting in your app, use the
-[`lazyComponent`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/react-corsair.RouteOptions.html#lazycomponent)
+[`lazyComponent`](https://smikhalevski.github.io/react-corsair/interfaces/react-corsair.RouteOptions.html#lazycomponent)
 option, instead of the
-[`component`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/react-corsair.RouteOptions.html#component):
+[`component`](https://smikhalevski.github.io/react-corsair/interfaces/react-corsair.RouteOptions.html#component):
 
 ```ts
 const userRoute = createRoute({
@@ -515,7 +510,7 @@ const userRoute = createRoute({
 });
 ```
 
-Default-export the component from the `./UserPage.js`:
+Default-export the component from the _./UserPage.js_:
 
 ```ts
 export default function UserPage() {
@@ -527,7 +522,7 @@ When router is navigated to the `userRoute`, a module that contains `<UserPage>`
 component is cached, so next time the `userRoute` is matched, `<UserPage>` would be rendered instantly.
 
 A promise is thrown if the `lazyComponent` isn't loaded yet. You can manually wrap
-[`<RouterProvider>`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/react-corsair.RouterProvider.html)
+[`<RouterProvider>`](https://smikhalevski.github.io/react-corsair/functions/react-corsair.RouterProvider.html)
 in a custom `<Suspense>` boundary to catch it and render a fallback:
 
 ```tsx
@@ -541,7 +536,7 @@ function LoadingIndicator() {
 ```
 
 Or you can to provide a
-[`loadingComponent`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/react-corsair.RouteOptions.html#loadingcomponent)
+[`loadingComponent`](https://smikhalevski.github.io/react-corsair/interfaces/react-corsair.RouteOptions.html#loadingcomponent)
 option to your route, so an `<Outlet>` renders a `<Suspense>` for you, using `loadingComponent` as a fallback:
 
 ```ts
@@ -558,7 +553,7 @@ Each route may have a custom loading component: here you can render a page skele
 
 Router can render the previously matched route when a new route is being loaded, even if a new route has
 a `loadingComponent`. Customize this behavior by adding a
-[`loadingAppearance`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/react-corsair.RouteOptions.html#loadingappearance)
+[`loadingAppearance`](https://smikhalevski.github.io/react-corsair/interfaces/react-corsair.RouteOptions.html#loadingappearance)
 option:
 
 ```ts
@@ -600,8 +595,8 @@ would retry loading the component again during the next navigation.
 ## Data loading
 
 Routes may require some data to render. Triggering data loading during rendering may lead to
-a [waterfall&#8239;<sup>↗</sup>](https://blog.sentry.io/fetch-waterfall-in-react/). React Corsair provides an easy way
-to load route data ahead of rendering:
+a [waterfall](https://blog.sentry.io/fetch-waterfall-in-react/). React Corsair provides an easy way to load route data
+ahead of rendering:
 
 ```ts
 function LoadingIndicator() {
@@ -622,13 +617,12 @@ const productRoute = createRoute<{ sku: string }, User>({
 });
 ```
 
-[`dataLoader`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/classes/react-corsair.Route.html#dataloader)
+[`dataLoader`](https://smikhalevski.github.io/react-corsair/classes/react-corsair.Route.html#dataloader)
 is called every time the router is navigated to `productRoute`. While data is being loaded, the `<LoadingIndicator>`
 is rendered instead of the `<ProductPage>`.
 
 You can access the loaded data in your route component using
-the [`useRoute`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/react-corsair.useRoute.html)
-hook:
+the [`useRoute`](https://smikhalevski.github.io/react-corsair/functions/react-corsair.useRoute.html) hook:
 
 ```ts
 function ProductPage() {
@@ -670,9 +664,9 @@ const router = new Router({
 ## Error boundaries
 
 Each route is rendered in its own
-[error boundary&#8239;<sup>↗</sup>](https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary).
+[error boundary](https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary).
 If an error occurs during route component rendering or [data loading](#data-loading), then
-an [`errorComponent`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/react-corsair.RouteOptions.html#errorcomponent)
+an [`errorComponent`](https://smikhalevski.github.io/react-corsair/interfaces/react-corsair.RouteOptions.html#errorcomponent)
 is rendered as a fallback:
 
 ```ts
@@ -704,7 +698,7 @@ function ErrorDetails() {
 ```
 
 Some errors are recoverable and only require a route data or component to
-be [reloaded&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/classes/react-corsair.RouteController.html#reload):
+be [reloaded](https://smikhalevski.github.io/react-corsair/classes/react-corsair.RouteController.html#reload):
 
 ```tsx
 function ErrorDetails() {
@@ -737,8 +731,8 @@ function ProductsPage() {
 ## Not found
 
 During route component rendering, you may detect that there's not enough data to render a route. Call
-the [`notFound`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/react-corsair.notFound.html)
-during rendering in such case:
+the [`notFound`](https://smikhalevski.github.io/react-corsair/functions/react-corsair.notFound.html) during rendering
+in such case:
 
 ```ts
 import { notFound, useRoute } from 'react-corsair';
@@ -759,9 +753,9 @@ function ProductPage() {
 ```
 
 `notFound` throws
-the [`NotFoundError`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/classes/react-corsair.NotFoundError.html)
+the [`NotFoundError`](https://smikhalevski.github.io/react-corsair/classes/react-corsair.NotFoundError.html)
 symbol and aborts further rendering of the route component. The `<Outlet>` catches `NotFoundError` and renders
-a [`notFoundComponent`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/react-corsair.RouteOptions.html#notfoundcomponent)
+a [`notFoundComponent`](https://smikhalevski.github.io/react-corsair/interfaces/react-corsair.RouteOptions.html#notfoundcomponent)
 as a fallback:
 
 ```ts
@@ -810,8 +804,7 @@ function ProductPage() {
 
 Trigger redirect during [data loading](#data-loading) or during rendering.
 
-Call [`redirect`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/react-corsair.redirect.html)
-during rendering:
+Call [`redirect`](https://smikhalevski.github.io/react-corsair/functions/react-corsair.redirect.html) during rendering:
 
 ```ts
 import { createRoute, redirect } from 'react-corsair';
@@ -846,11 +839,11 @@ const adminRoute = createRoute({
 ```
 
 Router would render a
-[`loadingComponent`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/react-corsair.RouteOptions.html#loadingcomponent)
+[`loadingComponent`](https://smikhalevski.github.io/react-corsair/interfaces/react-corsair.RouteOptions.html#loadingcomponent)
 when `redirect` is called during a data loading or during rendering.
 
 `redirect` accepts
-routes, [locations&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/react-corsair.Location.html),
+routes, [locations](https://smikhalevski.github.io/react-corsair/interfaces/react-corsair.Location.html),
 and URL strings as an argument.
 
 Rect Corsair doesn't have a default behavior for redirects. Use a router event listener to handle redirects:
@@ -882,7 +875,7 @@ Sometimes you know ahead of time that a user would visit a particular route, and
 the component and [related data](#data-loading) so the navigation is instant.
 
 To do this, call
-the [`Router.prefetch`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/classes/react-corsair.Router.html#prefetch)
+the [`Router.prefetch`](https://smikhalevski.github.io/react-corsair/classes/react-corsair.Router.html#prefetch)
 method and provide a route or a location to prefetch. Router would load required [components](#code-splitting)
 and trigger [data loaders](#data-loading):
 
@@ -891,22 +884,21 @@ router.prefetch(productRoute);
 ```
 
 If a route requires params, use
-[`getLocation`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/classes/react-corsair.Route.html#getlocation)
-to create a prefetched location:
+[`getLocation`](https://smikhalevski.github.io/react-corsair/classes/react-corsair.Route.html#getlocation) to create
+a prefetched location:
 
 ```ts
 router.prefetch(user.getLocation({ userId: 42 }));
 ```
 
-Use [`<Prefetch>`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/react-corsair.Prefetch.html)
-component for a more declarative route prefetching:
+Use [`<Prefetch>`](https://smikhalevski.github.io/react-corsair/functions/react-corsair.Prefetch.html) component for
+a more declarative route prefetching:
 
 ```tsx
 <Prefetch to={productRoute} />
 ```
 
-Or [`usePrefetch`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/react-corsair.usePrefetch.html)
-hook:
+Or [`usePrefetch`](https://smikhalevski.github.io/react-corsair/functions/react-corsair.usePrefetch.html) hook:
 
 ```tsx
 usePrefetch(productRoute);
@@ -935,10 +927,10 @@ When button is hovered, `usePrefetch` would start prefetching `productRoute`.
 
 React Corsair provides two prefetch triggers:
 
-- [`createHoveredPrefetchTrigger`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/react-corsair.createHoveredPrefetchTrigger.html)
+- [`createHoveredPrefetchTrigger`](https://smikhalevski.github.io/react-corsair/functions/react-corsair.createHoveredPrefetchTrigger.html)
   Creates a trigger that start prefetching when an element is hovered.
 
-- [`createVisiblePrefetchTrigger`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/react-corsair.createVisiblePrefetchTrigger.html)
+- [`createVisiblePrefetchTrigger`](https://smikhalevski.github.io/react-corsair/functions/react-corsair.createVisiblePrefetchTrigger.html)
   Creates a trigger that start prefetching when an element is at least 50% visible on the screen.
 
 Create a custom prefetch trigger:
@@ -1029,7 +1021,7 @@ With route interception we can render `productRoute` route inside the `<ShopPage
 `/product/42` and the user would see the shop feed with a product inlay.
 
 To achieve this, add
-the [`useInterceptedRoute`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/react-corsair.useInterceptedRoute.html)
+the [`useInterceptedRoute`](https://smikhalevski.github.io/react-corsair/functions/react-corsair.useInterceptedRoute.html)
 hook to `<ShopPage>`:
 
 ```tsx
@@ -1051,9 +1043,9 @@ function ShopPage() {
 
 Now when user clicks on _Go to product_, the browser location changes to `/product/42` and `<ShopPage>` is re-rendered.
 `productRouteController` would contain
-a [route controller&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/classes/react-corsair.RouteController.html)
+a [route controller](https://smikhalevski.github.io/react-corsair/classes/react-corsair.RouteController.html)
 for `productRoute`. This controller can be then rendered using
-the [`<RouteOutlet>`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/react-corsair.RouteOutlet.html).
+the [`<RouteOutlet>`](https://smikhalevski.github.io/react-corsair/functions/react-corsair.RouteOutlet.html).
 
 If a user clicks the _Reload_ button in the browser, a `<ProductPage>` would be rendered because it matches
 `/product/42`.
@@ -1062,7 +1054,7 @@ You can render `<RouteOutlet>` in a popup to show the product preview, allowing 
 the shop feed.
 
 Use
-[`cancelInterception`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/classes/react-corsair.Router.html#cancelinterception)
+[`cancelInterception`](https://smikhalevski.github.io/react-corsair/classes/react-corsair.Router.html#cancelinterception)
 method to render the intercepted route in a router `<Outlet>`:
 
 ```ts
@@ -1083,7 +1075,7 @@ function Product() {
 }
 ```
 
-[`useInlineRoute`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/react-corsair.useInlineRoute.html)
+[`useInlineRoute`](https://smikhalevski.github.io/react-corsair/functions/react-corsair.useInlineRoute.html)
 matches the provided location against routes of the current router and returns a corresponding route controller.
 
 # History
@@ -1122,18 +1114,15 @@ function App() {
 }
 ```
 
-Inside components
-use [`useHistory`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/history.useHistory.html)
-hook to retrieve the
-provided [`History`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/history.History.html):
+Inside components use [`useHistory`](https://smikhalevski.github.io/react-corsair/interfaces/history.useHistory.html)
+hook to retrieve the provided [`History`](https://smikhalevski.github.io/react-corsair/interfaces/history.History.html):
 
 ```ts
 const history = useHistory();
 ```
 
-[Push&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/history.History.html#push) and
-[replace&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/history.History.html#replace)
-routes using history:
+[Push](https://smikhalevski.github.io/react-corsair/interfaces/history.History.html#push) and
+[replace](https://smikhalevski.github.io/react-corsair/interfaces/history.History.html#replace) routes using history:
 
 ```ts
 history.push(helloRoute);
@@ -1143,15 +1132,15 @@ history.replace(productRoute.getLocation({ sku: 42 }));
 
 There are three types of history adapters that you can leverage:
 
-- [`createBrowserHistory`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/history.createBrowserHistory.html)
+- [`createBrowserHistory`](https://smikhalevski.github.io/react-corsair/functions/history.createBrowserHistory.html)
   is a DOM-specific history adapter that uses HTML5 history API.
 
-- [`createHashBrowserHistory`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/history.createHashBrowserHistory.html)
+- [`createHashBrowserHistory`](https://smikhalevski.github.io/react-corsair/functions/history.createHashBrowserHistory.html)
   is a DOM-specific history adapter that uses HTML5 history API and stores location in
-  a [URL hash&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/API/URL/hash). This is useful if
-  your server doesn't support history fallback, or if you're shipping an HTML file.
+  a [URL hash](https://developer.mozilla.org/en-US/docs/Web/API/URL/hash). This is useful if your server doesn't support
+  history fallback, or if you're shipping an HTML file.
 
-- [`createMemoryHistory`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/history.createMemoryHistory.html)
+- [`createMemoryHistory`](https://smikhalevski.github.io/react-corsair/functions/history.createMemoryHistory.html)
   is an in-memory history adapter, useful in testing and non-DOM environments like SSR.
 
 ## Route URLs
@@ -1170,7 +1159,7 @@ history.parseURL(helloURL);
 // ⮕ { pathname: '/hello', searchParams: { name: 'Bob' }, hash: '', state: undefined }
 ```
 
-Use [`basePathname`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/history.HistoryOptions.html#basepathname)
+Use [`basePathname`](https://smikhalevski.github.io/react-corsair/interfaces/history.HistoryOptions.html#basepathname)
 to set the base pathname for the entire history. URLs produced by history would share the base pathname:
 
 ```ts
@@ -1188,10 +1177,8 @@ createBrowserHistory({ basePathname: '/suuuper' }).parseURL('/ooops');
 // ❌ Error: Pathname doesn't match the required base: /suuuper
 ```
 
-URLs can be passed to
-[`push`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/history.History.html#push) and
-[`replace`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/history.History.html#replace)
-methods:
+URLs can be passed to [`push`](https://smikhalevski.github.io/react-corsair/interfaces/history.History.html#push) and
+[`replace`](https://smikhalevski.github.io/react-corsair/interfaces/history.History.html#replace) methods:
 
 ```ts
 const history = createBrowserHistory({ basePathname: '/suuuper' });
@@ -1256,11 +1243,11 @@ history.toURL(helloRoute.getLocation({ color: 'red' }));
 ```
 
 By default, history serializes
-[search params&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/react-corsair.Location.html#searchparams)
+[search params](https://smikhalevski.github.io/react-corsair/interfaces/react-corsair.Location.html#searchparams)
 with
-[`jsonSearchParamsSerializer`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/variables/history.jsonSearchParamsSerializer.html)
+[`jsonSearchParamsSerializer`](https://smikhalevski.github.io/react-corsair/variables/history.jsonSearchParamsSerializer.html)
 which serializes individual params with
-[`JSON`&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON):
+[`JSON`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON):
 
 ```ts
 interface ShopParams {
@@ -1286,9 +1273,9 @@ history.toURL(
 `jsonSearchParamsSerializer` allows you to store complex data structures in a URL.
 
 You can create
-[a custom search params serializer&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/history.HistoryOptions.html#searchparamsserializer)
+[a custom search params serializer](https://smikhalevski.github.io/react-corsair/interfaces/history.HistoryOptions.html#searchparamsserializer)
 and provide it to a history. Here's how to create a basic serializer that
-uses [`URLSearchParams`&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams):
+uses [`URLSearchParams`](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams):
 
 ```ts
 createBrowserHistory({
@@ -1302,9 +1289,8 @@ createBrowserHistory({
 
 ## Links
 
-Inside components
-use [`<Link>`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/history.Link.html)
-for navigation:
+Inside components use [`<Link>`](https://smikhalevski.github.io/react-corsair/functions/history.Link.html) for
+navigation:
 
 ```tsx
 import { Link } from 'react-corsair/history';
@@ -1332,8 +1318,7 @@ Navigation blocking is a way to prevent navigation from happening. This is typic
 there are unsaved changes. Usually, in such situation, a prompt or a custom UI should be shown to the user to confirm
 the navigation.
 
-Use
-the [`useHistoryBlocker`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/history.useHistoryBlocker.html)
+Use the [`useHistoryBlocker`](https://smikhalevski.github.io/react-corsair/functions/history.useHistoryBlocker.html)
 hook to intercept the navigation attempt and show a browser confirmation popup to the user:
 
 ```tsx
@@ -1346,10 +1331,9 @@ useHistoryBlocker(() => {
 ```
 
 A blocker function provided to the `useHistoryBlocker` hook receives a navigation transaction.
-With [`proceed`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/history.HistoryTransaction.html#proceed)
-and
-[`cancel`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/history.HistoryTransaction.html#cancel)
-methods you can handle a navigation transaction in an asynchronous manner:
+With [`proceed`](https://smikhalevski.github.io/react-corsair/interfaces/history.HistoryTransaction.html#proceed)
+and [`cancel`](https://smikhalevski.github.io/react-corsair/interfaces/history.HistoryTransaction.html#cancel) methods
+you can handle a navigation transaction in an asynchronous manner:
 
 ```tsx
 useHistoryBlocker(transaction => {
@@ -1394,10 +1378,9 @@ const transaction = useHistoryBlocker();
 Routes can be rendered on the server side and then hydrated on the client side.
 
 To enable hydration on the client, create
-a [`Router`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/classes/react-corsair.Router.html) and call
-[`hydrateRouter`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/react-corsair.hydrateRouter.html)
-instead of
-[`Router.navigate`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/classes/react-corsair.Router.html#navigate):
+a [`Router`](https://smikhalevski.github.io/react-corsair/classes/react-corsair.Router.html) and call
+[`hydrateRouter`](https://smikhalevski.github.io/react-corsair/functions/react-corsair.hydrateRouter.html)
+instead of [`Router.navigate`](https://smikhalevski.github.io/react-corsair/classes/react-corsair.Router.html#navigate):
 
 ```tsx
 import React from 'react';
@@ -1424,7 +1407,7 @@ hydrateRoot(
 > The location passed to `hydrateRouter` and set of routes passed to the `Router` on the client-side must be the same
 > as ones used during the server-side rendering. Otherwise, hydration behavior is undefined.
 
-[`hydrateRouter`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/react-corsair.hydrateRouter.html)
+[`hydrateRouter`](https://smikhalevski.github.io/react-corsair/functions/react-corsair.hydrateRouter.html)
 must be called only once on the client-side with the router that would receive the dehydrated state from the server.
 
 On the server-side, you can either render your app contents [as a string](#render-to-string) and send it to the client
@@ -1434,7 +1417,7 @@ in one go, or [stream the contents](#streaming-ssr).
 
 By default, when SSR is used, all routes are rendered both on the server side and on the client side. You can prevent
 server-side rendering for a route by specifying
-the [`renderingDisposition`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/react-corsair.RouteOptions.html#renderingdisposition)
+the [`renderingDisposition`](https://smikhalevski.github.io/react-corsair/interfaces/react-corsair.RouteOptions.html#renderingdisposition)
 option:
 
 ```ts
@@ -1458,8 +1441,8 @@ Rendering disposition can be set to:
 
 ## Render to string
 
-Use [`SSRRouter`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/classes/ssr.SSRRouter.html) to render
-your app as an HTML string:
+Use [`SSRRouter`](https://smikhalevski.github.io/react-corsair/classes/ssr.SSRRouter.html) to render your app as
+an HTML string:
 
 ```tsx
 import { createServer } from 'node:http';
@@ -1499,13 +1482,13 @@ server.listen(8080);
 A new router and a new history must be created for each request, so the results that are stored in router are served in
 response to a particular request.
 
-[`hasChanges`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/classes/ssr.SSRRouter.html#haschanges)
-would resolve with `true` if state of some routes have changed during rendering.
+[`hasChanges`](https://smikhalevski.github.io/react-corsair/classes/ssr.SSRRouter.html#haschanges) would resolve with
+`true` if state of some routes have changed during rendering.
 
 The hydration chunk returned
-by [`nextHydrationChunk`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/classes/ssr.SSRRouter.html#nexthydrationchunk)
+by [`nextHydrationChunk`](https://smikhalevski.github.io/react-corsair/classes/ssr.SSRRouter.html#nexthydrationchunk)
 contains the `<script>` tag that hydrates the router for which
-[`hydrateRouter`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/functions/react-corsair.hydrateRouter.html)
+[`hydrateRouter`](https://smikhalevski.github.io/react-corsair/functions/react-corsair.hydrateRouter.html)
 is invoked on the client side.
 
 ## Streaming SSR
@@ -1558,12 +1541,12 @@ server.listen(8080);
 ## State serialization
 
 By default, route state is serialized using
-[`JSON`&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify)
+[`JSON`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify)
 which has quite a few limitations. If your route [loads data](#data-loading) that may contain circular references,
 or non-serializable data like `BigInt`, use a custom state serialization.
 
 On the server, pass
-a [`serializer`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/ssr.SSRRouterOptions.html#serializer)
+a [`serializer`](https://smikhalevski.github.io/react-corsair/interfaces/ssr.SSRRouterOptions.html#serializer)
 option to [`SSRRouter`](#render-to-string):
 
 ```ts
@@ -1577,7 +1560,7 @@ const router = new SSRRouter({
 ```
 
 On the client, pass _the same_
-[`serializer`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/react-corsair.HydrateRouterOptions.html#serializer)
+[`serializer`](https://smikhalevski.github.io/react-corsair/interfaces/react-corsair.HydrateRouterOptions.html#serializer)
 option to `hydrateRouter`:
 
 ```tsx
@@ -1605,17 +1588,17 @@ hydrateRoot(
 ```
 
 > [!TIP]\
-> Read more about [JSON Marshal&#8239;<sup>↗</sup>](https://github.com/smikhalevski/json-marshal#readme), it can
+> Read more about [JSON Marshal](https://github.com/smikhalevski/json-marshal#readme), it can
 > stringify and parse any data structure.
 
 ## Content-Security-Policy support
 
 By default,
-[`nextHydrationChunk`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/classes/ssr.SSRRouter.html#nexthydrationchunk)
+[`nextHydrationChunk`](https://smikhalevski.github.io/react-corsair/classes/ssr.SSRRouter.html#nexthydrationchunk)
 renders an inline `<script>` tag without any attributes. To enable the support of
-the [`script-src`&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src)
+the [`script-src`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src)
 directive of the `Content-Security-Policy` header, provide
-the [`nonce`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/react-corsair/interfaces/ssr.SSRRouterOptions.html#nonce)
+the [`nonce`](https://smikhalevski.github.io/react-corsair/interfaces/ssr.SSRRouterOptions.html#nonce)
 option to `SSRRouter` or any of its subclasses:
 
 ```ts
