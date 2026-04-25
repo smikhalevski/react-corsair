@@ -1,4 +1,4 @@
-import React, { createContext, ReactElement, ReactNode, useCallback, useContext, useSyncExternalStore } from 'react';
+import { createContext, ReactElement, ReactNode, useCallback, useContext, useSyncExternalStore } from 'react';
 import { Outlet, OutletProvider } from './outlet/Outlet.js';
 import { Router } from './Router.js';
 import { RouteProvider } from './useRoute.js';

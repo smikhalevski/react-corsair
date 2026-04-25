@@ -7,11 +7,12 @@ import {
   Location,
   LocationOptions,
   ParamsAdapter,
-  ParamsAdapterLike,
   RenderingDisposition,
   RouteOptions,
 } from './types.js';
 import { Outlet } from './outlet/Outlet.js';
+import { LazyComponentError } from './LazyComponentError.js';
+import { toParamsAdapter } from './utils.js';
 
 type Prettify<T> = { [K in keyof T]: T[K] } & {};
 
@@ -22,7 +23,9 @@ type CombineParams<ParentRoute extends Route | null, Params extends Record<strin
   : Params;
 
 export type InferParams<R extends Route> = R['$inferParams'];
+
 export type InferData<R extends Route> = R['$inferData'];
+
 export type InferContext<R extends Route> = R['$inferContext'];
 
 /**
@@ -180,7 +183,7 @@ export class Route<
         },
         error => {
           promise = undefined;
-          throw new LazyComponentError('Cannot load a lazyComponent module', error);
+          throw new LazyComponentError('Cannot load a lazyComponent module', { cause: error });
         }
       ));
   }
@@ -247,51 +250,3 @@ export class Route<
     };
   }
 }
-
-function toParamsAdapter<Params extends Record<string, any>>(
-  paramsAdapter: ParamsAdapterLike<Params>
-): ParamsAdapter<Params> {
-  if (typeof paramsAdapter === 'function') {
-    return { fromRawParams: paramsAdapter };
-  }
-
-  if (!('~standard' in paramsAdapter)) {
-    return paramsAdapter;
-  }
-
-  return {
-    fromRawParams(searchParams, pathnameParams) {
-      const result = paramsAdapter['~standard'].validate({ ...searchParams, ...pathnameParams });
-
-      if (result instanceof Promise) {
-        throw new Error('Params adapter must be synchronous');
-      }
-
-      return result.issues === undefined ? result.value : null;
-    },
-  };
-}
-
-/**
- * An error that is thrown when a {@link RouteOptions.lazyComponent lazyComponent} cannot be loaded.
- *
- * @group Routing
- */
-export class LazyComponentError extends Error {
-  /**
-   * Creates a new {@link LazyComponentError} instance.
-   *
-   * @param message The error message.
-   * @param cause The cause of a loading error.
-   */
-  constructor(message: string, cause?: unknown) {
-    super(message, { cause });
-
-    this.cause = cause;
-  }
-}
-
-/**
- * @internal
- */
-LazyComponentError.prototype.name = 'LazyComponentError';

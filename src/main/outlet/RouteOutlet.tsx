@@ -1,5 +1,5 @@
 import { getActiveController, getLoadingComponent, RouteController } from '../RouteController.js';
-import React, { ExoticComponent, memo, ReactElement, Suspense } from 'react';
+import { ExoticComponent, memo, ReactElement, Suspense } from 'react';
 import { RouteContent } from './RouteContent.js';
 import { RouteProvider } from '../useRoute.js';
 import { createMemoElement } from './utils.js';

@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest';
-import { LazyComponentError, createRoute, Location, Outlet, ParamsAdapter } from '../main/index.js';
+import { createRoute, LazyComponentError, Location, Outlet, ParamsAdapter } from '../main/index.js';
 
 const Component = () => null;
 
@@ -92,7 +92,7 @@ describe('loadComponent', () => {
     });
 
     await expect(() => route.loadComponent()).rejects.toEqual(
-      new LazyComponentError('Cannot load a lazyComponent module', 111)
+      new LazyComponentError('Cannot load a lazyComponent module', { cause: 111 })
     );
   });
 
@@ -151,8 +151,8 @@ describe('loadComponent', () => {
       },
     });
 
-    await expect(route.loadComponent()).rejects.toStrictEqual(
-      new LazyComponentError('Cannot load a lazyComponent module', new Error('expected'))
+    await expect(() => route.loadComponent()).rejects.toStrictEqual(
+      new LazyComponentError('Cannot load a lazyComponent module', { cause: new Error('expected') })
     );
   });
 });

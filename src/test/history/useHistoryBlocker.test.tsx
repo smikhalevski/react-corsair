@@ -4,7 +4,7 @@
 
 import { expect, test, vi } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
-import React, { StrictMode } from 'react';
+import { StrictMode } from 'react';
 import {
   createMemoryHistory,
   HistoryProvider,

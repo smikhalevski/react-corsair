@@ -1,5 +1,5 @@
 import { getErrorComponent, getLoadingComponent, getNotFoundComponent, RouteController } from '../RouteController.js';
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 import { RouteProvider } from '../useRoute.js';
 import { createMemoElement } from './utils.js';
 import { OutletProvider } from './Outlet.js';

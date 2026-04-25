@@ -5,7 +5,7 @@
 import { expect, test, vi } from 'vitest';
 import { act, render } from '@testing-library/react';
 import { createRoute, Router, RouterProvider, useInterceptedRoute } from '../main/index.js';
-import React, { StrictMode } from 'react';
+import { StrictMode } from 'react';
 
 test('returns the intercepted controller of the provided route or null', () => {
   const hookTrap = vi.fn();

@@ -1,4 +1,4 @@
-import React, { ComponentType, memo, ReactElement } from 'react';
+import { ComponentType, memo, ReactElement } from 'react';
 
 const elementCache = new WeakMap<ComponentType, ReactElement>();
 

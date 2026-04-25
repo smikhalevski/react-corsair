@@ -16,7 +16,7 @@ import {
 } from '../../main/index.js';
 import { noop } from '../../main/utils.js';
 import { render } from '@testing-library/react';
-import React, { StrictMode } from 'react';
+import { StrictMode } from 'react';
 import { NotFoundRouteController } from '../../main/NotFoundRouteController.js';
 
 console.error = noop;

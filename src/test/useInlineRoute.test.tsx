@@ -5,7 +5,7 @@
 import { expect, test } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { createRoute, Router, RouterProvider, useInlineRoute } from '../main/index.js';
-import React, { StrictMode } from 'react';
+import { StrictMode } from 'react';
 
 test('returns the route controller', () => {
   const route = createRoute('/aaa', () => 'AAA');

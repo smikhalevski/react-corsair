@@ -9,7 +9,7 @@
     "skipLibCheck": true,
     "target": "ES2020",
     "module": "NodeNext",
-    "jsx": "react",
+    "jsx": "react-jsx",
     "lib": ["DOM", "ESNext"],
     "outDir": "./lib"
   },

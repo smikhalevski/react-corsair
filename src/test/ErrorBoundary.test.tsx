@@ -4,7 +4,7 @@
 
 import { expect, test, vi } from 'vitest';
 import { render } from '@testing-library/react';
-import React, { ReactNode, StrictMode } from 'react';
+import { ReactNode, StrictMode } from 'react';
 import { ErrorBoundary } from '../main/ErrorBoundary.js';
 import { noop } from '../main/utils.js';
 

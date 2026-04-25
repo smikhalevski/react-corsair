@@ -1,11 +1,14 @@
 import { describe, expect, test, vi } from 'vitest';
 import {
+  concatPathname,
   createHashLocationSerializer,
   createLocationSerializer,
+  debasePathname,
+  isUnloadBlocked,
+  navigateOrBlock,
   parseLocation,
   stringifyLocation,
 } from '../../main/history/utils.js';
-import { concatPathname, debasePathname, isUnloadBlocked, navigateOrBlock } from '../../main/history/utils.js';
 import { Location } from '../../main/index.js';
 import { HistoryTransaction, jsonSearchParamsSerializer } from '../../main/history/index.js';
 

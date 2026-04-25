@@ -6,7 +6,7 @@ import { expect, test, vi } from 'vitest';
 import { render, renderHook } from '@testing-library/react';
 import { createRoute, Router, RouterProvider, useRoute } from '../main/index.js';
 import { noop } from '../main/utils.js';
-import React, { act, StrictMode } from 'react';
+import { act, StrictMode } from 'react';
 
 console.error = noop;
 

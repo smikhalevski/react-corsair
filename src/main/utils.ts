@@ -1,5 +1,5 @@
 import isDeepEqual from 'fast-deep-equal/es6/index.js';
-import { Location, To } from './types.js';
+import { Location, ParamsAdapter, ParamsAdapterLike, To } from './types.js';
 import { RouteController } from './RouteController.js';
 import { Redirect } from './Redirect.js';
 
@@ -38,4 +38,28 @@ export function getLeafController(controller: RouteController | null): RouteCont
 export function preventUnhandledRejection<T extends PromiseLike<any>>(promise: T): T {
   promise.then(noop, noop);
   return promise;
+}
+
+export function toParamsAdapter<Params extends Record<string, any>>(
+  paramsAdapter: ParamsAdapterLike<Params>
+): ParamsAdapter<Params> {
+  if (typeof paramsAdapter === 'function') {
+    return { fromRawParams: paramsAdapter };
+  }
+
+  if (!('~standard' in paramsAdapter)) {
+    return paramsAdapter;
+  }
+
+  return {
+    fromRawParams(searchParams, pathnameParams) {
+      const result = paramsAdapter['~standard'].validate({ ...searchParams, ...pathnameParams });
+
+      if (result instanceof Promise) {
+        throw new Error('Params adapter must be synchronous');
+      }
+
+      return result.issues === undefined ? result.value : null;
+    },
+  };
 }

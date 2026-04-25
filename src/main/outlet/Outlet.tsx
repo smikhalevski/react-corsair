@@ -1,4 +1,4 @@
-import React, { createContext, ExoticComponent, memo, ReactNode, useContext } from 'react';
+import { createContext, ExoticComponent, memo, ReactNode, useContext } from 'react';
 import { RouteController } from '../RouteController.js';
 import { returnTrue } from './utils.js';
 import { RouteOutlet } from './RouteOutlet.js';

@@ -1,4 +1,4 @@
-import React, { forwardRef, HTMLAttributes, MouseEventHandler, Ref, useMemo, useRef } from 'react';
+import { forwardRef, HTMLAttributes, MouseEventHandler, Ref, useMemo, useRef } from 'react';
 import { To } from '../types.js';
 import { noop, toLocation } from '../utils.js';
 import { useHistory } from './useHistory.js';
