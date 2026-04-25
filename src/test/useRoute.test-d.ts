@@ -1,28 +1,30 @@
+import { expectTypeOf, test } from 'vitest';
 import { createRoute, useRoute } from '../main/index.js';
-import { expectType } from 'tsd';
 
-expectType<any>(useRoute().params);
+test('', () => {
+  expectTypeOf(useRoute().params).toEqualTypeOf<any>();
 
-expectType<any>(useRoute().data);
+  expectTypeOf(useRoute().data).toEqualTypeOf<any>();
 
-expectType<{}>(useRoute(createRoute('/aaa')).params);
+  expectTypeOf(useRoute(createRoute('/aaa')).params).toEqualTypeOf<{}>();
 
-expectType<void>(useRoute(createRoute('/aaa')).data);
+  expectTypeOf(useRoute(createRoute('/aaa')).data).toEqualTypeOf<void>();
 
-expectType<{ xxx: 111 }>(
-  useRoute(
-    createRoute({
-      pathname: '/aaa',
-      paramsAdapter: (): { xxx: 111 } => null as never,
-    })
-  ).params
-);
+  expectTypeOf(
+    useRoute(
+      createRoute({
+        pathname: '/aaa',
+        paramsAdapter: (): { xxx: 111 } => null as never,
+      })
+    ).params
+  ).toEqualTypeOf<{ xxx: 111 }>();
 
-expectType<{ xxx: 111 }>(
-  useRoute(
-    createRoute({
-      pathname: '/aaa',
-      dataLoader: (): { xxx: 111 } => null as never,
-    })
-  ).data
-);
+  expectTypeOf(
+    useRoute(
+      createRoute({
+        pathname: '/aaa',
+        dataLoader: (): { xxx: 111 } => null as never,
+      })
+    ).data
+  ).toEqualTypeOf<{ xxx: 111 }>();
+});

@@ -18,20 +18,12 @@ type Prettify<T> = { [K in keyof T]: T[K] } & {};
 type Voidable<T> = Partial<T> extends T ? T | void : T;
 
 type CombineParams<ParentRoute extends Route | null, Params extends Record<string, any>> = ParentRoute extends Route
-  ? Prettify<ParentRoute[PARAMS] & Params>
+  ? Prettify<InferParams<ParentRoute> & Params>
   : Params;
 
-declare const PARAMS: unique symbol;
-declare const DATA: unique symbol;
-declare const CONTEXT: unique symbol;
-
-export type PARAMS = typeof PARAMS;
-export type DATA = typeof DATA;
-export type CONTEXT = typeof CONTEXT;
-
-export type InferParams<R extends Route> = R[PARAMS];
-export type InferData<R extends Route> = R[DATA];
-export type InferContext<R extends Route> = R[CONTEXT];
+export type InferParams<R extends Route> = R['$inferParams'];
+export type InferData<R extends Route> = R['$inferData'];
+export type InferContext<R extends Route> = R['$inferContext'];
 
 /**
  * A route that can be rendered by a router.
@@ -55,21 +47,21 @@ export class Route<
    *
    * @internal
    */
-  declare readonly [PARAMS]: CombineParams<ParentRoute, Params>;
+  declare readonly ['$inferParams']: CombineParams<ParentRoute, Params>;
 
   /**
    * The type of the route context.
    *
    * @internal
    */
-  declare readonly [DATA]: Data;
+  declare readonly ['$inferData']: Data;
 
   /**
    * The type of the data loaded by a route.
    *
    * @internal
    */
-  declare readonly [CONTEXT]: Context;
+  declare readonly ['$inferContext']: Context;
 
   /**
    * A parent route or `null` if there is no parent.

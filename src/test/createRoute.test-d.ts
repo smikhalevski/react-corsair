@@ -1,47 +1,48 @@
-import { expectType } from 'tsd';
+import { expectTypeOf, test } from 'vitest';
 import { createRoute } from '../main/index.js';
-import { type PARAMS } from '../main/Route.js';
 
-declare const PARAMS: PARAMS;
+test('', () => {
+  expectTypeOf(createRoute()['$inferParams']).toEqualTypeOf<{}>();
 
-expectType<{}>(createRoute()[PARAMS]);
+  expectTypeOf(
+    createRoute({ pathname: '', paramsAdapter: null as unknown as () => { aaa: number } })['$inferParams']
+  ).toEqualTypeOf<{ aaa: number }>();
 
-expectType<{ aaa: number }>(
-  createRoute({ pathname: '', paramsAdapter: null as unknown as () => { aaa: number } })[PARAMS]
-);
+  expectTypeOf(
+    createRoute({ pathname: '', paramsAdapter: null as unknown as () => { aaa?: number } })['$inferParams']
+  ).toEqualTypeOf<{ aaa?: number }>();
 
-expectType<{ aaa?: number }>(
-  createRoute({ pathname: '', paramsAdapter: null as unknown as () => { aaa?: number } })[PARAMS]
-);
+  expectTypeOf(
+    createRoute(createRoute(), { pathname: '', paramsAdapter: null as unknown as () => { aaa: number } })[
+      '$inferParams'
+    ]
+  ).toEqualTypeOf<{ aaa: number }>();
 
-expectType<{ aaa: number }>(
-  createRoute(createRoute(), { pathname: '', paramsAdapter: null as unknown as () => { aaa: number } })[PARAMS]
-);
+  expectTypeOf(
+    createRoute(createRoute({ pathname: '', paramsAdapter: null as unknown as () => { aaa: number } }), {
+      pathname: '',
+      paramsAdapter: null as unknown as () => { bbb: string },
+    })['$inferParams']
+  ).toEqualTypeOf<{ aaa: number; bbb: string }>();
 
-expectType<{ aaa: number; bbb: string }>(
-  createRoute(createRoute({ pathname: '', paramsAdapter: null as unknown as () => { aaa: number } }), {
-    pathname: '',
-    paramsAdapter: null as unknown as () => { bbb: string },
-  })[PARAMS]
-);
+  expectTypeOf(
+    createRoute(createRoute({ pathname: '', paramsAdapter: null as unknown as () => { aaa?: number } }), {
+      pathname: '',
+      paramsAdapter: null as unknown as () => { bbb: string },
+    })['$inferParams']
+  ).toEqualTypeOf<{ aaa?: number; bbb: string }>();
 
-expectType<{ aaa?: number; bbb: string }>(
-  createRoute(createRoute({ pathname: '', paramsAdapter: null as unknown as () => { aaa?: number } }), {
-    pathname: '',
-    paramsAdapter: null as unknown as () => { bbb: string },
-  })[PARAMS]
-);
+  expectTypeOf(
+    createRoute(createRoute({ pathname: '', paramsAdapter: null as unknown as () => { aaa: number } }), {
+      pathname: '',
+      paramsAdapter: null as unknown as () => { bbb?: string },
+    })['$inferParams']
+  ).toEqualTypeOf<{ aaa: number; bbb?: string }>();
 
-expectType<{ aaa: number; bbb?: string }>(
-  createRoute(createRoute({ pathname: '', paramsAdapter: null as unknown as () => { aaa: number } }), {
-    pathname: '',
-    paramsAdapter: null as unknown as () => { bbb?: string },
-  })[PARAMS]
-);
-
-expectType<{ aaa?: number; bbb?: string }>(
-  createRoute(createRoute({ pathname: '', paramsAdapter: null as unknown as () => { aaa?: number } }), {
-    pathname: '',
-    paramsAdapter: null as unknown as () => { bbb?: string },
-  })[PARAMS]
-);
+  expectTypeOf(
+    createRoute(createRoute({ pathname: '', paramsAdapter: null as unknown as () => { aaa?: number } }), {
+      pathname: '',
+      paramsAdapter: null as unknown as () => { bbb?: string },
+    })['$inferParams']
+  ).toEqualTypeOf<{ aaa?: number; bbb?: string }>();
+});
