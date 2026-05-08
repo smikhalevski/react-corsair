@@ -35,9 +35,6 @@ npm install --save-prod react-corsair
 
 <!--TOC-->
 
-- [API docs](https://smikhalevski.github.io/react-corsair/)
-- [Live example](https://codesandbox.io/p/sandbox/react-corsair-example-mzjzcm)
-
 <span class="toc-icon">🧭&ensp;</span>[**Routing**](#routing)
 
 - [Router and routes](#router-and-routes)
@@ -74,6 +71,11 @@ npm install --save-prod react-corsair
 
 - [Route masking](#route-masking)
 - [Forbidden error](#forbidden-error)
+
+<span class="toc-icon">🔎&ensp;</span>**Resources**
+
+- [API docs](https://smikhalevski.github.io/react-corsair/)
+- [Live example](https://codesandbox.io/p/sandbox/react-corsair-example-mzjzcm)
 
 <!--/TOC-->
 
